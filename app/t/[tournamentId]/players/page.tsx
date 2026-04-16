@@ -140,9 +140,9 @@ export default function PlayersPage({
               className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rotate-45 ${player.status === "approved" ? "bg-teal-500" : "bg-orange-500"}`}
             />
             <div className="flex items-center gap-4">
-              <div
-                className="w-16 h-16 shrink-0 rounded-2xl bg-slate-100 bg-cover bg-center"
-                style={{ backgroundImage: `url(${player.photo_url})` }}
+              <div 
+                className="w-16 h-16 shrink-0 rounded-2xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center" 
+                style={{ backgroundImage: player.photo_url ? `url(${player.photo_url})` : 'none' }} 
               />
               <div className="flex-1 min-w-0 z-10">
                 <h4 className="font-black text-lg text-slate-900 dark:text-white truncate">

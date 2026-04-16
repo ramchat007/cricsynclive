@@ -241,9 +241,9 @@ export default function TeamsPage({
             <div className="flex justify-between items-start mb-6 z-10 gap-2">
               {/* Left Side: Logo & Info */}
               <div className="flex gap-4 items-start min-w-0">
-                <div
-                  className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl bg-slate-50 dark:bg-slate-800 bg-contain bg-no-repeat bg-center p-2 shadow-inner border border-slate-100 dark:border-slate-700"
-                  style={{ backgroundImage: `url(${team.logo_url})` }}
+                <div 
+                  className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl bg-slate-50 dark:bg-slate-800 bg-contain bg-no-repeat bg-center p-2 shadow-inner border border-slate-100 dark:border-slate-700" 
+                  style={{ backgroundImage: team.logo_url ? `url(${team.logo_url})` : 'none' }} 
                 />
                 <div className="flex flex-col gap-1 mt-1 truncate">
                   <span className="text-[10px] font-black uppercase tracking-widest text-teal-500 bg-teal-500/10 px-2 py-1 rounded w-max">

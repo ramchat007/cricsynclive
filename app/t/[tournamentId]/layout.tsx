@@ -126,7 +126,7 @@ export default function TournamentLayout({
       {/* BANNER & HEADER */}
       <div
         className="h-64 md:h-80 w-full bg-slate-900 bg-cover bg-center relative group"
-        style={{ backgroundImage: `url(${tournament.banner_url})` }}>
+        style={{ backgroundImage: tournament.banner_url ? `url(${tournament.banner_url})` : 'none' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
 
         {/* BANNER EDIT BUTTON (Admins Only) */}
