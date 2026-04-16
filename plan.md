@@ -84,3 +84,40 @@ Build the Points Table automator (Wins, Losses, NRR).
 Build the interactive Knockout Bracket UI.
 
 Build the Global Orange Cap/Purple Cap leaderboards.
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Epic 1: The App Router Refactor (Routing, Auth, & Sharing)
+Addresses your Points 3, 4, 5, & 6.
+Right now, your Tournament Hub uses a single React state (activeTab) to switch views. As you noted, this breaks on refresh and makes sharing impossible.
+
+The Fix: We need to convert app/t/[tournamentId]/page.tsx into a Layout (layout.tsx). Then, we create actual Next.js nested routes: /t/[id]/teams, /t/[id]/matches, /t/[id]/points, and /t/[id]/players.
+
+Auth Gates: Inside that layout, we check if the user is the Admin. If yes, we render the "Edit/Delete" buttons and the "Approve" player toggles. If no (public user), we hide the controls and render it as a read-only vanity page.
+
+Quick Win: Add a "Copy Registration Link" button to the header of the Players route.
+
+Epic 2: The Global Player Ecosystem
+Addresses your Points 9 & 10.
+Currently, a player belongs to a specific tournament. To make them global, we need a junction architecture.
+
+The Fix: We split the database. A global_players table holds their master profile (Name, Global Stats). A tournament_registrations table links that player to specific tournaments (Payment Status, Approved/Pending).
+
+The Flow: When a player registers, we check their mobile number globally. If found, we just add a row linking them to your specific tournament, bypassing the need to re-upload photos.
+
+Epic 3: The Match Engine & League Mechanics
+Addresses your Points 8, 11, & 12.
+This is the most complex data layer. A match isn't just Team A vs. Team B. It requires deep logistics.
+
+The Fix: Update the matches table to include overs, group_name (Pool A/Pool B), and stage (League vs. Knockout).
+
+The UI: Build a tabbed interface (Upcoming, Live, Completed). Add an "Auto-Schedule" button that runs a Round-Robin algorithm based on the groups.
+
+Points Table: Write a Supabase RPC (Remote Procedure Call) function that calculates Net Run Rate (NRR) and Points dynamically based only on matches marked as "League" stage.
+
+Epic 4: UX Polish & Settings
+Addresses your Points 1, 2, & 7.
+
+Tournament Settings: Add an is_auction_enabled boolean to the tournaments table. If false, hide the purse UI and Auction Console link.
+
+Franchise UI: Pull the "Create Team" form out of the grid and place it in a sticky header or modal, leaving the grid purely for the Team Cards (which will now display Matches Played, Won, Lost).
