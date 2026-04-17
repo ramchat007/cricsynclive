@@ -14,6 +14,20 @@ export default function Scoreboard({
 }: any) {
   return (
     <div className="flex flex-col gap-6">
+      {/* 2ND INNINGS: TARGET & RRR */}
+      {match?.current_innings === 2 && (
+        <div className="bg-teal-500 p-6 rounded-3xl shadow-lg shadow-teal-500/20 text-white text-center">
+          <p className="text-xs font-black text-teal-100 uppercase tracking-widest mb-1">
+            Target: {targetScore}
+          </p>
+          <p className="text-xl font-black">
+            Need {remainingRuns} off {remainingBalls}
+          </p>
+          <p className="text-sm font-bold text-teal-100 mt-2 uppercase tracking-widest">
+            Required RR: {rrr}
+          </p>
+        </div>
+      )}
       {/* SCORE SECTION */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
@@ -61,21 +75,6 @@ export default function Scoreboard({
           </p>
         </div>
       </div>
-
-      {/* 2ND INNINGS: TARGET & RRR */}
-      {match?.current_innings === 2 && (
-        <div className="bg-teal-500 p-6 rounded-3xl shadow-lg shadow-teal-500/20 text-white text-center">
-          <p className="text-xs font-black text-teal-100 uppercase tracking-widest mb-1">
-            Target: {targetScore}
-          </p>
-          <p className="text-xl font-black">
-            Need {remainingRuns} off {remainingBalls}
-          </p>
-          <p className="text-sm font-bold text-teal-100 mt-2 uppercase tracking-widest">
-            Required RR: {rrr}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

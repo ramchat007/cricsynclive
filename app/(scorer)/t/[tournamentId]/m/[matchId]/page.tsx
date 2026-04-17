@@ -71,7 +71,7 @@ export default function LiveScorerPage({
   >("penalty");
   const [customRuns, setCustomRuns] = useState(5); // Default to 5 for penalties
   const [activeTab, setActiveTab] = useState<
-    "scoreboard" | "commentary" | "predictor" | "info"
+    "scoreboard" | "scorecard" | "commentary" | "predictor" | "info"
   >("scoreboard");
 
   if (matchId === "null" || !matchId) {
@@ -957,13 +957,9 @@ export default function LiveScorerPage({
               {activeTab === "scorecard" && (
                 <FullScorecard
                   deliveries={deliveries}
-                  team1Squad={
-                    match.current_innings === 1 ? battingSquad : bowlingSquad
-                  }
-                  team2Squad={
-                    match.current_innings === 1 ? bowlingSquad : battingSquad
-                  }
-                  innings={match.current_innings}
+                  battingSquad={battingSquad}
+                  bowlingSquad={bowlingSquad}
+                  match={match}
                 />
               )}
 
