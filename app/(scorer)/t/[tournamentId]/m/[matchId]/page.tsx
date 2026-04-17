@@ -605,7 +605,7 @@ export default function LiveScorerPage({
   // --- 5. MAIN JSX (CLEAN WEB LAYOUT) ---
   return (
     // Note the pb-[320px] on mobile! This allows the user to scroll to the very bottom of the page without the floating keypad covering it.
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 md:p-6 pb-[320px] lg:pb-6 font-sans text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 md:p-6 pb-[220px] lg:pb-6 font-sans text-slate-900 dark:text-white">
       {/* HEADER & TOP NAVIGATION */}
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6 px-2 mt-2">
         <div className="flex items-center gap-4">
@@ -644,7 +644,7 @@ export default function LiveScorerPage({
       </div>
 
       {/* MAIN CONTAINER */}
-      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-4">
+      <div className="max-w-[1400px] mx-auto flex flex-col-reverse lg:flex-row gap-4">
         {/* LEFT COLUMN: THE SCORE, PITCH & FLOATING KEYPAD */}
         <div className="flex-1 flex flex-col gap-4 lg:max-w-[50%] xl:max-w-[45%] w-full">
           <ActivePlayers
@@ -697,7 +697,7 @@ export default function LiveScorerPage({
               </button>
               <button
                 onClick={() => setShowMoreModal(true)}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl col-span-2 transition-all active:scale-95">
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95">
                 ... More Actions
               </button>
               <button
@@ -712,7 +712,7 @@ export default function LiveScorerPage({
                       : setShowPostMatchModal(true);
                   }
                 }}
-                className="flex flex-col items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-2xl border border-orange-200 dark:border-orange-800/30">
+                className="items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-2xl border border-orange-200 dark:border-orange-800/30">
                 <Square size={20} className="mb-1" />
                 <span className="text-[10px] font-black uppercase tracking-widest">
                   End Innings

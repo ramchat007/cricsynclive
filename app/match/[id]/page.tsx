@@ -79,23 +79,9 @@ export default function PublicMatchCenter({
         </p>
       </div>
 
-      {/* PUBLIC TABS */}
-      <div className="flex justify-center gap-4 mb-6">
-        <button
-          onClick={() => setActiveTab("scoreboard")}
-          className={`px-6 py-3 rounded-xl font-black uppercase tracking-widest ${activeTab === "scoreboard" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-white dark:bg-slate-900 text-slate-500"}`}>
-          Live Score
-        </button>
-        <button
-          onClick={() => setActiveTab("scorecard")}
-          className={`px-6 py-3 rounded-xl font-black uppercase tracking-widest ${activeTab === "scorecard" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-white dark:bg-slate-900 text-slate-500"}`}>
-          Scorecard
-        </button>
-      </div>
-
       {/* RENDER THE REUSABLE COMPONENTS */}
       <div className="animate-in fade-in slide-in-from-bottom-4">
-        {activeTab === "scoreboard" && (
+        <div className="mb-5">
           <Scoreboard
             battingTeam={stats.battingTeam}
             currentScore={stats.currentScore}
@@ -110,16 +96,13 @@ export default function PublicMatchCenter({
             extras={stats.extrasBreakdown}
             openSettings={() => alert("Scorer only!")} // Disable settings for public
           />
-        )}
-
-        {activeTab === "scorecard" && (
-          <FullScorecard
-            deliveries={deliveries}
-            battingSquad={stats.battingSquad}
-            bowlingSquad={stats.bowlingSquad}
-            match={match}
-          />
-        )}
+        </div>
+        <FullScorecard
+          deliveries={deliveries}
+          battingSquad={stats.battingSquad}
+          bowlingSquad={stats.bowlingSquad}
+          match={match}
+        />
       </div>
     </div>
   );
