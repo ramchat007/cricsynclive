@@ -13,7 +13,7 @@ export default function ActivePlayers({
   setShowEditPlayersModal, // NEW PROP
 }: any) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
       {/* BATSMEN */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm relative">
         <div className="flex justify-between items-center mb-4">

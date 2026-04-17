@@ -35,3 +35,7 @@ body {
   background: #2dd4bf;
   border-radius: 10px;
 }
+
+button, a {
+  cursor: pointer;
+}
