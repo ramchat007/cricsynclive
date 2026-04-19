@@ -3,7 +3,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { generateTournamentStandings } from "../../../..//utils/cricketMath";
+import { generateTournamentStandings } from "../../../../../utils/cricketMath";
 
 export default function TournamentStandingsPage({
   params,

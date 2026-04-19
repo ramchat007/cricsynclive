@@ -7,16 +7,18 @@ import {
   Filter,
   Home,
   User,
-  Shield,
-  Activity,
   Award,
   X,
   Calendar,
   ChevronRight,
   Loader2,
+  Trophy,
+  ArrowUpDown,
+  Target,
+  Activity,
 } from "lucide-react";
 
-export default function GlobalPlayersPage() {
+export default function GlobalStatsPage() {
   const [players, setPlayers] = useState<any[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<any[]>([]);
   const [tournamentsList, setTournamentsList] = useState<
@@ -24,38 +26,31 @@ export default function GlobalPlayersPage() {
   >([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Search & Filter State
+  // Search, Filter & Sort State
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
-  const [tournamentFilter, setTournamentFilter] = useState("All"); // NEW: Tournament Filter
+  const [tournamentFilter, setTournamentFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("total_runs");
 
   // Modal State
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [recentMatches, setRecentMatches] = useState<any[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
 
+  // Top Performers
+  const [topBatter, setTopBatter] = useState<any>(null);
+  const [topBowler, setTopBowler] = useState<any>(null);
+
   useEffect(() => {
     fetchGlobalDirectory();
   }, []);
 
-  // Fetch list of tournaments for the dropdown
-  const fetchTournaments = async () => {
-    const { data } = await supabase
-      .from("tournaments")
-      .select("id, name")
-      .order("created_at", { ascending: false });
-    if (data) setTournamentsList(data);
-  };
-
   const fetchGlobalDirectory = async () => {
     setIsLoading(true);
 
-    // 1. Fetch the fast aggregate stats we built in the SQL view
     const { data: statsData } = await supabase
       .from("global_career_stats")
       .select("*");
-
-    // 2. Fetch the player mappings to get their Franchise & Tournament history
     const { data: mappingData } = await supabase
       .from("players")
       .select(
@@ -63,10 +58,8 @@ export default function GlobalPlayersPage() {
       );
 
     if (statsData && mappingData) {
-      // A Map to keep track of unique tournaments we discover
       const discoveredTournaments = new Map<string, string>();
 
-      // Merge the Franchise history into the stats object
       const mergedData = statsData.map((stat: any) => {
         const appearances = mappingData.filter(
           (m) =>
@@ -74,16 +67,13 @@ export default function GlobalPlayersPage() {
             stat.full_name?.toLowerCase().trim(),
         );
 
-        // Extract unique tournaments AND add them to our discovered map
         const playedTournaments = Array.from(
           new Set(
             appearances
               .map((a) => {
-                // Safe check: If it's an array, grab [0], otherwise use it as an object
                 const t = Array.isArray(a.tournaments)
                   ? a.tournaments[0]
                   : a.tournaments;
-
                 if (t) {
                   discoveredTournaments.set(t.id, t.name);
                   return t.id;
@@ -104,14 +94,9 @@ export default function GlobalPlayersPage() {
           return acc;
         }, []);
 
-        return {
-          ...stat,
-          playedTournaments,
-          franchiseHistory,
-        };
+        return { ...stat, playedTournaments, franchiseHistory };
       });
 
-      // Convert our Map into an array for the Dropdown state
       const availableTournaments = Array.from(
         discoveredTournaments,
         ([id, name]) => ({ id, name }),
@@ -119,72 +104,67 @@ export default function GlobalPlayersPage() {
       setTournamentsList(availableTournaments);
 
       setPlayers(mergedData);
-      setFilteredPlayers(mergedData);
+
+      const sortedByRuns = [...mergedData].sort(
+        (a, b) => (b.total_runs || 0) - (a.total_runs || 0),
+      );
+      const sortedByWickets = [...mergedData].sort(
+        (a, b) => (b.total_wickets || 0) - (a.total_wickets || 0),
+      );
+
+      if (sortedByRuns.length > 0) setTopBatter(sortedByRuns[0]);
+      if (sortedByWickets.length > 0) setTopBowler(sortedByWickets[0]);
     }
     setIsLoading(false);
   };
 
-  // Handle Search and Filtering
   useEffect(() => {
     let result = players;
 
-    if (searchQuery) {
+    if (searchQuery)
       result = result.filter((p) =>
         p.full_name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
-    }
-    if (roleFilter !== "All") {
+    if (roleFilter !== "All")
       result = result.filter((p) => p.player_role === roleFilter);
-    }
-    if (tournamentFilter !== "All") {
+    if (tournamentFilter !== "All")
       result = result.filter((p) =>
         p.playedTournaments.includes(tournamentFilter),
       );
-    }
 
-    setFilteredPlayers(result);
-  }, [searchQuery, roleFilter, tournamentFilter, players]);
+    result.sort((a, b) => {
+      const valA = a[sortBy] || 0;
+      const valB = b[sortBy] || 0;
+      return valB - valA;
+    });
+
+    setFilteredPlayers([...result]);
+  }, [searchQuery, roleFilter, tournamentFilter, sortBy, players]);
 
   const openPlayerProfile = async (player: any) => {
     setSelectedPlayer(player);
     setIsLoadingMatches(true);
     setRecentMatches([]);
 
-    // 1. Find all Team IDs this person has played for
     const { data: profileData } = await supabase
       .from("players")
       .select("team_id")
       .ilike("full_name", player.full_name);
 
     if (profileData && profileData.length > 0) {
-      // Extract unique team IDs, filtering out any nulls
       const teamIds = Array.from(
         new Set(profileData.map((p) => p.team_id).filter(Boolean)),
       );
-
       if (teamIds.length > 0) {
-        // 2. Fetch matches where ANY of their teams were playing
         const { data: matches, error } = await supabase
           .from("matches")
-          .select(
-            `
-            id,
-            status,
-            tournament_id,
-            tournaments(name)
-          `,
-          )
+          .select(`id, status, tournament_id, tournaments(name)`)
           .or(
             `team1_id.in.(${teamIds.join(",")}),team2_id.in.(${teamIds.join(",")})`,
           )
           .order("created_at", { ascending: false })
           .limit(10);
-
-        if (matches && !error) {
-          setRecentMatches(matches);
-        } else {
-          console.error("Error fetching matches:", error);
-        }
+        if (matches && !error) setRecentMatches(matches);
       }
     }
     setIsLoadingMatches(false);
@@ -192,175 +172,282 @@ export default function GlobalPlayersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center font-black text-slate-400 animate-pulse text-xl uppercase tracking-widest">
-        Loading Directory...
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-black text-slate-400 animate-pulse text-xl uppercase tracking-widest">
+        Loading Global Stats...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans pb-20">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans pb-20 w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         {/* HEADER & NAVIGATION */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-500 uppercase tracking-widest mb-4 transition-colors">
+              className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-600 uppercase tracking-widest mb-4 transition-colors">
               <Home size={14} /> Back to Hub
             </Link>
-            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">
-              Global Directory
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-slate-900 leading-none">
+              Global Stats
             </h1>
-            <p className="text-sm font-bold text-teal-500 uppercase tracking-widest mt-2">
-              {filteredPlayers.length} Athletes Found
+            <p className="text-sm font-bold text-teal-600 uppercase tracking-widest mt-2">
+              Leaderboards & Player Rankings
             </p>
           </div>
+        </div>
 
-          {/* SEARCH & FILTER CONTROLS */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative flex-1 sm:w-64">
+        {/* PODIUM: TOP PERFORMERS (Mobile optimized layout) */}
+        {!searchQuery && roleFilter === "All" && tournamentFilter === "All" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            {topBatter && (
+              <div
+                onClick={() => openPlayerProfile(topBatter)}
+                className="bg-orange-50 border border-orange-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-orange-500/10 transition-all group">
+                <div
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 border-orange-500 shadow-lg bg-cover bg-center shrink-0 flex items-center justify-center text-orange-200"
+                  style={{
+                    backgroundImage: topBatter.photo_url
+                      ? `url(${topBatter.photo_url})`
+                      : "none",
+                  }}>
+                  {!topBatter.photo_url && <User size={32} />}
+                </div>
+                <div className="flex-1 w-full min-w-0">
+                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1">
+                    <Trophy size={14} /> Orange Cap
+                  </span>
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-orange-600 transition-colors truncate">
+                    {topBatter.full_name}
+                  </h3>
+                  <p className="text-sm font-bold text-slate-500">
+                    {topBatter.total_runs} Runs{" "}
+                    <span className="text-slate-300 mx-1">|</span> SR:{" "}
+                    {topBatter.career_strike_rate}
+                  </p>
+                </div>
+              </div>
+            )}
+            {topBowler && (
+              <div
+                onClick={() => openPlayerProfile(topBowler)}
+                className="bg-purple-50 border border-purple-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-purple-500/10 transition-all group">
+                <div
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 border-purple-500 shadow-lg bg-cover bg-center shrink-0 flex items-center justify-center text-purple-200"
+                  style={{
+                    backgroundImage: topBowler.photo_url
+                      ? `url(${topBowler.photo_url})`
+                      : "none",
+                  }}>
+                  {!topBowler.photo_url && <User size={32} />}
+                </div>
+                <div className="flex-1 w-full min-w-0">
+                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] font-black uppercase tracking-widest text-purple-600 mb-1">
+                    <Target size={14} /> Purple Cap
+                  </span>
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-purple-600 transition-colors truncate">
+                    {topBowler.full_name}
+                  </h3>
+                  <p className="text-sm font-bold text-slate-500">
+                    {topBowler.total_wickets} Wickets{" "}
+                    <span className="text-slate-300 mx-1">|</span> Econ:{" "}
+                    {topBowler.career_economy}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SEARCH, FILTER & SORT BAR */}
+        <div className="bg-white p-4 rounded-[2rem] sm:rounded-3xl border border-slate-200 shadow-sm mb-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative flex-1">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                 size={18}
               />
               <input
                 type="text"
-                placeholder="Search players..."
+                placeholder="Search athletes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold outline-none focus:border-teal-500 transition-colors shadow-sm"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold outline-none focus:border-teal-500 transition-colors"
               />
             </div>
 
-            <div className="relative shrink-0 flex-1 sm:w-48">
-              <Filter
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={16}
-              />
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors shadow-sm appearance-none cursor-pointer">
-                <option value="All">All Roles</option>
-                <option value="Batsman">Batsmen</option>
-                <option value="Bowler">Bowlers</option>
-                <option value="All-Rounder">All-Rounders</option>
-                <option value="Wicket-Keeper">Wicket-Keepers</option>
-              </select>
-            </div>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:w-auto">
+              <div className="relative shrink-0 flex-1">
+                <Filter
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={16}
+                />
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
+                  <option value="All">All Roles</option>
+                  <option value="Batsman">Batsmen</option>
+                  <option value="Bowler">Bowlers</option>
+                  <option value="All-Rounder">All-Rounders</option>
+                  <option value="Wicket-Keeper">Wicket-Keepers</option>
+                </select>
+              </div>
 
-            {/* NEW: TOURNAMENT FILTER */}
-            <div className="relative shrink-0 flex-1 sm:w-48">
-              <Award
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={16}
-              />
-              <select
-                value={tournamentFilter}
-                onChange={(e) => setTournamentFilter(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors shadow-sm appearance-none cursor-pointer">
-                <option value="All">All Tournaments</option>
-                {tournamentsList.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative shrink-0 flex-1">
+                <Award
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={16}
+                />
+                <select
+                  value={tournamentFilter}
+                  onChange={(e) => setTournamentFilter(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
+                  <option value="All">All Tournaments</option>
+                  {tournamentsList.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="relative shrink-0 flex-1">
+                <ArrowUpDown
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-teal-500 pointer-events-none"
+                  size={16}
+                />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full bg-teal-50 border border-teal-200 text-teal-700 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
+                  <option value="total_runs">Sort: Most Runs</option>
+                  <option value="total_wickets">Sort: Most Wickets</option>
+                  <option value="career_strike_rate">Sort: Highest SR</option>
+                  <option value="total_sixes">Sort: Most Sixes</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* PLAYER GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {filteredPlayers.map((player) => (
-            <div
-              key={player.full_name}
-              onClick={() => openPlayerProfile(player)}
-              className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-teal-500 transition-all cursor-pointer overflow-hidden group flex flex-col scale-100 active:scale-95">
-              <div className="p-6 pb-4 relative">
-                <div className="flex items-start justify-between mb-4">
-                  <div
-                    className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center shadow-inner border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 z-10"
-                    style={{
-                      backgroundImage: player.photo_url
-                        ? `url(${player.photo_url})`
-                        : "none",
-                    }}>
-                    {!player.photo_url && (
-                      <User size={24} className="text-slate-400" />
-                    )}
-                  </div>
-                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg z-10">
-                    {player.player_role}
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1 group-hover:text-teal-500 transition-colors">
-                  {player.full_name}
-                </h3>
-
-                <div className="flex flex-col gap-1 mt-3">
-                  <p className="text-xs font-bold text-slate-500 flex items-center gap-2">
-                    <Shield size={12} className="text-slate-400" />{" "}
-                    {player.batting_hand}
-                  </p>
-                  <p className="text-xs font-bold text-slate-500 flex items-center gap-2">
-                    <Activity size={12} className="text-slate-400" />{" "}
-                    {player.bowling_style}
-                  </p>
-                </div>
-              </div>
-
-              {/* Stats Preview */}
-              <div className="p-6 pt-4 mt-auto border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/20 grid grid-cols-3 gap-2 text-center">
-                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Runs
-                  </p>
-                  <p className="text-xl font-black text-orange-500 leading-none">
-                    {player.total_runs}
-                  </p>
-                </div>
-                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Wickets
-                  </p>
-                  <p className="text-xl font-black text-purple-500 leading-none">
-                    {player.total_wickets}
-                  </p>
-                </div>
-                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Franchises
-                  </p>
-                  <p className="text-lg font-black text-teal-500 leading-none">
-                    {player.franchiseHistory?.length || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* COMPREHENSIVE LEADERBOARD TABLE (Mobile Swipe Fix) */}
+        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden w-full">
+          <div className="overflow-x-auto custom-scrollbar w-full">
+            {/* Added min-w-[800px] to force proper table rendering on mobile without squishing */}
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <th className="p-4 md:p-5 w-16 text-center">Rank</th>
+                  <th className="p-4 md:p-5">Athlete</th>
+                  <th className="p-4 md:p-5">Role</th>
+                  <th className="p-4 md:p-5 text-right">Runs</th>
+                  <th className="p-4 md:p-5 text-right">SR</th>
+                  <th className="p-4 md:p-5 text-right">6s</th>
+                  <th className="p-4 md:p-5 text-right">Wickets</th>
+                  <th className="p-4 md:p-5 text-right">Econ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredPlayers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="p-10 text-center text-slate-400 font-bold">
+                      No athletes match your filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPlayers.map((player, index) => (
+                    <tr
+                      key={player.full_name}
+                      onClick={() => openPlayerProfile(player)}
+                      className="hover:bg-slate-50 transition-colors cursor-pointer group">
+                      <td className="p-4 md:p-5 text-center font-black text-slate-400 group-hover:text-teal-500">
+                        #{index + 1}
+                      </td>
+                      <td className="p-4 md:p-5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 rounded-xl bg-slate-100 bg-cover bg-center shrink-0 border border-slate-200"
+                            style={{
+                              backgroundImage: player.photo_url
+                                ? `url(${player.photo_url})`
+                                : "none",
+                            }}>
+                            {!player.photo_url && (
+                              <User
+                                size={16}
+                                className="text-slate-400 m-auto h-full"
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-900 group-hover:text-teal-600 transition-colors uppercase">
+                              {player.full_name}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[150px]">
+                              {player.franchiseHistory
+                                ?.map((t: any) => t.short_name)
+                                .join(", ") || "Unassigned"}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 md:p-5">
+                        <span className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded whitespace-nowrap">
+                          {player.player_role}
+                        </span>
+                      </td>
+                      <td
+                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_runs" ? "text-orange-600 text-lg" : "text-slate-700"}`}>
+                        {player.total_runs}
+                      </td>
+                      <td
+                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "career_strike_rate" ? "text-teal-600 text-lg" : "text-slate-500"}`}>
+                        {player.career_strike_rate}
+                      </td>
+                      <td
+                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "total_sixes" ? "text-blue-600 text-lg" : "text-slate-500"}`}>
+                        {player.total_sixes}
+                      </td>
+                      <td
+                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_wickets" ? "text-purple-600 text-lg" : "text-slate-700"}`}>
+                        {player.total_wickets}
+                      </td>
+                      <td className="p-4 md:p-5 text-right font-bold text-slate-500">
+                        {player.career_economy}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* ----------------------------------------------------------- */}
-        {/* PLAYER PROFILE MODAL (Full Photo + Stats + Recent Matches) */}
+        {/* PLAYER PROFILE MODAL (Mobile Scroll Trap Fixed) */}
         {/* ----------------------------------------------------------- */}
         {selectedPlayer && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-slate-200 dark:border-slate-800">
-              {/* CLOSE BUTTON (Mobile Absolute) */}
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in">
+            {/* MOBILE FIX: 
+              - On mobile (default): `overflow-y-auto h-[90vh]` so the whole modal scrolls as one continuous block. 
+              - On desktop (`md:`): `overflow-hidden h-auto` to split scrolling between the two panes.
+            */}
+            <div className="bg-white w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden custom-scrollbar animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-slate-200 relative">
+              {/* Close Button Mobile (Fixed to top right of modal view) */}
               <button
                 onClick={() => setSelectedPlayer(null)}
-                className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/20 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50">
+                className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50 shadow-lg">
                 <X size={20} />
               </button>
 
-              {/* LEFT SIDE: Full Photo & Career Stats */}
-              <div className="w-full md:w-5/12 bg-slate-100 dark:bg-slate-950 flex flex-col border-r border-slate-200 dark:border-slate-800">
-                {/* Full Profile Photo Area */}
+              {/* LEFT SIDE: Photo & Stats */}
+              <div className="w-full md:w-5/12 bg-slate-50 flex flex-col border-b md:border-b-0 md:border-r border-slate-200 shrink-0">
                 <div
-                  className="w-full h-64 md:h-80 bg-slate-200 dark:bg-slate-800 bg-cover bg-center relative shrink-0"
+                  className="w-full h-64 md:h-80 bg-slate-200 bg-cover bg-center relative shrink-0"
                   style={{
                     backgroundImage: selectedPlayer.photo_url
                       ? `url(${selectedPlayer.photo_url})`
@@ -383,20 +470,19 @@ export default function GlobalPlayersPage() {
                   </div>
                 </div>
 
-                {/* Deep Stats Area */}
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white dark:bg-slate-900">
+                {/* Desktop gets inner scroll, mobile flows naturally */}
+                <div className="p-6 md:overflow-y-auto custom-scrollbar flex-1 bg-white">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
                     Career Aggregates
                   </h3>
 
                   <div className="space-y-4">
-                    {/* Batting Card */}
-                    <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 rounded-2xl flex justify-between items-center">
+                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex justify-between items-center">
                       <div>
-                        <p className="text-[10px] font-black text-orange-600/70 dark:text-orange-500/70 uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-orange-600/70 uppercase tracking-widest">
                           Total Runs
                         </p>
-                        <p className="text-3xl font-black text-orange-600 dark:text-orange-500 leading-none">
+                        <p className="text-3xl font-black text-orange-600 leading-none">
                           {selectedPlayer.total_runs}
                         </p>
                       </div>
@@ -411,13 +497,12 @@ export default function GlobalPlayersPage() {
                       </div>
                     </div>
 
-                    {/* Bowling Card */}
-                    <div className="p-4 bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-2xl flex justify-between items-center">
+                    <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl flex justify-between items-center">
                       <div>
-                        <p className="text-[10px] font-black text-purple-600/70 dark:text-purple-500/70 uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-purple-600/70 uppercase tracking-widest">
                           Total Wickets
                         </p>
-                        <p className="text-3xl font-black text-purple-600 dark:text-purple-500 leading-none">
+                        <p className="text-3xl font-black text-purple-600 leading-none">
                           {selectedPlayer.total_wickets}
                         </p>
                       </div>
@@ -426,60 +511,32 @@ export default function GlobalPlayersPage() {
                           Econ: {selectedPlayer.career_economy}
                         </p>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                          {selectedPlayer.legal_balls_bowled} Balls Bowled
+                          {selectedPlayer.legal_balls_bowled} Balls
                         </p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Franchise Badges */}
-                  {selectedPlayer.franchiseHistory?.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                        Franchises Represented
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedPlayer.franchiseHistory.map(
-                          (team: any, i: number) => (
-                            <div
-                              key={i}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 shadow-sm">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{
-                                  backgroundColor:
-                                    team.primary_color || "#2dd4bf",
-                                }}
-                              />
-                              <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                {team.short_name}
-                              </span>
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* RIGHT SIDE: Recent Matches */}
-              <div className="w-full md:w-7/12 bg-slate-50 dark:bg-slate-950 flex flex-col">
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center shrink-0">
+              <div className="w-full md:w-7/12 bg-slate-50 flex flex-col shrink-0">
+                <div className="p-6 border-b border-slate-200 bg-white flex justify-between items-center shrink-0">
                   <h2 className="text-lg font-black uppercase tracking-widest flex items-center gap-2">
                     <Calendar size={20} className="text-teal-500" /> Recent
                     Matches
                   </h2>
                   <button
                     onClick={() => setSelectedPlayer(null)}
-                    className="hidden md:flex text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                    className="hidden md:flex text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-colors">
                     <X size={20} />
                   </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                {/* Desktop gets inner scroll, mobile flows naturally */}
+                <div className="p-6 md:overflow-y-auto custom-scrollbar flex-1">
                   {isLoadingMatches ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                    <div className="h-40 md:h-full flex flex-col items-center justify-center text-slate-400">
                       <Loader2
                         size={32}
                         className="animate-spin text-teal-500 mb-4"
@@ -493,8 +550,8 @@ export default function GlobalPlayersPage() {
                       {recentMatches.map((match) => (
                         <Link
                           key={match.id}
-                          href={`/match/${match.id}`} // <--- Updated to the clean public route!
-                          className="block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:border-teal-500 hover:shadow-md transition-all group">
+                          href={`/match/${match.id}`}
+                          className="block bg-white border border-slate-200 rounded-2xl p-4 hover:border-teal-500 hover:shadow-md transition-all group">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate pr-4">
                               {(Array.isArray(match.tournaments)
@@ -502,29 +559,21 @@ export default function GlobalPlayersPage() {
                                 : match.tournaments?.name) ||
                                 "Tournament Match"}
                             </span>
-
                             <span
-                              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shrink-0 ${
-                                match.status?.toLowerCase() === "completed"
-                                  ? "bg-teal-50 dark:bg-teal-900/20 text-teal-600 border-teal-200 dark:border-teal-800/50"
-                                  : match.status?.toLowerCase() === "live"
-                                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 border-red-200 dark:border-red-800/50 animate-pulse"
-                                    : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
-                              }`}>
+                              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shrink-0 ${match.status?.toLowerCase() === "completed" ? "bg-teal-50 text-teal-600 border-teal-200" : match.status?.toLowerCase() === "live" ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-slate-50 text-slate-600 border-slate-200"}`}>
                               {match.status || "Scheduled"}
                             </span>
                           </div>
-
                           <div className="flex justify-between items-center">
                             <div>
-                              <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-teal-500 transition-colors uppercase tracking-tight">
+                              <p className="text-sm font-black text-slate-900 group-hover:text-teal-600 transition-colors uppercase tracking-tight">
                                 Match #{match.id.substring(0, 4)}
                               </p>
                               <p className="text-xs font-bold text-slate-500 mt-0.5">
                                 Click to view scorecard
                               </p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-white transition-colors shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-white transition-colors">
                               <ChevronRight size={16} />
                             </div>
                           </div>
@@ -532,15 +581,15 @@ export default function GlobalPlayersPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center py-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                      <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                        <Activity size={24} className="text-slate-400" />
+                    <div className="h-40 md:h-full flex flex-col items-center justify-center text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl">
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                        <Activity size={20} className="text-slate-400" />
                       </div>
-                      <p className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white mb-1">
+                      <p className="text-sm font-black uppercase tracking-widest text-slate-900 mb-1">
                         No Recent Matches
                       </p>
                       <p className="text-xs font-bold text-slate-500">
-                        This player hasn't played in any recorded matches yet.
+                        This player hasn't played recently.
                       </p>
                     </div>
                   )}

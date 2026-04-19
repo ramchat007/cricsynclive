@@ -618,8 +618,8 @@ export default function LiveScorerPage({
           </button>
           <div>
             <h1 className="font-black text-lg md:text-2xl uppercase tracking-tight leading-none">
-              {engine.match?.team1?.short_name} vs{" "}
-              {engine.match?.team2?.short_name}
+              {engine.match?.team1?.name} vs{" "}
+              {engine.match?.team2?.name}
             </h1>
             <p className="text-[10px] md:text-sm font-bold text-teal-500 uppercase tracking-widest mt-1">
               {engine.match?.current_innings === 1

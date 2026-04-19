@@ -104,7 +104,7 @@ export default function V2LandingPage() {
               tournaments.map((t) => (
                 <Link
                   key={t.id}
-                  href={`/t/${t.id}/standings`} // Or whichever public page you want them to land on
+                  href={`/t/${t.id}/`} // Or whichever public page you want them to land on
                   className="group block relative h-64 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all">
                   <div
                     className="absolute inset-0 bg-slate-300 dark:bg-slate-800 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"

@@ -3,7 +3,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ArrowLeft, Trophy, Target, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { generateTournamentLeaderboards } from "../../../..//utils/cricketMath";
+import { generateTournamentLeaderboards } from "../../../../../utils/cricketMath";
 
 export default function LeaderboardsPage({
   params,

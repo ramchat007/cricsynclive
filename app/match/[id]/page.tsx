@@ -6,6 +6,8 @@ import { deriveMatchStats } from "../../utils/cricketMath";
 // REUSE YOUR COMPONENTS!
 import Scoreboard from "../../(scorer)/t/[tournamentId]/m/[matchId]/components/Scoreboard";
 import FullScorecard from "../../(scorer)/t/[tournamentId]/m/[matchId]/components/FullScorecard";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function PublicMatchCenter({
   params,
@@ -18,9 +20,6 @@ export default function PublicMatchCenter({
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [team1Players, setTeam1Players] = useState<any[]>([]);
   const [team2Players, setTeam2Players] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"scoreboard" | "scorecard">(
-    "scoreboard",
-  );
 
   // Fetch the data just like the engine does (Read-Only)
   useEffect(() => {
@@ -69,10 +68,15 @@ export default function PublicMatchCenter({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 font-sans max-w-4xl mx-auto">
+      <Link
+        href={`/`}
+        className="flex items-center gap-2 text-slate-500 font-bold mb-8 hover:text-teal-500 w-max">
+        <ArrowLeft size={16} /> Back to Home
+      </Link>
       {/* PUBLIC HEADER */}
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 text-center mb-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        <h1 className="text-3xl font-black uppercase">
-          {match.team1.short_name} vs {match.team2.short_name}
+        <h1 className="text-2xl font-black">
+          {match.team1.name} vs {match.team2.name}
         </h1>
         <p className="text-teal-500 font-bold text-sm tracking-widest uppercase mt-1">
           Live Match Center
