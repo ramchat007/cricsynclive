@@ -9,8 +9,11 @@ export default function BroadcastOverlay({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
-  const [config, setConfig] = useState<any>(null);
+
+  // 🔴 THIS IS THE MISSING LINE 🔴
   const [matchData, setMatchData] = useState<any>(null);
+
+  const [config, setConfig] = useState<any>(null);
 
   useEffect(() => {
     if (!tournamentId) return;
