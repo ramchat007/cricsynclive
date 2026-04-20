@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Providers } from "./providers";
-import Navbar from "./components/Navbar"; // Adjust this path if you put it elsewhere
+import LayoutWrapper from "./components/LayoutWrapper";
 
 export const metadata = {
   title: "CricSync V2 | Pro Sports Management",
@@ -15,13 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300">
+      <body>
         <Providers>
-          {/* THE SMART NAVBAR */}
-          <Navbar />
-
-          {/* MAIN CONTENT ZONE */}
-          <main>{children}</main>
+          <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
       </body>
     </html>
