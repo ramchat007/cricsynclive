@@ -47,6 +47,7 @@ export default function BroadcastOverlay({
   useEffect(() => {
     const matchId = config?.activeMatchId;
     if (!matchId) return;
+
     const fetchMatch = async () => {
       const { data } = await supabase
         .from("matches")
@@ -55,6 +56,7 @@ export default function BroadcastOverlay({
         .single();
       if (data) setMatchData(data);
     };
+
     fetchMatch();
 
     const matchSub = supabase
@@ -77,8 +79,26 @@ export default function BroadcastOverlay({
         },
       )
       .subscribe();
+
+    const deliverySub = supabase
+      .channel(`overlay_deliveries_${matchId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "deliveries",
+          filter: `match_id=eq.${matchId}`,
+        },
+        async () => {
+          await fetchMatch();
+        },
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(matchSub);
+      supabase.removeChannel(deliverySub);
     };
   }, [config?.activeMatchId]);
 
