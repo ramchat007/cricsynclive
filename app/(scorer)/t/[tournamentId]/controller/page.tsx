@@ -28,86 +28,34 @@ export default function MasterController({
     activeMatchId: "",
     showAppLogo: true,
   });
-  const [isStudioConnected, setIsStudioConnected] = useState(false);
-  const studioChannelRef = useRef<any>(null);
 
-  // --- INITIALIZATION ---
   useEffect(() => {
-    const channel = supabase.channel(`broadcast-${tournamentId}`);
-    studioChannelRef.current = channel;
+    if (!tournamentId) return;
+    const init = async () => {
+      const { data } = await supabase
+        .from("tournaments")
+        .select("broadcast_state")
+        .eq("id", tournamentId)
+        .single();
+      if (data?.broadcast_state) setConfig(data.broadcast_state);
 
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        setIsStudioConnected(true);
-        console.log("Studio Link Active");
-      } else if (
-        status === "CHANNEL_ERROR" ||
-        status === "TIMED_OUT" ||
-        status === "CLOSED"
-      ) {
-        setIsStudioConnected(false);
-      }
-    });
-
-    fetchMatches();
-
-    return () => {
-      setIsStudioConnected(false);
-      studioChannelRef.current = null;
-      supabase.removeChannel(channel);
+      const { data: m } = await supabase
+        .from("matches")
+        .select("id, team1:team1_id(short_name), team2:team2_id(short_name)")
+        .eq("tournament_id", tournamentId)
+        .eq("status", "live");
+      if (m) setMatches(m);
     };
     init();
   }, [tournamentId]);
 
-  const fetchMatches = async () => {
-    const { data } = await supabase
-      .from("matches")
-      .select(
-        "id, team1_id, team2_id, team1:team1_id(short_name), team2:team2_id(short_name)",
-      )
-      .eq("tournament_id", tournamentId)
-      .eq("status", "live");
-    if (data) setMatches(data);
-  };
-
-  useEffect(() => {
-    if (!activeMatchId) {
-      setTeamASquad([]);
-      setTeamBSquad([]);
-      return;
-    }
-    const fetchSquads = async () => {
-      const match = matches.find((m) => m.id === activeMatchId);
-      if (!match) return;
-      const { data: squadA } = await supabase
-        .from("players")
-        .select("id, full_name")
-        .eq("team_id", match.team1_id);
-      const { data: squadB } = await supabase
-        .from("players")
-        .select("id, full_name")
-        .eq("team_id", match.team2_id);
-      if (squadA) setTeamASquad(squadA);
-      if (squadB) setTeamBSquad(squadB);
-    };
-    fetchSquads();
-  }, [activeMatchId, matches]);
-
-  // --- REALTIME SYNC ENGINE ---
-  const syncToOverlay = (updates: any) => {
-    setConfig((prev) => {
-      const newConfig = { ...prev, ...updates };
-
-      if (isStudioConnected && studioChannelRef.current) {
-        studioChannelRef.current.send({
-          type: "broadcast",
-          event: "overlay-sync",
-          payload: newConfig,
-        });
-      }
-
-      return newConfig;
-    });
+  const updateDB = async (updates: any) => {
+    const newConfig = { ...config, ...updates };
+    setConfig(newConfig);
+    await supabase
+      .from("tournaments")
+      .update({ broadcast_state: newConfig })
+      .eq("id", tournamentId);
   };
 
   const toggleView = (view: string) => {
