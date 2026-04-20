@@ -69,6 +69,12 @@ export default function MasterController({
   });
   const [isStudioConnected, setIsStudioConnected] = useState(false);
   const studioChannelRef = useRef<any>(null);
+  const isStudioConnectedRef = useRef(false);
+  const configRef = useRef(config);
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -77,6 +83,7 @@ export default function MasterController({
 
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
+        isStudioConnectedRef.current = true;
         setIsStudioConnected(true);
         console.log("Studio Link Active");
       } else if (
@@ -84,6 +91,7 @@ export default function MasterController({
         status === "TIMED_OUT" ||
         status === "CLOSED"
       ) {
+        isStudioConnectedRef.current = false;
         setIsStudioConnected(false);
       }
     });
@@ -91,6 +99,7 @@ export default function MasterController({
     fetchMatches();
 
     return () => {
+      isStudioConnectedRef.current = false;
       setIsStudioConnected(false);
       studioChannelRef.current = null;
       supabase.removeChannel(channel);
@@ -131,21 +140,23 @@ export default function MasterController({
     fetchSquads();
   }, [activeMatchId, matches]);
 
+  const updateDB = (newConfig: any) => {
+    setConfig(newConfig);
+  };
+
   // --- REALTIME SYNC ENGINE ---
   const syncToOverlay = (updates: any) => {
-    setConfig((prev) => {
-      const newConfig = { ...prev, ...updates };
+    const newConfig = { ...configRef.current, ...updates };
+    configRef.current = newConfig;
+    updateDB(newConfig);
 
-      if (isStudioConnected && studioChannelRef.current) {
-        studioChannelRef.current.send({
-          type: "broadcast",
-          event: "overlay-sync",
-          payload: newConfig,
-        });
-      }
-
-      return newConfig;
-    });
+    if (isStudioConnectedRef.current && studioChannelRef.current) {
+      studioChannelRef.current.send({
+        type: "broadcast",
+        event: "overlay-sync",
+        payload: newConfig,
+      });
+    }
   };
 
   const toggleView = (viewName: string) => {
