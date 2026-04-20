@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { CldUploadWidget } from "next-cloudinary";
 import {
@@ -67,16 +67,32 @@ export default function MasterController({
     showAppLogo: false,
     broadcastAudioEnabled: true,
   });
-
-  const channel = supabase.channel(`broadcast-${tournamentId}`);
+  const [isStudioConnected, setIsStudioConnected] = useState(false);
+  const studioChannelRef = useRef<any>(null);
 
   // --- INITIALIZATION ---
   useEffect(() => {
+    const channel = supabase.channel(`broadcast-${tournamentId}`);
+    studioChannelRef.current = channel;
+
     channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") console.log("Studio Link Active");
+      if (status === "SUBSCRIBED") {
+        setIsStudioConnected(true);
+        console.log("Studio Link Active");
+      } else if (
+        status === "CHANNEL_ERROR" ||
+        status === "TIMED_OUT" ||
+        status === "CLOSED"
+      ) {
+        setIsStudioConnected(false);
+      }
     });
+
     fetchMatches();
+
     return () => {
+      setIsStudioConnected(false);
+      studioChannelRef.current = null;
       supabase.removeChannel(channel);
     };
   }, [tournamentId]);
@@ -117,12 +133,18 @@ export default function MasterController({
 
   // --- REALTIME SYNC ENGINE ---
   const syncToOverlay = (updates: any) => {
-    const newConfig = { ...config, ...updates };
-    setConfig(newConfig);
-    channel.send({
-      type: "broadcast",
-      event: "overlay-sync",
-      payload: newConfig,
+    setConfig((prev) => {
+      const newConfig = { ...prev, ...updates };
+
+      if (isStudioConnected && studioChannelRef.current) {
+        studioChannelRef.current.send({
+          type: "broadcast",
+          event: "overlay-sync",
+          payload: newConfig,
+        });
+      }
+
+      return newConfig;
     });
   };
 
