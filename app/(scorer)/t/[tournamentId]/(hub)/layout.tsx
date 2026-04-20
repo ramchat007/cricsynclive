@@ -407,10 +407,10 @@ export default function TournamentLayout({
                   />
                 </div>
 
-                <div className="bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                   <div className="flex justify-between items-center gap-4">
                     <div className="min-w-0">
-                      <p className="text-[10px] sm:text-xs font-black text-slate-900 dark:text-white uppercase truncate">
+                      <p className="text-[10px] sm:text-xs font-black text-slate-900 uppercase truncate">
                         OBS Overlay Link
                       </p>
                       <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold truncate">
@@ -423,14 +423,16 @@ export default function TournamentLayout({
                           `${window.location.origin}/t/${tournamentId}/overlay`,
                         )
                       }
-                      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white p-2.5 rounded-xl transition-colors shrink-0 shadow-sm">
+                      className="bg-white border border-slate-200 text-slate-500 hover:text-slate-900 p-2.5 rounded-xl transition-colors shrink-0 shadow-sm">
                       <Copy size={16} />
                     </button>
                   </div>
-                  <hr className="border-slate-200 dark:border-slate-800" />
+
+                  <hr className="border-slate-200" />
+
                   <div className="flex justify-between items-center gap-4">
                     <div className="min-w-0">
-                      <p className="text-[10px] sm:text-xs font-black text-slate-900 dark:text-white uppercase flex items-center gap-1 truncate">
+                      <p className="text-[10px] sm:text-xs font-black text-slate-900 uppercase flex items-center gap-1 truncate">
                         <MonitorPlay size={14} /> Controller
                       </p>
                     </div>
@@ -438,7 +440,7 @@ export default function TournamentLayout({
                       onClick={() =>
                         window.open(`/t/${tournamentId}/controller`, "_blank")
                       }
-                      className="bg-teal-50 dark:bg-teal-900/20 text-teal-600 font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-teal-100 transition-colors shrink-0">
+                      className="bg-teal-50 text-teal-600 font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-teal-100 transition-colors shrink-0">
                       Open
                     </button>
                   </div>
