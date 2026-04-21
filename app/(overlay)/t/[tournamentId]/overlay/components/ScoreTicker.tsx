@@ -23,6 +23,7 @@ export default function ScoreTicker({
   const [players, setPlayers] = useState<any>({});
 
   const prevBallRef = useRef<string | null>(null);
+  const prevAnimBallRef = useRef<string | null>(null);
 
   // 1. FETCH LIVE STATS & PLAYERS
   useEffect(() => {
@@ -193,9 +194,11 @@ export default function ScoreTicker({
 
     const lastBall = deliveries[deliveries.length - 1];
 
-    if (prevBallRef.current !== lastBall.id) return;
+    // Only process if this is a new ball we haven't animated yet
+    if (prevAnimBallRef.current === lastBall.id) return;
 
     if (lastBall.is_wicket || Number(lastBall.runs_off_bat) >= 4) {
+      prevAnimBallRef.current = lastBall.id;
       setScoreAnim(true);
       setTimeout(() => setScoreAnim(false), 500);
     }
