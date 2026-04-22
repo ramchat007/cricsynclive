@@ -223,7 +223,7 @@ export default function TournamentLayout({
             </div>
 
             <div className="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto mt-2 md:mt-0">
-              <button
+              {/* <button
                 onClick={() =>
                   copyLink(`${window.location.origin}/register/${tournamentId}`)
                 }
@@ -233,7 +233,19 @@ export default function TournamentLayout({
                 ) : (
                   <Copy size={16} />
                 )}{" "}
-                Link
+                Register Link
+              </button> */}
+              <button
+                onClick={() =>
+                  copyLink(`${window.location.origin}/t/${tournamentId}/broadcast`)
+                }
+                className="flex-1 md:flex-none justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-2 transition-all">
+                {copied ? (
+                  <CheckCircle2 size={16} className="text-teal-400" />
+                ) : (
+                  <Copy size={16} />
+                )}{" "}
+                Broadcast
               </button>
 
               {isAdmin && (

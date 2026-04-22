@@ -309,9 +309,9 @@ export default function ScoreTicker({
           className={`absolute inset-0 z-[60] flex items-center justify-center transition-all duration-500
             ${eventTrigger ? "opacity-100 scale-100" : "opacity-0 scale-125 pointer-events-none"}
           `}>
-                    {/* Background Glow */}
-                    <div
-                      className={`absolute inset-0 blur-2xl opacity-70
+          {/* Background Glow */}
+          <div
+            className={`absolute inset-0 blur-2xl opacity-70
               ${
                 eventTrigger === "WICKET"
                   ? "bg-red-600"
