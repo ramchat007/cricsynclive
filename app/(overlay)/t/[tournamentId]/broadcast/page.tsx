@@ -20,6 +20,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const currentConnectionIdRef = useRef<string | null>(null);
   const sigChannelRef = useRef<any>(null);
   const dbChannelRef = useRef<any>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
 
   const [matchId, setMatchId] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState<string>(""); 
@@ -77,23 +78,29 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         else if (videoInputs.length > 0) setSelectedCamera(videoInputs[0].deviceId);
 
         tempStream.getTracks().forEach((t) => t.stop());
-      } catch (err) {}
+      } catch (err) {
+        setError("Camera permission denied. Ensure you are on HTTPS.");
+      }
     };
     loadCameras();
 
-    return () => { handleStopStream(); };
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      handleStopStream();
+    };
   }, [tournamentId]);
 
   const copyLink = (type: "obs" | "remote") => {
     const origin = window.location.origin;
     if (type === "obs") {
       navigator.clipboard.writeText(`${origin}/t/${tournamentId}/obs?cam=${deviceId}`);
-      setCopiedObs(true);
-      setTimeout(() => setCopiedObs(false), 2000);
+      setCopiedObs(true); setTimeout(() => setCopiedObs(false), 2000);
     } else {
       navigator.clipboard.writeText(`${origin}/t/${tournamentId}/remote?cam=${deviceId}`);
-      setCopiedRemote(true);
-      setTimeout(() => setCopiedRemote(false), 2000);
+      setCopiedRemote(true); setTimeout(() => setCopiedRemote(false), 2000);
     }
   };
 
@@ -104,6 +111,56 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       localStorage.setItem("cricsync_cam_id", newId);
       setDeviceId(newId);
     }
+  };
+
+  const applyVideoConstraint = async (constraint: any) => {
+    if (!activeStreamRef.current) return;
+    const track = activeStreamRef.current.getVideoTracks()[0];
+    if (track && track.applyConstraints) {
+      try { await track.applyConstraints({ advanced: [constraint] } as any); } catch (err) {}
+    }
+  };
+
+  const startSmoothZoom = (direction: number) => {
+    if (!activeStreamRef.current || !zoomCap) return;
+    const track = activeStreamRef.current.getVideoTracks()[0];
+    const stepSpeed = (zoomCap.max - zoomCap.min) * 0.02;
+
+    zoomIntervalRef.current = setInterval(() => {
+      setZoomLevel((prevZoom) => {
+        let newZoom = prevZoom + stepSpeed * direction;
+        if (newZoom >= zoomCap.max) newZoom = zoomCap.max;
+        if (newZoom <= zoomCap.min) newZoom = zoomCap.min;
+
+        if (track.applyConstraints) track.applyConstraints({ advanced: [{ zoom: newZoom }] } as any).catch(() => {});
+        return newZoom;
+      });
+    }, 40);
+  };
+
+  const stopSmoothZoom = () => {
+    if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
+  };
+
+  const snapZoom = async (targetVal: number) => {
+    if (!zoomCap) return;
+    let clamped = targetVal;
+    if (clamped > zoomCap.max) clamped = zoomCap.max;
+    if (clamped < zoomCap.min) clamped = zoomCap.min;
+    setZoomLevel(clamped);
+    await applyVideoConstraint({ zoom: clamped });
+  };
+
+  const handleExposureChange = async (e: any) => {
+    const val = Number(e.target.value);
+    setExposureLevel(val);
+    await applyVideoConstraint({ exposureCompensation: val });
+  };
+
+  const toggleTorch = async () => {
+    const newState = !torchOn;
+    await applyVideoConstraint({ torch: newState });
+    setTorchOn(newState);
   };
 
   const mapHardwareCapabilities = (videoTrack: MediaStreamTrack) => {
@@ -118,27 +175,27 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     return { zCap, eCap, tCap };
   };
 
-  const applyVideoConstraint = async (constraint: any) => {
-    if (!activeStreamRef.current) return;
-    const track = activeStreamRef.current.getVideoTracks()[0];
-    if (track && track.applyConstraints) { try { await track.applyConstraints({ advanced: [constraint] } as any); } catch (err) {} }
-  };
-
   const handleStartStream = async () => {
-    if (!matchId) return setError("No Active Match found in Tournament Settings.");
+    if (!matchId) return setError("No Active Match found.");
     try {
       setError("");
-      await supabase.removeAllChannels();
+      
+      // Cleanup previous instances entirely
+      if (sigChannelRef.current) { await supabase.removeChannel(sigChannelRef.current); sigChannelRef.current = null; }
+      if (dbChannelRef.current) { await supabase.removeChannel(dbChannelRef.current); dbChannelRef.current = null; }
       if (activeStreamRef.current) activeStreamRef.current.getTracks().forEach((t) => t.stop());
 
+      pendingCandidatesRef.current = [];
       const connectionId = `${matchId}_${deviceId}`; 
+      currentConnectionIdRef.current = connectionId;
+
       const width = resolution === "1080p" ? 1920 : 1280;
       const height = resolution === "1080p" ? 1080 : 720;
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: selectedCamera ? { deviceId: { exact: selectedCamera }, width: { ideal: width }, height: { ideal: height } } : { facingMode: "environment", width: { ideal: width }, height: { ideal: height } }, 
-        audio: true 
-      });
+      const videoConstraints = selectedCamera
+        ? { deviceId: { exact: selectedCamera }, width: { ideal: width }, height: { ideal: height } }
+        : { facingMode: "environment", width: { ideal: width }, height: { ideal: height } };
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
       stream.getAudioTracks().forEach((track) => { track.enabled = !isMuted; });
       const { zCap, tCap } = mapHardwareCapabilities(stream.getVideoTracks()[0]);
       
@@ -155,21 +212,27 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      
-      setError("Gathering Network Routes...");
-      await new Promise((resolve) => {
-        if (pc.iceGatheringState === 'complete') resolve(null);
-        pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') resolve(null); };
-        setTimeout(resolve, 2000); 
+      // 🔥 UNIFIED BROADCAST CHANNEL NAME
+      const signalingChannel = supabase.channel(`webrtc_broadcast_${connectionId}`);
+      sigChannelRef.current = signalingChannel;
+
+      // Broadcast ICE Candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) signalingChannel.send({ type: "broadcast", event: "candidate", payload: { candidate: event.candidate } });
+      };
+
+      // Listen for ICE Candidates & PTZ Commands
+      signalingChannel.on("broadcast", { event: "candidate" }, (message) => {
+        if (message.payload.candidate) {
+          if (pc.remoteDescription) {
+            pc.addIceCandidate(new RTCIceCandidate(message.payload.candidate)).catch(()=>{});
+          } else {
+            pendingCandidatesRef.current.push(message.payload.candidate); // Queue it up!
+          }
+        }
       });
-
-      const { error: dbError } = await supabase.from("webrtc_signals").upsert({ match_id: connectionId, offer: JSON.parse(JSON.stringify(pc.localDescription)), status: "live" });
-      if (dbError) throw new Error(`Database Write Failed: ${dbError.message}`);
-
-      const sigChannel = supabase.channel(`sig_${connectionId}_${Date.now()}`);
-      sigChannel.on("broadcast", { event: "ptz_command" }, (message) => {
+        
+      signalingChannel.on("broadcast", { event: "ptz_command" }, (message) => {
         const cmd = message.payload;
         if (cmd.type === "zoom") { setZoomLevel(cmd.value); applyVideoConstraint({ zoom: cmd.value }); } 
         else if (cmd.type === "torch") { setTorchOn(cmd.value); applyVideoConstraint({ torch: cmd.value }); } 
@@ -177,18 +240,36 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         else if (cmd.type === "mute") { setIsMuted(cmd.value); if (activeStreamRef.current) activeStreamRef.current.getAudioTracks().forEach(t => t.enabled = !cmd.value); } 
         else if (cmd.type === "oled") setIsOledSleep(cmd.value); 
         else if (cmd.type === "stop") handleStopStream();
-      }).subscribe((status) => {
+      });
+
+      // When remote control requests state, send it
+      signalingChannel.on("broadcast", { event: "request_sync" }, () => {
+        signalingChannel.send({ type: "broadcast", event: "sync_state", payload: { capabilities: { zoom: zCap, torch: tCap, exposure: exposureCap }, zoom: zoomLevel, torch: torchOn, exposure: exposureLevel, isMuted, oled: isOledSleep } });
+      });
+
+      signalingChannel.subscribe((status) => {
         if (status === "SUBSCRIBED") {
-          sigChannel.send({ type: "broadcast", event: "sync_state", payload: { capabilities: { zoom: zCap, torch: tCap }, zoom: zCap?.min || 1, torch: false } });
+          signalingChannel.send({ type: "broadcast", event: "sync_state", payload: { capabilities: { zoom: zCap, torch: tCap, exposure: exposureCap }, zoom: zCap?.min || 1, torch: false, exposure: 0 } });
         }
       });
 
-      supabase.channel(`db_${connectionId}_${Date.now()}`)
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const { error: dbError } = await supabase.from("webrtc_signals").upsert({ match_id: connectionId, offer: JSON.parse(JSON.stringify(pc.localDescription)), status: "live" });
+      if (dbError) throw new Error(`DB Write Failed. Check RLS policies.`);
+
+      // Listen for the Answer from OBS
+      const dbChannel = supabase.channel(`webrtc_db_${connectionId}_${Date.now()}`);
+      dbChannelRef.current = dbChannel;
+      
+      dbChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
         async (payload) => {
           if (payload.new.answer && pc.signalingState === "have-local-offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
-            setError(""); // Clear loading state
+            // Drain queue
+            pendingCandidatesRef.current.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}));
+            pendingCandidatesRef.current = [];
           }
         }).subscribe();
 
@@ -206,8 +287,13 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     if (activeStreamRef.current) { activeStreamRef.current.getTracks().forEach((t) => t.stop()); activeStreamRef.current = null; }
     if (videoRef.current) videoRef.current.srcObject = null;
     
-    supabase.removeAllChannels(); 
-    if (matchId && deviceId) await supabase.from("webrtc_signals").delete().eq("match_id", `${matchId}_${deviceId}`);
+    if (sigChannelRef.current) supabase.removeChannel(sigChannelRef.current);
+    if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
+
+    if (currentConnectionIdRef.current) {
+      await supabase.from("webrtc_signals").delete().eq("match_id", currentConnectionIdRef.current);
+      currentConnectionIdRef.current = null;
+    }
   };
 
   const toggleMute = () => {
@@ -215,39 +301,14 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     setIsMuted(newState);
     if (activeStreamRef.current) activeStreamRef.current.getAudioTracks().forEach((track) => (track.enabled = !newState));
   };
-  const toggleTorch = async () => { const newState = !torchOn; await applyVideoConstraint({ torch: newState }); setTorchOn(newState); };
-  
-  const snapZoom = async (targetVal: number) => {
-    if (!zoomCap) return;
-    let clamped = Math.min(Math.max(targetVal, zoomCap.min), zoomCap.max);
-    setZoomLevel(clamped); await applyVideoConstraint({ zoom: clamped });
-  };
-  const startSmoothZoom = (dir: number) => {
-    if (!activeStreamRef.current || !zoomCap) return;
-    const track = activeStreamRef.current.getVideoTracks()[0];
-    const step = (zoomCap.max - zoomCap.min) * 0.02;
-    zoomIntervalRef.current = setInterval(() => {
-      setZoomLevel((p) => {
-        let n = Math.min(Math.max(p + step * dir, zoomCap.min), zoomCap.max);
-        if (track.applyConstraints) track.applyConstraints({ advanced: [{ zoom: n }] } as any).catch(()=>{});
-        return n;
-      });
-    }, 40);
-  };
-  const stopSmoothZoom = () => { if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current); };
-  const handleExposureChange = async (e: any) => {
-    const val = Number(e.target.value); setExposureLevel(val); await applyVideoConstraint({ exposureCompensation: val });
-  };
   const toggleFullscreen = async () => {
     try { if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setIsFullscreen(true); } else { await document.exitFullscreen(); setIsFullscreen(false); } } catch (err) {}
   };
 
   return (
-    // 🔥 BREAKOUT WRAPPER: fixed inset-0 z-[9999] kills global layouts
     <div className="fixed inset-0 z-[9999] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
       <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
       
-      {/* 🔥 DISAPPEARING HEADER: Disappears when stream goes live for true fullscreen */}
       {!isStreaming && (
         <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200 shadow-sm">
           <div className="flex items-center gap-2"><Camera className="text-teal-500" size={20} /><h1 className="font-black uppercase tracking-widest text-sm md:text-lg italic">Pro Cam V2</h1></div>
@@ -255,7 +316,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       )}
 
       {error && (<div className="absolute top-4 left-4 right-4 bg-red-500 text-white text-xs font-bold p-3 rounded-xl text-center z-50 shadow-2xl flex items-center justify-center gap-2"><AlertCircle size={16} /> {error}</div>)}
-      
       {isOledSleep && (<div onClick={() => setIsOledSleep(false)} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center cursor-pointer"><div className="flex flex-col items-center opacity-30"><Moon size={48} className="text-indigo-500 mb-4" /><p className="text-white text-xs font-black uppercase tracking-widest">OLED Sleep Mode</p></div></div>)}
 
       {!isStreaming ? (
@@ -283,15 +343,11 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       ) : (
         <div className="flex-1 relative bg-black flex flex-col justify-end overflow-hidden">
           <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-          
-          {/* Live Indicator overlay directly on video */}
           <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500/20 backdrop-blur-md border border-red-500/50 text-red-500 px-3 py-1.5 rounded-full z-10 shadow-xl">
-             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-             <span className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow-md">Live</span>
+             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div><span className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow-md">Live</span>
           </div>
 
           <div className="relative z-10 w-full p-4 flex flex-col gap-4 pointer-events-none">
-            {/* The controls are pointer-events-auto so you can tap them, but the wrapper is none so you can tap to focus the camera */}
             <div className="absolute right-4 bottom-32 flex flex-col gap-2 pointer-events-auto">
               {zoomCap && (
                 <div className="bg-black/40 backdrop-blur-xl rounded-xl p-1.5 border border-white/10 flex flex-col gap-1 mb-4 shadow-2xl">
