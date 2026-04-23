@@ -1,15 +1,14 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { supabase } from "@/lib/supabase";
-import { ZoomIn, Flashlight, ZapOff, Radio, AlertCircle, Mic, MicOff, Power, Moon, Sun, Battery, BatteryCharging, Wifi, Activity, Zap, Info, Plus, Minus } from "lucide-react";
+import { ZoomIn, Flashlight, ZapOff, Radio, AlertCircle, Mic, MicOff, Power, Moon, Sun, Plus, Minus } from "lucide-react";
 
 export default function RemoteControl({ params }: { params: Promise<{ tournamentId: string }> }) {
-  const { tournamentId } = React.use(params);
+  const { tournamentId } = use(params);
 
   const [matchId, setMatchId] = useState<string | null>(null);
   const [camParam, setCamParam] = useState<string | null>(null); 
   const [camCapabilities, setCamCapabilities] = useState<any>(null);
-  const [deviceHealth, setDeviceHealth] = useState<any>(null);
 
   const [remoteZoom, setRemoteZoom] = useState(1);
   const [remoteTorch, setRemoteTorch] = useState(false);
@@ -19,6 +18,7 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
   const [isLive, setIsLive] = useState(false);
 
   const signalingChannelRef = useRef<any>(null);
+  const dbChannelRef = useRef<any>(null);
   const remoteZoomRef = useRef(1);
   const lastZoomTime = useRef(0);
   const lastExposureTime = useRef(0);
@@ -27,7 +27,7 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
   useEffect(() => { remoteZoomRef.current = remoteZoom; }, [remoteZoom]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = newSearchParams(window.location.search);
     const cameraQuery = searchParams.get("cam");
     if (cameraQuery) setCamParam(cameraQuery);
   }, []);
@@ -45,7 +45,13 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
     if (!matchId || !camParam) return;
 
     const connectionId = `${matchId}_${camParam}`;
-    const channel = supabase.channel(`webrtc_${connectionId}`);
+    
+    // 1. Fetch initial status to see if it is already live
+    supabase.from("webrtc_signals").select("status").eq("match_id", connectionId).single().then(({data}) => {
+       if (data?.status === "live") setIsLive(true);
+    });
+
+    const channel = supabase.channel(`webrtc_sig_${connectionId}`);
     signalingChannelRef.current = channel;
 
     channel.on("broadcast", { event: "sync_state" }, (message) => {
@@ -58,17 +64,17 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
       if (data.torch !== undefined) setRemoteTorch(data.torch);
       if (data.isMuted !== undefined) setRemoteMuted(data.isMuted);
       if (data.oled !== undefined) setRemoteOled(data.oled);
-    });
+    }).subscribe();
 
-    const dbSub = supabase.channel(`db_webrtc_remote_${connectionId}`)
+    const dbSub = supabase.channel(`webrtc_db_rem_${connectionId}_${Date.now()}`)
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` }, 
-      () => { setIsLive(false); setCamCapabilities(null); setDeviceHealth(null); }).subscribe();
-
-    channel.subscribe();
+      () => { setIsLive(false); setCamCapabilities(null); }).subscribe();
+      
+    dbChannelRef.current = dbSub;
 
     return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(dbSub);
+      if (signalingChannelRef.current) supabase.removeChannel(signalingChannelRef.current);
+      if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
     };
   }, [matchId, camParam]);
 
@@ -82,10 +88,7 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
     const val = Number(e.target.value);
     setRemoteZoom(val);
     const now = Date.now();
-    if (now - lastZoomTime.current > 100) {
-      sendCommand("zoom", val);
-      lastZoomTime.current = now;
-    }
+    if (now - lastZoomTime.current > 100) { sendCommand("zoom", val); lastZoomTime.current = now; }
   };
 
   const handleZoomRelease = () => sendCommand("zoom", remoteZoom);
@@ -106,24 +109,18 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
     }, 150);
   };
 
-  const stopSmoothZoom = () => {
-    if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
-  };
+  const stopSmoothZoom = () => { if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current); };
 
   const snapZoom = (targetVal: number) => {
     const min = camCapabilities?.zoom?.min || 1;
     const max = camCapabilities?.zoom?.max || 10;
     let clamped = Math.min(Math.max(Number(targetVal), min), max);
-    setRemoteZoom(clamped);
-    sendCommand("zoom", clamped);
-    lastZoomTime.current = Date.now();
+    setRemoteZoom(clamped); sendCommand("zoom", clamped); lastZoomTime.current = Date.now();
   };
 
   const handleExposureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
-    setRemoteExposure(val);
-    sendCommand("exposure", val);
-    lastExposureTime.current = Date.now();
+    setRemoteExposure(val); sendCommand("exposure", val); lastExposureTime.current = Date.now();
   };
 
   const toggleRemoteTorch = () => { const newVal = !remoteTorch; setRemoteTorch(newVal); sendCommand("torch", newVal); };
@@ -166,19 +163,13 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
         <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-4">
           <div>
             <h1 className="text-xl font-black uppercase tracking-widest text-white">PTZ Remote V2</h1>
-            <p className="text-[10px] text-gray-500 font-mono mt-1">ID: {matchId}_{camParam}</p>
+            <p className="text-[10px] text-gray-500 font-mono mt-1">ID: {camParam}</p>
           </div>
           <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-3 py-1 rounded-full animate-pulse">
             <Radio size={12} />
             <span className="text-[10px] font-black uppercase tracking-widest">Live</span>
           </div>
         </div>
-
-        {!deviceHealth && (
-          <div className="text-center py-3 mb-6 text-gray-600 text-[10px] font-bold uppercase tracking-widest bg-gray-950 rounded-xl border border-gray-800">
-            Awaiting Telemetry Data...
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           <div className="md:col-span-4 space-y-4 flex flex-col">
