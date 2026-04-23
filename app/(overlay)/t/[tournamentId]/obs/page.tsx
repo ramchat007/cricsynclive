@@ -1,17 +1,18 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { ZoomIn, Flashlight, ZapOff } from "lucide-react";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 export default function ObsReceiver({ params }: { params: Promise<{ tournamentId: string }> }) {
-  const { tournamentId } = React.use(params);
+  const { tournamentId } = use(params);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const signalingChannelRef = useRef<any>(null);
+  const dbChannelRef = useRef<any>(null);
 
   const [matchId, setMatchId] = useState<string | null>(null);
   const [camParam, setCamParam] = useState<string | null>(null); 
@@ -79,7 +80,7 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
       }
     };
 
-    const signalingChannel = supabase.channel(`webrtc_${connectionId}`);
+    const signalingChannel = supabase.channel(`webrtc_sig_${connectionId}`);
     signalingChannelRef.current = signalingChannel;
 
     pc.onicecandidate = (event) => {
@@ -97,28 +98,43 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
       })
       .subscribe();
 
-    const dbSub = supabase.channel(`db_webrtc_receiver_${connectionId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` }, 
-      async (payload) => {
-        const { offer } = payload.new;
-        if (offer && !hasJoined && pc.signalingState === "stable") {
-          hasJoined = true;
-          setError("Connecting to stream...");
-          await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await supabase.from("webrtc_signals").update({ answer }).eq("match_id", connectionId);
-        } else if (!offer) {
+    // 🔥 THE HANDSHAKE FIX
+    const processOffer = async (offer: any) => {
+      if (!offer || hasJoined) return;
+      hasJoined = true;
+      setError("Connecting to stream...");
+      if (pc.signalingState === "stable") {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await supabase.from("webrtc_signals").update({ answer }).eq("match_id", connectionId);
+      }
+    };
+
+    // 1. Fetch to see if Broadcaster is ALREADY live
+    supabase.from("webrtc_signals").select("offer").eq("match_id", connectionId).single().then(({data}) => {
+      if (data?.offer) processOffer(data.offer);
+    });
+
+    // 2. Listen for BOTH Inserts and Updates (in case it goes live while we are waiting)
+    const dbChannel = supabase.channel(`webrtc_db_obs_${connectionId}_${Date.now()}`);
+    dbChannelRef.current = dbChannel;
+    
+    dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` }, 
+      (payload) => {
+        if (payload.eventType === "DELETE") {
           setConnected(false);
-          setError(`Waiting for ${camParam} to go live...`);
+          setError(`Stream stopped. Waiting for ${camParam}...`);
           hasJoined = false;
+        } else if (payload.new?.offer) {
+          processOffer(payload.new.offer);
         }
       }).subscribe();
 
     return () => {
       pc.close();
-      supabase.removeChannel(signalingChannel);
-      supabase.removeChannel(dbSub);
+      if (signalingChannelRef.current) supabase.removeChannel(signalingChannelRef.current);
+      if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
     };
   }, [matchId, camParam]);
 
@@ -152,7 +168,7 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
           <p style={{ fontSize: "24px", color: error.includes("Failed") || error.includes("Invalid") ? "#ef4444" : "#f59e0b", fontWeight: "bold" }}>
             {error.includes("Failed") || error.includes("Invalid") ? "🔴 " : "🟡 "} {error}
           </p>
-          <p style={{ fontSize: "14px", opacity: 0.7, marginTop: "8px" }}>ID: {camParam ? `${matchId}_${camParam}` : "UNKNOWN"}</p>
+          <p style={{ fontSize: "14px", opacity: 0.7, marginTop: "8px" }}>ID: {camParam ? `${camParam}` : "UNKNOWN"}</p>
         </div>
       )}
 
