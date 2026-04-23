@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useState, use } from "react";
-import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ZoomIn, Flashlight, ZapOff } from "lucide-react";
 
@@ -12,32 +11,31 @@ export default function ObsReceiver({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
-  const searchParams = useSearchParams();
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null); // 🟢 Dedicated Audio Player for OBS
+  const audioRef = useRef<HTMLAudioElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const signalingChannelRef = useRef<any>(null);
 
   const [matchId, setMatchId] = useState<string | null>(null);
+  const [camParam, setCamParam] = useState("cam-1"); // Extracted safely from URL
   const [error, setError] = useState("Waiting for tournament config...");
   const [connected, setConnected] = useState(false);
   const [needsInteraction, setNeedsInteraction] = useState(false);
 
-  // 🟢 REMOTE CONTROL STATE
   const [isRemoteMode, setIsRemoteMode] = useState(false);
   const [camCapabilities, setCamCapabilities] = useState<any>(null);
   const [remoteZoom, setRemoteZoom] = useState(1);
   const [remoteTorch, setRemoteTorch] = useState(false);
 
-  // 1. Check URL for ?control=true
+  // Safe URL Parsing to bypass Next.js Suspense errors
   useEffect(() => {
-    if (searchParams.get("control") === "true") {
-      setIsRemoteMode(true);
-    }
-  }, [searchParams]);
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("control") === "true") setIsRemoteMode(true);
+    const cameraQuery = searchParams.get("cam");
+    if (cameraQuery) setCamParam(cameraQuery);
+  }, []);
 
-  // 2. Fetch Active Match ID
   useEffect(() => {
     const fetchConfig = async () => {
       const { data } = await supabase
@@ -55,20 +53,17 @@ export default function ObsReceiver({
     fetchConfig();
   }, [tournamentId]);
 
-  // 3. WebRTC & Signaling Engine
   useEffect(() => {
     if (!matchId) return;
 
     let hasJoined = false;
+    const connectionId = `${matchId}_${camParam}`;
     const pc = new RTCPeerConnection(ICE_SERVERS);
     peerConnectionRef.current = pc;
 
-    // 🟢 THE SPLIT STREAM TRICK
     pc.ontrack = (event) => {
       if (event.streams && event.streams.length > 0) {
-        // Send to Video Player (Muted for Autoplay)
         if (videoRef.current) videoRef.current.srcObject = event.streams[0];
-        // Send to Audio Player (Unmuted for OBS Mixer)
         if (audioRef.current) audioRef.current.srcObject = event.streams[0];
       }
     };
@@ -77,7 +72,6 @@ export default function ObsReceiver({
       if (pc.connectionState === "connected") {
         setConnected(true);
         setError("");
-        // Try autoplaying
         if (videoRef.current)
           videoRef.current.play().catch(() => setNeedsInteraction(true));
         if (audioRef.current)
@@ -86,34 +80,29 @@ export default function ObsReceiver({
         ["disconnected", "failed", "closed"].includes(pc.connectionState)
       ) {
         setConnected(false);
-        setError("Stream interrupted. Waiting to reconnect...");
+        setError(`Stream interrupted. Waiting to reconnect to ${camParam}...`);
         hasJoined = false;
       }
     };
 
-    // 🟢 SUPABASE BROADCAST CHANNEL (For ICE and Remote Control)
-    const signalingChannel = supabase.channel(`webrtc_${matchId}`);
+    const signalingChannel = supabase.channel(`webrtc_${connectionId}`);
     signalingChannelRef.current = signalingChannel;
 
-    // Send local ICE candidates
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
+      if (event.candidate)
         signalingChannel.send({
           type: "broadcast",
           event: "candidate",
           payload: { candidate: event.candidate },
         });
-      }
     };
 
-    // Listen for Broadcasts (ICE, Capabilities, State Sync)
     signalingChannel
       .on("broadcast", { event: "candidate" }, (message) => {
         if (message.payload.candidate)
           pc.addIceCandidate(new RTCIceCandidate(message.payload.candidate));
       })
       .on("broadcast", { event: "sync_state" }, (message) => {
-        // The phone broadcasts its capabilities and current state to us
         if (message.payload.capabilities)
           setCamCapabilities(message.payload.capabilities);
         if (message.payload.zoom) setRemoteZoom(message.payload.zoom);
@@ -122,20 +111,18 @@ export default function ObsReceiver({
       })
       .subscribe();
 
-    // 🟢 DATABASE SYNC (For Offer/Answer Handshake)
     const dbSub = supabase
-      .channel(`db_webrtc_receiver_${matchId}`)
+      .channel(`db_webrtc_receiver_${connectionId}`)
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "webrtc_signals",
-          filter: `match_id=eq.${matchId}`,
+          filter: `match_id=eq.${connectionId}`,
         },
         async (payload) => {
           const { offer } = payload.new;
-
           if (offer && !hasJoined && pc.signalingState === "stable") {
             hasJoined = true;
             setError("Connecting to stream...");
@@ -145,10 +132,10 @@ export default function ObsReceiver({
             await supabase
               .from("webrtc_signals")
               .update({ answer })
-              .eq("match_id", matchId);
+              .eq("match_id", connectionId);
           } else if (!offer) {
             setConnected(false);
-            setError("Waiting for camera operator to go live...");
+            setError(`Waiting for ${camParam} to go live...`);
             hasJoined = false;
           }
         },
@@ -160,7 +147,7 @@ export default function ObsReceiver({
       supabase.removeChannel(signalingChannel);
       supabase.removeChannel(dbSub);
     };
-  }, [matchId]);
+  }, [matchId, camParam]);
 
   const handleManualPlay = () => {
     if (videoRef.current) videoRef.current.play();
@@ -170,15 +157,13 @@ export default function ObsReceiver({
     }
   };
 
-  // 🟢 SEND COMMANDS VIA SUPABASE BROADCAST (Ultra-low latency)
   const sendCommand = (type: string, value: any) => {
-    if (signalingChannelRef.current) {
+    if (signalingChannelRef.current)
       signalingChannelRef.current.send({
         type: "broadcast",
         event: "ptz_command",
         payload: { type, value, timestamp: Date.now() },
       });
-    }
   };
 
   const handleRemoteZoom = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,7 +193,6 @@ export default function ObsReceiver({
         position: "relative",
         fontFamily: "sans-serif",
       }}>
-      {/* FORCE HIDE NEXT.JS UI ELEMENTS IN OBS */}
       <style>{`nav, header, footer { display: none !important; }`}</style>
 
       {!connected && (
@@ -222,7 +206,7 @@ export default function ObsReceiver({
             {error.includes("Failed") ? "🔴 " : "🟡 "} {error}
           </p>
           <p style={{ fontSize: "14px", opacity: 0.7, marginTop: "8px" }}>
-            Match ID: {matchId || "Loading..."}
+            ID: {matchId}_{camParam}
           </p>
         </div>
       )}
@@ -246,13 +230,9 @@ export default function ObsReceiver({
           <h2 style={{ fontSize: "24px", fontWeight: "bold" }}>
             Click to Unmute & Play
           </h2>
-          <p style={{ opacity: 0.7, marginTop: "10px", fontSize: "14px" }}>
-            Right-click in OBS -&gt; Interact -&gt; Click here
-          </p>
         </div>
       )}
 
-      {/* 🟢 THE REMOTE CONTROL DASHBOARD (?control=true) */}
       {isRemoteMode && connected && (
         <div
           style={{
@@ -277,14 +257,11 @@ export default function ObsReceiver({
               fontSize: "12px",
               fontWeight: "bold",
               textTransform: "uppercase",
-              letterSpacing: "2px",
               opacity: 0.5,
-              marginRight: "10px",
             }}>
             Remote PTZ
           </div>
-
-          {camCapabilities?.zoom ? (
+          {camCapabilities?.zoom && (
             <div
               style={{
                 display: "flex",
@@ -303,12 +280,7 @@ export default function ObsReceiver({
                 style={{ flex: 1, accentColor: "#14b8a6", cursor: "pointer" }}
               />
             </div>
-          ) : (
-            <div style={{ color: "white", fontSize: "12px", opacity: 0.5 }}>
-              Zoom Unavailable
-            </div>
           )}
-
           {camCapabilities?.torch && (
             <button
               onClick={toggleRemoteTorch}
@@ -325,7 +297,6 @@ export default function ObsReceiver({
                 justifyContent: "center",
                 cursor: "pointer",
                 color: remoteTorch ? "black" : "white",
-                transition: "0.2s",
               }}>
               {remoteTorch ? <Flashlight size={20} /> : <ZapOff size={20} />}
             </button>
@@ -333,10 +304,7 @@ export default function ObsReceiver({
         </div>
       )}
 
-      {/* 🟢 INVISIBLE AUDIO ELEMENT */}
       <audio ref={audioRef} autoPlay playsInline />
-
-      {/* 🟢 MUTED VIDEO ELEMENT */}
       <video
         ref={videoRef}
         autoPlay

@@ -35,8 +35,10 @@ export default function Broadcaster({
   const activeStreamRef = useRef<MediaStream | null>(null);
   const wakeLockRef = useRef<any>(null);
   const zoomIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentConnectionIdRef = useRef<string | null>(null);
 
   const [matchId, setMatchId] = useState<string | null>(null);
+  const [cameraId, setCameraId] = useState("cam-1"); // 🟢 Multi-cam support
   const [isStreaming, setIsStreaming] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -122,11 +124,10 @@ export default function Broadcaster({
         if (newZoom >= zoomCap.max) newZoom = zoomCap.max;
         if (newZoom <= zoomCap.min) newZoom = zoomCap.min;
 
-        if (track.applyConstraints) {
+        if (track.applyConstraints)
           track
             .applyConstraints({ advanced: [{ zoom: newZoom }] } as any)
             .catch(() => {});
-        }
         return newZoom;
       });
     }, 40);
@@ -199,6 +200,9 @@ export default function Broadcaster({
         activeStreamRef.current.getTracks().forEach((t) => t.stop());
       }
 
+      const connectionId = `${matchId}_${cameraId}`;
+      currentConnectionIdRef.current = connectionId;
+
       const width = resolution === "1080p" ? 1920 : 1280;
       const height = resolution === "1080p" ? 1080 : 720;
       const videoConstraints = selectedCamera
@@ -222,7 +226,6 @@ export default function Broadcaster({
       });
       const videoTrack = stream.getVideoTracks()[0];
 
-      // 🔥 FIX: Capturing the returned variables here!
       const { zCap, tCap } = mapHardwareCapabilities(videoTrack);
 
       activeStreamRef.current = stream;
@@ -239,14 +242,12 @@ export default function Broadcaster({
           setError(
             "⚠️ CONNECTION LOST! The network dropped. Stop and Go Live again.",
           );
-        } else if (pc.connectionState === "connected") {
-          setError("");
-        }
+        } else if (pc.connectionState === "connected") setError("");
       };
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      const signalingChannel = supabase.channel(`webrtc_${matchId}`);
+      const signalingChannel = supabase.channel(`webrtc_${connectionId}`);
       pc.onicecandidate = (event) => {
         if (event.candidate)
           signalingChannel.send({
@@ -255,6 +256,7 @@ export default function Broadcaster({
             payload: { candidate: event.candidate },
           });
       };
+
       signalingChannel
         .on("broadcast", { event: "candidate" }, (message) => {
           if (message.payload.candidate)
@@ -271,11 +273,23 @@ export default function Broadcaster({
           } else if (cmd.type === "torch") {
             setTorchOn(cmd.value);
             applyVideoConstraint({ torch: cmd.value });
+          } else if (cmd.type === "exposure") {
+            setExposureLevel(cmd.value);
+            applyVideoConstraint({ exposureCompensation: cmd.value });
+          } else if (cmd.type === "mute") {
+            setIsMuted(cmd.value);
+            if (activeStreamRef.current)
+              activeStreamRef.current
+                .getAudioTracks()
+                .forEach((t) => (t.enabled = !cmd.value));
+          } else if (cmd.type === "oled") {
+            setIsOledSleep(cmd.value);
+          } else if (cmd.type === "stop") {
+            handleStopStream();
           }
         })
         .subscribe();
 
-      // Broadcast the initial capabilities so the laptop knows what sliders to show:
       signalingChannel.send({
         type: "broadcast",
         event: "sync_state",
@@ -291,17 +305,17 @@ export default function Broadcaster({
 
       await supabase
         .from("webrtc_signals")
-        .upsert({ match_id: matchId, offer: offer, status: "live" });
+        .upsert({ match_id: connectionId, offer: offer, status: "live" });
 
       supabase
-        .channel(`db_webrtc_${matchId}`)
+        .channel(`db_webrtc_${connectionId}`)
         .on(
           "postgres_changes",
           {
             event: "UPDATE",
             schema: "public",
             table: "webrtc_signals",
-            filter: `match_id=eq.${matchId}`,
+            filter: `match_id=eq.${connectionId}`,
           },
           async (payload) => {
             if (payload.new.answer && pc.signalingState !== "stable") {
@@ -343,8 +357,13 @@ export default function Broadcaster({
     }
     if (videoRef.current) videoRef.current.srcObject = null;
 
-    if (matchId)
-      await supabase.from("webrtc_signals").delete().eq("match_id", matchId);
+    if (currentConnectionIdRef.current) {
+      await supabase
+        .from("webrtc_signals")
+        .delete()
+        .eq("match_id", currentConnectionIdRef.current);
+      currentConnectionIdRef.current = null;
+    }
   };
 
   const toggleMute = () => {
@@ -370,17 +389,9 @@ export default function Broadcaster({
     }
   };
 
-  const currentCameraLabel =
-    cameras.find((c) => c.deviceId === selectedCamera)?.label ||
-    "Default Camera";
-
   return (
     <div className="h-[90dvh] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
-      {/* 🔥 CSS Hack to kill all ugly scrollbars while keeping things scrollable if absolutely needed 🔥 */}
-      <style>{`
-        ::-webkit-scrollbar { display: none; }
-        * { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+      <style>{`::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
 
       {!isFullscreen && (
         <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200">
@@ -416,9 +427,6 @@ export default function Broadcaster({
             <p className="text-white text-xs font-black uppercase tracking-widest">
               OLED Sleep Mode
             </p>
-            <p className="text-gray-500 text-[10px] mt-2">
-              Tap anywhere to wake screen
-            </p>
           </div>
         </div>
       )}
@@ -436,6 +444,21 @@ export default function Broadcaster({
             </div>
 
             <div className="space-y-4 mb-8">
+              {/* 🟢 NEW CAMERA ASSIGNMENT DROPDOWN */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">
+                  Camera Assignment
+                </label>
+                <select
+                  className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500"
+                  value={cameraId}
+                  onChange={(e) => setCameraId(e.target.value)}>
+                  <option value="cam-1">Camera 1 (Main / Bowler)</option>
+                  <option value="cam-2">Camera 2 (Square Leg)</option>
+                  <option value="cam-3">Camera 3 (Boundary / Roving)</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">
                   Active Lens
@@ -471,7 +494,7 @@ export default function Broadcaster({
                   </label>
                   <button
                     onClick={toggleMute}
-                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition-all ${isMuted ? "border-red-500 text-red-500 bg-red-50" : "border-gray-200 text-gray-700 bg-gray-50 hover:bg-gray-100"}`}>
+                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition-all ${isMuted ? "border-red-500 text-red-500 bg-red-50" : "border-gray-200 text-gray-700 bg-gray-50"}`}>
                     {isMuted ? (
                       <>
                         <MicOff size={16} /> Muted
@@ -546,9 +569,6 @@ export default function Broadcaster({
                     }}
                     className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-t-full flex flex-col items-center justify-center text-white select-none touch-none">
                     <Plus size={20} strokeWidth={3} />
-                    <span className="text-[8px] font-black uppercase mt-1 opacity-50">
-                      In
-                    </span>
                   </button>
                   <span className="text-[10px] font-black text-white/50 font-mono">
                     {Number(zoomLevel || 1).toFixed(1)}x
@@ -566,9 +586,6 @@ export default function Broadcaster({
                       stopSmoothZoom();
                     }}
                     className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-b-full flex flex-col items-center justify-center text-white select-none touch-none">
-                    <span className="text-[8px] font-black uppercase mb-1 opacity-50">
-                      Out
-                    </span>
                     <Minus size={20} strokeWidth={3} />
                   </button>
                 </div>
@@ -592,10 +609,6 @@ export default function Broadcaster({
                     } as React.CSSProperties
                   }
                 />
-                <span className="text-[8px] font-mono text-white/80 font-black">
-                  {Number(exposureLevel) > 0 ? "+" : ""}
-                  {Number(exposureLevel || 0).toFixed(1)}
-                </span>
               </div>
             )}
 
@@ -633,7 +646,7 @@ export default function Broadcaster({
                 </button>
                 <button
                   onClick={handleStopStream}
-                  className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center justify-center gap-2 active:scale-95 text-xs">
+                  className="h-12 px-6 rounded-full bg-red-600 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs">
                   <Square size={14} fill="currentColor" /> Stop
                 </button>
               </div>
