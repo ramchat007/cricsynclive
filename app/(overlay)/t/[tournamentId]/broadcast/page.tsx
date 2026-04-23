@@ -2,25 +2,8 @@
 import React, { useState, useEffect, useRef, use } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  Camera,
-  Play,
-  Square,
-  AlertCircle,
-  Mic,
-  MicOff,
-  RefreshCw,
-  Settings2,
-  Maximize,
-  Minimize,
-  Flashlight,
-  ZapOff,
-  Video,
-  Moon,
-  Sun,
-  Plus,
-  Minus,
-  Copy,
-  Check,
+  Camera, Play, Square, AlertCircle, Mic, MicOff, RefreshCw, Settings2,
+  Maximize, Minimize, Flashlight, ZapOff, Moon, Sun, Plus, Minus, Copy, Check,
 } from "lucide-react";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
@@ -36,7 +19,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const currentConnectionIdRef = useRef<string | null>(null);
 
   const [matchId, setMatchId] = useState<string | null>(null);
-  const [deviceId, setDeviceId] = useState<string>(""); // 🟢 Dynamic ID
+  const [deviceId, setDeviceId] = useState<string>(""); 
   const [isStreaming, setIsStreaming] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -58,8 +41,14 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const [exposureCap, setExposureCap] = useState<any>(null);
   const [exposureLevel, setExposureLevel] = useState(0);
 
+  // 🔥 THE FIX: Attach the stream to the video tag AFTER it mounts!
   useEffect(() => {
-    // Generate or load Device ID
+    if (isStreaming && videoRef.current && activeStreamRef.current) {
+      videoRef.current.srcObject = activeStreamRef.current;
+    }
+  }, [isStreaming]);
+
+  useEffect(() => {
     let savedId = localStorage.getItem("cricsync_cam_id");
     if (!savedId) {
       savedId = `cam-${Math.random().toString(36).substring(2, 8)}`;
@@ -85,7 +74,9 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         else if (videoInputs.length > 0) setSelectedCamera(videoInputs[0].deviceId);
 
         tempStream.getTracks().forEach((t) => t.stop());
-      } catch (err) {}
+      } catch (err) {
+        setError("Camera permission denied. Ensure you are on HTTPS.");
+      }
     };
     loadCameras();
 
@@ -98,10 +89,11 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     };
   }, [tournamentId]);
 
+  // 🟢 UPDATED: Route paths changed to /obs and /remote
   const copyLink = (type: "obs" | "remote") => {
     const origin = window.location.origin;
     if (type === "obs") {
-      navigator.clipboard.writeText(`${origin}/t/${tournamentId}/cam-receiver?cam=${deviceId}`);
+      navigator.clipboard.writeText(`${origin}/t/${tournamentId}/obs?cam=${deviceId}`);
       setCopiedObs(true);
       setTimeout(() => setCopiedObs(false), 2000);
     } else {
@@ -217,7 +209,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       const { zCap, tCap } = mapHardwareCapabilities(videoTrack);
 
       activeStreamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
 
       const pc = new RTCPeerConnection(ICE_SERVERS);
       peerConnectionRef.current = pc;
@@ -282,7 +273,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       setIsStreaming(true);
       if ("wakeLock" in navigator) wakeLockRef.current = await navigator.wakeLock.request("screen");
     } catch (err: any) {
-      setError(`Camera failed: ${err.message}`);
+      setError(`Camera failed: ${err.message}. Check permissions & HTTPS.`);
     }
   };
 
@@ -364,7 +355,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
               <h2 className="text-xl font-black uppercase tracking-tight text-gray-900">Broadcast Setup</h2>
             </div>
 
-            {/* 🟢 DYNAMIC ID AND SHARE SECTION */}
             <div className="bg-slate-900 rounded-2xl p-4 mb-6 text-white shadow-inner">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Device ID</span>
@@ -465,7 +455,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
                 <button onClick={toggleMute} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 ${isMuted ? "bg-red-500 text-white" : "bg-black/50 text-white backdrop-blur-md"}`}>
                   {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                 </button>
-                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs">
+                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs">
                   <Square size={14} fill="currentColor" /> Stop
                 </button>
               </div>
