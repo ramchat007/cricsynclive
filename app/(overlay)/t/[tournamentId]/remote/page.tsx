@@ -18,6 +18,7 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
   const [isLive, setIsLive] = useState(false);
 
   const signalingChannelRef = useRef<any>(null);
+  const dbChannelRef = useRef<any>(null);
   const remoteZoomRef = useRef(1);
   const lastZoomTime = useRef(0);
   const lastExposureTime = useRef(0);
@@ -64,7 +65,6 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
       if (data.oled !== undefined) setRemoteOled(data.oled);
     }).subscribe((status) => {
       if (status === "SUBSCRIBED") {
-         // Ask phone for current state
          channel.send({ type: "broadcast", event: "request_sync", payload: {} });
       }
     });
@@ -72,6 +72,8 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
     const dbSub = supabase.channel(`db_webrtc_remote_${connectionId}_${Date.now()}`)
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` }, 
       () => { setIsLive(false); setCamCapabilities(null); }).subscribe();
+      
+    dbChannelRef.current = dbSub;
 
     return () => { supabase.removeAllChannels(); };
   }, [matchId, camParam]);
@@ -86,6 +88,7 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
     const val = Number(e.target.value); setRemoteZoom(val);
     const now = Date.now(); if (now - lastZoomTime.current > 100) { sendCommand("zoom", val); lastZoomTime.current = now; }
   };
+
   const handleZoomRelease = () => sendCommand("zoom", remoteZoom);
 
   const startSmoothZoom = (direction: number) => {
@@ -110,16 +113,19 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
   const toggleOledSleep = () => { const newVal = !remoteOled; setRemoteOled(newVal); sendCommand("oled", newVal); };
   const handleKillStream = () => { if (window.confirm("🚨 WARNING: This instantly kills the broadcast. Are you sure?")) sendCommand("stop", true); };
 
-  if (!camParam) { return (<div className="h-screen w-screen bg-gray-900 flex flex-col items-center justify-center text-white"><AlertCircle size={48} className="text-red-500 mb-4" /><h1 className="text-2xl font-black uppercase tracking-widest text-red-500">Invalid Link</h1><p className="text-gray-400 mt-2">No Camera ID provided in URL.</p></div>); }
-  if (!isLive) { return (<div className="h-screen w-screen bg-gray-900 flex flex-col items-center justify-center text-white"><AlertCircle size={48} className="text-amber-500 mb-4 animate-pulse" /><h1 className="text-2xl font-black uppercase tracking-widest">Stream Offline</h1><p className="text-gray-400 mt-2">Waiting for <span className="text-cyan-500 font-mono">{camParam}</span></p></div>); }
+  if (!camParam) { return (<div className="fixed inset-0 z-[9999] bg-gray-900 flex flex-col items-center justify-center text-white"><style>{`nav, header, footer { display: none !important; }`}</style><AlertCircle size={48} className="text-red-500 mb-4" /><h1 className="text-2xl font-black uppercase tracking-widest text-red-500">Invalid Link</h1><p className="text-gray-400 mt-2">No Camera ID provided in URL.</p></div>); }
+  if (!isLive) { return (<div className="fixed inset-0 z-[9999] bg-gray-900 flex flex-col items-center justify-center text-white"><style>{`nav, header, footer { display: none !important; }`}</style><AlertCircle size={48} className="text-amber-500 mb-4 animate-pulse" /><h1 className="text-2xl font-black uppercase tracking-widest">Stream Offline</h1><p className="text-gray-400 mt-2">Waiting for <span className="text-cyan-500 font-mono">{camParam}</span></p></div>); }
 
   const rawMin = camCapabilities?.zoom?.min || 1; const rawMax = camCapabilities?.zoom?.max || 10;
   const rawExpMin = camCapabilities?.exposure?.min || -4; const rawExpMax = camCapabilities?.exposure?.max || 4;
   const mappedDisplayZoom = (((Number(remoteZoom) - rawMin) / (rawMax - rawMin)) * 9 + 1).toFixed(1);
 
   return (
-    <div className="min-h-screen w-screen bg-gray-950 flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-3xl bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-2xl">
+    // 🔥 BREAKOUT WRAPPER: fixed inset-0 z-[9999] kills global layouts
+    <div className="fixed inset-0 z-[9999] bg-gray-950 flex items-center justify-center p-4 font-sans overflow-y-auto">
+      <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; }`}</style>
+      
+      <div className="w-full max-w-3xl bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-2xl my-auto">
         <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-4">
           <div><h1 className="text-xl font-black uppercase tracking-widest text-white">PTZ Remote V2</h1><p className="text-[10px] text-gray-500 font-mono mt-1">ID: {camParam}</p></div>
           <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-3 py-1 rounded-full animate-pulse"><Radio size={12} /><span className="text-[10px] font-black uppercase tracking-widest">Live</span></div>
