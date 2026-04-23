@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
+import { ZoomIn, Flashlight, ZapOff } from "lucide-react";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
@@ -10,6 +11,8 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const signalingChannelRef = useRef<any>(null);
+  const dbChannelRef = useRef<any>(null);
 
   const [matchId, setMatchId] = useState<string | null>(null);
   const [camParam, setCamParam] = useState<string | null>(null); 
@@ -17,11 +20,21 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
   const [connected, setConnected] = useState(false);
   const [needsInteraction, setNeedsInteraction] = useState(false);
 
+  const [isRemoteMode, setIsRemoteMode] = useState(false);
+  const [camCapabilities, setCamCapabilities] = useState<any>(null);
+  const [remoteZoom, setRemoteZoom] = useState(1);
+  const [remoteTorch, setRemoteTorch] = useState(false);
+
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("control") === "true") setIsRemoteMode(true);
+    
     const cameraQuery = searchParams.get("cam");
-    if (cameraQuery) setCamParam(cameraQuery);
-    else setError("Invalid Link: No Camera ID provided in URL.");
+    if (cameraQuery) {
+      setCamParam(cameraQuery);
+    } else {
+      setError("Invalid Link: No Camera ID provided in URL.");
+    }
   }, []);
 
   useEffect(() => {
@@ -41,7 +54,6 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
     let hasJoined = false;
     const connectionId = `${matchId}_${camParam}`;
     
-    // 1. CLEANUP OLD CHANNELS
     supabase.removeAllChannels();
     const pc = new RTCPeerConnection(ICE_SERVERS);
     peerConnectionRef.current = pc;
@@ -63,7 +75,6 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
       }
     };
 
-    // 🔥 THE BULLETPROOF HANDSHAKE FUNCTION
     const processOffer = async (offerStr: any) => {
       if (!offerStr || hasJoined) return;
       hasJoined = true;
@@ -74,7 +85,6 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        // Wait for Receiver ICE Gathering
         await new Promise((resolve) => {
           if (pc.iceGatheringState === 'complete') resolve(null);
           pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') resolve(null); };
@@ -88,13 +98,13 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
       }
     };
 
-    // 2. CHECK IF BROADCASTER IS ALREADY LIVE
     supabase.from("webrtc_signals").select("offer").eq("match_id", connectionId).single().then(({data}) => {
       if (data?.offer) processOffer(data.offer);
     });
 
-    // 3. LISTEN FOR NEW BROADCASTS (Both INSERT and UPDATE)
     const dbChannel = supabase.channel(`webrtc_db_obs_${connectionId}_${Date.now()}`);
+    dbChannelRef.current = dbChannel;
+    
     dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` }, 
       (payload) => {
         if (payload.eventType === "DELETE") {
@@ -112,9 +122,27 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
     if (audioRef.current) { audioRef.current.play(); setNeedsInteraction(false); }
   };
 
+  const sendCommand = (type: string, value: any) => {
+    if (signalingChannelRef.current) signalingChannelRef.current.send({ type: "broadcast", event: "ptz_command", payload: { type, value, timestamp: Date.now() } });
+  };
+
+  const handleRemoteZoom = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setRemoteZoom(val);
+    sendCommand("zoom", val);
+  };
+
+  const toggleRemoteTorch = () => {
+    const newVal = !remoteTorch;
+    setRemoteTorch(newVal);
+    sendCommand("torch", newVal);
+  };
+
   return (
-    <div style={{ width: "100vw", height: "100vh", backgroundColor: "black", margin: 0, padding: 0, overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "center", position: "relative", fontFamily: "sans-serif" }}>
-      <style>{`nav, header, footer { display: none !important; }`}</style>
+    // 🔥 BREAKOUT WRAPPER: fixed inset-0 z-[9999] kills global layouts inside OBS
+    <div className="fixed inset-0 z-[9999] bg-black overflow-hidden flex justify-center items-center font-sans">
+      <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; }`}</style>
+
       {!connected && (
         <div style={{ color: "white", textAlign: "center", zIndex: 10 }}>
           <p style={{ fontSize: "24px", color: error.includes("Failed") || error.includes("Invalid") ? "#ef4444" : "#f59e0b", fontWeight: "bold" }}>
@@ -123,12 +151,31 @@ export default function ObsReceiver({ params }: { params: Promise<{ tournamentId
           <p style={{ fontSize: "14px", opacity: 0.7, marginTop: "8px" }}>ID: {camParam ? `${camParam}` : "UNKNOWN"}</p>
         </div>
       )}
+
       {connected && needsInteraction && (
         <div onClick={handleManualPlay} style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.8)", zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", cursor: "pointer", color: "white" }}>
           <div style={{ fontSize: "48px", marginBottom: "20px" }}>▶️</div>
           <h2 style={{ fontSize: "24px", fontWeight: "bold" }}>Click to Unmute & Play</h2>
         </div>
       )}
+
+      {isRemoteMode && connected && (
+        <div style={{ position: "absolute", bottom: "40px", left: "50%", transform: "translateX(-50%)", backgroundColor: "rgba(15, 23, 42, 0.85)", backdropFilter: "blur(10px)", border: "2px solid rgba(255,255,255,0.1)", padding: "15px 30px", borderRadius: "50px", display: "flex", alignItems: "center", gap: "24px", zIndex: 100, boxShadow: "0 20px 40px rgba(0,0,0,0.5)" }}>
+          <div style={{ color: "white", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase", opacity: 0.5 }}>Remote PTZ</div>
+          {camCapabilities?.zoom && (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "200px" }}>
+              <ZoomIn size={20} color="white" />
+              <input type="range" min={camCapabilities.zoom.min} max={camCapabilities.zoom.max} step={camCapabilities.zoom.step} value={remoteZoom} onChange={handleRemoteZoom} style={{ flex: 1, accentColor: "#14b8a6", cursor: "pointer" }} />
+            </div>
+          )}
+          {camCapabilities?.torch && (
+            <button onClick={toggleRemoteTorch} style={{ backgroundColor: remoteTorch ? "#f59e0b" : "rgba(255,255,255,0.1)", border: "none", width: "45px", height: "45px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: remoteTorch ? "black" : "white" }}>
+              {remoteTorch ? <Flashlight size={20} /> : <ZapOff size={20} />}
+            </button>
+          )}
+        </div>
+      )}
+
       <audio ref={audioRef} autoPlay playsInline />
       <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "100%", objectFit: "contain", display: connected ? "block" : "none" }} />
     </div>
