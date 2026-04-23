@@ -17,10 +17,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const wakeLockRef = useRef<any>(null);
   const zoomIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  const currentConnectionIdRef = useRef<string | null>(null);
-  const sigChannelRef = useRef<any>(null);
-  const dbChannelRef = useRef<any>(null);
-
   const [matchId, setMatchId] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState<string>(""); 
   const [cameraId, setCameraId] = useState("cam-1"); 
@@ -71,25 +67,15 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter((d) => d.kind === "videoinput");
         setCameras(videoInputs);
-
         const backCam = videoInputs.find((d) => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment"));
         if (backCam) setSelectedCamera(backCam.deviceId);
         else if (videoInputs.length > 0) setSelectedCamera(videoInputs[0].deviceId);
-
         tempStream.getTracks().forEach((t) => t.stop());
-      } catch (err) {
-        setError("Camera permission denied. Ensure you are on HTTPS.");
-      }
+      } catch (err) {}
     };
     loadCameras();
 
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      handleStopStream();
-    };
+    return () => { handleStopStream(); };
   }, [tournamentId]);
 
   const copyLink = (type: "obs" | "remote") => {
@@ -105,86 +91,22 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     }
   };
 
-  const regenerateId = () => {
-    if (isStreaming) return alert("Cannot change ID while streaming!");
-    if (window.confirm("Generate a new Camera ID? Old links will break.")) {
-      const newId = `cam-${Math.random().toString(36).substring(2, 8)}`;
-      localStorage.setItem("cricsync_cam_id", newId);
-      setDeviceId(newId);
-    }
-  };
-
-  const applyVideoConstraint = async (constraint: any) => {
-    if (!activeStreamRef.current) return;
-    const track = activeStreamRef.current.getVideoTracks()[0];
-    if (track && track.applyConstraints) {
-      try { await track.applyConstraints({ advanced: [constraint] } as any); } catch (err) {}
-    }
-  };
-
-  const startSmoothZoom = (direction: number) => {
-    if (!activeStreamRef.current || !zoomCap) return;
-    const track = activeStreamRef.current.getVideoTracks()[0];
-    const stepSpeed = (zoomCap.max - zoomCap.min) * 0.02;
-
-    zoomIntervalRef.current = setInterval(() => {
-      setZoomLevel((prevZoom) => {
-        let newZoom = prevZoom + stepSpeed * direction;
-        if (newZoom >= zoomCap.max) newZoom = zoomCap.max;
-        if (newZoom <= zoomCap.min) newZoom = zoomCap.min;
-
-        if (track.applyConstraints) track.applyConstraints({ advanced: [{ zoom: newZoom }] } as any).catch(() => {});
-        return newZoom;
-      });
-    }, 40);
-  };
-
-  const stopSmoothZoom = () => {
-    if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
-  };
-
-  const snapZoom = async (targetVal: number) => {
-    if (!zoomCap) return;
-    let clamped = targetVal;
-    if (clamped > zoomCap.max) clamped = zoomCap.max;
-    if (clamped < zoomCap.min) clamped = zoomCap.min;
-    setZoomLevel(clamped);
-    await applyVideoConstraint({ zoom: clamped });
-  };
-
-  const handleExposureChange = async (e: any) => {
-    const val = Number(e.target.value);
-    setExposureLevel(val);
-    await applyVideoConstraint({ exposureCompensation: val });
-  };
-
-  const toggleTorch = async () => {
-    const newState = !torchOn;
-    await applyVideoConstraint({ torch: newState });
-    setTorchOn(newState);
-  };
-
   const mapHardwareCapabilities = (videoTrack: MediaStreamTrack) => {
     let zCap = null, eCap = null, tCap = false;
     if (videoTrack.getCapabilities) {
       const caps = videoTrack.getCapabilities() as any;
       const settings = videoTrack.getSettings() as any;
-      tCap = !!caps.torch;
-      setTorchSupported(tCap);
-
-      if (caps.zoom) {
-        zCap = { min: caps.zoom.min, max: caps.zoom.max, step: caps.zoom.step || 0.1 };
-        setZoomCap(zCap);
-        setZoomLevel(settings.zoom || caps.zoom.min || 1);
-      } else setZoomCap(null);
-
-      if (caps.exposureCompensation) {
-        eCap = { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, step: caps.exposureCompensation.step || 0.1 };
-        setExposureCap(eCap);
-        setExposureLevel(settings.exposureCompensation || 0);
-      } else setExposureCap(null);
+      tCap = !!caps.torch; setTorchSupported(tCap);
+      if (caps.zoom) { zCap = { min: caps.zoom.min, max: caps.zoom.max, step: caps.zoom.step || 0.1 }; setZoomCap(zCap); setZoomLevel(settings.zoom || caps.zoom.min || 1); }
+      if (caps.exposureCompensation) { eCap = { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, step: caps.exposureCompensation.step || 0.1 }; setExposureCap(eCap); setExposureLevel(settings.exposureCompensation || 0); }
     }
     return { zCap, eCap, tCap };
+  };
+
+  const applyVideoConstraint = async (constraint: any) => {
+    if (!activeStreamRef.current) return;
+    const track = activeStreamRef.current.getVideoTracks()[0];
+    if (track && track.applyConstraints) { try { await track.applyConstraints({ advanced: [constraint] } as any); } catch (err) {} }
   };
 
   const handleStartStream = async () => {
@@ -192,24 +114,21 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     try {
       setError("");
       
-      // 🔥 FIX: Clean up any rogue channels before starting
-      if (sigChannelRef.current) { supabase.removeChannel(sigChannelRef.current); sigChannelRef.current = null; }
-      if (dbChannelRef.current) { supabase.removeChannel(dbChannelRef.current); dbChannelRef.current = null; }
+      // 🔥 1. ABSOLUTE CLEANUP OF OLD SUPABASE CACHES
+      await supabase.removeAllChannels();
       if (activeStreamRef.current) activeStreamRef.current.getTracks().forEach((t) => t.stop());
 
       const connectionId = `${matchId}_${deviceId}`; 
-      currentConnectionIdRef.current = connectionId;
-
       const width = resolution === "1080p" ? 1920 : 1280;
       const height = resolution === "1080p" ? 1080 : 720;
-      const videoConstraints = selectedCamera
-        ? { deviceId: { exact: selectedCamera }, width: { ideal: width }, height: { ideal: height } }
-        : { facingMode: "environment", width: { ideal: width }, height: { ideal: height } };
-
-      const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: selectedCamera ? { deviceId: { exact: selectedCamera }, width: { ideal: width }, height: { ideal: height } } : { facingMode: "environment", width: { ideal: width }, height: { ideal: height } }, 
+        audio: true 
+      });
       stream.getAudioTracks().forEach((track) => { track.enabled = !isMuted; });
-      const videoTrack = stream.getVideoTracks()[0];
-      const { zCap, tCap } = mapHardwareCapabilities(videoTrack);
+      const { zCap, tCap } = mapHardwareCapabilities(stream.getVideoTracks()[0]);
+      
       activeStreamRef.current = stream;
 
       const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -223,57 +142,40 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      // 🔥 FIX: Setup robust signaling
-      const signalingChannel = supabase.channel(`webrtc_sig_${connectionId}`);
-      sigChannelRef.current = signalingChannel;
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) signalingChannel.send({ type: "broadcast", event: "candidate", payload: { candidate: event.candidate } });
-      };
-
-      signalingChannel.on("broadcast", { event: "candidate" }, (message) => {
-        if (message.payload.candidate) pc.addIceCandidate(new RTCIceCandidate(message.payload.candidate));
-      });
-        
-      signalingChannel.on("broadcast", { event: "ptz_command" }, (message) => {
-        const cmd = message.payload;
-        if (cmd.type === "zoom") {
-          setZoomLevel(cmd.value);
-          applyVideoConstraint({ zoom: cmd.value });
-        } else if (cmd.type === "torch") {
-          setTorchOn(cmd.value);
-          applyVideoConstraint({ torch: cmd.value });
-        } else if (cmd.type === "exposure") {
-          setExposureLevel(cmd.value);
-          applyVideoConstraint({ exposureCompensation: cmd.value });
-        } else if (cmd.type === "mute") {
-          setIsMuted(cmd.value);
-          if (activeStreamRef.current) activeStreamRef.current.getAudioTracks().forEach(t => t.enabled = !cmd.value);
-        } else if (cmd.type === "oled") {
-          setIsOledSleep(cmd.value);
-        } else if (cmd.type === "stop") {
-          handleStopStream();
-        }
-      });
-      
-      signalingChannel.subscribe(); // Must subscribe BEFORE sending
-
-      signalingChannel.send({
-        type: "broadcast",
-        event: "sync_state",
-        payload: { capabilities: { zoom: zCap, torch: tCap }, zoom: zCap?.min || 1, torch: false },
-      });
-
+      // 🔥 2. BULLETPROOF "NON-TRICKLE" ICE GATHERING
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-
-      await supabase.from("webrtc_signals").upsert({ match_id: connectionId, offer: offer, status: "live" });
-
-      // 🔥 FIX: Use a unique channel name using Date.now() so Supabase never caches it
-      const dbChannel = supabase.channel(`webrtc_db_${connectionId}_${Date.now()}`);
-      dbChannelRef.current = dbChannel;
       
-      dbChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
+      setStatus("Gathering Network Routes...");
+      await new Promise((resolve) => {
+        if (pc.iceGatheringState === 'complete') resolve(null);
+        pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') resolve(null); };
+        setTimeout(resolve, 2000); // 2 second timeout fallback
+      });
+
+      // 3. PUSH MASSIVE OFFER TO DATABASE
+      const { error: dbError } = await supabase.from("webrtc_signals").upsert({ match_id: connectionId, offer: JSON.parse(JSON.stringify(pc.localDescription)), status: "live" });
+      if (dbError) throw new Error(`Database Write Failed: ${dbError.message}`);
+
+      // 4. SETUP REMOTE CONTROL LISTENER
+      const sigChannel = supabase.channel(`sig_${connectionId}_${Date.now()}`);
+      sigChannel.on("broadcast", { event: "ptz_command" }, (message) => {
+        const cmd = message.payload;
+        if (cmd.type === "zoom") { setZoomLevel(cmd.value); applyVideoConstraint({ zoom: cmd.value }); } 
+        else if (cmd.type === "torch") { setTorchOn(cmd.value); applyVideoConstraint({ torch: cmd.value }); } 
+        else if (cmd.type === "exposure") { setExposureLevel(cmd.value); applyVideoConstraint({ exposureCompensation: cmd.value }); } 
+        else if (cmd.type === "mute") { setIsMuted(cmd.value); if (activeStreamRef.current) activeStreamRef.current.getAudioTracks().forEach(t => t.enabled = !cmd.value); } 
+        else if (cmd.type === "oled") setIsOledSleep(cmd.value); 
+        else if (cmd.type === "stop") handleStopStream();
+      }).subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          sigChannel.send({ type: "broadcast", event: "sync_state", payload: { capabilities: { zoom: zCap, torch: tCap }, zoom: zCap?.min || 1, torch: false } });
+        }
+      });
+
+      // 5. LISTEN FOR OBS ANSWER
+      supabase.channel(`db_${connectionId}_${Date.now()}`)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
         async (payload) => {
           if (payload.new.answer && pc.signalingState === "have-local-offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
@@ -283,30 +185,19 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       setIsStreaming(true);
       if ("wakeLock" in navigator) wakeLockRef.current = await navigator.wakeLock.request("screen");
     } catch (err: any) {
-      setError(`Camera failed: ${err.message}`);
+      setError(`Stream Failed: ${err.message}`);
     }
   };
 
   const handleStopStream = async () => {
-    setIsStreaming(false);
-    setIsOledSleep(false);
+    setIsStreaming(false); setIsOledSleep(false);
     if (wakeLockRef.current) { wakeLockRef.current.release(); wakeLockRef.current = null; }
-    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-    setIsFullscreen(false);
-    setTorchOn(false);
-
     if (peerConnectionRef.current) { peerConnectionRef.current.close(); peerConnectionRef.current = null; }
     if (activeStreamRef.current) { activeStreamRef.current.getTracks().forEach((t) => t.stop()); activeStreamRef.current = null; }
     if (videoRef.current) videoRef.current.srcObject = null;
-
-    // 🔥 Clean up channels completely
-    if (sigChannelRef.current) { supabase.removeChannel(sigChannelRef.current); sigChannelRef.current = null; }
-    if (dbChannelRef.current) { supabase.removeChannel(dbChannelRef.current); dbChannelRef.current = null; }
-
-    if (currentConnectionIdRef.current) {
-      await supabase.from("webrtc_signals").delete().eq("match_id", currentConnectionIdRef.current);
-      currentConnectionIdRef.current = null;
-    }
+    
+    supabase.removeAllChannels(); // Destroy all listeners
+    if (matchId && deviceId) await supabase.from("webrtc_signals").delete().eq("match_id", `${matchId}_${deviceId}`);
   };
 
   const toggleMute = () => {
@@ -314,121 +205,72 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     setIsMuted(newState);
     if (activeStreamRef.current) activeStreamRef.current.getAudioTracks().forEach((track) => (track.enabled = !newState));
   };
-
-  const toggleFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    } catch (err) { setIsFullscreen(!isFullscreen); }
+  const toggleTorch = async () => { const newState = !torchOn; await applyVideoConstraint({ torch: newState }); setTorchOn(newState); };
+  
+  const snapZoom = async (targetVal: number) => {
+    if (!zoomCap) return;
+    let clamped = Math.min(Math.max(targetVal, zoomCap.min), zoomCap.max);
+    setZoomLevel(clamped); await applyVideoConstraint({ zoom: clamped });
   };
+  const startSmoothZoom = (dir: number) => {
+    if (!activeStreamRef.current || !zoomCap) return;
+    const track = activeStreamRef.current.getVideoTracks()[0];
+    const step = (zoomCap.max - zoomCap.min) * 0.02;
+    zoomIntervalRef.current = setInterval(() => {
+      setZoomLevel((p) => {
+        let n = Math.min(Math.max(p + step * dir, zoomCap.min), zoomCap.max);
+        if (track.applyConstraints) track.applyConstraints({ advanced: [{ zoom: n }] } as any).catch(()=>{});
+        return n;
+      });
+    }, 40);
+  };
+  const stopSmoothZoom = () => { if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current); };
+  const handleExposureChange = async (e: any) => {
+    const val = Number(e.target.value); setExposureLevel(val); await applyVideoConstraint({ exposureCompensation: val });
+  };
+  const toggleFullscreen = async () => {
+    try { if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setIsFullscreen(true); } else { await document.exitFullscreen(); setIsFullscreen(false); } } catch (err) {}
+  };
+
+  const setStatus = (msg: string) => setError(msg);
 
   return (
     <div className="h-[100dvh] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
       <style>{`::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
-
       {!isFullscreen && (
         <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200">
-          <div className="flex items-center gap-2">
-            <Camera className="text-teal-500" size={20} />
-            <h1 className="font-black uppercase tracking-widest text-sm md:text-lg italic">Pro Cam V2</h1>
-          </div>
-          {isStreaming && (
-            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1 rounded-full animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
-              <span className="text-[10px] font-black uppercase tracking-widest">Live</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2"><Camera className="text-teal-500" size={20} /><h1 className="font-black uppercase tracking-widest text-sm md:text-lg italic">Pro Cam V2</h1></div>
+          {isStreaming && (<div className="flex items-center gap-2 bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1 rounded-full animate-pulse"><div className="w-2 h-2 rounded-full bg-red-500"></div><span className="text-[10px] font-black uppercase tracking-widest">Live</span></div>)}
         </div>
       )}
-
-      {error && (
-        <div className="bg-red-500 text-white text-xs font-bold p-3 text-center shrink-0 flex items-center justify-center gap-2 z-20 shadow-md">
-          <AlertCircle size={16} /> {error}
-        </div>
-      )}
-
-      {isOledSleep && (
-        <div onClick={() => setIsOledSleep(false)} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center cursor-pointer">
-          <div className="flex flex-col items-center opacity-30">
-            <Moon size={48} className="text-indigo-500 mb-4" />
-            <p className="text-white text-xs font-black uppercase tracking-widest">OLED Sleep Mode</p>
-          </div>
-        </div>
-      )}
+      {error && (<div className="bg-red-500 text-white text-xs font-bold p-3 text-center shrink-0 flex items-center justify-center gap-2 z-20 shadow-md"><AlertCircle size={16} /> {error}</div>)}
+      {isOledSleep && (<div onClick={() => setIsOledSleep(false)} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center cursor-pointer"><div className="flex flex-col items-center opacity-30"><Moon size={48} className="text-indigo-500 mb-4" /><p className="text-white text-xs font-black uppercase tracking-widest">OLED Sleep Mode</p></div></div>)}
 
       {!isStreaming ? (
         <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden bg-gray-50">
           <div className="w-full max-w-md p-6 rounded-3xl border shadow-2xl bg-white border-gray-200 max-h-full overflow-y-auto">
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3"><Settings2 size={24} /></div>
-              <h2 className="text-xl font-black uppercase tracking-tight text-gray-900">Broadcast Setup</h2>
-            </div>
-
+            <div className="text-center mb-6"><div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3"><Settings2 size={24} /></div><h2 className="text-xl font-black uppercase tracking-tight text-gray-900">Broadcast Setup</h2></div>
             <div className="bg-slate-900 rounded-2xl p-4 mb-6 text-white shadow-inner">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Device ID</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded">{deviceId}</span>
-                  <button onClick={regenerateId} className="p-1 hover:bg-slate-800 rounded text-slate-400"><RefreshCw size={12} /></button>
-                </div>
-              </div>
+              <div className="flex justify-between items-center mb-3"><span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Device ID</span><div className="flex items-center gap-2"><span className="font-mono font-bold text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded">{deviceId}</span><button onClick={regenerateId} className="p-1 hover:bg-slate-800 rounded text-slate-400"><RefreshCw size={12} /></button></div></div>
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => copyLink("obs")} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors">
-                  {copiedObs ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-slate-400" />} OBS Link
-                </button>
-                <button onClick={() => copyLink("remote")} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors">
-                  {copiedRemote ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-slate-400" />} Remote Link
-                </button>
+                <button onClick={() => copyLink("obs")} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors">{copiedObs ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-slate-400" />} OBS Link</button>
+                <button onClick={() => copyLink("remote")} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors">{copiedRemote ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-slate-400" />} Remote Link</button>
               </div>
             </div>
-
             <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Camera Name</label>
-                <select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500" value={cameraId} onChange={(e) => setCameraId(e.target.value)}>
-                  <option value="cam-1">Camera 1 (Main / Bowler)</option>
-                  <option value="cam-2">Camera 2 (Square Leg)</option>
-                  <option value="cam-3">Camera 3 (Boundary / Roving)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Active Lens</label>
-                <select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500 truncate" value={selectedCamera} onChange={(e) => setSelectedCamera(e.target.value)}>
-                  {cameras.map((c) => (<option key={c.deviceId} value={c.deviceId}>{c.label || `Camera ${c.deviceId.substring(0, 5)}`}</option>))}
-                </select>
-              </div>
-
+              <div><label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Camera Name</label><select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500" value={cameraId} onChange={(e) => setCameraId(e.target.value)}><option value="cam-1">Camera 1 (Main / Bowler)</option><option value="cam-2">Camera 2 (Square Leg)</option><option value="cam-3">Camera 3 (Boundary / Roving)</option></select></div>
+              <div><label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Active Lens</label><select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500 truncate" value={selectedCamera} onChange={(e) => setSelectedCamera(e.target.value)}>{cameras.map((c) => (<option key={c.deviceId} value={c.deviceId}>{c.label || `Camera ${c.deviceId.substring(0, 5)}`}</option>))}</select></div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Resolution</label>
-                  <select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500" value={resolution} onChange={(e) => setResolution(e.target.value)}>
-                    <option value="720p">720p (Smooth)</option>
-                    <option value="1080p">1080p (FHD)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Microphone</label>
-                  <button onClick={toggleMute} className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition-all ${isMuted ? "border-red-500 text-red-500 bg-red-50" : "border-gray-200 text-gray-700 bg-gray-50"}`}>
-                    {isMuted ? <><MicOff size={16} /> Muted</> : <><Mic size={16} /> Active</>}
-                  </button>
-                </div>
+                <div><label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Resolution</label><select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500" value={resolution} onChange={(e) => setResolution(e.target.value)}><option value="720p">720p (Smooth)</option><option value="1080p">1080p (FHD)</option></select></div>
+                <div><label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Microphone</label><button onClick={toggleMute} className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition-all ${isMuted ? "border-red-500 text-red-500 bg-red-50" : "border-gray-200 text-gray-700 bg-gray-50"}`}>{isMuted ? <><MicOff size={16} /> Muted</> : <><Mic size={16} /> Active</>}</button></div>
               </div>
             </div>
-
-            <button onClick={handleStartStream} className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black py-4 rounded-xl uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(20,184,166,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2">
-              <Play size={18} fill="currentColor" /> Go Live
-            </button>
+            <button onClick={handleStartStream} className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black py-4 rounded-xl uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(20,184,166,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2"><Play size={18} fill="currentColor" /> Go Live</button>
           </div>
         </div>
       ) : (
         <div className="flex-1 relative bg-black flex flex-col justify-end overflow-hidden">
           <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-
           <div className="relative z-10 w-full p-4 flex flex-col gap-4">
             <div className="absolute right-4 bottom-32 flex flex-col gap-2">
               {zoomCap && (
@@ -439,47 +281,24 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
                   <button onClick={() => snapZoom(zoomCap.max)} className="bg-white/10 hover:bg-teal-500/50 text-teal-400 font-black text-[10px] py-2 px-3 rounded shadow active:scale-95 uppercase tracking-widest">Tight</button>
                 </div>
               )}
-
               {zoomCap && (
                 <div className="bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/20 flex flex-col items-center gap-2 shadow-2xl">
-                  <button onMouseDown={() => startSmoothZoom(1)} onMouseUp={stopSmoothZoom} onMouseLeave={stopSmoothZoom} onTouchStart={(e) => { e.preventDefault(); startSmoothZoom(1); }} onTouchEnd={(e) => { e.preventDefault(); stopSmoothZoom(); }} className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-t-full flex flex-col items-center justify-center text-white select-none touch-none">
-                    <Plus size={20} strokeWidth={3} />
-                  </button>
+                  <button onMouseDown={() => startSmoothZoom(1)} onMouseUp={stopSmoothZoom} onMouseLeave={stopSmoothZoom} onTouchStart={(e) => { e.preventDefault(); startSmoothZoom(1); }} onTouchEnd={(e) => { e.preventDefault(); stopSmoothZoom(); }} className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-t-full flex flex-col items-center justify-center text-white select-none touch-none"><Plus size={20} strokeWidth={3} /></button>
                   <span className="text-[10px] font-black text-white/50 font-mono">{Number(zoomLevel || 1).toFixed(1)}x</span>
-                  <button onMouseDown={() => startSmoothZoom(-1)} onMouseUp={stopSmoothZoom} onMouseLeave={stopSmoothZoom} onTouchStart={(e) => { e.preventDefault(); startSmoothZoom(-1); }} onTouchEnd={(e) => { e.preventDefault(); stopSmoothZoom(); }} className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-b-full flex flex-col items-center justify-center text-white select-none touch-none">
-                    <Minus size={20} strokeWidth={3} />
-                  </button>
+                  <button onMouseDown={() => startSmoothZoom(-1)} onMouseUp={stopSmoothZoom} onMouseLeave={stopSmoothZoom} onTouchStart={(e) => { e.preventDefault(); startSmoothZoom(-1); }} onTouchEnd={(e) => { e.preventDefault(); stopSmoothZoom(); }} className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-b-full flex flex-col items-center justify-center text-white select-none touch-none"><Minus size={20} strokeWidth={3} /></button>
                 </div>
               )}
             </div>
-
             {exposureCap && (
-              <div className="absolute left-4 bottom-[130px] bg-black/60 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-xl h-48 flex flex-col items-center justify-between">
-                <Sun size={14} className="text-amber-400 drop-shadow-md" />
-                <input type="range" min={exposureCap.min} max={exposureCap.max} step={exposureCap.step || 0.1} value={Number(exposureLevel || 0)} onChange={handleExposureChange} className="w-2 h-24 appearance-none bg-white/20 rounded-full accent-amber-400 outline-none flex-1 my-2" style={{ WebkitAppearance: "slider-vertical" } as React.CSSProperties} />
-              </div>
+              <div className="absolute left-4 bottom-[130px] bg-black/60 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-xl h-48 flex flex-col items-center justify-between"><Sun size={14} className="text-amber-400 drop-shadow-md" /><input type="range" min={exposureCap.min} max={exposureCap.max} step={exposureCap.step || 0.1} value={Number(exposureLevel || 0)} onChange={handleExposureChange} className="w-2 h-24 appearance-none bg-white/20 rounded-full accent-amber-400 outline-none flex-1 my-2" style={{ WebkitAppearance: "slider-vertical" } as React.CSSProperties} /></div>
             )}
-
             <div className="flex flex-wrap justify-center items-center gap-3 pb-2 mt-auto bg-gradient-to-t from-black/90 to-transparent p-6 -mx-4 -mb-4">
-              <button onClick={() => setIsOledSleep(true)} className="flex items-center gap-2 border rounded-full px-4 py-3 backdrop-blur-md bg-black/50 border-white/20 active:scale-95 text-cyan-400">
-                <Moon size={16} /> <span className="text-white text-[10px] font-bold uppercase">Save Battery</span>
-              </button>
-
+              <button onClick={() => setIsOledSleep(true)} className="flex items-center gap-2 border rounded-full px-4 py-3 backdrop-blur-md bg-black/50 border-white/20 active:scale-95 text-cyan-400"><Moon size={16} /> <span className="text-white text-[10px] font-bold uppercase">Save Battery</span></button>
               <div className="flex flex-wrap justify-center items-center gap-3">
-                {torchSupported && (
-                  <button onClick={toggleTorch} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border ${torchOn ? "bg-amber-500 border-amber-400 text-black" : "bg-black/50 border-white/20 text-white backdrop-blur-md"}`}>
-                    {torchOn ? <Flashlight size={18} /> : <ZapOff size={18} />}
-                  </button>
-                )}
-                <button onClick={toggleFullscreen} className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 bg-black/50 text-white backdrop-blur-md">
-                  {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-                </button>
-                <button onClick={toggleMute} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 ${isMuted ? "bg-red-500 text-white" : "bg-black/50 text-white backdrop-blur-md"}`}>
-                  {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                </button>
-                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs">
-                  <Square size={14} fill="currentColor" /> Stop
-                </button>
+                {torchSupported && (<button onClick={toggleTorch} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border ${torchOn ? "bg-amber-500 border-amber-400 text-black" : "bg-black/50 border-white/20 text-white backdrop-blur-md"}`}>{torchOn ? <Flashlight size={18} /> : <ZapOff size={18} />}</button>)}
+                <button onClick={toggleFullscreen} className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 bg-black/50 text-white backdrop-blur-md">{isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}</button>
+                <button onClick={toggleMute} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 ${isMuted ? "bg-red-500 text-white" : "bg-black/50 text-white backdrop-blur-md"}`}>{isMuted ? <MicOff size={18} /> : <Mic size={18} />}</button>
+                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs"><Square size={14} fill="currentColor" /> Stop</button>
               </div>
             </div>
           </div>
