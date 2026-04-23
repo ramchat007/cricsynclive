@@ -1,26 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import {
-  ZoomIn,
-  Flashlight,
-  ZapOff,
-  Radio,
-  AlertCircle,
-  Mic,
-  MicOff,
-  Power,
-  Moon,
-  Sun,
-  Battery,
-  BatteryCharging,
-  Wifi,
-  Activity,
-  Zap,
-  Info,
-  Plus,
-  Minus,
-} from "lucide-react";
+import { ZoomIn, Flashlight, ZapOff, Radio, AlertCircle, Mic, MicOff, Power, Moon, Sun, Battery, BatteryCharging, Wifi, Activity, Zap, Info, Plus, Minus } from "lucide-react";
 
 export default function RemoteControl({ params }: { params: Promise<{ tournamentId: string }> }) {
   const { tournamentId } = React.use(params);
