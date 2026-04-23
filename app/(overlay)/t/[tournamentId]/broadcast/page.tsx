@@ -17,6 +17,10 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const wakeLockRef = useRef<any>(null);
   const zoomIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
+  const currentConnectionIdRef = useRef<string | null>(null);
+  const sigChannelRef = useRef<any>(null);
+  const dbChannelRef = useRef<any>(null);
+
   const [matchId, setMatchId] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState<string>(""); 
   const [cameraId, setCameraId] = useState("cam-1"); 
@@ -67,9 +71,11 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter((d) => d.kind === "videoinput");
         setCameras(videoInputs);
+
         const backCam = videoInputs.find((d) => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment"));
         if (backCam) setSelectedCamera(backCam.deviceId);
         else if (videoInputs.length > 0) setSelectedCamera(videoInputs[0].deviceId);
+
         tempStream.getTracks().forEach((t) => t.stop());
       } catch (err) {}
     };
@@ -88,6 +94,15 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       navigator.clipboard.writeText(`${origin}/t/${tournamentId}/remote?cam=${deviceId}`);
       setCopiedRemote(true);
       setTimeout(() => setCopiedRemote(false), 2000);
+    }
+  };
+
+  const regenerateId = () => {
+    if (isStreaming) return alert("Cannot change ID while streaming!");
+    if (window.confirm("Generate a new Camera ID? Old links will break.")) {
+      const newId = `cam-${Math.random().toString(36).substring(2, 8)}`;
+      localStorage.setItem("cricsync_cam_id", newId);
+      setDeviceId(newId);
     }
   };
 
@@ -113,8 +128,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     if (!matchId) return setError("No Active Match found in Tournament Settings.");
     try {
       setError("");
-      
-      // 🔥 1. ABSOLUTE CLEANUP OF OLD SUPABASE CACHES
       await supabase.removeAllChannels();
       if (activeStreamRef.current) activeStreamRef.current.getTracks().forEach((t) => t.stop());
 
@@ -142,22 +155,19 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      // 🔥 2. BULLETPROOF "NON-TRICKLE" ICE GATHERING
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       
-      setStatus("Gathering Network Routes...");
+      setError("Gathering Network Routes...");
       await new Promise((resolve) => {
         if (pc.iceGatheringState === 'complete') resolve(null);
         pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') resolve(null); };
-        setTimeout(resolve, 2000); // 2 second timeout fallback
+        setTimeout(resolve, 2000); 
       });
 
-      // 3. PUSH MASSIVE OFFER TO DATABASE
       const { error: dbError } = await supabase.from("webrtc_signals").upsert({ match_id: connectionId, offer: JSON.parse(JSON.stringify(pc.localDescription)), status: "live" });
       if (dbError) throw new Error(`Database Write Failed: ${dbError.message}`);
 
-      // 4. SETUP REMOTE CONTROL LISTENER
       const sigChannel = supabase.channel(`sig_${connectionId}_${Date.now()}`);
       sigChannel.on("broadcast", { event: "ptz_command" }, (message) => {
         const cmd = message.payload;
@@ -173,12 +183,12 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         }
       });
 
-      // 5. LISTEN FOR OBS ANSWER
       supabase.channel(`db_${connectionId}_${Date.now()}`)
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
         async (payload) => {
           if (payload.new.answer && pc.signalingState === "have-local-offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
+            setError(""); // Clear loading state
           }
         }).subscribe();
 
@@ -196,7 +206,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     if (activeStreamRef.current) { activeStreamRef.current.getTracks().forEach((t) => t.stop()); activeStreamRef.current = null; }
     if (videoRef.current) videoRef.current.srcObject = null;
     
-    supabase.removeAllChannels(); // Destroy all listeners
+    supabase.removeAllChannels(); 
     if (matchId && deviceId) await supabase.from("webrtc_signals").delete().eq("match_id", `${matchId}_${deviceId}`);
   };
 
@@ -232,18 +242,20 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     try { if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setIsFullscreen(true); } else { await document.exitFullscreen(); setIsFullscreen(false); } } catch (err) {}
   };
 
-  const setStatus = (msg: string) => setError(msg);
-
   return (
-    <div className="h-[100dvh] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
-      <style>{`::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
-      {!isFullscreen && (
-        <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200">
+    // 🔥 BREAKOUT WRAPPER: fixed inset-0 z-[9999] kills global layouts
+    <div className="fixed inset-0 z-[9999] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
+      <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+      
+      {/* 🔥 DISAPPEARING HEADER: Disappears when stream goes live for true fullscreen */}
+      {!isStreaming && (
+        <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200 shadow-sm">
           <div className="flex items-center gap-2"><Camera className="text-teal-500" size={20} /><h1 className="font-black uppercase tracking-widest text-sm md:text-lg italic">Pro Cam V2</h1></div>
-          {isStreaming && (<div className="flex items-center gap-2 bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1 rounded-full animate-pulse"><div className="w-2 h-2 rounded-full bg-red-500"></div><span className="text-[10px] font-black uppercase tracking-widest">Live</span></div>)}
         </div>
       )}
-      {error && (<div className="bg-red-500 text-white text-xs font-bold p-3 text-center shrink-0 flex items-center justify-center gap-2 z-20 shadow-md"><AlertCircle size={16} /> {error}</div>)}
+
+      {error && (<div className="absolute top-4 left-4 right-4 bg-red-500 text-white text-xs font-bold p-3 rounded-xl text-center z-50 shadow-2xl flex items-center justify-center gap-2"><AlertCircle size={16} /> {error}</div>)}
+      
       {isOledSleep && (<div onClick={() => setIsOledSleep(false)} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center cursor-pointer"><div className="flex flex-col items-center opacity-30"><Moon size={48} className="text-indigo-500 mb-4" /><p className="text-white text-xs font-black uppercase tracking-widest">OLED Sleep Mode</p></div></div>)}
 
       {!isStreaming ? (
@@ -271,10 +283,18 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       ) : (
         <div className="flex-1 relative bg-black flex flex-col justify-end overflow-hidden">
           <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-          <div className="relative z-10 w-full p-4 flex flex-col gap-4">
-            <div className="absolute right-4 bottom-32 flex flex-col gap-2">
+          
+          {/* Live Indicator overlay directly on video */}
+          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500/20 backdrop-blur-md border border-red-500/50 text-red-500 px-3 py-1.5 rounded-full z-10 shadow-xl">
+             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow-md">Live</span>
+          </div>
+
+          <div className="relative z-10 w-full p-4 flex flex-col gap-4 pointer-events-none">
+            {/* The controls are pointer-events-auto so you can tap them, but the wrapper is none so you can tap to focus the camera */}
+            <div className="absolute right-4 bottom-32 flex flex-col gap-2 pointer-events-auto">
               {zoomCap && (
-                <div className="bg-black/60 backdrop-blur-md rounded-xl p-1.5 border border-white/20 flex flex-col gap-1 mb-4 shadow-xl">
+                <div className="bg-black/40 backdrop-blur-xl rounded-xl p-1.5 border border-white/10 flex flex-col gap-1 mb-4 shadow-2xl">
                   <span className="text-[8px] text-white/50 text-center font-black uppercase tracking-widest mb-1 mt-1">Framing</span>
                   <button onClick={() => snapZoom(zoomCap.min)} className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] py-2 px-3 rounded shadow active:scale-95 uppercase tracking-widest">Wide</button>
                   <button onClick={() => snapZoom(zoomCap.min + (zoomCap.max - zoomCap.min) * 0.3)} className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] py-2 px-3 rounded shadow active:scale-95 uppercase tracking-widest">Pitch</button>
@@ -282,23 +302,23 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
                 </div>
               )}
               {zoomCap && (
-                <div className="bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/20 flex flex-col items-center gap-2 shadow-2xl">
+                <div className="bg-black/40 backdrop-blur-xl rounded-full p-1 border border-white/10 flex flex-col items-center gap-2 shadow-2xl">
                   <button onMouseDown={() => startSmoothZoom(1)} onMouseUp={stopSmoothZoom} onMouseLeave={stopSmoothZoom} onTouchStart={(e) => { e.preventDefault(); startSmoothZoom(1); }} onTouchEnd={(e) => { e.preventDefault(); stopSmoothZoom(); }} className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-t-full flex flex-col items-center justify-center text-white select-none touch-none"><Plus size={20} strokeWidth={3} /></button>
-                  <span className="text-[10px] font-black text-white/50 font-mono">{Number(zoomLevel || 1).toFixed(1)}x</span>
+                  <span className="text-[10px] font-black text-white/70 font-mono drop-shadow-md">{Number(zoomLevel || 1).toFixed(1)}x</span>
                   <button onMouseDown={() => startSmoothZoom(-1)} onMouseUp={stopSmoothZoom} onMouseLeave={stopSmoothZoom} onTouchStart={(e) => { e.preventDefault(); startSmoothZoom(-1); }} onTouchEnd={(e) => { e.preventDefault(); stopSmoothZoom(); }} className="w-12 h-16 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-b-full flex flex-col items-center justify-center text-white select-none touch-none"><Minus size={20} strokeWidth={3} /></button>
                 </div>
               )}
             </div>
             {exposureCap && (
-              <div className="absolute left-4 bottom-[130px] bg-black/60 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-xl h-48 flex flex-col items-center justify-between"><Sun size={14} className="text-amber-400 drop-shadow-md" /><input type="range" min={exposureCap.min} max={exposureCap.max} step={exposureCap.step || 0.1} value={Number(exposureLevel || 0)} onChange={handleExposureChange} className="w-2 h-24 appearance-none bg-white/20 rounded-full accent-amber-400 outline-none flex-1 my-2" style={{ WebkitAppearance: "slider-vertical" } as React.CSSProperties} /></div>
+              <div className="absolute left-4 bottom-[130px] bg-black/40 backdrop-blur-xl p-3 rounded-full border border-white/10 shadow-2xl h-48 flex flex-col items-center justify-between pointer-events-auto"><Sun size={14} className="text-amber-400 drop-shadow-md" /><input type="range" min={exposureCap.min} max={exposureCap.max} step={exposureCap.step || 0.1} value={Number(exposureLevel || 0)} onChange={handleExposureChange} className="w-2 h-24 appearance-none bg-white/20 rounded-full accent-amber-400 outline-none flex-1 my-2" style={{ WebkitAppearance: "slider-vertical" } as React.CSSProperties} /></div>
             )}
-            <div className="flex flex-wrap justify-center items-center gap-3 pb-2 mt-auto bg-gradient-to-t from-black/90 to-transparent p-6 -mx-4 -mb-4">
-              <button onClick={() => setIsOledSleep(true)} className="flex items-center gap-2 border rounded-full px-4 py-3 backdrop-blur-md bg-black/50 border-white/20 active:scale-95 text-cyan-400"><Moon size={16} /> <span className="text-white text-[10px] font-bold uppercase">Save Battery</span></button>
+            <div className="flex flex-wrap justify-center items-center gap-3 pb-2 mt-auto bg-gradient-to-t from-black/80 to-transparent p-6 -mx-4 -mb-4 pointer-events-auto">
+              <button onClick={() => setIsOledSleep(true)} className="flex items-center gap-2 border rounded-full px-4 py-3 backdrop-blur-xl bg-black/40 border-white/10 active:scale-95 text-cyan-400 shadow-xl"><Moon size={16} /> <span className="text-white text-[10px] font-bold uppercase">Save Battery</span></button>
               <div className="flex flex-wrap justify-center items-center gap-3">
-                {torchSupported && (<button onClick={toggleTorch} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border ${torchOn ? "bg-amber-500 border-amber-400 text-black" : "bg-black/50 border-white/20 text-white backdrop-blur-md"}`}>{torchOn ? <Flashlight size={18} /> : <ZapOff size={18} />}</button>)}
-                <button onClick={toggleFullscreen} className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 bg-black/50 text-white backdrop-blur-md">{isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}</button>
-                <button onClick={toggleMute} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 ${isMuted ? "bg-red-500 text-white" : "bg-black/50 text-white backdrop-blur-md"}`}>{isMuted ? <MicOff size={18} /> : <Mic size={18} />}</button>
-                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs"><Square size={14} fill="currentColor" /> Stop</button>
+                {torchSupported && (<button onClick={toggleTorch} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl active:scale-95 border ${torchOn ? "bg-amber-500 border-amber-400 text-black" : "bg-black/40 border-white/10 text-white backdrop-blur-xl"}`}>{torchOn ? <Flashlight size={18} /> : <ZapOff size={18} />}</button>)}
+                <button onClick={toggleFullscreen} className="w-12 h-12 rounded-full flex items-center justify-center shadow-xl active:scale-95 border border-white/10 bg-black/40 text-white backdrop-blur-xl">{isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}</button>
+                <button onClick={toggleMute} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl active:scale-95 border border-white/10 ${isMuted ? "bg-red-500 text-white" : "bg-black/40 text-white backdrop-blur-xl"}`}>{isMuted ? <MicOff size={18} /> : <Mic size={18} />}</button>
+                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center gap-2 text-xs"><Square size={14} fill="currentColor" /> Stop</button>
               </div>
             </div>
           </div>
