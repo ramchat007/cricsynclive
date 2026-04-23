@@ -16,10 +16,14 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const activeStreamRef = useRef<MediaStream | null>(null);
   const wakeLockRef = useRef<any>(null);
   const zoomIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   const currentConnectionIdRef = useRef<string | null>(null);
+  const sigChannelRef = useRef<any>(null);
+  const dbChannelRef = useRef<any>(null);
 
   const [matchId, setMatchId] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState<string>(""); 
+  const [cameraId, setCameraId] = useState("cam-1"); 
   const [isStreaming, setIsStreaming] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -41,7 +45,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
   const [exposureCap, setExposureCap] = useState<any>(null);
   const [exposureLevel, setExposureLevel] = useState(0);
 
-  // 🔥 THE FIX: Attach the stream to the video tag AFTER it mounts!
   useEffect(() => {
     if (isStreaming && videoRef.current && activeStreamRef.current) {
       videoRef.current.srcObject = activeStreamRef.current;
@@ -89,7 +92,6 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     };
   }, [tournamentId]);
 
-  // 🟢 UPDATED: Route paths changed to /obs and /remote
   const copyLink = (type: "obs" | "remote") => {
     const origin = window.location.origin;
     if (type === "obs") {
@@ -189,9 +191,11 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     if (!matchId) return setError("No Active Match found in Tournament Settings.");
     try {
       setError("");
-      if (activeStreamRef.current) {
-        activeStreamRef.current.getTracks().forEach((t) => t.stop());
-      }
+      
+      // 🔥 FIX: Clean up any rogue channels before starting
+      if (sigChannelRef.current) { supabase.removeChannel(sigChannelRef.current); sigChannelRef.current = null; }
+      if (dbChannelRef.current) { supabase.removeChannel(dbChannelRef.current); dbChannelRef.current = null; }
+      if (activeStreamRef.current) activeStreamRef.current.getTracks().forEach((t) => t.stop());
 
       const connectionId = `${matchId}_${deviceId}`; 
       currentConnectionIdRef.current = connectionId;
@@ -205,9 +209,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
       stream.getAudioTracks().forEach((track) => { track.enabled = !isMuted; });
       const videoTrack = stream.getVideoTracks()[0];
-      
       const { zCap, tCap } = mapHardwareCapabilities(videoTrack);
-
       activeStreamRef.current = stream;
 
       const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -215,20 +217,23 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
 
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
-          setError("⚠️ CONNECTION LOST! The network dropped. Stop and Go Live again.");
+          setError("⚠️ CONNECTION LOST! Stop and Go Live again.");
         } else if (pc.connectionState === "connected") setError("");
       };
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      const signalingChannel = supabase.channel(`webrtc_${connectionId}`);
+      // 🔥 FIX: Setup robust signaling
+      const signalingChannel = supabase.channel(`webrtc_sig_${connectionId}`);
+      sigChannelRef.current = signalingChannel;
+
       pc.onicecandidate = (event) => {
         if (event.candidate) signalingChannel.send({ type: "broadcast", event: "candidate", payload: { candidate: event.candidate } });
       };
 
       signalingChannel.on("broadcast", { event: "candidate" }, (message) => {
         if (message.payload.candidate) pc.addIceCandidate(new RTCIceCandidate(message.payload.candidate));
-      }).subscribe();
+      });
         
       signalingChannel.on("broadcast", { event: "ptz_command" }, (message) => {
         const cmd = message.payload;
@@ -249,7 +254,9 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
         } else if (cmd.type === "stop") {
           handleStopStream();
         }
-      }).subscribe();
+      });
+      
+      signalingChannel.subscribe(); // Must subscribe BEFORE sending
 
       signalingChannel.send({
         type: "broadcast",
@@ -262,10 +269,13 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
 
       await supabase.from("webrtc_signals").upsert({ match_id: connectionId, offer: offer, status: "live" });
 
-      supabase.channel(`db_webrtc_${connectionId}`)
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
+      // 🔥 FIX: Use a unique channel name using Date.now() so Supabase never caches it
+      const dbChannel = supabase.channel(`webrtc_db_${connectionId}_${Date.now()}`);
+      dbChannelRef.current = dbChannel;
+      
+      dbChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
         async (payload) => {
-          if (payload.new.answer && pc.signalingState !== "stable") {
+          if (payload.new.answer && pc.signalingState === "have-local-offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
           }
         }).subscribe();
@@ -273,7 +283,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
       setIsStreaming(true);
       if ("wakeLock" in navigator) wakeLockRef.current = await navigator.wakeLock.request("screen");
     } catch (err: any) {
-      setError(`Camera failed: ${err.message}. Check permissions & HTTPS.`);
+      setError(`Camera failed: ${err.message}`);
     }
   };
 
@@ -288,6 +298,10 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
     if (peerConnectionRef.current) { peerConnectionRef.current.close(); peerConnectionRef.current = null; }
     if (activeStreamRef.current) { activeStreamRef.current.getTracks().forEach((t) => t.stop()); activeStreamRef.current = null; }
     if (videoRef.current) videoRef.current.srcObject = null;
+
+    // 🔥 Clean up channels completely
+    if (sigChannelRef.current) { supabase.removeChannel(sigChannelRef.current); sigChannelRef.current = null; }
+    if (dbChannelRef.current) { supabase.removeChannel(dbChannelRef.current); dbChannelRef.current = null; }
 
     if (currentConnectionIdRef.current) {
       await supabase.from("webrtc_signals").delete().eq("match_id", currentConnectionIdRef.current);
@@ -375,6 +389,14 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
 
             <div className="space-y-4 mb-8">
               <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Camera Name</label>
+                <select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500" value={cameraId} onChange={(e) => setCameraId(e.target.value)}>
+                  <option value="cam-1">Camera 1 (Main / Bowler)</option>
+                  <option value="cam-2">Camera 2 (Square Leg)</option>
+                  <option value="cam-3">Camera 3 (Boundary / Roving)</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">Active Lens</label>
                 <select className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500 truncate" value={selectedCamera} onChange={(e) => setSelectedCamera(e.target.value)}>
                   {cameras.map((c) => (<option key={c.deviceId} value={c.deviceId}>{c.label || `Camera ${c.deviceId.substring(0, 5)}`}</option>))}
@@ -455,7 +477,7 @@ export default function Broadcaster({ params }: { params: Promise<{ tournamentId
                 <button onClick={toggleMute} className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 border border-white/20 ${isMuted ? "bg-red-500 text-white" : "bg-black/50 text-white backdrop-blur-md"}`}>
                   {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                 </button>
-                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs">
+                <button onClick={handleStopStream} className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center gap-2 text-xs">
                   <Square size={14} fill="currentColor" /> Stop
                 </button>
               </div>
