@@ -50,7 +50,8 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
        if (data?.status === "live") setIsLive(true);
     });
 
-    const channel = supabase.channel(`sig_${connectionId}_remote_${Date.now()}`);
+    // 🔥 UNIFIED BROADCAST CHANNEL NAME
+    const channel = supabase.channel(`webrtc_broadcast_${connectionId}`);
     signalingChannelRef.current = channel;
 
     channel.on("broadcast", { event: "sync_state" }, (message) => {
@@ -88,7 +89,6 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
     const val = Number(e.target.value); setRemoteZoom(val);
     const now = Date.now(); if (now - lastZoomTime.current > 100) { sendCommand("zoom", val); lastZoomTime.current = now; }
   };
-
   const handleZoomRelease = () => sendCommand("zoom", remoteZoom);
 
   const startSmoothZoom = (direction: number) => {
@@ -118,10 +118,9 @@ export default function RemoteControl({ params }: { params: Promise<{ tournament
 
   const rawMin = camCapabilities?.zoom?.min || 1; const rawMax = camCapabilities?.zoom?.max || 10;
   const rawExpMin = camCapabilities?.exposure?.min || -4; const rawExpMax = camCapabilities?.exposure?.max || 4;
-  const mappedDisplayZoom = (((Number(remoteZoom) - rawMin) / (rawMax - rawMin)) * 9 + 1).toFixed(1);
+  const mappedDisplayZoom = rawMax > rawMin ? (((Number(remoteZoom) - rawMin) / (rawMax - rawMin)) * 9 + 1).toFixed(1) : "1.0";
 
   return (
-    // 🔥 BREAKOUT WRAPPER: fixed inset-0 z-[9999] kills global layouts
     <div className="fixed inset-0 z-[9999] bg-gray-950 flex items-center justify-center p-4 font-sans overflow-y-auto">
       <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; }`}</style>
       
