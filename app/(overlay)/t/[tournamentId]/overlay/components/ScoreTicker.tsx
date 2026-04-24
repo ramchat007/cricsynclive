@@ -306,7 +306,7 @@ export default function ScoreTicker({
         ballsRemaining > 0
           ? ((runsNeeded / ballsRemaining) * 6).toFixed(2)
           : "0.00";
-      equationStr = `NEED ${runsNeeded} IN ${ballsRemaining}`;
+      equationStr = `NEED ${runsNeeded} runs in ${ballsRemaining} balls`;
     }
   } else {
     projScoreStr =
@@ -389,7 +389,7 @@ export default function ScoreTicker({
             </span>
           </div>
 
-          <div className="flex items-center gap-8 bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-16 py-1 shadow-lg text-[13px] font-black uppercase text-white pb-1 min-w-0 max-w-[760px]">
+          <div className="flex items-center gap-2 bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-16 py-1 shadow-lg text-[12px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]">
             <span className="text-amber-400 shrink-0">
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
@@ -400,7 +400,7 @@ export default function ScoreTicker({
             <span className="text-white/40 shrink-0">|</span>
             <span className="text-cyan-400 drop-shadow-md min-w-0">
               {target
-                ? `${battingName} needs ${target - score} runs`
+                ? `${battingName} ${equationStr}`
                 : tossWinnerName
                   ? `${tossWinnerName} won toss, elected to ${liveMatch.toss_decision || "bat"}`
                   : "Live Action"}
