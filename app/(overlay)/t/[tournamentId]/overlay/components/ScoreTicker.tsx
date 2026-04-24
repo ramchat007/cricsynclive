@@ -46,7 +46,6 @@ export default function ScoreTicker({
           (acc: any, p: any) => ({ ...acc, [p.id]: p.full_name }),
           {},
         );
-
         setPlayers(pMap || {});
       }
 
@@ -57,6 +56,12 @@ export default function ScoreTicker({
         .eq("innings", liveMatch.current_innings)
         .order("created_at", { ascending: true });
 
+      // Silent Init for Animations
+      if (dData && dData.length > 0) {
+        const lastBall = dData[dData.length - 1];
+        prevBallRef.current = lastBall.id;
+        prevAnimBallRef.current = lastBall.id;
+      }
       setDeliveries(dData || []);
     };
 
@@ -67,36 +72,81 @@ export default function ScoreTicker({
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // Listens for INSERT, UPDATE, and DELETE
           schema: "public",
           table: "deliveries",
-          filter: `match_id=eq.${liveMatch.id}`,
         },
-        (payload) => setDeliveries((prev) => [...prev, payload.new]),
+        (payload) => {
+          // --- 1. HANDLE NEW BALLS ---
+          if (payload.eventType === "INSERT") {
+            if (
+              payload.new.match_id === liveMatch.id &&
+              payload.new.innings === liveMatch.current_innings
+            ) {
+              setDeliveries((prev) => [...prev, payload.new]);
+            }
+          }
+          // --- 2. HANDLE EDITED BALLS / UNDOS ---
+          else if (payload.eventType === "UPDATE") {
+            setDeliveries((prev) => {
+              const exists = prev.some((d) => d.id === payload.new.id);
+              if (exists) {
+                prevBallRef.current = null;
+                prevAnimBallRef.current = null;
+                return prev.map((d) =>
+                  d.id === payload.new.id ? payload.new : d,
+                );
+              }
+              return prev;
+            });
+          }
+          // --- 3. HANDLE DELETED BALLS / HARD UNDOS ---
+          else if (payload.eventType === "DELETE") {
+            setDeliveries((prev) => {
+              const exists = prev.some((d) => d.id === payload.old.id);
+              if (exists) {
+                prevBallRef.current = null;
+                prevAnimBallRef.current = null;
+                return prev.filter((d) => d.id !== payload.old.id);
+              }
+              return prev;
+            });
+          }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(sub);
     };
-  }, [
-    liveMatch?.id,
-    liveMatch?.current_innings,
-    liveMatch?.live_striker_id,
-    liveMatch?.live_non_striker_id,
-    liveMatch?.live_bowler_id,
-  ]);
+  }, [liveMatch?.id, liveMatch?.current_innings]);
 
   // 2. SLIDE-OVER ANIMATION TRIGGER
+  const prevEventTimeRef = useRef<any>(null);
+  const isInitialLoad = useRef(true);
+
   useEffect(() => {
     if (overlayData?.event && overlayData?.eventTime) {
-      setEventTrigger(overlayData.event);
-      const timer = setTimeout(() => setEventTrigger(null), 4000);
-      return () => clearTimeout(timer);
+      if (prevEventTimeRef.current === overlayData.eventTime) return;
+      prevEventTimeRef.current = overlayData.eventTime;
+
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+        return;
+      }
+
+      const validEvents = ["WICKET", "SIX", "FOUR"];
+      if (validEvents.includes(overlayData.event.toUpperCase())) {
+        setEventTrigger(overlayData.event.toUpperCase());
+        const timer = setTimeout(() => {
+          setEventTrigger(null);
+        }, 3500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [overlayData?.event, overlayData?.eventTime]);
 
-  // Auto event detection from deliveries
+  // AUTO EVENT DETECTION FROM DELIVERIES
   useEffect(() => {
     if (!deliveries.length) return;
 
@@ -106,15 +156,14 @@ export default function ScoreTicker({
     prevBallRef.current = lastBall.id;
 
     let event: string | null = null;
+    const runs = Number(lastBall.runs_off_bat) || 0;
 
     if (lastBall.is_wicket) {
       event = "WICKET";
-    } else if (Number(lastBall.runs_off_bat) === 6) {
+    } else if (runs === 6) {
       event = "SIX";
-    } else if (Number(lastBall.runs_off_bat) === 4) {
+    } else if (runs === 4) {
       event = "FOUR";
-    } else if (Number(lastBall.runs_off_bat) > 0) {
-      event = String(lastBall.runs_off_bat);
     }
 
     if (event) {
@@ -125,52 +174,37 @@ export default function ScoreTicker({
 
   if (!liveMatch) return null;
 
-  // 3. ROCK-SOLID DATA PIPELINE (Restored exact working logic)
+  // 3. ROCK-SOLID DATA PIPELINE (Deriving Score from Deliveries)
   const isFirstInnings = Number(liveMatch.current_innings) === 1;
 
-  // Checking where the data actually is prevents the teams from swapping
-  const team1HasData =
-    Number(liveMatch.team1_runs) > 0 || Number(liveMatch.team1_balls) > 0;
-  const team2HasData =
-    Number(liveMatch.team2_runs) > 0 || Number(liveMatch.team2_balls) > 0;
-
   let team1IsBattingNow = true;
+  const inningsRuns = deliveries.reduce(
+    (acc, d) =>
+      acc + (Number(d.runs_off_bat) || 0) + (Number(d.extras_runs) || 0),
+    0,
+  );
 
   if (isFirstInnings) {
-    if (team2HasData && !team1HasData) {
-      team1IsBattingNow = false;
-    } else if (team1HasData) {
-      team1IsBattingNow = true;
-    } else {
-      const choseBat = String(liveMatch.toss_decision)
-        .toLowerCase()
-        .includes("bat");
-      const t1Won = liveMatch.toss_winner_id === liveMatch.team1_id;
-      team1IsBattingNow = choseBat ? t1Won : !t1Won;
-    }
+    const t1HasData =
+      Number(liveMatch.team1_runs) > 0 || Number(liveMatch.team1_balls) > 0;
+    const t2HasData =
+      Number(liveMatch.team2_runs) > 0 || Number(liveMatch.team2_balls) > 0;
+    team1IsBattingNow = t2HasData && !t1HasData ? false : true;
   } else {
-    // 2nd Innings Logic
-    const choseBat = String(liveMatch.toss_decision)
-      .toLowerCase()
-      .includes("bat");
-    const t1Won = liveMatch.toss_winner_id === liveMatch.team1_id;
-    const t1BattedFirst = choseBat ? t1Won : !t1Won;
-    team1IsBattingNow = !t1BattedFirst;
+    const diff1 = Math.abs((Number(liveMatch.team1_runs) || 0) - inningsRuns);
+    const diff2 = Math.abs((Number(liveMatch.team2_runs) || 0) - inningsRuns);
+    team1IsBattingNow = diff1 < diff2;
   }
 
-  const score = team1IsBattingNow
-    ? Number(liveMatch.team1_runs) || 0
-    : Number(liveMatch.team2_runs) || 0;
-  const wickets = team1IsBattingNow
-    ? Number(liveMatch.team1_wickets) || 0
-    : Number(liveMatch.team2_wickets) || 0;
-  const totalBalls = team1IsBattingNow
-    ? Number(liveMatch.team1_balls) || 0
-    : Number(liveMatch.team2_balls) || 0;
+  const score = inningsRuns;
+  const wickets = deliveries.filter((d) => d.is_wicket).length;
+  const totalBalls = deliveries.filter(
+    (d) => d.extras_type !== "wd" && d.extras_type !== "nb",
+  ).length;
 
   const displayOvers = `${Math.floor(totalBalls / 6)}.${totalBalls % 6}`;
 
-  // 4. BRANDING & COLORS (Batting Left, Bowling Right)
+  // 4. BRANDING & COLORS
   const battingTeamObj = team1IsBattingNow ? liveMatch.team1 : liveMatch.team2;
   const bowlingTeamObj = team1IsBattingNow ? liveMatch.team2 : liveMatch.team1;
 
@@ -194,11 +228,11 @@ export default function ScoreTicker({
 
     const lastBall = deliveries[deliveries.length - 1];
 
-    // Only process if this is a new ball we haven't animated yet
     if (prevAnimBallRef.current === lastBall.id) return;
 
+    prevAnimBallRef.current = lastBall.id;
+
     if (lastBall.is_wicket || Number(lastBall.runs_off_bat) >= 4) {
-      prevAnimBallRef.current = lastBall.id;
       setScoreAnim(true);
       setTimeout(() => setScoreAnim(false), 500);
     }
@@ -226,7 +260,7 @@ export default function ScoreTicker({
       ),
       wickets: d.filter((b) => b.is_wicket).length,
       overs: `${Math.floor(bLegalBalls / 6)}.${bLegalBalls % 6}`,
-      timeline: d.slice(-6),
+      timeline: d.slice(-9),
     };
   };
 
@@ -266,12 +300,13 @@ export default function ScoreTicker({
     const ballsRemaining = totalMatchBalls - totalBalls;
 
     if (runsNeeded <= 0) {
-      equationStr = "SCORES LEVEL";
-    } else if (ballsRemaining > 0) {
-      rrrVal = ((runsNeeded / ballsRemaining) * 6).toFixed(2);
-      equationStr = `NEED ${runsNeeded} IN ${ballsRemaining}`;
+      equationStr = `${battingInitials} WON THE MATCH`;
     } else {
-      equationStr = "INNINGS COMPLETE";
+      rrrVal =
+        ballsRemaining > 0
+          ? ((runsNeeded / ballsRemaining) * 6).toFixed(2)
+          : "0.00";
+      equationStr = `NEED ${runsNeeded} IN ${ballsRemaining}`;
     }
   } else {
     projScoreStr =
@@ -302,14 +337,13 @@ export default function ScoreTicker({
           @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }@keyframes flash {0% { opacity: 0.8; } 100% { opacity: 0; }}
         `}</style>
 
-      {/* 🔴 EDG-TO-EDGE FLUSH CONTAINER 🔴 */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[1920px] h-[160px]">
-        {/* 🟢 JIO-STYLE OVERLAY ANIMATION 🟢 */}
+      {/* 🟢 Height reduced to 120px 🟢 */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[1920px] h-[120px]">
+        {/* EVENT OVERLAY */}
         <div
           className={`absolute inset-0 z-[60] flex items-center justify-center transition-all duration-500
             ${eventTrigger ? "opacity-100 scale-100" : "opacity-0 scale-125 pointer-events-none"}
           `}>
-          {/* Background Glow */}
           <div
             className={`absolute inset-0 blur-2xl opacity-70
               ${
@@ -322,20 +356,19 @@ export default function ScoreTicker({
             `}
           />
 
-          {/* Radial Burst */}
           <div className="absolute w-[600px] h-[300px] rounded-full border-[6px] border-white/20 animate-ping" />
 
-          {/* Animated Text */}
+          {/* Event Text size reduced to 90px */}
           <h2
-            className={`text-[120px] font-black italic uppercase tracking-tighter z-10
-    ${
-      eventTrigger === "WICKET"
-        ? "text-red-500 drop-shadow-[0_0_40px_#ef4444]"
-        : eventTrigger === "SIX"
-          ? "text-amber-300 drop-shadow-[0_0_40px_#fbbf24]"
-          : "text-emerald-300 drop-shadow-[0_0_40px_#10b981]"
-    }
-    animate-bounce`}>
+            className={`text-[90px] font-black italic uppercase tracking-tighter z-10
+            ${
+              eventTrigger === "WICKET"
+                ? "text-red-500 drop-shadow-[0_0_40px_#ef4444]"
+                : eventTrigger === "SIX"
+                  ? "text-amber-300 drop-shadow-[0_0_40px_#fbbf24]"
+                  : "text-emerald-300 drop-shadow-[0_0_40px_#10b981]"
+            }
+            animate-bounce`}>
             {eventTrigger === "WICKET"
               ? "WICKET!"
               : eventTrigger === "SIX"
@@ -345,28 +378,27 @@ export default function ScoreTicker({
                   : eventTrigger}
           </h2>
 
-          {/* Flash Overlay */}
           <div className="absolute inset-0 bg-white opacity-0 animate-[flash_0.4s_ease-out]" />
         </div>
 
-        {/* --- TOP TABS (Info Layer) --- */}
-        <div className="absolute -top-[38px] left-0 w-full flex justify-between items-end px-24 z-10">
+        {/* TOP TABS - Adjusted top placement */}
+        <div className="absolute -top-[32px] left-0 w-full flex justify-between items-end px-24 z-10">
           <div className="w-[220px] text-center">
-            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-2 shadow-lg text-sm font-black uppercase tracking-widest text-white truncate pb-2">
+            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[13px] font-black uppercase text-white pb-1">
               {battingName}
             </span>
           </div>
 
-          <div className="flex items-center gap-8 bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-16 py-2 shadow-lg text-sm font-black uppercase tracking-widest text-white pb-2 min-w-0 max-w-[760px]">
+          <div className="flex items-center gap-8 bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-16 py-1 shadow-lg text-[13px] font-black uppercase text-white pb-1 min-w-0 max-w-[760px]">
             <span className="text-amber-400 shrink-0">
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
-            <span className="drop-shadow-md truncate min-w-0">
+            <span className="drop-shadow-md min-w-0">
               {liveMatch.stage || "Live Match"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
-            <span className="text-cyan-400 drop-shadow-md truncate min-w-0">
+            <span className="text-cyan-400 drop-shadow-md min-w-0">
               {target
                 ? `${battingName} needs ${target - score} runs`
                 : tossWinnerName
@@ -376,166 +408,162 @@ export default function ScoreTicker({
           </div>
 
           <div className="w-[220px] text-center">
-            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-2 shadow-lg text-sm font-black uppercase tracking-widest text-white truncate pb-2">
+            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[13px] font-black uppercase text-white pb-1">
               {bowlingName}
             </span>
           </div>
         </div>
 
-        {/* --- MAIN FULL-WIDTH TICKER --- */}
+        {/* MAIN TICKER CONTAINER */}
         <div
-          className="w-full h-full flex relative overflow-hidden border-t-[3px] border-white/30 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]"
+          className="w-full h-full flex relative overflow-hidden border-t-[3px] border-white/20 shadow-2xl"
           style={{
             background: `linear-gradient(90deg,
               ${battingColor} 0%,
-              ${battingColor} 14%,
-              rgba(2, 6, 23, 0.98) 34%,
-              rgba(2, 6, 23, 0.98) 66%,
-              ${bowlingColor} 86%,
+              ${battingColor} 18%,
+              rgba(10, 10, 15, 0.98) 40%,
+              rgba(10, 10, 15, 0.98) 60%,
+              ${bowlingColor} 82%,
               ${bowlingColor} 100%)`,
           }}>
-          {/* stronger blended color wash on both ends */}
           <div
-            className="absolute inset-y-0 left-0 w-[38%] pointer-events-none"
+            className="absolute inset-y-0 left-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
-              background: `linear-gradient(90deg, ${battingColor} 0%, rgba(2, 6, 23, 0.15) 58%, rgba(2, 6, 23, 0) 100%)`,
-              opacity: 0.65,
+              background: `linear-gradient(90deg, ${battingColor} 0%, transparent 100%)`,
+              opacity: 0.3,
             }}
           />
           <div
-            className="absolute inset-y-0 right-0 w-[38%] pointer-events-none"
+            className="absolute inset-y-0 right-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
-              background: `linear-gradient(270deg, ${bowlingColor} 0%, rgba(2, 6, 23, 0.15) 58%, rgba(2, 6, 23, 0) 100%)`,
-              opacity: 0.65,
+              background: `linear-gradient(270deg, ${bowlingColor} 0%, transparent 100%)`,
+              opacity: 0.3,
             }}
           />
 
-          <div className="relative z-10 w-full flex h-full">
-            {/* 1. BATTING LOGO - SQUARE FLUSH */}
-            <div className="w-[180px] h-full shrink-0 flex items-center justify-center bg-black/40 border-r border-white/10 relative">
+          <div className="relative z-10 w-full flex h-full bg-black/30 backdrop-blur-sm">
+            {/* 1. BATTING LOGO - Logo reduced to 85px */}
+            <div className="w-[180px] h-full shrink-0 flex items-center justify-center relative">
               <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
               <img
                 src={battingLogo}
-                className="w-[110px] h-[110px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] relative z-10"
+                className="w-[85px] h-[85px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] relative z-10"
+                alt="Batting Team"
               />
             </div>
 
-            {/* 2. SCORE COLUMN */}
-            <div className="w-[430px] h-full flex flex-col justify-center border-r border-white/10 shrink-0 bg-black/30 backdrop-blur-sm relative">
-              <div className="text-white text-sm font-black tracking-[0.25em] uppercase drop-shadow-md absolute top-3 left-8 right-8 opacity-90 truncate">
+            {/* 2. SCORE COLUMN - Adjusted paddings & font sizes */}
+            <div className="w-[430px] h-full flex flex-col justify-center shrink-0 relative border-r border-white/10">
+              <div className="text-white text-[13px] font-black tracking-[0.25em] uppercase drop-shadow-md absolute top-2 left-8 right-8 opacity-90 ">
                 {battingInitials}{" "}
-                <span className="text-white/40 mx-2 text-xs">VS</span>{" "}
+                <span className="text-white/40 mx-2 text-[11px]">VS</span>{" "}
                 {bowlingInitials}
               </div>
 
-              <div className="flex items-end gap-5 px-8 pt-10">
+              <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`min-w-[250px] flex items-end whitespace-nowrap font-mono text-[5.8rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : "text-white"}`}>
+                  className={`min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : "text-white"}`}>
                   <span>{score}</span>
-                  <span className="text-[3.8rem] text-white/80">
+                  <span className="text-[2.5rem] text-white/80">
                     /{wickets}
                   </span>
                 </span>
 
-                <span className="flex-none min-w-[112px] text-center font-bold text-3xl text-white/90 leading-none drop-shadow-md bg-black/50 px-4 py-2 rounded border border-white/20">
+                <span className="flex-none min-w-[90px] text-center font-bold text-xl text-white/90 leading-none drop-shadow-md bg-white/5 px-4 py-1.5 rounded border border-white/10">
                   {displayOvers}{" "}
-                  <span className="text-xl font-normal text-white/50 ml-1">
+                  <span className="text-base font-normal text-white/50 ml-1">
                     Ov
                   </span>
                 </span>
               </div>
 
-              <div className="text-xs text-amber-400 font-bold uppercase tracking-widest truncate mt-2 drop-shadow-sm px-8">
+              <div className="text-[11px] text-amber-400 font-bold uppercase mt-1 drop-shadow-sm px-8">
                 {scoreContextText}
               </div>
             </div>
 
-            {/* 3. BATSMEN COLUMN */}
-            <div className="w-[450px] h-full flex flex-col justify-center px-12 border-r border-white/10 shrink-0 text-white bg-black/20 backdrop-blur-sm">
+            {/* 3. BATSMEN COLUMN - Scaled text down */}
+            <div className="w-[450px] h-full flex flex-col justify-center px-12 shrink-0 text-white border-r border-white/10">
               <div className="flex justify-between items-end font-bold">
-                <span className="truncate pr-3 flex items-center gap-3 text-3xl drop-shadow-md min-w-0">
-                  <span className="truncate">
-                    {strikerName.split(" ").pop()}
-                  </span>
+                <span className="pr-3 flex items-center gap-2 text-xl drop-shadow-md min-w-0">
+                  <span className="truncate max-w-[200px]">{strikerName}</span>
                   <Zap
-                    size={22}
+                    size={18}
                     className="text-amber-400 fill-amber-400 animate-pulseGlow shrink-0"
                   />
                 </span>
-                <span className="font-mono text-5xl font-black drop-shadow-md leading-none shrink-0">
+                <span className="font-mono text-3xl font-black drop-shadow-md leading-none shrink-0">
                   {sStats.runs}
-                  <span className="text-2xl font-sans font-bold text-white/60 ml-2">
+                  <span className="text-lg font-sans font-bold text-white/60 ml-2">
                     ({sStats.balls})
                   </span>
                 </span>
               </div>
 
-              <div className="flex justify-between items-end mt-3 text-white/70">
-                <span className="truncate pr-3 text-2xl drop-shadow-md min-w-0">
-                  {nonStrikerName.split(" ").pop()}
+              <div className="flex justify-between items-end mt-2 text-white/70">
+                <span className="pr-3 text-lg drop-shadow-md min-w-0 truncate max-w-[200px]">
+                  {nonStrikerName}
                 </span>
-                <span className="font-mono text-4xl font-bold drop-shadow-md leading-none shrink-0">
+                <span className="font-mono text-2xl font-bold drop-shadow-md leading-none shrink-0">
                   {nsStats.runs}
-                  <span className="text-xl font-sans text-white/50 ml-2">
+                  <span className="text-base font-sans text-white/50 ml-2">
                     ({nsStats.balls})
                   </span>
                 </span>
               </div>
             </div>
 
-            {/* 4. CENTER MATH BOX */}
-            <div className="w-[320px] h-full flex flex-col justify-center items-center px-4 bg-black/60 border-r border-white/10 shrink-0 shadow-[inset_0_0_40px_rgba(0,0,0,1)] backdrop-blur-md">
+            {/* 4. CENTER MATH BOX - Scaled down font sizes */}
+            <div className="w-[320px] h-full flex flex-col justify-center items-center px-4 shrink-0 border-r border-white/10">
               {target ? (
                 <>
                   <div className="flex w-full justify-between items-center px-6 mb-2">
                     <div className="text-center">
-                      <div className="text-xs font-black text-white/40 tracking-widest uppercase mb-1">
+                      <div className="text-[10px] font-black text-white/40 uppercase mb-1">
                         Target
                       </div>
-                      <div className="text-2xl font-black text-white">
+                      <div className="text-lg font-black text-white">
                         {target}
                       </div>
                     </div>
-                    <div className="h-10 w-px bg-white/20"></div>
+                    <div className="h-6 w-px bg-white/20"></div>
                     <div className="text-center">
-                      <div className="text-xs font-black text-white/40 tracking-widest uppercase mb-1">
+                      <div className="text-[10px] font-black text-white/40 uppercase mb-1">
                         CRR
                       </div>
-                      <div className="text-2xl font-black text-white">
-                        {crr}
-                      </div>
+                      <div className="text-lg font-black text-white">{crr}</div>
                     </div>
-                    <div className="h-10 w-px bg-white/20"></div>
+                    <div className="h-6 w-px bg-white/20"></div>
                     <div className="text-center">
-                      <div className="text-xs font-black text-amber-500/60 tracking-widest uppercase mb-1">
+                      <div className="text-[10px] font-black text-amber-500/60 uppercase mb-1">
                         RRR
                       </div>
-                      <div className="text-2xl font-black text-amber-400">
+                      <div className="text-lg font-black text-amber-400">
                         {rrrVal}
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-1.5 rounded text-amber-400 font-black text-xs tracking-widest uppercase drop-shadow-md">
+                  <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-1 rounded text-amber-400 font-black text-[11px] uppercase drop-shadow-md tracking-wider">
                     {equationStr}
                   </div>
                 </>
               ) : (
                 <div className="flex w-full justify-center gap-12 items-center">
                   <div className="text-center">
-                    <div className="text-sm font-black text-white/40 tracking-widest uppercase mb-1">
+                    <div className="text-xs font-black text-white/40 uppercase mb-1">
                       CRR
                     </div>
-                    <div className="text-4xl font-black text-white drop-shadow-md">
+                    <div className="text-2xl font-black text-white drop-shadow-md">
                       {crr}
                     </div>
                   </div>
-                  <div className="h-14 w-px bg-white/20"></div>
+                  <div className="h-10 w-px bg-white/20"></div>
                   <div className="text-center">
-                    <div className="text-sm font-black text-cyan-500/60 tracking-widest uppercase mb-1">
+                    <div className="text-xs font-black text-cyan-500/60 uppercase mb-1">
                       Projected
                     </div>
-                    <div className="text-4xl font-black text-cyan-400 drop-shadow-md">
+                    <div className="text-2xl font-black text-cyan-400 drop-shadow-md">
                       {projScoreStr}
                     </div>
                   </div>
@@ -543,47 +571,47 @@ export default function ScoreTicker({
               )}
             </div>
 
-            {/* 5. BOWLER & TIMELINE */}
-            <div className="flex-1 h-full flex flex-col justify-center px-12 border-l border-white/10 overflow-hidden bg-black/10 backdrop-blur-sm">
-              <div className="flex justify-between items-end mb-3 w-full min-w-0">
-                <span className="font-bold text-white text-3xl truncate pr-4 drop-shadow-md min-w-0">
-                  {bowlerName.split(" ").pop()}
+            {/* 5. BOWLER TIMELINE - Scaled Timeline Balls to w-9 h-9 */}
+            <div className="flex-1 h-full flex flex-col justify-center px-8 overflow-hidden">
+              <div className="flex justify-between items-end mb-2 w-full min-w-0">
+                <span className="font-bold text-white text-xl pr-4 drop-shadow-md min-w-0 truncate">
+                  {bowlerName}
                 </span>
-                <span className="font-mono text-4xl text-white font-black shrink-0 drop-shadow-md leading-none">
+                <span className="font-mono text-2xl text-white font-black shrink-0 drop-shadow-md leading-none">
                   {bStats.wickets}-{bStats.runs}
-                  <span className="text-2xl font-sans font-normal text-white/70 ml-2">
+                  <span className="text-lg font-sans font-normal text-white/70 ml-2">
                     ({bStats.overs})
                   </span>
                 </span>
               </div>
 
-              <div className="flex items-center justify-start gap-3 overflow-hidden w-full py-1">
+              <div className="flex items-center justify-start gap-2 overflow-hidden w-full py-1">
                 {bStats.timeline.map((b: any, i: number) => {
                   let bText =
                     Number(b.runs_off_bat) === 0 && !b.extras_runs
                       ? "•"
                       : b.runs_off_bat;
-                  let bCls = "bg-white/10 border-white/30 text-white";
+                  let bCls = "bg-white/10 border-white/20 text-white";
 
                   if (b.is_wicket) {
                     bText = "W";
                     bCls =
-                      "bg-rose-600 border-rose-400 text-white shadow-[0_0_15px_#ef4444]";
+                      "bg-rose-600 border-rose-400 text-white shadow-[0_0_10px_#ef4444]";
                   } else if (b.extras_type) {
                     bText = `${Number(b.runs_off_bat) > 0 ? b.runs_off_bat : ""}${b.extras_type}`;
                     bCls = "bg-indigo-600 border-indigo-400 text-white";
                   } else if (Number(b.runs_off_bat) === 4) {
                     bCls =
-                      "bg-teal-400 border-teal-200 text-slate-900 shadow-[0_0_15px_#2dd4bf]";
+                      "bg-teal-400 border-teal-200 text-slate-900 shadow-[0_0_10px_#2dd4bf]";
                   } else if (Number(b.runs_off_bat) === 6) {
                     bCls =
-                      "bg-amber-400 border-amber-200 text-slate-900 shadow-[0_0_15px_#fbbf24]";
+                      "bg-amber-400 border-amber-200 text-slate-900 shadow-[0_0_10px_#fbbf24]";
                   }
 
                   return (
                     <div
                       key={b.id || i}
-                      className={`w-12 h-12 border-2 rounded-full shrink-0 flex items-center justify-center font-black ${bCls} text-xl uppercase opacity-0`}
+                      className={`w-9 h-9 border-2 rounded-full shrink-0 flex items-center justify-center font-black ${bCls} text-base uppercase opacity-0`}
                       style={{
                         animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
                         animationDelay: `${i * 0.08}s`,
@@ -595,12 +623,13 @@ export default function ScoreTicker({
               </div>
             </div>
 
-            {/* 6. BOWLING LOGO - SQUARE FLUSH */}
-            <div className="w-[180px] h-full shrink-0 flex items-center justify-center bg-black/40 border-l border-white/10 relative">
+            {/* 6. BOWLING LOGO - Logo reduced to 85px */}
+            <div className="w-[180px] h-full shrink-0 flex items-center justify-center border-l border-white/10 relative">
               <div className="absolute inset-0 bg-gradient-to-l from-black/60 to-transparent" />
               <img
                 src={bowlingLogo}
-                className="w-[110px] h-[110px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] relative z-10"
+                className="w-[85px] h-[85px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] relative z-10"
+                alt="Bowling Team"
               />
             </div>
           </div>
