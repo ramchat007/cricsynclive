@@ -205,14 +205,14 @@ export default function LiveScorerPage({
         if (isMajorEvent) {
           // 1. Try Gemini for Major Events (Boundaries & Wickets)
           const ballContext = {
-            bowler: bowlerName.split(" ").pop(),
-            batter: batterName.split(" ").pop(),
+            bowler: bowlerName,
+            batter: batterName,
             runs: latestBall.runs_off_bat,
             isWicket: latestBall.is_wicket,
             extras: latestBall.extras_type,
             matchSituation: `Innings ${engine.match.current_innings}`,
           };
-          finalCommentaryText = await fetchAICommentary(ballContext)  || "";
+          finalCommentaryText = (await fetchAICommentary(ballContext)) || "";
         }
 
         // 2. If it's a standard ball (or if Gemini API failed), generate local slang!
@@ -1003,8 +1003,20 @@ export default function LiveScorerPage({
                   bowlingSquad={stats.bowlingSquad}
                 />
               )}
-              {activeTab === "predictor" && <Predictor />}
-              {activeTab === "info" && <Info />}
+              {activeTab === "predictor" && (
+                <Predictor
+                  match={engine.match}
+                  stats={stats}
+                  // You can pass standingsData={yourRealStandingsArray} here later!
+                />
+              )}
+              {activeTab === "info" && (
+                <Info
+                  match={engine.match}
+                  team1Players={engine.team1Players}
+                  team2Players={engine.team2Players}
+                />
+              )}
             </div>
           </div>
         </div>

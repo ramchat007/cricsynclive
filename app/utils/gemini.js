@@ -82,3 +82,45 @@ export const fetchMatchAnalysis = async (matchData, inningData) => {
     return null;
   }
 };
+// Add this to the bottom of utils/gemini.js
+
+export const fetchTournamentAnalysis = async (match, standings, winProb) => {
+  // Use process.env for Next.js!
+  const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  if (!API_KEY) return null;
+
+  try {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Format the top 4 teams for the AI to read easily
+    const topTeams = standings
+      .slice(0, 4)
+      .map(
+        (t, i) =>
+          `${i + 1}. ${t.short_name || t.name} (${t.points || 0} pts, NRR: ${t.nrr || 0})`,
+      )
+      .join(" | ");
+
+    const team1Name = match.team1?.name || "Team 1";
+    const team2Name = match.team2?.name || "Team 2";
+
+    const prompt = `
+      You are an expert cricket commentator and tournament analyst.
+      Current Match: ${team1Name} vs ${team2Name}.
+      Current Win Probability: ${team1Name} is at ${winProb.batting}%, ${team2Name} is at ${winProb.bowling}%.
+      Live Points Table Top 4: ${topTeams}
+
+      Write exactly 2 punchy, exciting sentences analyzing the tournament implications of this match. 
+      Mention if a team can jump to the top of the table, solidify their playoff spot, or if they are facing elimination. 
+      Do NOT use hashtags. Keep it strictly professional broadcast style.
+    `;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Gemini Tournament Analysis Error:", error);
+    return null;
+  }
+};
