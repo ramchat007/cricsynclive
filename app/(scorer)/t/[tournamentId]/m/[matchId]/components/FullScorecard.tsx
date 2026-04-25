@@ -23,6 +23,30 @@ export default function FullScorecard({
     (d: any) => d.innings === selectedInnings,
   );
 
+  // --- NEW: Identify Batting Team for the Highlight Banner ---
+  const team1Name = match?.team1?.name || "Team 1";
+  const team2Name = match?.team2?.name || "Team 2";
+
+  let isTeam1Batting = true;
+  if (
+    inningsDelivs.length > 0 &&
+    (inningsDelivs[0].batting_team_id || inningsDelivs[0].team_id)
+  ) {
+    // If we have delivery data, trust the database ID
+    const activeTeamId =
+      inningsDelivs[0].batting_team_id || inningsDelivs[0].team_id;
+    isTeam1Batting = activeTeamId === match?.team1_id;
+  } else {
+    // Fallback to Toss Math if no deliveries exist yet
+    const choseBat = String(match?.toss_decision || "")
+      .toLowerCase()
+      .includes("bat");
+    const t1Won = match?.toss_winner_id === match?.team1_id;
+    const t1BattedFirst = choseBat ? t1Won : !t1Won;
+    isTeam1Batting = selectedInnings === 1 ? t1BattedFirst : !t1BattedFirst;
+  }
+  // ---------------------------------------------------------
+
   // 3a. Chronological Batting Order Logic
   const battingOrderIds: string[] = [];
   inningsDelivs.forEach((d: any) => {
@@ -45,7 +69,7 @@ export default function FullScorecard({
       battingOrderIds.push(match.live_non_striker_id);
   }
 
-  // 3b. NEW: Chronological Bowling Order Logic
+  // 3b. Chronological Bowling Order Logic
   const bowlingOrderIds: string[] = [];
   inningsDelivs.forEach((d: any) => {
     if (d.bowler_id && !bowlingOrderIds.includes(d.bowler_id))
@@ -210,7 +234,6 @@ export default function FullScorecard({
           (isCurrentInnings && p.id === match.live_bowler_id),
       );
 
-    // NEW: Sort bowlers chronologically
     return activeBowlers.sort((a, b) => {
       const idxA = bowlingOrderIds.indexOf(a.id);
       const idxB = bowlingOrderIds.indexOf(b.id);
@@ -224,13 +247,44 @@ export default function FullScorecard({
   );
 
   const bowlers = getBowlingStats(activeBowlingSquad);
-  // NEW: Calculate yet to bowl
   const yetToBowl = activeBowlingSquad.filter(
     (player: any) => !bowlers.some((b: any) => b.id === player.id),
   );
 
   return (
     <div className="space-y-6 animate-in fade-in">
+      {/* 0. MATCHUP HEADER (Dynamic Highlighting based on Tab) */}
+      <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-[1.5rem] sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-3">
+        {/* Match Stage & Innings Badge */}
+        <div className="inline-block bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <p className="text-[10px] sm:text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            {match?.stage || "Match"} <span className="mx-1 opacity-50">•</span>{" "}
+            Innings {selectedInnings}
+          </p>
+        </div>
+
+        {/* VS Banner with Batting Team Highlight */}
+        <div className="flex items-center justify-center gap-3 text-sm sm:text-lg font-black uppercase tracking-tight">
+          <span
+            className={`transition-colors ${isTeam1Batting ? "text-teal-500 drop-shadow-sm" : "text-slate-600 dark:text-slate-300"}`}
+          >
+            {team1Name}{" "}
+            {isTeam1Batting && <span className="text-teal-500 ml-1">🏏</span>}
+          </span>
+
+          <span className="text-slate-300 dark:text-slate-600 text-xs sm:text-sm font-bold">
+            VS
+          </span>
+
+          <span
+            className={`transition-colors ${!isTeam1Batting ? "text-teal-500 drop-shadow-sm" : "text-slate-600 dark:text-slate-300"}`}
+          >
+            {!isTeam1Batting && <span className="text-teal-500 mr-1">🏏</span>}{" "}
+            {team2Name}
+          </span>
+        </div>
+      </div>
+
       {/* 1. MATCH SUMMARY */}
       {match.status === "completed" && (
         <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-sm text-center">
@@ -265,12 +319,14 @@ export default function FullScorecard({
         <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-max">
           <button
             onClick={() => setSelectedInnings(1)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${selectedInnings === 1 ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${selectedInnings === 1 ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+          >
             1st Innings
           </button>
           <button
             onClick={() => setSelectedInnings(2)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${selectedInnings === 2 ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${selectedInnings === 2 ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+          >
             2nd Innings
           </button>
         </div>
@@ -298,7 +354,8 @@ export default function FullScorecard({
                 {batsmen.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-slate-100 dark:border-slate-800/50">
+                    className="border-t border-slate-100 dark:border-slate-800/50"
+                  >
                     <td className="p-3 sm:p-4">
                       <div className="flex items-center gap-1 sm:gap-2">
                         <p className="text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-xs">
@@ -371,7 +428,8 @@ export default function FullScorecard({
                 {bowlers.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-slate-100 dark:border-slate-800/50">
+                    className="border-t border-slate-100 dark:border-slate-800/50"
+                  >
                     <td className="p-3 sm:p-4 text-slate-900 dark:text-white flex items-center gap-2 truncate max-w-[120px] sm:max-w-xs">
                       {p.full_name}
                       {isCurrentInnings && p.id === match.live_bowler_id && (

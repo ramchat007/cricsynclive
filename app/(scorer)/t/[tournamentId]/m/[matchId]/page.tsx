@@ -16,6 +16,9 @@ import {
   deriveMatchStats,
   getPlayerMatchStats,
 } from "../../../../../utils/cricketMath";
+import Commentary from "./components/Commentary";
+import Predictor from "./components/Predictor";
+import Info from "./components/Info";
 
 export default function LiveScorerPage({
   params,
@@ -331,7 +334,8 @@ export default function LiveScorerPage({
               onClick={() =>
                 (window.location.href = `/t/${tournamentId}/matches`)
               }
-              className="w-12 h-12 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform">
+              className="w-12 h-12 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform"
+            >
               <ArrowLeft size={20} />
             </button>
             <div>
@@ -399,7 +403,8 @@ export default function LiveScorerPage({
                   onClick={() =>
                     (window.location.href = `/t/${tournamentId}/matches`)
                   }
-                  className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-4 rounded-xl hover:opacity-80 transition-opacity">
+                  className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-4 rounded-xl hover:opacity-80 transition-opacity"
+                >
                   Return to Matches
                 </button>
               </div>
@@ -427,7 +432,8 @@ export default function LiveScorerPage({
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans">
         <Link
           href={`/t/${tournamentId}/matches`}
-          className="flex items-center gap-2 text-slate-500 font-bold mb-8 hover:text-teal-500 w-max">
+          className="flex items-center gap-2 text-slate-500 font-bold mb-8 hover:text-teal-500 w-max"
+        >
           <ArrowLeft size={16} /> Back to Schedule
         </Link>
         <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-200 dark:border-slate-800">
@@ -478,12 +484,14 @@ export default function LiveScorerPage({
               <div className="flex gap-4">
                 <button
                   onClick={() => setTossWinnerId(engine.match.team1_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossWinnerId === engine.match.team1_id ? "border-teal-500 bg-teal-500/10 text-teal-600" : "border-slate-200 text-slate-500"}`}>
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossWinnerId === engine.match.team1_id ? "border-teal-500 bg-teal-500/10 text-teal-600" : "border-slate-200 text-slate-500"}`}
+                >
                   {engine.match.team1?.name}
                 </button>
                 <button
                   onClick={() => setTossWinnerId(engine.match.team2_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossWinnerId === engine.match.team2_id ? "border-teal-500 bg-teal-500/10 text-teal-600" : "border-slate-200 text-slate-500"}`}>
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossWinnerId === engine.match.team2_id ? "border-teal-500 bg-teal-500/10 text-teal-600" : "border-slate-200 text-slate-500"}`}
+                >
                   {engine.match.team2?.name}
                 </button>
               </div>
@@ -496,12 +504,14 @@ export default function LiveScorerPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setTossDecision("bat")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossDecision === "bat" ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-500"}`}>
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossDecision === "bat" ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-500"}`}
+                  >
                     Elected to Bat
                   </button>
                   <button
                     onClick={() => setTossDecision("bowl")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossDecision === "bowl" ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-500"}`}>
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossDecision === "bowl" ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-500"}`}
+                  >
                     Elected to Bowl
                   </button>
                 </div>
@@ -512,7 +522,8 @@ export default function LiveScorerPage({
                 engine.saveTossAndStart(tossWinnerId, tossDecision)
               }
               disabled={!tossWinnerId}
-              className="w-full mt-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 disabled:opacity-50 font-black uppercase py-4 rounded-xl">
+              className="w-full mt-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 disabled:opacity-50 font-black uppercase py-4 rounded-xl"
+            >
               Start Match
             </button>
           </div>
@@ -545,7 +556,8 @@ export default function LiveScorerPage({
                   <select
                     value={setupStriker}
                     onChange={(e) => setSetupStriker(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-base font-bold">
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-base font-bold"
+                  >
                     <option value="">Select...</option>
                     {stats.battingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -561,7 +573,8 @@ export default function LiveScorerPage({
                   <select
                     value={setupNonStriker}
                     onChange={(e) => setSetupNonStriker(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-base font-bold">
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-base font-bold"
+                  >
                     <option value="">Select...</option>
                     {stats.battingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -579,7 +592,8 @@ export default function LiveScorerPage({
               <select
                 value={setupBowler}
                 onChange={(e) => setSetupBowler(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-base font-bold">
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-base font-bold"
+              >
                 <option value="">Select...</option>
                 {stats.bowlingSquad
                   .filter((p) => p.id !== engine.match.live_bowler_id)
@@ -594,7 +608,8 @@ export default function LiveScorerPage({
               onClick={() =>
                 engine.saveOpeners(setupStriker, setupNonStriker, setupBowler)
               }
-              className="w-full bg-teal-600 text-white font-black text-lg uppercase tracking-widest py-5 rounded-xl">
+              className="w-full bg-teal-600 text-white font-black text-lg uppercase tracking-widest py-5 rounded-xl"
+            >
               Play Ball
             </button>
           </div>
@@ -613,13 +628,13 @@ export default function LiveScorerPage({
             onClick={() =>
               (window.location.href = `/t/${tournamentId}/matches`)
             }
-            className="w-12 h-12 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform">
+            className="w-12 h-12 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform"
+          >
             <ArrowLeft size={20} />
           </button>
           <div>
             <h1 className="font-black text-lg md:text-2xl uppercase tracking-tight leading-none">
-              {engine.match?.team1?.name} vs{" "}
-              {engine.match?.team2?.name}
+              {engine.match?.team1?.name} vs {engine.match?.team2?.name}
             </h1>
             <p className="text-[10px] md:text-sm font-bold text-teal-500 uppercase tracking-widest mt-1">
               {engine.match?.current_innings === 1
@@ -646,7 +661,7 @@ export default function LiveScorerPage({
       {/* MAIN CONTAINER */}
       <div className="max-w-[1400px] mx-auto flex flex-col-reverse lg:flex-row gap-4">
         {/* LEFT COLUMN: THE SCORE, PITCH & FLOATING KEYPAD */}
-        <div className="flex-1 flex flex-col gap-4 lg:max-w-[50%] xl:max-w-[45%] w-full">
+        <div className="flex-1 flex flex-col gap-4 lg:max-w-[50%] xl:max-w-[40%] w-full">
           <ActivePlayers
             battingSquad={stats.battingSquad}
             bowlingSquad={stats.bowlingSquad}
@@ -676,7 +691,8 @@ export default function LiveScorerPage({
                   key={runs}
                   onClick={() => handleRecordBall(runs)}
                   disabled={engine.isSubmittingBall}
-                  className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95">
+                  className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
+                >
                   {runs}
                 </button>
               ))}
@@ -686,18 +702,21 @@ export default function LiveScorerPage({
               <button
                 onClick={() => handleRecordBall(4)}
                 disabled={engine.isSubmittingBall}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95">
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
+              >
                 4
               </button>
               <button
                 onClick={() => handleRecordBall(6)}
                 disabled={engine.isSubmittingBall}
-                className="bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all shadow-lg shadow-teal-500/20 active:scale-95">
+                className="bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all shadow-lg shadow-teal-500/20 active:scale-95"
+              >
                 6
               </button>
               <button
                 onClick={() => setShowMoreModal(true)}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95">
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95"
+              >
                 ... More Actions
               </button>
               <button
@@ -712,7 +731,8 @@ export default function LiveScorerPage({
                       : setShowPostMatchModal(true);
                   }
                 }}
-                className="items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-2xl border border-orange-200 dark:border-orange-800/30">
+                className="items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-2xl border border-orange-200 dark:border-orange-800/30"
+              >
                 <Square size={20} className="mb-1" />
                 <span className="text-[10px] font-black uppercase tracking-widest">
                   End Innings
@@ -728,7 +748,8 @@ export default function LiveScorerPage({
                   setPendingExtraType("wide");
                   setShowExtrasModal(true);
                 }}
-                className="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 border border-orange-200 dark:border-orange-500/20 text-orange-600 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all">
+                className="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 border border-orange-200 dark:border-orange-500/20 text-orange-600 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
+              >
                 WD
               </button>
               <button
@@ -736,7 +757,8 @@ export default function LiveScorerPage({
                   setPendingExtraType("no-ball");
                   setShowExtrasModal(true);
                 }}
-                className="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 border border-orange-200 dark:border-orange-500/20 text-orange-600 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all">
+                className="bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 border border-orange-200 dark:border-orange-500/20 text-orange-600 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
+              >
                 NB
               </button>
               <button
@@ -744,7 +766,8 @@ export default function LiveScorerPage({
                   setPendingExtraType("leg-bye");
                   setShowExtrasModal(true);
                 }}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 lg:border-none dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all">
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 lg:border-none dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
+              >
                 LB
               </button>
               <button
@@ -752,7 +775,8 @@ export default function LiveScorerPage({
                   setPendingExtraType("bye");
                   setShowExtrasModal(true);
                 }}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 lg:border-none dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all">
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 lg:border-none dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
+              >
                 B
               </button>
               <button
@@ -760,7 +784,8 @@ export default function LiveScorerPage({
                   setPlayerOutId(engine.match.live_striker_id);
                   setShowWicketModal(true);
                 }}
-                className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all">
+                className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+              >
                 OUT
               </button>
             </div>
@@ -775,7 +800,7 @@ export default function LiveScorerPage({
         </div>
 
         {/* RIGHT COLUMN: TABS & SCORECARD */}
-        <div className="flex-1 w-full lg:max-w-[50%] xl:max-w-[55%]">
+        <div className="flex-1 w-full lg:max-w-[50%] xl:max-w-[60%]">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="flex overflow-x-auto border-b border-slate-100 dark:border-slate-800 p-2 gap-2 hide-scrollbar">
               {[
@@ -788,7 +813,8 @@ export default function LiveScorerPage({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-5 py-3 rounded-xl text-sm font-black uppercase whitespace-nowrap transition-all shrink-0 ${activeTab === tab.id ? "bg-teal-50 dark:bg-teal-900/20 text-teal-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}>
+                  className={`px-5 py-3 rounded-xl text-sm font-black uppercase whitespace-nowrap transition-all shrink-0 ${activeTab === tab.id ? "bg-teal-50 dark:bg-teal-900/20 text-teal-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}
+                >
                   {tab.label}
                 </button>
               ))}
@@ -820,45 +846,9 @@ export default function LiveScorerPage({
                 />
               )}
               {/* Placeholders */}
-              {activeTab === "commentary" && (
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
-                    🎙️
-                  </div>
-                  <h3 className="font-black text-slate-400 uppercase tracking-widest text-lg">
-                    Live Commentary
-                  </h3>
-                  <p className="text-base font-bold text-slate-500 mt-2">
-                    Ball-by-ball feed coming soon...
-                  </p>
-                </div>
-              )}
-              {activeTab === "predictor" && (
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
-                    📊
-                  </div>
-                  <h3 className="font-black text-slate-400 uppercase tracking-widest text-lg">
-                    Team Analysis
-                  </h3>
-                  <p className="text-base font-bold text-slate-500 mt-2">
-                    Win probability and wagon wheels coming soon...
-                  </p>
-                </div>
-              )}
-              {activeTab === "info" && (
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
-                    ℹ️
-                  </div>
-                  <h3 className="font-black text-slate-400 uppercase tracking-widest text-lg">
-                    Match Information
-                  </h3>
-                  <p className="text-base font-bold text-slate-500 mt-2">
-                    Toss, Umpires, and Ground info coming soon...
-                  </p>
-                </div>
-              )}
+              {activeTab === "commentary" && <Commentary />}
+              {activeTab === "predictor" && <Predictor />}
+              {activeTab === "info" && <Info />}
             </div>
           </div>
         </div>
@@ -883,7 +873,8 @@ export default function LiveScorerPage({
                     <button
                       key={p.id}
                       onClick={() => setSelectedNewBowlerId(p.id)}
-                      className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg ${selectedNewBowlerId === p.id ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400" : "border-slate-100 dark:border-slate-800"}`}>
+                      className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg ${selectedNewBowlerId === p.id ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400" : "border-slate-100 dark:border-slate-800"}`}
+                    >
                       <span>{p.full_name}</span>
                     </button>
                   ))}
@@ -895,7 +886,8 @@ export default function LiveScorerPage({
                   setSelectedNewBowlerId("");
                 }}
                 disabled={!selectedNewBowlerId}
-                className="w-full mt-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black py-5 rounded-2xl disabled:opacity-30 text-lg">
+                className="w-full mt-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black py-5 rounded-2xl disabled:opacity-30 text-lg"
+              >
                 Confirm Bowler
               </button>
             </div>
@@ -923,7 +915,8 @@ export default function LiveScorerPage({
                     <button
                       key={id}
                       onClick={() => setPlayerOutId(id)}
-                      className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm ${playerOutId === id ? "border-red-500 bg-red-50 dark:bg-red-900/10 text-red-600" : "border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300"}`}>
+                      className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm ${playerOutId === id ? "border-red-500 bg-red-50 dark:bg-red-900/10 text-red-600" : "border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300"}`}
+                    >
                       {stats.battingSquad.find((p) => p.id === id)?.full_name}
                     </button>
                   ))}
@@ -936,7 +929,8 @@ export default function LiveScorerPage({
                 <select
                   value={wicketType}
                   onChange={(e) => setWicketType(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold">
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold"
+                >
                   <option value="bowled">Bowled</option>
                   <option value="caught">Caught</option>
                   <option value="lbw">LBW</option>
@@ -952,7 +946,8 @@ export default function LiveScorerPage({
                   <select
                     value={fielderId}
                     onChange={(e) => setFielderId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold">
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold"
+                  >
                     <option value="">Select Fielder...</option>
                     {stats.bowlingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -969,7 +964,8 @@ export default function LiveScorerPage({
                 <select
                   value={newBatsmanId}
                   onChange={(e) => setNewBatsmanId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold">
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold"
+                >
                   <option value="">Select New Batsman...</option>
                   {stats.battingSquad
                     .filter(
@@ -987,7 +983,8 @@ export default function LiveScorerPage({
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <button
                     onClick={() => setShowQuickAddPlayer(true)}
-                    className="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl text-xs font-black uppercase">
+                    className="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl text-xs font-black uppercase"
+                  >
                     + Add Extra Player to Squad
                   </button>
                 </div>
@@ -1004,7 +1001,8 @@ export default function LiveScorerPage({
                   />
                   <label
                     htmlFor="wicketExtra"
-                    className="text-sm font-black text-orange-600 uppercase">
+                    className="text-sm font-black text-orange-600 uppercase"
+                  >
                     Wicket on an Extra?
                   </label>
                 </div>
@@ -1018,7 +1016,8 @@ export default function LiveScorerPage({
                             setWicketExtraType(ext as any);
                             setForceLegalBall(false);
                           }}
-                          className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 uppercase ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}>
+                          className={`flex-1 py-3 text-xs font-bold rounded-xl border-2 uppercase ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                        >
                           {ext.replace("-", " ")}
                         </button>
                       ))}
@@ -1035,7 +1034,8 @@ export default function LiveScorerPage({
                         />
                         <label
                           htmlFor="forceLegal"
-                          className="text-sm font-bold text-slate-600 dark:text-slate-400">
+                          className="text-sm font-bold text-slate-600 dark:text-slate-400"
+                        >
                           Count this as a legal delivery?
                         </label>
                       </div>
@@ -1049,7 +1049,8 @@ export default function LiveScorerPage({
                           <button
                             key={num}
                             onClick={() => setWicketExtraRuns(num)}
-                            className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}>
+                            className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                          >
                             +{num}
                           </button>
                         ))}
@@ -1061,13 +1062,15 @@ export default function LiveScorerPage({
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setShowWicketModal(false)}
-                  className="flex-1 py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg">
+                  className="flex-1 py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg"
+                >
                   Cancel
                 </button>
                 <button
                   onClick={submitWicket}
                   disabled={!newBatsmanId || engine.isSubmittingBall}
-                  className="flex-[2] bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest">
+                  className="flex-[2] bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest"
+                >
                   Confirm OUT
                 </button>
               </div>
@@ -1091,7 +1094,8 @@ export default function LiveScorerPage({
                 <button
                   key={num}
                   onClick={() => setExtraAdditionalRuns(num)}
-                  className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}>
+                  className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}
+                >
                   {num}
                 </button>
               ))}
@@ -1099,12 +1103,14 @@ export default function LiveScorerPage({
             <div className="flex gap-4">
               <button
                 onClick={() => setShowExtrasModal(false)}
-                className="flex-1 py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg">
+                className="flex-1 py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg"
+              >
                 Cancel
               </button>
               <button
                 onClick={submitExtra}
-                className="flex-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest">
+                className="flex-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest"
+              >
                 Confirm
               </button>
             </div>
@@ -1146,7 +1152,8 @@ export default function LiveScorerPage({
               </div> */}
               <button
                 onClick={() => setEditingBall(null)}
-                className="w-full py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg">
+                className="w-full py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg"
+              >
                 Cancel
               </button>
             </div>
@@ -1184,13 +1191,15 @@ export default function LiveScorerPage({
             {engine.match.current_innings === 1 ? (
               <button
                 onClick={engine.startSecondInnings}
-                className="w-full bg-teal-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-teal-400 transition-colors shadow-lg shadow-teal-500/20">
+                className="w-full bg-teal-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-teal-400 transition-colors shadow-lg shadow-teal-500/20"
+              >
                 START 2ND INNINGS
               </button>
             ) : (
               <button
                 onClick={() => setShowPostMatchModal(true)} // <-- THIS IS THE FIX! Opens the awards modal.
-                className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20">
+                className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
+              >
                 POST-MATCH AWARDS 🏆
               </button>
             )}
@@ -1218,7 +1227,8 @@ export default function LiveScorerPage({
                       live_striker_id: e.target.value,
                     })
                   }
-                  className="w-full p-4 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-base">
+                  className="w-full p-4 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-base"
+                >
                   {stats.battingSquad.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.full_name}
@@ -1238,7 +1248,8 @@ export default function LiveScorerPage({
                       live_non_striker_id: e.target.value,
                     })
                   }
-                  className="w-full p-4 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-base">
+                  className="w-full p-4 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-base"
+                >
                   {stats.battingSquad.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.full_name}
@@ -1258,7 +1269,8 @@ export default function LiveScorerPage({
                       live_bowler_id: e.target.value,
                     })
                   }
-                  className="w-full p-4 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-base">
+                  className="w-full p-4 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-base"
+                >
                   {stats.bowlingSquad.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.full_name}
@@ -1273,7 +1285,8 @@ export default function LiveScorerPage({
                   setShowEditPlayersModal(false);
                   engine.fetchMatchData();
                 }}
-                className="flex-1 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 py-5 rounded-2xl text-lg">
+                className="flex-1 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 py-5 rounded-2xl text-lg"
+              >
                 Cancel
               </button>
               <button
@@ -1285,7 +1298,8 @@ export default function LiveScorerPage({
                   );
                   setShowEditPlayersModal(false);
                 }}
-                className="flex-[2] bg-teal-500 hover:bg-teal-600 text-white font-black uppercase tracking-widest py-5 rounded-2xl text-lg">
+                className="flex-[2] bg-teal-500 hover:bg-teal-600 text-white font-black uppercase tracking-widest py-5 rounded-2xl text-lg"
+              >
                 Save Changes
               </button>
             </div>
@@ -1311,7 +1325,8 @@ export default function LiveScorerPage({
                     onClick={() =>
                       setTempOversLimit(Math.max(1, tempOversLimit - 1))
                     }
-                    className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 transition-colors">
+                    className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 transition-colors"
+                  >
                     -
                   </button>
                   <span className="text-5xl font-black w-24 text-center">
@@ -1319,7 +1334,8 @@ export default function LiveScorerPage({
                   </span>
                   <button
                     onClick={() => setTempOversLimit(tempOversLimit + 1)}
-                    className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 transition-colors">
+                    className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 transition-colors"
+                  >
                     +
                   </button>
                 </div>
@@ -1337,7 +1353,8 @@ export default function LiveScorerPage({
                         Math.max(1, tempMaxOversPerBowler - 1),
                       )
                     }
-                    className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-xl hover:bg-slate-200 transition-colors">
+                    className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-xl hover:bg-slate-200 transition-colors"
+                  >
                     -
                   </button>
                   <span className="text-3xl font-black w-16 text-center">
@@ -1347,7 +1364,8 @@ export default function LiveScorerPage({
                     onClick={() =>
                       setTempMaxOversPerBowler(tempMaxOversPerBowler + 1)
                     }
-                    className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-xl hover:bg-slate-200 transition-colors">
+                    className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-xl hover:bg-slate-200 transition-colors"
+                  >
                     +
                   </button>
                 </div>
@@ -1364,7 +1382,8 @@ export default function LiveScorerPage({
                       onClick={() =>
                         setTempTargetScore((tempTargetScore || 0) - 1)
                       }
-                      className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-2xl">
+                      className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-2xl"
+                    >
                       -
                     </button>
                     <span className="text-4xl font-black w-24 text-center text-orange-600">
@@ -1374,7 +1393,8 @@ export default function LiveScorerPage({
                       onClick={() =>
                         setTempTargetScore((tempTargetScore || 0) + 1)
                       }
-                      className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-2xl">
+                      className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 font-black text-2xl"
+                    >
                       +
                     </button>
                   </div>
@@ -1388,7 +1408,8 @@ export default function LiveScorerPage({
             <div className="flex gap-4">
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className="flex-1 py-5 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg">
+                className="flex-1 py-5 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg"
+              >
                 Cancel
               </button>
               <button
@@ -1402,7 +1423,8 @@ export default function LiveScorerPage({
                   );
                   setShowSettingsModal(false);
                 }}
-                className="flex-[2] bg-teal-500 hover:bg-teal-600 text-white font-black uppercase py-5 rounded-2xl text-lg tracking-widest">
+                className="flex-[2] bg-teal-500 hover:bg-teal-600 text-white font-black uppercase py-5 rounded-2xl text-lg tracking-widest"
+              >
                 Save
               </button>
             </div>
@@ -1434,7 +1456,8 @@ export default function LiveScorerPage({
                         setMoreActionType(type.id as any);
                         setCustomRuns(type.id === "penalty" ? 5 : 5);
                       }}
-                      className={`py-4 text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === type.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}>
+                      className={`py-4 text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === type.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                    >
                       {type.label}
                     </button>
                   ))}
@@ -1448,7 +1471,8 @@ export default function LiveScorerPage({
                   <div className="flex items-center justify-center gap-4">
                     <button
                       onClick={() => setCustomRuns(Math.max(1, customRuns - 1))}
-                      className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 dark:hover:bg-slate-700">
+                      className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 dark:hover:bg-slate-700"
+                    >
                       -
                     </button>
                     <input
@@ -1463,7 +1487,8 @@ export default function LiveScorerPage({
                     />
                     <button
                       onClick={() => setCustomRuns(customRuns + 1)}
-                      className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 dark:hover:bg-slate-700">
+                      className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 font-black text-2xl hover:bg-slate-200 dark:hover:bg-slate-700"
+                    >
                       +
                     </button>
                   </div>
@@ -1473,13 +1498,15 @@ export default function LiveScorerPage({
             <div className="flex gap-4">
               <button
                 onClick={() => setShowMoreModal(false)}
-                className="flex-1 py-5 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-lg">
+                className="flex-1 py-5 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-lg"
+              >
                 Cancel
               </button>
               <button
                 onClick={submitMoreAction}
                 disabled={engine.isSubmittingBall}
-                className="flex-[2] bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-5 rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 text-lg">
+                className="flex-[2] bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-5 rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 text-lg"
+              >
                 Submit Action
               </button>
             </div>
@@ -1518,7 +1545,8 @@ export default function LiveScorerPage({
               />
               <label
                 htmlFor="strictMom"
-                className="text-xs font-black text-yellow-700 dark:text-yellow-500 uppercase tracking-widest leading-tight">
+                className="text-xs font-black text-yellow-700 dark:text-yellow-500 uppercase tracking-widest leading-tight"
+              >
                 MOM must be from the winning team
               </label>
             </div>
@@ -1531,7 +1559,8 @@ export default function LiveScorerPage({
                 <select
                   value={momId}
                   onChange={(e) => setMomId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold">
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold"
+                >
                   <option value="">Select Player...</option>
                   {[...engine.team1Players, ...engine.team2Players].map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1552,7 +1581,8 @@ export default function LiveScorerPage({
                 <select
                   value={bestBatsmanId}
                   onChange={(e) => setBestBatsmanId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold">
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold"
+                >
                   <option value="">Select Player...</option>
                   {[...engine.team1Players, ...engine.team2Players].map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1569,7 +1599,8 @@ export default function LiveScorerPage({
                 <select
                   value={bestBowlerId}
                   onChange={(e) => setBestBowlerId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold">
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-base font-bold"
+                >
                   <option value="">Select Player...</option>
                   {[...engine.team1Players, ...engine.team2Players].map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1582,7 +1613,8 @@ export default function LiveScorerPage({
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setShowPostMatchModal(false)}
-                  className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                  className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl"
+                >
                   Cancel
                 </button>
                 <button
@@ -1604,7 +1636,8 @@ export default function LiveScorerPage({
                       bestBowlerId,
                     );
                   }}
-                  className="flex-[2] bg-yellow-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20">
+                  className="flex-[2] bg-yellow-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20"
+                >
                   Save & Complete
                 </button>
               </div>
@@ -1634,12 +1667,14 @@ export default function LiveScorerPage({
             <div className="flex gap-4">
               <button
                 onClick={() => setShowQuickAddPlayer(false)}
-                className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl"
+              >
                 Cancel
               </button>
               <button
                 onClick={handleQuickAddPlayer}
-                className="flex-[2] bg-teal-500 text-white font-black uppercase py-4 rounded-2xl">
+                className="flex-[2] bg-teal-500 text-white font-black uppercase py-4 rounded-2xl"
+              >
                 Add Player
               </button>
             </div>

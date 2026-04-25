@@ -177,24 +177,22 @@ export default function ScoreTicker({
   // 3. ROCK-SOLID DATA PIPELINE (Deriving Score from Deliveries)
   const isFirstInnings = Number(liveMatch.current_innings) === 1;
 
-  let team1IsBattingNow = true;
+  // 🔥 FIX: Definitive Team Determination using Toss Data
+  let team1BatsFirst = true; // Safe fallback
+  if (liveMatch.toss_winner_id === liveMatch.team1_id) {
+    team1BatsFirst = liveMatch.toss_decision === "bat";
+  } else if (liveMatch.toss_winner_id === liveMatch.team2_id) {
+    team1BatsFirst = liveMatch.toss_decision === "bowl";
+  }
+
+  // If it's the 1st innings, the team that bats first is batting now. If 2nd innings, flip it.
+  const team1IsBattingNow = isFirstInnings ? team1BatsFirst : !team1BatsFirst;
+
   const inningsRuns = deliveries.reduce(
     (acc, d) =>
       acc + (Number(d.runs_off_bat) || 0) + (Number(d.extras_runs) || 0),
     0,
   );
-
-  if (isFirstInnings) {
-    const t1HasData =
-      Number(liveMatch.team1_runs) > 0 || Number(liveMatch.team1_balls) > 0;
-    const t2HasData =
-      Number(liveMatch.team2_runs) > 0 || Number(liveMatch.team2_balls) > 0;
-    team1IsBattingNow = t2HasData && !t1HasData ? false : true;
-  } else {
-    const diff1 = Math.abs((Number(liveMatch.team1_runs) || 0) - inningsRuns);
-    const diff2 = Math.abs((Number(liveMatch.team2_runs) || 0) - inningsRuns);
-    team1IsBattingNow = diff1 < diff2;
-  }
 
   const score = inningsRuns;
   const wickets = deliveries.filter((d) => d.is_wicket).length;
@@ -343,7 +341,8 @@ export default function ScoreTicker({
         <div
           className={`absolute inset-0 z-[60] flex items-center justify-center transition-all duration-500
             ${eventTrigger ? "opacity-100 scale-100" : "opacity-0 scale-125 pointer-events-none"}
-          `}>
+          `}
+        >
           <div
             className={`absolute inset-0 blur-2xl opacity-70
               ${
@@ -368,7 +367,8 @@ export default function ScoreTicker({
                   ? "text-amber-300 drop-shadow-[0_0_40px_#fbbf24]"
                   : "text-emerald-300 drop-shadow-[0_0_40px_#10b981]"
             }
-            animate-bounce`}>
+            animate-bounce`}
+          >
             {eventTrigger === "WICKET"
               ? "WICKET!"
               : eventTrigger === "SIX"
@@ -425,7 +425,8 @@ export default function ScoreTicker({
               rgba(10, 10, 15, 0.98) 60%,
               ${bowlingColor} 82%,
               ${bowlingColor} 100%)`,
-          }}>
+          }}
+        >
           <div
             className="absolute inset-y-0 left-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
@@ -462,7 +463,8 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : "text-white"}`}>
+                  className={`min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : "text-white"}`}
+                >
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -615,7 +617,8 @@ export default function ScoreTicker({
                       style={{
                         animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}>
+                      }}
+                    >
                       {bText}
                     </div>
                   );
