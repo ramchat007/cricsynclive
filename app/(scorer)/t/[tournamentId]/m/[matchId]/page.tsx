@@ -92,7 +92,89 @@ export default function LiveScorerPage({
     engine.team2Players,
   );
 
-  // 🤖 --- AI COMMENTARY BACKGROUND WATCHER --- 🤖
+  // 🏏 --- PREDEFINED SLANGS DICTIONARY --- 🏏
+  const COMMENTARY_SLANGS: any = {
+    SIX: [
+      "High and handsome! {batter} clears the ropes for a massive SIX! 🔥",
+      "Smoked it! That is out of the park from {batter}!",
+    ],
+    FOUR: [
+      "Shot of a boss! {batter} finds the gap perfectly for FOUR! 🎯",
+      "Raced away to the boundary! Exquisite timing.",
+    ],
+    WICKET: [
+      "Got him! {bowler} strikes! Huge breakthrough! ☝️ ({dismissal})",
+      "Timber! The stumps are in a mess! {batter} has to walk back. ({dismissal})",
+    ],
+    DOT: [
+      "Solid defense from {batter}. No run.",
+      "Pushed straight to the fielder. Dot ball.",
+      "Beaten! Good pace and carry from {bowler}.",
+    ],
+    RUNS: [
+      "Tucked away nicely by {batter} for {runs} run(s).",
+      "Good running between the wickets, they scramble for {runs}.",
+    ],
+    WIDE: [
+      "Wayward from {bowler}. Umpire stretches his arms for a Wide.",
+      "Lost his radar there, slipping it down the leg side. Wide called.",
+    ],
+    NO_BALL: [
+      "Oh no, he's overstepped! No Ball called. Free hit coming up!",
+      "Siren goes off! {bowler} crosses the line. No Ball.",
+    ],
+  };
+
+  const getFallbackCommentary = (
+    ball: {
+      runs_off_bat: any;
+      is_wicket: any;
+      extras_type: any;
+      wicket_type: any;
+    },
+    batterName: string,
+    bowlerName: string,
+  ) => {
+    let msg = "";
+    const batter = batterName.split(" ").pop();
+    const bowler = bowlerName.split(" ").pop();
+    const runs = Number(ball.runs_off_bat) || 0;
+    const isWicket = ball.is_wicket;
+    const eTypeCode = (ball.extras_type || "").toLowerCase();
+
+    const getRandom = (cat: string) =>
+      COMMENTARY_SLANGS[cat][
+        Math.floor(Math.random() * COMMENTARY_SLANGS[cat].length)
+      ];
+
+    if (isWicket) {
+      msg = getRandom("WICKET")
+        .replace("{bowler}", bowler)
+        .replace("{batter}", batter)
+        .replace("{dismissal}", (ball.wicket_type || "OUT").toUpperCase());
+      if (runs > 0) msg += ` Batters completed ${runs} run(s).`;
+      return msg;
+    }
+    if (eTypeCode === "nb" || eTypeCode === "no-ball") {
+      msg = getRandom("NO_BALL").replace("{bowler}", bowler);
+      if (runs > 0) msg += ` Plus they scramble for ${runs} off the bat!`;
+      return msg;
+    }
+    if (eTypeCode === "wd" || eTypeCode === "wide")
+      return getRandom("WIDE").replace("{bowler}", bowler);
+    if (runs === 6) return getRandom("SIX").replace("{batter}", batter);
+    if (runs === 4) return getRandom("FOUR").replace("{batter}", batter);
+    if (runs === 0)
+      return getRandom("DOT")
+        .replace("{batter}", batter)
+        .replace("{bowler}", bowler);
+
+    return getRandom("RUNS")
+      .replace("{batter}", batter)
+      .replace("{runs}", runs);
+  };
+
+  // 🤖 --- HYBRID COMMENTARY BACKGROUND WATCHER --- 🤖
   const processingBalls = useRef(new Set());
 
   useEffect(() => {
@@ -100,20 +182,28 @@ export default function LiveScorerPage({
 
     // Grab the most recently bowled ball
     const latestBall = engine.deliveries[engine.deliveries.length - 1];
-    
-    // Only trigger Gemini for Boundaries and Wickets
-    const isMajorEvent = latestBall.is_wicket || Number(latestBall.runs_off_bat) >= 4;
 
-    // If it's major, doesn't have AI text yet, and we aren't already processing it...
-    if (isMajorEvent && !latestBall.ai_commentary && !processingBalls.current.has(latestBall.id)) {
-      
-      processingBalls.current.add(latestBall.id); // Lock it so we don't spam the API
+    // If it already has commentary, or we are currently processing it, skip!
+    if (latestBall.ai_commentary || processingBalls.current.has(latestBall.id))
+      return;
 
-      const generateAndSaveAI = async () => {
-        try {
-          const batterName = stats.battingSquad.find((p) => p.id === latestBall.striker_id)?.full_name || "Batter";
-          const bowlerName = stats.bowlingSquad.find((p) => p.id === latestBall.bowler_id)?.full_name || "Bowler";
+    processingBalls.current.add(latestBall.id); // Lock it
 
+    const generateAndSaveCommentary = async () => {
+      try {
+        const batterName =
+          stats.battingSquad.find((p) => p.id === latestBall.striker_id)
+            ?.full_name || "Batter";
+        const bowlerName =
+          stats.bowlingSquad.find((p) => p.id === latestBall.bowler_id)
+            ?.full_name || "Bowler";
+
+        const isMajorEvent =
+          latestBall.is_wicket || Number(latestBall.runs_off_bat) >= 4;
+        let finalCommentaryText = "";
+
+        if (isMajorEvent) {
+          // 1. Try Gemini for Major Events (Boundaries & Wickets)
           const ballContext = {
             bowler: bowlerName.split(" ").pop(),
             batter: batterName.split(" ").pop(),
@@ -122,29 +212,33 @@ export default function LiveScorerPage({
             extras: latestBall.extras_type,
             matchSituation: `Innings ${engine.match.current_innings}`,
           };
-
-          // 1. Fetch from Gemini
-          const aiText = await fetchAICommentary(ballContext);
-
-          // 2. Save to Supabase seamlessly
-          if (aiText) {
-            await supabase
-              .from("deliveries")
-              .update({ ai_commentary: aiText })
-              .eq("id", latestBall.id);
-          }
-        } catch (err) {
-          console.error("Failed to save AI commentary:", err);
-          processingBalls.current.delete(latestBall.id); // Unlock on failure so it can retry
+          finalCommentaryText = await fetchAICommentary(ballContext)  || "";
         }
-      };
 
-      generateAndSaveAI();
-    }
+        // 2. If it's a standard ball (or if Gemini API failed), generate local slang!
+        if (!finalCommentaryText) {
+          finalCommentaryText = getFallbackCommentary(
+            latestBall,
+            batterName,
+            bowlerName,
+          );
+        }
+
+        // 3. Save to Supabase
+        if (finalCommentaryText) {
+          await supabase
+            .from("deliveries")
+            .update({ ai_commentary: finalCommentaryText })
+            .eq("id", latestBall.id);
+        }
+      } catch (err) {
+        console.error("Failed to save commentary:", err);
+        processingBalls.current.delete(latestBall.id); // Unlock on failure so it can retry
+      }
+    };
+
+    generateAndSaveCommentary();
   }, [engine.deliveries, stats, engine.match?.current_innings]);
-  // ------------------------------------------------
-
-
 
   useEffect(() => {
     if (engine.match) {
@@ -901,7 +995,14 @@ export default function LiveScorerPage({
                 />
               )}
               {/* Placeholders */}
-              {activeTab === "commentary" && <Commentary />}
+              {activeTab === "commentary" && (
+                <Commentary
+                  match={engine.match}
+                  deliveries={engine.deliveries}
+                  battingSquad={stats.battingSquad}
+                  bowlingSquad={stats.bowlingSquad}
+                />
+              )}
               {activeTab === "predictor" && <Predictor />}
               {activeTab === "info" && <Info />}
             </div>

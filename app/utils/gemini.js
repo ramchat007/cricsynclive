@@ -12,7 +12,7 @@ export const fetchAICommentary = async (ballContext) => {
 
   try {
     // 2. UPGRADED TO FAST REAL-TIME MODEL
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const prompt = `
       Write a 1-sentence cricket commentary.
@@ -36,7 +36,7 @@ export const fetchMatchAnalysis = async (matchData, inningData) => {
   if (!genAI) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const currentInningIndex = matchData.currentInnings || 0;
     let contextPrompt = "";
