@@ -15,8 +15,11 @@ export default function ObsReceiver({
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const signalingChannelRef = useRef<any>(null);
+
+  // 🔥 FIX: Track specific channels to safely close them
+  const sigChannelRef = useRef<any>(null);
   const dbChannelRef = useRef<any>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
 
   const [matchId, setMatchId] = useState<string | null>(null);
   const [camParam, setCamParam] = useState<string | null>(null);
@@ -61,8 +64,12 @@ export default function ObsReceiver({
     if (!matchId || !camParam) return;
     let hasJoined = false;
     const connectionId = `${matchId}_${camParam}`;
+    pendingCandidatesRef.current = [];
 
-    supabase.removeAllChannels();
+    // Clean up any old specific channels before creating new ones
+    if (sigChannelRef.current) supabase.removeChannel(sigChannelRef.current);
+    if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
+
     const pc = new RTCPeerConnection(ICE_SERVERS);
     peerConnectionRef.current = pc;
     const remoteStream = new MediaStream();
@@ -95,19 +102,55 @@ export default function ObsReceiver({
     const signalingChannel = supabase.channel(
       `webrtc_broadcast_${connectionId}`,
     );
-    signalingChannelRef.current = signalingChannel;
+    sigChannelRef.current = signalingChannel;
+
+    let isSubscribed = false;
+    let pendingOutboundCandidates: any[] = [];
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        if (isSubscribed)
+          signalingChannel.send({
+            type: "broadcast",
+            event: "candidate",
+            payload: { candidate: event.candidate },
+          });
+        else pendingOutboundCandidates.push(event.candidate);
+      }
+    };
 
     signalingChannel
+      .on("broadcast", { event: "candidate" }, (message) => {
+        if (message.payload.candidate) {
+          if (pc.remoteDescription)
+            pc.addIceCandidate(
+              new RTCIceCandidate(message.payload.candidate),
+            ).catch(() => {});
+          else pendingCandidatesRef.current.push(message.payload.candidate);
+        }
+      })
       .on("broadcast", { event: "sync_state" }, (message) => {
         if (message.payload.capabilities)
           setCamCapabilities(message.payload.capabilities);
         if (message.payload.zoom) setRemoteZoom(message.payload.zoom);
         if (message.payload.torch !== undefined)
           setRemoteTorch(message.payload.torch);
-      })
-      .subscribe();
+      });
 
-    // 🔥 THE FIX: NON-TRICKLE WEBRTC FOR OBS 🔥
+    signalingChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        isSubscribed = true;
+        pendingOutboundCandidates.forEach((c) =>
+          signalingChannel.send({
+            type: "broadcast",
+            event: "candidate",
+            payload: { candidate: c },
+          }),
+        );
+        pendingOutboundCandidates = [];
+      }
+    });
+
     const processOffer = async (offerStr: any) => {
       if (!offerStr || hasJoined) return;
       hasJoined = true;
@@ -116,36 +159,27 @@ export default function ObsReceiver({
         const offer =
           typeof offerStr === "string" ? JSON.parse(offerStr) : offerStr;
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+        // Drain ICE queue
+        pendingCandidatesRef.current.forEach((c) =>
+          pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}),
+        );
+        pendingCandidatesRef.current = [];
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        // Wait for all ICE candidates to gather locally
-        await new Promise<void>((resolve) => {
-          if (pc.iceGatheringState === "complete") resolve();
-          else {
-            const checkState = () => {
-              if (pc.iceGatheringState === "complete") {
-                pc.removeEventListener("icegatheringstatechange", checkState);
-                resolve();
-              }
-            };
-            pc.addEventListener("icegatheringstatechange", checkState);
-            setTimeout(resolve, 2000);
-          }
-        });
-
-        // Send complete answer
-        const { error: dbError } = await supabase
+        await supabase
           .from("webrtc_signals")
           .update({ answer: JSON.parse(JSON.stringify(pc.localDescription)) })
           .eq("match_id", connectionId);
-        if (dbError) throw new Error(dbError.message);
       } catch (err: any) {
         setError(`Handshake failed: ${err.message}`);
         hasJoined = false;
       }
     };
 
+    // 1. Check if offer already exists
     supabase
       .from("webrtc_signals")
       .select("offer")
@@ -155,6 +189,7 @@ export default function ObsReceiver({
         if (data?.offer) processOffer(data.offer);
       });
 
+    // 2. Listen for DB changes
     const dbChannel = supabase.channel(
       `webrtc_db_obs_${connectionId}_${Date.now()}`,
     );
@@ -181,9 +216,11 @@ export default function ObsReceiver({
       )
       .subscribe();
 
+    // 🔥 FIX: Clean up EXACT channels, not the global instance
     return () => {
       pc.close();
-      supabase.removeAllChannels();
+      if (sigChannelRef.current) supabase.removeChannel(sigChannelRef.current);
+      if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
     };
   }, [matchId, camParam]);
 
@@ -196,8 +233,8 @@ export default function ObsReceiver({
   };
 
   const sendCommand = (type: string, value: any) => {
-    if (signalingChannelRef.current)
-      signalingChannelRef.current.send({
+    if (sigChannelRef.current)
+      sigChannelRef.current.send({
         type: "broadcast",
         event: "ptz_command",
         payload: { type, value, timestamp: Date.now() },

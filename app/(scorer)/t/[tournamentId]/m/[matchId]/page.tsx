@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef } from "react"; // <-- Added useRef
+import { fetchAICommentary } from "../../../../../utils/gemini";
 import Link from "next/link";
 import { ArrowLeft, Coins, Settings, RotateCcw, Square } from "lucide-react";
 
@@ -90,6 +91,60 @@ export default function LiveScorerPage({
     engine.team1Players,
     engine.team2Players,
   );
+
+  // 🤖 --- AI COMMENTARY BACKGROUND WATCHER --- 🤖
+  const processingBalls = useRef(new Set());
+
+  useEffect(() => {
+    if (!engine.deliveries || engine.deliveries.length === 0 || !stats) return;
+
+    // Grab the most recently bowled ball
+    const latestBall = engine.deliveries[engine.deliveries.length - 1];
+    
+    // Only trigger Gemini for Boundaries and Wickets
+    const isMajorEvent = latestBall.is_wicket || Number(latestBall.runs_off_bat) >= 4;
+
+    // If it's major, doesn't have AI text yet, and we aren't already processing it...
+    if (isMajorEvent && !latestBall.ai_commentary && !processingBalls.current.has(latestBall.id)) {
+      
+      processingBalls.current.add(latestBall.id); // Lock it so we don't spam the API
+
+      const generateAndSaveAI = async () => {
+        try {
+          const batterName = stats.battingSquad.find((p) => p.id === latestBall.striker_id)?.full_name || "Batter";
+          const bowlerName = stats.bowlingSquad.find((p) => p.id === latestBall.bowler_id)?.full_name || "Bowler";
+
+          const ballContext = {
+            bowler: bowlerName.split(" ").pop(),
+            batter: batterName.split(" ").pop(),
+            runs: latestBall.runs_off_bat,
+            isWicket: latestBall.is_wicket,
+            extras: latestBall.extras_type,
+            matchSituation: `Innings ${engine.match.current_innings}`,
+          };
+
+          // 1. Fetch from Gemini
+          const aiText = await fetchAICommentary(ballContext);
+
+          // 2. Save to Supabase seamlessly
+          if (aiText) {
+            await supabase
+              .from("deliveries")
+              .update({ ai_commentary: aiText })
+              .eq("id", latestBall.id);
+          }
+        } catch (err) {
+          console.error("Failed to save AI commentary:", err);
+          processingBalls.current.delete(latestBall.id); // Unlock on failure so it can retry
+        }
+      };
+
+      generateAndSaveAI();
+    }
+  }, [engine.deliveries, stats, engine.match?.current_innings]);
+  // ------------------------------------------------
+
+
 
   useEffect(() => {
     if (engine.match) {
