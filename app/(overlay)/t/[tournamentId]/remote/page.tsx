@@ -41,8 +41,10 @@ export default function RemoteControl({
   const [remoteExposure, setRemoteExposure] = useState(0);
   const [isLive, setIsLive] = useState(false);
 
+  // 🔥 FIX: Track specific channels safely
   const signalingChannelRef = useRef<any>(null);
   const dbChannelRef = useRef<any>(null);
+
   const remoteZoomRef = useRef(1);
   const lastZoomTime = useRef(0);
   const lastExposureTime = useRef(0);
@@ -77,6 +79,11 @@ export default function RemoteControl({
 
     const connectionId = `${matchId}_${camParam}`;
 
+    // Clean old channels
+    if (signalingChannelRef.current)
+      supabase.removeChannel(signalingChannelRef.current);
+    if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
+
     supabase
       .from("webrtc_signals")
       .select("status")
@@ -106,7 +113,6 @@ export default function RemoteControl({
       if (data.oled !== undefined) setRemoteOled(data.oled);
     });
 
-    // 🔥 FIX: RESTORED TELEMETRY LISTENER 🔥
     channel.on("broadcast", { event: "telemetry" }, (message) => {
       setDeviceHealth(message.payload);
     });
@@ -137,8 +143,11 @@ export default function RemoteControl({
 
     dbChannelRef.current = dbSub;
 
+    // 🔥 FIX: Clean up EXACT channels
     return () => {
-      supabase.removeAllChannels();
+      if (signalingChannelRef.current)
+        supabase.removeChannel(signalingChannelRef.current);
+      if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
     };
   }, [matchId, camParam]);
 
@@ -302,7 +311,6 @@ export default function RemoteControl({
           </div>
         </div>
 
-        {/* 🔥 RESTORED V1 TELEMETRY UI 🔥 */}
         {deviceHealth ? (
           <>
             <div className="flex justify-between bg-gray-950 rounded-xl border border-gray-800 p-3 mb-2">
@@ -360,7 +368,8 @@ export default function RemoteControl({
               <Info size={16} className={`mt-0.5 shrink-0 ${networkColor}`} />
               <div>
                 <p
-                  className={`text-xs font-black tracking-widest uppercase mb-1 ${networkColor}`}>
+                  className={`text-xs font-black tracking-widest uppercase mb-1 ${networkColor}`}
+                >
                   {networkStatus}
                 </p>
                 <p className="text-[10px] text-gray-400 leading-relaxed">
@@ -379,20 +388,23 @@ export default function RemoteControl({
           <div className="md:col-span-4 space-y-4 flex flex-col">
             <button
               onClick={toggleRemoteMute}
-              className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-lg ${remoteMuted ? "bg-red-500/20 text-red-500 border-red-500/50" : "bg-gray-950 text-emerald-500 border-gray-800 hover:bg-gray-900"}`}>
+              className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-lg ${remoteMuted ? "bg-red-500/20 text-red-500 border-red-500/50" : "bg-gray-950 text-emerald-500 border-gray-800 hover:bg-gray-900"}`}
+            >
               {remoteMuted ? <MicOff size={24} /> : <Mic size={24} />}{" "}
               {remoteMuted ? "Muted" : "Mic Active"}
             </button>
             <button
               onClick={toggleOledSleep}
-              className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-lg ${remoteOled ? "bg-indigo-600 text-white border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.4)]" : "bg-gray-950 text-indigo-400 border-gray-800 hover:bg-gray-900"}`}>
+              className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-lg ${remoteOled ? "bg-indigo-600 text-white border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.4)]" : "bg-gray-950 text-indigo-400 border-gray-800 hover:bg-gray-900"}`}
+            >
               {remoteOled ? <Moon size={24} /> : <Sun size={24} />}{" "}
               {remoteOled ? "Screen Off" : "Screen On"}
             </button>
             {camCapabilities?.torch !== undefined && (
               <button
                 onClick={toggleRemoteTorch}
-                className={`w-full flex-1 p-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-lg ${remoteTorch ? "bg-amber-500 text-black border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]" : "bg-gray-950 text-amber-500 border-gray-800 hover:bg-gray-900"}`}>
+                className={`w-full flex-1 p-4 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-lg ${remoteTorch ? "bg-amber-500 text-black border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]" : "bg-gray-950 text-amber-500 border-gray-800 hover:bg-gray-900"}`}
+              >
                 {remoteTorch ? <Flashlight size={24} /> : <ZapOff size={24} />}{" "}
                 {remoteTorch ? "Torch ON" : "Torch OFF"}
               </button>
@@ -404,17 +416,20 @@ export default function RemoteControl({
               <div className="flex justify-between gap-2 mb-6">
                 <button
                   onClick={() => snapZoom(rawMin)}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs py-3 rounded-lg border border-gray-700 shadow active:scale-95 uppercase tracking-widest transition-all">
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs py-3 rounded-lg border border-gray-700 shadow active:scale-95 uppercase tracking-widest transition-all"
+                >
                   Wide
                 </button>
                 <button
                   onClick={() => snapZoom(rawMin + (rawMax - rawMin) * 0.3)}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs py-3 rounded-lg border border-gray-700 shadow active:scale-95 uppercase tracking-widest transition-all">
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs py-3 rounded-lg border border-gray-700 shadow active:scale-95 uppercase tracking-widest transition-all"
+                >
                   Pitch
                 </button>
                 <button
                   onClick={() => snapZoom(rawMax)}
-                  className="flex-1 bg-gray-800 hover:bg-cyan-900/50 text-cyan-400 border border-gray-700 hover:border-cyan-500/50 font-black text-xs py-3 rounded-lg shadow active:scale-95 uppercase tracking-widest transition-all">
+                  className="flex-1 bg-gray-800 hover:bg-cyan-900/50 text-cyan-400 border border-gray-700 hover:border-cyan-500/50 font-black text-xs py-3 rounded-lg shadow active:scale-95 uppercase tracking-widest transition-all"
+                >
                   Tight
                 </button>
               </div>
@@ -432,7 +447,8 @@ export default function RemoteControl({
                       e.preventDefault();
                       stopSmoothZoom();
                     }}
-                    className="w-16 h-14 bg-gray-800 hover:bg-gray-700 active:bg-cyan-600 rounded-t-lg flex items-center justify-center text-white transition-colors touch-none select-none">
+                    className="w-16 h-14 bg-gray-800 hover:bg-gray-700 active:bg-cyan-600 rounded-t-lg flex items-center justify-center text-white transition-colors touch-none select-none"
+                  >
                     <Plus size={24} strokeWidth={3} />
                   </button>
                   <button
@@ -447,7 +463,8 @@ export default function RemoteControl({
                       e.preventDefault();
                       stopSmoothZoom();
                     }}
-                    className="w-16 h-14 bg-gray-800 hover:bg-gray-700 active:bg-cyan-600 rounded-b-lg flex items-center justify-center text-white transition-colors touch-none select-none">
+                    className="w-16 h-14 bg-gray-800 hover:bg-gray-700 active:bg-cyan-600 rounded-b-lg flex items-center justify-center text-white transition-colors touch-none select-none"
+                  >
                     <Minus size={24} strokeWidth={3} />
                   </button>
                 </div>
@@ -504,7 +521,8 @@ export default function RemoteControl({
 
         <button
           onClick={handleKillStream}
-          className="w-full mt-6 py-4 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg">
+          className="w-full mt-6 py-4 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg"
+        >
           <Power size={16} /> Emergency Kill Stream
         </button>
       </div>
