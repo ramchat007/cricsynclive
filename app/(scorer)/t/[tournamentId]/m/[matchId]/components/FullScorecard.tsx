@@ -45,7 +45,7 @@ export default function FullScorecard({
       battingOrderIds.push(match.live_non_striker_id);
   }
 
-  // 3b. NEW: Chronological Bowling Order Logic
+  // 3b. Chronological Bowling Order Logic
   const bowlingOrderIds: string[] = [];
   inningsDelivs.forEach((d: any) => {
     if (d.bowler_id && !bowlingOrderIds.includes(d.bowler_id))
@@ -56,30 +56,6 @@ export default function FullScorecard({
     if (match.live_bowler_id && !bowlingOrderIds.includes(match.live_bowler_id))
       bowlingOrderIds.push(match.live_bowler_id);
   }
-
-  // 4. Calculate Innings Summaries
-  const getInningsSummary = (inningNum: number) => {
-    const delivs = deliveries.filter((d: any) => d.innings === inningNum);
-    const runs = delivs.reduce(
-      (sum: number, d: any) =>
-        sum + (d.runs_off_bat || 0) + (d.extras_runs || 0),
-      0,
-    );
-    const wickets = delivs.filter((d: any) => d.is_wicket).length;
-    const validBalls = delivs.filter(
-      (d: any) =>
-        (d.extras_type !== "wide" &&
-          d.extras_type !== "no-ball" &&
-          d.extras_type !== "penalty" &&
-          d.extras_type !== "dead-ball") ||
-        d.force_legal_ball,
-    ).length;
-    const overs = `${Math.floor(validBalls / 6)}.${validBalls % 6}`;
-    return { runs, wickets, overs };
-  };
-
-  const inn1 = getInningsSummary(1);
-  const inn2 = getInningsSummary(2);
 
   const formatDismissal = (dismissal: any) => {
     if (!dismissal) return "not out";
@@ -210,7 +186,6 @@ export default function FullScorecard({
           (isCurrentInnings && p.id === match.live_bowler_id),
       );
 
-    // NEW: Sort bowlers chronologically
     return activeBowlers.sort((a, b) => {
       const idxA = bowlingOrderIds.indexOf(a.id);
       const idxB = bowlingOrderIds.indexOf(b.id);
@@ -224,43 +199,13 @@ export default function FullScorecard({
   );
 
   const bowlers = getBowlingStats(activeBowlingSquad);
-  // NEW: Calculate yet to bowl
   const yetToBowl = activeBowlingSquad.filter(
     (player: any) => !bowlers.some((b: any) => b.id === player.id),
   );
 
   return (
     <div className="space-y-6 animate-in fade-in">
-      {/* 1. MATCH SUMMARY */}
-      {match.status === "completed" && (
-        <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-sm text-center">
-          <p className="text-xs font-bold text-teal-400 uppercase tracking-widest mb-2">
-            Final Summary
-          </p>
-          <h3 className="text-2xl sm:text-3xl font-black uppercase mb-4">
-            {match.result_margin}
-          </h3>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 text-sm font-bold bg-white/10 py-3 rounded-2xl w-max mx-auto px-6">
-            <div>
-              <span className="text-slate-400 mr-2">1st Innings:</span>{" "}
-              {inn1.runs}/{inn1.wickets}{" "}
-              <span className="text-slate-400">({inn1.overs})</span>
-            </div>
-            {inn2.runs > 0 && (
-              <>
-                <span className="hidden sm:block text-slate-500">|</span>
-                <div>
-                  <span className="text-slate-400 mr-2">2nd Innings:</span>{" "}
-                  {inn2.runs}/{inn2.wickets}{" "}
-                  <span className="text-slate-400">({inn2.overs})</span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 2. INNINGS TABS */}
+      {/* 1. INNINGS TABS */}
       {(match.current_innings === 2 || match.status === "completed") && (
         <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-max">
           <button
@@ -276,7 +221,7 @@ export default function FullScorecard({
         </div>
       )}
 
-      {/* BATTING SCORECARD */}
+      {/* 2. BATTING SCORECARD */}
       <div>
         <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4 px-2">
           Batting Scorecard
@@ -349,7 +294,7 @@ export default function FullScorecard({
         </div>
       </div>
 
-      {/* BOWLING FIGURES */}
+      {/* 3. BOWLING FIGURES */}
       <div>
         <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4 px-2">
           Bowling Figures
@@ -397,7 +342,7 @@ export default function FullScorecard({
             </table>
           </div>
 
-          {/* NEW: YET TO BOWL SECTION */}
+          {/* YET TO BOWL SECTION */}
           {yetToBowl.length > 0 && (
             <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex gap-2 items-start">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 mt-0.5">

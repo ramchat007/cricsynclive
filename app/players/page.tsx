@@ -158,7 +158,9 @@ export default function GlobalStatsPage() {
       if (teamIds.length > 0) {
         const { data: matches, error } = await supabase
           .from("matches")
-          .select(`id, status, tournament_id, tournaments(name)`)
+          .select(
+            `id, status, tournament_id, created_at, tournaments(name), team1:team1_id(name, short_name), team2:team2_id(name, short_name)`,
+          )
           .or(
             `team1_id.in.(${teamIds.join(",")}),team2_id.in.(${teamIds.join(",")})`,
           )
@@ -332,10 +334,9 @@ export default function GlobalStatsPage() {
           </div>
         </div>
 
-        {/* COMPREHENSIVE LEADERBOARD TABLE (Mobile Swipe Fix) */}
+        {/* COMPREHENSIVE LEADERBOARD TABLE */}
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden w-full">
           <div className="overflow-x-auto custom-scrollbar w-full">
-            {/* Added min-w-[800px] to force proper table rendering on mobile without squishing */}
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -428,16 +429,11 @@ export default function GlobalStatsPage() {
         </div>
 
         {/* ----------------------------------------------------------- */}
-        {/* PLAYER PROFILE MODAL (Mobile Scroll Trap Fixed) */}
+        {/* PLAYER PROFILE MODAL */}
         {/* ----------------------------------------------------------- */}
         {selectedPlayer && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in">
-            {/* MOBILE FIX: 
-              - On mobile (default): `overflow-y-auto h-[90vh]` so the whole modal scrolls as one continuous block. 
-              - On desktop (`md:`): `overflow-hidden h-auto` to split scrolling between the two panes.
-            */}
             <div className="bg-white w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden custom-scrollbar animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-slate-200 relative">
-              {/* Close Button Mobile (Fixed to top right of modal view) */}
               <button
                 onClick={() => setSelectedPlayer(null)}
                 className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50 shadow-lg">
@@ -470,7 +466,6 @@ export default function GlobalStatsPage() {
                   </div>
                 </div>
 
-                {/* Desktop gets inner scroll, mobile flows naturally */}
                 <div className="p-6 md:overflow-y-auto custom-scrollbar flex-1 bg-white">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
                     Career Aggregates
@@ -533,7 +528,6 @@ export default function GlobalStatsPage() {
                   </button>
                 </div>
 
-                {/* Desktop gets inner scroll, mobile flows naturally */}
                 <div className="p-6 md:overflow-y-auto custom-scrollbar flex-1">
                   {isLoadingMatches ? (
                     <div className="h-40 md:h-full flex flex-col items-center justify-center text-slate-400">
@@ -567,11 +561,34 @@ export default function GlobalStatsPage() {
                           <div className="flex justify-between items-center">
                             <div>
                               <p className="text-sm font-black text-slate-900 group-hover:text-teal-600 transition-colors uppercase tracking-tight">
-                                Match #{match.id.substring(0, 4)}
+                                {match.team1?.name ||
+                                  match.team1?.short_name ||
+                                  "TBA"}{" "}
+                                vs{" "}
+                                {match.team2?.name ||
+                                  match.team2?.short_name ||
+                                  "TBA"}
                               </p>
-                              <p className="text-xs font-bold text-slate-500 mt-0.5">
-                                Click to view scorecard
-                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {match.created_at && (
+                                  <>
+                                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-widest">
+                                      <Calendar size={10} />
+                                      {new Date(
+                                        match.created_at,
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })}
+                                    </p>
+                                    <span className="text-slate-300">•</span>
+                                  </>
+                                )}
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                  View Scorecard
+                                </p>
+                              </div>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-teal-500 group-hover:text-white transition-colors">
                               <ChevronRight size={16} />
