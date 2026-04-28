@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getBroadcastTheme } from "@/lib/themes";
 
 const getInitials = (name: string) => {
   if (!name) return "";
@@ -38,6 +39,7 @@ export default function ScoreTicker({
   const [eventTrigger, setEventTrigger] = useState<string | null>(null);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [players, setPlayers] = useState<any>({});
+  const selectedTheme = getBroadcastTheme(overlayData?.broadcastThemeId);
 
   const prevBallRef = useRef<string | null>(null);
   const prevAnimBallRef = useRef<string | null>(null);
@@ -398,26 +400,42 @@ export default function ScoreTicker({
             className={`absolute inset-0 blur-2xl opacity-70
               ${
                 eventTrigger === "WICKET"
-                  ? "bg-red-600"
+                  ? ""
                   : eventTrigger === "SIX"
-                    ? "bg-amber-400"
-                    : "bg-emerald-500"
+                    ? ""
+                    : ""
               }
             `}
+            style={{
+              backgroundColor:
+                eventTrigger === "WICKET"
+                  ? selectedTheme.tokens.danger
+                  : eventTrigger === "SIX"
+                    ? selectedTheme.tokens.warning
+                    : selectedTheme.tokens.success,
+            }}
           />
 
           <div className="absolute w-[600px] h-[300px] rounded-full border-[6px] border-white/20 animate-ping" />
 
           <h2
             className={`text-[90px] font-black italic uppercase tracking-tighter z-10
-            ${
-              eventTrigger === "WICKET"
-                ? "text-red-500 drop-shadow-[0_0_40px_#ef4444]"
-                : eventTrigger === "SIX"
-                  ? "text-amber-300 drop-shadow-[0_0_40px_#fbbf24]"
-                  : "text-emerald-300 drop-shadow-[0_0_40px_#10b981]"
-            }
+            
             animate-bounce`}
+            style={{
+              color:
+                eventTrigger === "WICKET"
+                  ? selectedTheme.tokens.danger
+                  : eventTrigger === "SIX"
+                    ? selectedTheme.tokens.warning
+                    : selectedTheme.tokens.success,
+              textShadow:
+                eventTrigger === "WICKET"
+                  ? `0 0 40px ${selectedTheme.tokens.danger}`
+                  : eventTrigger === "SIX"
+                    ? `0 0 40px ${selectedTheme.tokens.warning}`
+                    : `0 0 40px ${selectedTheme.tokens.success}`,
+            }}
           >
             {eventTrigger === "WICKET"
               ? "WICKET!"
@@ -439,8 +457,13 @@ export default function ScoreTicker({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-16 py-1 shadow-lg text-[12px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]">
-            <span className="text-amber-400 shrink-0">
+          <div
+            className="flex items-center gap-2 border-t border-l border-r rounded-t-xl px-16 py-1 shadow-lg text-[12px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]"
+            style={{
+              backgroundColor: selectedTheme.tokens.panelBg,
+              borderColor: selectedTheme.tokens.panelBorder,
+            }}>
+            <span className="shrink-0" style={{ color: selectedTheme.tokens.warning }}>
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -448,7 +471,7 @@ export default function ScoreTicker({
               {liveMatch.stage || "Live Match"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
-            <span className="text-cyan-400 drop-shadow-md min-w-0">
+            <span className="drop-shadow-md min-w-0" style={{ color: selectedTheme.tokens.accent }}>
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName

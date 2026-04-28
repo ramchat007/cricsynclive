@@ -10,6 +10,7 @@ import {
   MessageCircle,
   ClipboardList,
 } from "lucide-react";
+import { getBroadcastTheme } from "@/lib/themes";
 
 interface PlayerStats {
   name: string;
@@ -23,6 +24,7 @@ export default function FullscreenPlates({
   deliveries,
   team1Squad,
   team2Squad,
+  themeId,
 }: any) {
   if (!matchData) return null;
 
@@ -33,7 +35,7 @@ export default function FullscreenPlates({
 
   // 1. DYNAMIC OVER SUMMARY ENGINE
   const overInfo = useMemo(() => {
-    const currentInn = matchData.current_innings || 1;
+    const currentInn = matchData?.current_innings || 1;
     const innBalls = deliveries.filter((d: any) => d.innings === currentInn);
     const lastBall = innBalls[innBalls.length - 1];
     if (!lastBall) return null;
@@ -52,7 +54,7 @@ export default function FullscreenPlates({
       balls: innBalls.filter((d:any) => d.over_number === lastBall.over_number),
       commentary: lastBall.ai_commentary,
     };
-  }, [deliveries, matchData.current_innings, allPlayers]);
+  }, [deliveries, matchData?.current_innings, allPlayers]);
 
   // 2. MATCH SUMMARY STATS ENGINE
   const summaryStats = useMemo(() => {
@@ -90,22 +92,29 @@ export default function FullscreenPlates({
 
   const glass =
     "bg-slate-950/40 backdrop-blur-3xl border border-white/10 shadow-2xl";
+  const theme = getBroadcastTheme(themeId);
   const tossWinner =
-    matchData.toss_winner_id === matchData.team1_id
+    matchData?.toss_winner_id === matchData?.team1_id
       ? matchData.team1
       : matchData.team2;
   const tossLoser =
-    matchData.toss_winner_id === matchData.team1_id
+    matchData?.toss_winner_id === matchData?.team1_id
       ? matchData.team2
       : matchData.team1;
 
+  if (!matchData) return null;
+
   return (
-    <div className="w-full h-full flex items-center justify-center p-20 text-white font-sans">
+    <div
+      className="w-full h-full flex items-center justify-center p-20 text-white font-sans"
+      style={{ color: theme.tokens.text }}>
       {/* --- TOSS REPORT --- */}
       {type === "TOSS_REPORT" && (
         <div
           className={`w-full max-w-5xl p-16 rounded-[4rem] flex flex-col items-center text-center animate-in slide-in-from-bottom-10 ${glass}`}>
-          <p className="text-amber-400 font-black uppercase tracking-[0.35em] text-sm">
+          <p
+            className="font-black uppercase tracking-[0.35em] text-sm"
+            style={{ color: theme.tokens.warning }}>
             Toss Report
           </p>
           <h2 className="text-7xl font-black uppercase tracking-tighter mt-6">
@@ -113,7 +122,7 @@ export default function FullscreenPlates({
           </h2>
           <p className="text-3xl font-bold text-white/70 mt-4">
             won the toss and elected to{" "}
-            <span className="text-cyan-400 uppercase">
+            <span className="uppercase" style={{ color: theme.tokens.accent }}>
               {matchData.toss_decision || "bat"}
             </span>
           </p>
@@ -138,7 +147,9 @@ export default function FullscreenPlates({
       {type === "INNINGS_BREAK" && (
         <div
           className={`w-full max-w-6xl p-16 rounded-[4rem] animate-in slide-in-from-bottom-10 ${glass}`}>
-          <p className="text-amber-400 font-black uppercase tracking-[0.35em] text-sm text-center">
+          <p
+            className="font-black uppercase tracking-[0.35em] text-sm text-center"
+            style={{ color: theme.tokens.warning }}>
             Innings Break
           </p>
           <div className="grid grid-cols-2 gap-12 mt-8">
@@ -160,7 +171,9 @@ export default function FullscreenPlates({
               <h3 className="text-5xl font-black mt-3">
                 {matchData.team2?.name}
               </h3>
-              <p className="text-7xl font-black mt-6 text-cyan-400">
+              <p
+                className="text-7xl font-black mt-6"
+                style={{ color: theme.tokens.accent }}>
                 {(Number(matchData.team1_runs) || 0) + 1}
               </p>
             </div>

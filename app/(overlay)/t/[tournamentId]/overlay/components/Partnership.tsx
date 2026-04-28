@@ -1,11 +1,13 @@
 "use client";
 import React from "react";
+import { getBroadcastTheme } from "@/lib/themes";
 
 export default function Partnership({
   matchData,
   deliveries = [],
   team1Squad = [],
   team2Squad = [],
+  themeId,
 }: any) {
   if (!matchData || !deliveries.length) return null;
 
@@ -58,11 +60,19 @@ export default function Partnership({
       type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball"
     );
   }).length;
+  const theme = getBroadcastTheme(themeId);
 
   return (
-    <div className="bg-slate-950/90 border-t-4 border-teal-500 px-10 py-4 rounded-t-[2rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md flex items-center gap-12 animate-in slide-in-from-bottom-10">
+    <div
+      className="px-10 py-4 rounded-t-[2rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md flex items-center gap-12 animate-in slide-in-from-bottom-10"
+      style={{
+        background: theme.tokens.panelBg,
+        borderTop: `4px solid ${theme.tokens.accent}`,
+      }}>
       <div className="flex flex-col border-r border-white/10 pr-10">
-        <span className="text-teal-400 font-black uppercase tracking-[0.2em] text-[10px] mb-1">
+        <span
+          className="font-black uppercase tracking-[0.2em] text-[10px] mb-1"
+          style={{ color: theme.tokens.accent }}>
           Partnership
         </span>
         <div className="flex items-baseline gap-2">
@@ -88,7 +98,9 @@ export default function Partnership({
                 {player.name}
               </span>
               <div className="bg-white/5 px-2 py-1 rounded-lg border border-white/5">
-                <span className="text-teal-400 font-black text-lg">
+                <span
+                  className="font-black text-lg"
+                  style={{ color: theme.tokens.accent }}>
                   {player.runs}
                 </span>
                 <span className="text-white/30 font-bold text-xs ml-1">

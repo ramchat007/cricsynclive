@@ -22,6 +22,7 @@ import {
   X,
   ClipboardList,
 } from "lucide-react";
+import { BROADCAST_THEMES } from "@/lib/themes";
 
 export default function MasterController({
   params,
@@ -33,6 +34,7 @@ export default function MasterController({
   const [teamASquad, setTeamASquad] = useState<any[]>([]);
   const [teamBSquad, setTeamBSquad] = useState<any[]>([]);
   const [triggerNote, setTriggerNote] = useState<string>("");
+  const [themeNote, setThemeNote] = useState<string>("");
 
   // 🔥 Notice: sponsorBanners is now an array!
   const [config, setConfig] = useState<any>({
@@ -44,6 +46,7 @@ export default function MasterController({
     sponsorBanners: [],
     sponsorBugUrl: "",
     spotlightPlayerId: "",
+    broadcastThemeId: "classic",
   });
 
   const studioChannelRef = useRef<any>(null);
@@ -335,6 +338,17 @@ export default function MasterController({
     publishConfig({ sponsorBanners: newBanners });
   };
 
+  const selectBroadcastTheme = (themeId: string) => {
+    publishConfig({ broadcastThemeId: themeId });
+    const selected = BROADCAST_THEMES.find((t) => t.id === themeId);
+    setThemeNote(
+      selected?.premium
+        ? "Premium theme selected (dummy access enabled until payments are integrated)."
+        : "Free theme selected.",
+    );
+    setTimeout(() => setThemeNote(""), 2200);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-6 font-sans pb-24">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -498,6 +512,46 @@ export default function MasterController({
               className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_RESULT") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}>
               <Trophy size={18} /> Match Result
             </button>
+          </div>
+
+          <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-4 shadow-sm">
+            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-2">
+              <LayoutTemplate size={16} className="text-gray-400" /> Broadcast
+              Themes
+            </h3>
+            <p className="text-[11px] text-gray-500">
+              App themes are free in navbar. Tournament broadcast themes include
+              premium presets (payments can be integrated later).
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {BROADCAST_THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => selectBroadcastTheme(theme.id)}
+                  className={`w-full py-3 px-4 rounded-xl border text-left transition-all ${
+                    config.broadcastThemeId === theme.id
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-black uppercase tracking-wider text-xs text-gray-700">
+                      {theme.label}
+                    </span>
+                    <span
+                      className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${
+                        theme.premium
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}>
+                      {theme.premium ? "Premium" : "Free"}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {!!themeNote && (
+              <p className="text-[11px] font-bold text-gray-500">{themeNote}</p>
+            )}
           </div>
         </div>
 
