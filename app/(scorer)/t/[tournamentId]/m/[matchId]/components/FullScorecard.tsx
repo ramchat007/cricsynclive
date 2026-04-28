@@ -23,6 +23,40 @@ export default function FullScorecard({
     (d: any) => d.innings === selectedInnings,
   );
 
+  // --- TEAM IDENTIFICATION LOGIC ---
+  // Figure out who actually batted first using either the delivery data (most accurate) or toss data
+  const t1Short = match?.team1?.short_name || match?.team1?.name || "Team 1";
+  const t2Short = match?.team2?.short_name || match?.team2?.name || "Team 2";
+  const t1Full = match?.team1?.name || "Team 1";
+  const t2Full = match?.team2?.name || "Team 2";
+
+  let actualT1BattedFirst = true;
+  const allInn1Delivs = deliveries.filter((d: any) => d.innings === 1);
+
+  if (
+    allInn1Delivs.length > 0 &&
+    (allInn1Delivs[0].batting_team_id || allInn1Delivs[0].team_id)
+  ) {
+    const firstTeamId =
+      allInn1Delivs[0].batting_team_id || allInn1Delivs[0].team_id;
+    actualT1BattedFirst = firstTeamId === match?.team1_id;
+  } else {
+    const choseBat = String(match?.toss_decision || "")
+      .toLowerCase()
+      .includes("bat");
+    const t1Won = match?.toss_winner_id === match?.team1_id;
+    actualT1BattedFirst = choseBat ? t1Won : !t1Won;
+  }
+
+  // Set the names for the Tabs
+  const inn1TeamName = actualT1BattedFirst ? t1Short : t2Short;
+  const inn2TeamName = actualT1BattedFirst ? t2Short : t1Short;
+
+  // Set the flag for the VS Banner highlight
+  const isTeam1Batting =
+    selectedInnings === 1 ? actualT1BattedFirst : !actualT1BattedFirst;
+  // ---------------------------------
+
   // 3a. Chronological Batting Order Logic
   const battingOrderIds: string[] = [];
   inningsDelivs.forEach((d: any) => {
@@ -45,7 +79,7 @@ export default function FullScorecard({
       battingOrderIds.push(match.live_non_striker_id);
   }
 
-  // 3b. NEW: Chronological Bowling Order Logic
+  // 3b. Chronological Bowling Order Logic
   const bowlingOrderIds: string[] = [];
   inningsDelivs.forEach((d: any) => {
     if (d.bowler_id && !bowlingOrderIds.includes(d.bowler_id))
@@ -56,30 +90,6 @@ export default function FullScorecard({
     if (match.live_bowler_id && !bowlingOrderIds.includes(match.live_bowler_id))
       bowlingOrderIds.push(match.live_bowler_id);
   }
-
-  // 4. Calculate Innings Summaries
-  const getInningsSummary = (inningNum: number) => {
-    const delivs = deliveries.filter((d: any) => d.innings === inningNum);
-    const runs = delivs.reduce(
-      (sum: number, d: any) =>
-        sum + (d.runs_off_bat || 0) + (d.extras_runs || 0),
-      0,
-    );
-    const wickets = delivs.filter((d: any) => d.is_wicket).length;
-    const validBalls = delivs.filter(
-      (d: any) =>
-        (d.extras_type !== "wide" &&
-          d.extras_type !== "no-ball" &&
-          d.extras_type !== "penalty" &&
-          d.extras_type !== "dead-ball") ||
-        d.force_legal_ball,
-    ).length;
-    const overs = `${Math.floor(validBalls / 6)}.${validBalls % 6}`;
-    return { runs, wickets, overs };
-  };
-
-  const inn1 = getInningsSummary(1);
-  const inn2 = getInningsSummary(2);
 
   const formatDismissal = (dismissal: any) => {
     if (!dismissal) return "not out";
@@ -210,7 +220,6 @@ export default function FullScorecard({
           (isCurrentInnings && p.id === match.live_bowler_id),
       );
 
-    // NEW: Sort bowlers chronologically
     return activeBowlers.sort((a, b) => {
       const idxA = bowlingOrderIds.indexOf(a.id);
       const idxB = bowlingOrderIds.indexOf(b.id);
@@ -224,59 +233,69 @@ export default function FullScorecard({
   );
 
   const bowlers = getBowlingStats(activeBowlingSquad);
-  // NEW: Calculate yet to bowl
   const yetToBowl = activeBowlingSquad.filter(
     (player: any) => !bowlers.some((b: any) => b.id === player.id),
   );
 
   return (
     <div className="space-y-6 animate-in fade-in">
-      {/* 1. MATCH SUMMARY */}
-      {match.status === "completed" && (
-        <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-sm text-center">
-          <p className="text-xs font-bold text-teal-400 uppercase tracking-widest mb-2">
-            Final Summary
+      {/* 0. MATCHUP HEADER (Dynamic Highlighting based on Tab) */}
+      <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-[1.5rem] sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-3">
+        {/* Match Stage & Innings Badge */}
+        <div className="inline-block bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <p className="text-[10px] sm:text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            {match?.stage || "Match"} <span className="mx-1 opacity-50">•</span>{" "}
+            Innings {selectedInnings}
           </p>
-          <h3 className="text-2xl sm:text-3xl font-black uppercase mb-4">
-            {match.result_margin}
-          </h3>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 text-sm font-bold bg-white/10 py-3 rounded-2xl w-max mx-auto px-6">
-            <div>
-              <span className="text-slate-400 mr-2">1st Innings:</span>{" "}
-              {inn1.runs}/{inn1.wickets}{" "}
-              <span className="text-slate-400">({inn1.overs})</span>
-            </div>
-            {inn2.runs > 0 && (
-              <>
-                <span className="hidden sm:block text-slate-500">|</span>
-                <div>
-                  <span className="text-slate-400 mr-2">2nd Innings:</span>{" "}
-                  {inn2.runs}/{inn2.wickets}{" "}
-                  <span className="text-slate-400">({inn2.overs})</span>
-                </div>
-              </>
-            )}
-          </div>
         </div>
-      )}
 
-      {/* 2. INNINGS TABS */}
+        {/* VS Banner with Batting Team Highlight */}
+        <div className="flex items-center justify-center gap-3 text-sm sm:text-lg font-black uppercase tracking-tight">
+          <span
+            className={`transition-colors ${isTeam1Batting ? "text-teal-500 drop-shadow-sm" : "text-slate-600 dark:text-slate-300"}`}>
+            {t1Full}{" "}
+            {isTeam1Batting && <span className="text-teal-500 ml-1">🏏</span>}
+          </span>
+
+          <span className="text-slate-300 dark:text-slate-600 text-xs sm:text-sm font-bold">
+            VS
+          </span>
+
+          <span
+            className={`transition-colors ${!isTeam1Batting ? "text-teal-500 drop-shadow-sm" : "text-slate-600 dark:text-slate-300"}`}>
+            {!isTeam1Batting && <span className="text-teal-500 mr-1">🏏</span>}{" "}
+            {t2Full}
+          </span>
+        </div>
+      </div>
+
+      {/* 1. INNINGS TABS WITH TEAM NAMES */}
       {(match.current_innings === 2 || match.status === "completed") && (
         <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-max">
           <button
             onClick={() => setSelectedInnings(1)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${selectedInnings === 1 ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
-            1st Innings
+            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${
+              selectedInnings === 1
+                ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+            }`}>
+            {inn1TeamName}{" "}
+            <span className="opacity-50 text-[10px]">(1st Inn)</span>
           </button>
           <button
             onClick={() => setSelectedInnings(2)}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${selectedInnings === 2 ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
-            2nd Innings
+            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${
+              selectedInnings === 2
+                ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+            }`}>
+            {inn2TeamName}{" "}
+            <span className="opacity-50 text-[10px]">(2nd Inn)</span>
           </button>
         </div>
       )}
 
-      {/* BATTING SCORECARD */}
+      {/* 2. BATTING SCORECARD */}
       <div>
         <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4 px-2">
           Batting Scorecard
@@ -349,7 +368,7 @@ export default function FullScorecard({
         </div>
       </div>
 
-      {/* BOWLING FIGURES */}
+      {/* 3. BOWLING FIGURES */}
       <div>
         <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4 px-2">
           Bowling Figures
@@ -397,7 +416,7 @@ export default function FullScorecard({
             </table>
           </div>
 
-          {/* NEW: YET TO BOWL SECTION */}
+          {/* YET TO BOWL SECTION */}
           {yetToBowl.length > 0 && (
             <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex gap-2 items-start">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 mt-0.5">
