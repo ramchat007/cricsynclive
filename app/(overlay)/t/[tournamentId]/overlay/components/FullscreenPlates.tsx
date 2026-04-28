@@ -26,6 +26,8 @@ export default function FullscreenPlates({
   team2Squad,
   themeId,
 }: any) {
+  if (!matchData) return null;
+
   const allPlayers = useMemo(
     () => [...team1Squad, ...team2Squad],
     [team1Squad, team2Squad],
