@@ -22,6 +22,7 @@ import {
   X,
   ClipboardList,
 } from "lucide-react";
+import { BROADCAST_THEMES } from "@/lib/themes";
 
 export default function MasterController({
   params,
@@ -32,6 +33,8 @@ export default function MasterController({
   const [matches, setMatches] = useState<any[]>([]);
   const [teamASquad, setTeamASquad] = useState<any[]>([]);
   const [teamBSquad, setTeamBSquad] = useState<any[]>([]);
+  const [triggerNote, setTriggerNote] = useState<string>("");
+  const [themeNote, setThemeNote] = useState<string>("");
 
   // 🔥 Notice: sponsorBanners is now an array!
   const [config, setConfig] = useState<any>({
@@ -43,6 +46,7 @@ export default function MasterController({
     sponsorBanners: [],
     sponsorBugUrl: "",
     spotlightPlayerId: "",
+    broadcastThemeId: "classic",
   });
 
   const studioChannelRef = useRef<any>(null);
@@ -291,11 +295,58 @@ export default function MasterController({
     publishConfig({ activeViews: views });
   };
 
+  const triggerRapidEvent = async (eventType: "FOUR" | "SIX" | "WICKET") => {
+    if (!config.activeMatchId) {
+      setTriggerNote("Select active match first.");
+      return;
+    }
+
+    const { data: lastBall } = await supabase
+      .from("deliveries")
+      .select("id, runs_off_bat, is_wicket")
+      .eq("match_id", config.activeMatchId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!lastBall) {
+      setTriggerNote("No delivery found for this match.");
+      return;
+    }
+
+    const runs = Number(lastBall.runs_off_bat) || 0;
+    const isWicket = !!lastBall.is_wicket;
+    const matchesEvent =
+      (eventType === "FOUR" && runs === 4 && !isWicket) ||
+      (eventType === "SIX" && runs === 6 && !isWicket) ||
+      (eventType === "WICKET" && isWicket);
+
+    if (!matchesEvent) {
+      setTriggerNote(`Last ball does not match ${eventType} trigger.`);
+      return;
+    }
+
+    await publishConfig({ event: eventType, eventTime: Date.now() });
+    setTriggerNote(`${eventType} trigger fired.`);
+    setTimeout(() => setTriggerNote(""), 1800);
+  };
+
   const removeBanner = (indexToRemove: number) => {
     const newBanners = config.sponsorBanners.filter(
       (_: any, i: number) => i !== indexToRemove,
     );
     publishConfig({ sponsorBanners: newBanners });
+  };
+
+  const selectBroadcastTheme = (themeId: string) => {
+    publishConfig({ broadcastThemeId: themeId });
+    const selected = BROADCAST_THEMES.find((t) => t.id === themeId);
+    setThemeNote(
+      selected?.premium
+        ? "Premium theme selected (dummy access enabled until payments are integrated)."
+        : "Free theme selected.",
+    );
+    setTimeout(() => setThemeNote(""), 2200);
   };
 
   return (
@@ -381,27 +432,26 @@ export default function MasterController({
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() =>
-                  publishConfig({ event: "FOUR", eventTime: Date.now() })
-                }
+                onClick={() => triggerRapidEvent("FOUR")}
                 className="bg-emerald-50 border border-emerald-200 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-700 font-black text-sm active:scale-95 transition-all shadow-sm">
                 4 RUNS
               </button>
               <button
-                onClick={() =>
-                  publishConfig({ event: "SIX", eventTime: Date.now() })
-                }
+                onClick={() => triggerRapidEvent("SIX")}
                 className="bg-amber-50 border border-amber-200 hover:bg-amber-400 hover:text-white hover:border-amber-400 py-6 rounded-xl text-amber-700 font-black text-sm active:scale-95 transition-all shadow-sm">
                 6 RUNS
               </button>
             </div>
             <button
-              onClick={() =>
-                publishConfig({ event: "WICKET", eventTime: Date.now() })
-              }
+              onClick={() => triggerRapidEvent("WICKET")}
               className="w-full bg-rose-50 border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-700 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm">
               WICKET
             </button>
+            {!!triggerNote && (
+              <p className="text-[11px] font-bold text-gray-500 mt-1">
+                {triggerNote}
+              </p>
+            )}
 
             <div className="pt-4 mt-auto border-t border-gray-100">
               <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
@@ -462,6 +512,46 @@ export default function MasterController({
               className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_RESULT") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}>
               <Trophy size={18} /> Match Result
             </button>
+          </div>
+
+          <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-4 shadow-sm">
+            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-2">
+              <LayoutTemplate size={16} className="text-gray-400" /> Broadcast
+              Themes
+            </h3>
+            <p className="text-[11px] text-gray-500">
+              App themes are free in navbar. Tournament broadcast themes include
+              premium presets (payments can be integrated later).
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {BROADCAST_THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => selectBroadcastTheme(theme.id)}
+                  className={`w-full py-3 px-4 rounded-xl border text-left transition-all ${
+                    config.broadcastThemeId === theme.id
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-black uppercase tracking-wider text-xs text-gray-700">
+                      {theme.label}
+                    </span>
+                    <span
+                      className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${
+                        theme.premium
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}>
+                      {theme.premium ? "Premium" : "Free"}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {!!themeNote && (
+              <p className="text-[11px] font-bold text-gray-500">{themeNote}</p>
+            )}
           </div>
         </div>
 
