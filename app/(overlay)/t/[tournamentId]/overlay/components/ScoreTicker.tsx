@@ -166,13 +166,14 @@ export default function ScoreTicker({
   // --------------------------------------------------------
   // 3. ROCK-SOLID DATA PIPELINE (Deriving Score + Target)
   // --------------------------------------------------------
-  const isFirstInnings = Number(liveMatch.current_innings) === 1;
+  const currentInnings = Number(liveMatch.current_innings) || 1;
+  const isFirstInnings = currentInnings === 1;
 
-  // Split deliveries by innings
+  // Split deliveries by innings (normalize to number to avoid string/number mismatch)
   const currentInningsBalls = deliveries.filter(
-    (d) => d.innings === liveMatch.current_innings,
+    (d) => Number(d.innings) === currentInnings,
   );
-  const firstInningsBalls = deliveries.filter((d) => d.innings === 1);
+  const firstInningsBalls = deliveries.filter((d) => Number(d.innings) === 1);
 
   // Live Score Math
   const score = currentInningsBalls.reduce(
@@ -208,7 +209,7 @@ export default function ScoreTicker({
   ) {
     const activeTeamId =
       currentInningsBalls[0].batting_team_id || currentInningsBalls[0].team_id;
-    team1IsBattingNow = activeTeamId === liveMatch.team1_id;
+    team1IsBattingNow = String(activeTeamId) === String(liveMatch.team1_id);
   } else {
     const choseBat = String(liveMatch.toss_decision || "")
       .toLowerCase()
