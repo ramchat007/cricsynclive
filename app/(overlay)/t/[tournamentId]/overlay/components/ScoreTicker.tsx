@@ -620,21 +620,23 @@ export default function ScoreTicker({
                 </span>
               </div>
 
-              <div className="flex items-center justify-start gap-2 overflow-hidden w-full py-1">
+              <div className="flex items-center justify-start gap-2 gap-y-1 flex-wrap overflow-hidden w-full py-1">
                 {bStats.timeline.map((b: any, i: number) => {
                   let bText =
                     Number(b.runs_off_bat) === 0 && !b.extras_runs
                       ? "•"
                       : b.runs_off_bat;
                   let bCls = "bg-white/10 border-white/20 text-white";
+                  let bShape = "w-9 h-9 rounded-full text-base";
 
                   if (b.is_wicket) {
                     bText = "W";
                     bCls =
                       "bg-rose-600 border-rose-400 text-white shadow-[0_0_10px_#ef4444]";
                   } else if (b.extras_type) {
-                    bText = `${Number(b.runs_off_bat) > 0 ? b.runs_off_bat : ""}${b.extras_type}`;
+                    bText = getExtraLabel(b);
                     bCls = "bg-indigo-600 border-indigo-400 text-white";
+                    bShape = "h-9 min-w-[46px] px-2 rounded-xl text-[12px]";
                   } else if (Number(b.runs_off_bat) === 4) {
                     bCls =
                       "bg-teal-400 border-teal-200 text-slate-900 shadow-[0_0_10px_#2dd4bf]";
@@ -646,7 +648,7 @@ export default function ScoreTicker({
                   return (
                     <div
                       key={b.id || i}
-                      className={`w-9 h-9 border-2 rounded-full shrink-0 flex items-center justify-center font-black ${bCls} text-base uppercase opacity-0`}
+                      className={`${bShape} border-2 shrink-0 flex items-center justify-center font-black ${bCls} uppercase opacity-0 leading-none`}
                       style={{
                         animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
                         animationDelay: `${i * 0.08}s`,
