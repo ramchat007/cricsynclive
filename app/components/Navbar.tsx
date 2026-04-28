@@ -12,7 +12,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const [session, setSession] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+  const activeTheme = mounted ? theme : "dark";
 
   useEffect(() => {
     // 1. Get initial session
@@ -28,6 +30,10 @@ export default function Navbar() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Block background scroll when mobile menu is open
@@ -95,8 +101,8 @@ export default function Navbar() {
                 <button
                   key={appTheme.id}
                   onClick={() => setTheme(appTheme.id)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                    theme === appTheme.id
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                    activeTheme === appTheme.id
                       ? "bg-slate-900 text-white"
                       : "text-slate-500 hover:text-slate-900"
                   }`}>
@@ -204,7 +210,7 @@ export default function Navbar() {
                       key={appTheme.id}
                       onClick={() => setTheme(appTheme.id)}
                       className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                        theme === appTheme.id
+                        activeTheme === appTheme.id
                           ? "bg-slate-900 text-white border-slate-900"
                           : "bg-white text-slate-500 border-slate-200"
                       }`}>
