@@ -167,7 +167,7 @@ export default function BroadcastOverlay({
     const t1Won = matchData.toss_winner_id === matchData.team1_id;
     const t1BattedFirst = choseBat ? t1Won : !t1Won;
     isT1Batting =
-      matchData.current_innings === 1 ? t1BattedFirst : !t1BattedFirst;
+      Number(matchData.current_innings) === 1 ? t1BattedFirst : !t1BattedFirst;
   }
   const miniBatName = isT1Batting
     ? matchData?.team1?.short_name
