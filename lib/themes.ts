@@ -1,6 +1,8 @@
 export const APP_THEMES = [
   { id: "light", label: "Light" },
   { id: "dark", label: "Dark" },
+  { id: "ocean", label: "Ocean" },
+  { id: "sunset", label: "Sunset" },
 ] as const;
 
 export const BROADCAST_THEMES = [

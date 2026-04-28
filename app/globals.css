@@ -3,6 +3,37 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --border-1: #e2e8f0;
+  --text-muted: #64748b;
+}
+
+:root[data-theme="dark"] {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --surface-1: #0f172a;
+  --surface-2: #111827;
+  --border-1: #1f2937;
+  --text-muted: #94a3b8;
+}
+
+:root[data-theme="ocean"] {
+  --background: #ecfeff;
+  --foreground: #0f172a;
+  --surface-1: #cffafe;
+  --surface-2: #a5f3fc;
+  --border-1: #67e8f9;
+  --text-muted: #155e75;
+}
+
+:root[data-theme="sunset"] {
+  --background: #fff7ed;
+  --foreground: #431407;
+  --surface-1: #ffedd5;
+  --surface-2: #fed7aa;
+  --border-1: #fdba74;
+  --text-muted: #9a3412;
 }
 
 @theme inline {
@@ -12,17 +43,36 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+:root[data-theme] .bg-white {
+  background-color: var(--surface-1) !important;
+}
+:root[data-theme] .bg-gray-50,
+:root[data-theme] .bg-slate-50 {
+  background-color: var(--surface-2) !important;
+}
+:root[data-theme] .border-gray-200,
+:root[data-theme] .border-slate-200 {
+  border-color: var(--border-1) !important;
+}
+:root[data-theme] .text-gray-900,
+:root[data-theme] .text-gray-800,
+:root[data-theme] .text-slate-900,
+:root[data-theme] .text-slate-800 {
+  color: var(--foreground) !important;
+}
+:root[data-theme] .text-gray-600,
+:root[data-theme] .text-gray-500,
+:root[data-theme] .text-gray-400,
+:root[data-theme] .text-slate-600,
+:root[data-theme] .text-slate-500,
+:root[data-theme] .text-slate-400 {
+  color: var(--text-muted) !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
