@@ -10,6 +10,23 @@ const getInitials = (name: string) => {
   return name.substring(0, 3).toUpperCase();
 };
 
+const getExtraLabel = (ball: any) => {
+  const rawType = String(ball?.extras_type || "").toLowerCase();
+  const extrasRuns = Number(ball?.extras_runs) || 0;
+  const typeMap: Record<string, string> = {
+    wd: "WD",
+    wide: "WD",
+    nb: "NB",
+    "no-ball": "NB",
+    lb: "LB",
+    legbye: "LB",
+    b: "B",
+    bye: "B",
+  };
+  const typeLabel = typeMap[rawType] || rawType.toUpperCase();
+  return `${extrasRuns > 0 ? extrasRuns : ""}${typeLabel}`;
+};
+
 export default function ScoreTicker({
   overlayData,
   liveMatch,
@@ -24,6 +41,16 @@ export default function ScoreTicker({
 
   const prevBallRef = useRef<string | null>(null);
   const prevAnimBallRef = useRef<string | null>(null);
+  const eventTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scoreAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const upsertDelivery = (list: any[], delivery: any) => {
+    const idx = list.findIndex((d) => d.id === delivery.id);
+    if (idx === -1) return [...list, delivery];
+    const next = [...list];
+    next[idx] = delivery;
+    return next;
+  };
 
   // --------------------------------------------------------
   // 1. FETCH LIVE STATS & PLAYERS (Full Match Fetch)
@@ -72,21 +99,22 @@ export default function ScoreTicker({
       .channel(`ticker_realtime_${liveMatch.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "deliveries" },
+        {
+          event: "*",
+          schema: "public",
+          table: "deliveries",
+          filter: `match_id=eq.${liveMatch.id}`,
+        },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            if (payload.new.match_id === liveMatch.id) {
-              setDeliveries((prev) => [...prev, payload.new]);
-            }
+            setDeliveries((prev) => upsertDelivery(prev, payload.new));
           } else if (payload.eventType === "UPDATE") {
             setDeliveries((prev) => {
               const exists = prev.some((d) => d.id === payload.new.id);
               if (exists) {
                 prevBallRef.current = null;
                 prevAnimBallRef.current = null;
-                return prev.map((d) =>
-                  d.id === payload.new.id ? payload.new : d,
-                );
+                return upsertDelivery(prev, payload.new);
               }
               return prev;
             });
@@ -106,6 +134,8 @@ export default function ScoreTicker({
       .subscribe();
 
     return () => {
+      if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
+      if (scoreAnimTimerRef.current) clearTimeout(scoreAnimTimerRef.current);
       supabase.removeChannel(sub);
     };
   }, [liveMatch?.id]);
@@ -157,7 +187,21 @@ export default function ScoreTicker({
 
     if (event) {
       setEventTrigger(event);
-      setTimeout(() => setEventTrigger(null), 2500);
+      if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
+      eventTimerRef.current = setTimeout(() => setEventTrigger(null), 2500);
+    }
+  }, [deliveries]);
+
+  useEffect(() => {
+    if (!deliveries.length) return;
+    const lastBall = deliveries[deliveries.length - 1];
+    if (prevAnimBallRef.current === lastBall.id) return;
+    prevAnimBallRef.current = lastBall.id;
+
+    if (lastBall.is_wicket || Number(lastBall.runs_off_bat) >= 4) {
+      setScoreAnim(true);
+      if (scoreAnimTimerRef.current) clearTimeout(scoreAnimTimerRef.current);
+      scoreAnimTimerRef.current = setTimeout(() => setScoreAnim(false), 500);
     }
   }, [deliveries]);
 
@@ -166,13 +210,14 @@ export default function ScoreTicker({
   // --------------------------------------------------------
   // 3. ROCK-SOLID DATA PIPELINE (Deriving Score + Target)
   // --------------------------------------------------------
-  const isFirstInnings = Number(liveMatch.current_innings) === 1;
+  const currentInnings = Number(liveMatch.current_innings) || 1;
+  const isFirstInnings = currentInnings === 1;
 
-  // Split deliveries by innings
+  // Split deliveries by innings (normalize to number to avoid string/number mismatch)
   const currentInningsBalls = deliveries.filter(
-    (d) => d.innings === liveMatch.current_innings,
+    (d) => Number(d.innings) === currentInnings,
   );
-  const firstInningsBalls = deliveries.filter((d) => d.innings === 1);
+  const firstInningsBalls = deliveries.filter((d) => Number(d.innings) === 1);
 
   // Live Score Math
   const score = currentInningsBalls.reduce(
@@ -208,7 +253,7 @@ export default function ScoreTicker({
   ) {
     const activeTeamId =
       currentInningsBalls[0].batting_team_id || currentInningsBalls[0].team_id;
-    team1IsBattingNow = activeTeamId === liveMatch.team1_id;
+    team1IsBattingNow = String(activeTeamId) === String(liveMatch.team1_id);
   } else {
     const choseBat = String(liveMatch.toss_decision || "")
       .toLowerCase()
@@ -326,18 +371,6 @@ export default function ScoreTicker({
   if (isFirstInnings && totalBalls < 12 && tossWinnerName) {
     scoreContextText = `${tossWinnerName} won toss, elected to ${liveMatch.toss_decision || "bat"}`;
   }
-
-  useEffect(() => {
-    if (!deliveries.length) return;
-    const lastBall = deliveries[deliveries.length - 1];
-    if (prevAnimBallRef.current === lastBall.id) return;
-    prevAnimBallRef.current = lastBall.id;
-
-    if (lastBall.is_wicket || Number(lastBall.runs_off_bat) >= 4) {
-      setScoreAnim(true);
-      setTimeout(() => setScoreAnim(false), 500);
-    }
-  }, [deliveries]);
 
   // --------------------------------------------------------
   // UI RENDER
@@ -604,21 +637,23 @@ export default function ScoreTicker({
                 </span>
               </div>
 
-              <div className="flex items-center justify-start gap-2 overflow-hidden w-full py-1">
+              <div className="flex items-center justify-start gap-2 gap-y-1 flex-wrap overflow-hidden w-full py-1">
                 {bStats.timeline.map((b: any, i: number) => {
                   let bText =
                     Number(b.runs_off_bat) === 0 && !b.extras_runs
                       ? "•"
                       : b.runs_off_bat;
                   let bCls = "bg-white/10 border-white/20 text-white";
+                  let bShape = "w-9 h-9 rounded-full text-base";
 
                   if (b.is_wicket) {
                     bText = "W";
                     bCls =
                       "bg-rose-600 border-rose-400 text-white shadow-[0_0_10px_#ef4444]";
                   } else if (b.extras_type) {
-                    bText = `${Number(b.runs_off_bat) > 0 ? b.runs_off_bat : ""}${b.extras_type}`;
+                    bText = getExtraLabel(b);
                     bCls = "bg-indigo-600 border-indigo-400 text-white";
+                    bShape = "h-9 min-w-[46px] px-2 rounded-xl text-[12px]";
                   } else if (Number(b.runs_off_bat) === 4) {
                     bCls =
                       "bg-teal-400 border-teal-200 text-slate-900 shadow-[0_0_10px_#2dd4bf]";
@@ -630,7 +665,7 @@ export default function ScoreTicker({
                   return (
                     <div
                       key={b.id || i}
-                      className={`w-9 h-9 border-2 rounded-full shrink-0 flex items-center justify-center font-black ${bCls} text-base uppercase opacity-0`}
+                      className={`${bShape} border-2 shrink-0 flex items-center justify-center font-black ${bCls} uppercase opacity-0 leading-none`}
                       style={{
                         animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
                         animationDelay: `${i * 0.08}s`,
