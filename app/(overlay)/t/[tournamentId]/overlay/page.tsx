@@ -5,6 +5,7 @@ import ScoreTicker from "./components/ScoreTicker";
 import PlayerSpotlight from "./components/PlayerSpotlight";
 import FullscreenPlates from "./components/FullscreenPlates";
 import Partnership from "./components/Partnership";
+import { getBroadcastTheme } from "@/lib/themes";
 
 export default function BroadcastOverlay({
   params,
@@ -18,6 +19,14 @@ export default function BroadcastOverlay({
   const [team1Squad, setTeam1Squad] = useState<any[]>([]); // Added for Name Consistency
   const [team2Squad, setTeam2Squad] = useState<any[]>([]); // Added for Name Consistency
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
+
+  const upsertDelivery = (list: any[], delivery: any) => {
+    const idx = list.findIndex((d) => d.id === delivery.id);
+    if (idx === -1) return [...list, delivery];
+    const next = [...list];
+    next[idx] = delivery;
+    return next;
+  };
 
   // 1. TOURNAMENT CONFIG (Broadcast State)
   useEffect(() => {
@@ -117,11 +126,9 @@ export default function BroadcastOverlay({
         },
         (p) => {
           if (p.eventType === "INSERT")
-            setDeliveries((prev) => [...prev, p.new]);
+            setDeliveries((prev) => upsertDelivery(prev, p.new));
           else if (p.eventType === "UPDATE")
-            setDeliveries((prev) =>
-              prev.map((d) => (d.id === p.new.id ? p.new : d)),
-            );
+            setDeliveries((prev) => upsertDelivery(prev, p.new));
           else if (p.eventType === "DELETE")
             setDeliveries((prev) => prev.filter((d) => d.id !== p.old.id));
         },
@@ -137,6 +144,7 @@ export default function BroadcastOverlay({
   if (!config || !config.activeMatchId) return null;
 
   const activeViews = config.activeViews || [];
+  const broadcastTheme = getBroadcastTheme(config.broadcastThemeId);
   const activeFullscreen = activeViews.find((v: string) =>
     [
       "TOSS_REPORT",
@@ -167,7 +175,7 @@ export default function BroadcastOverlay({
     const t1Won = matchData.toss_winner_id === matchData.team1_id;
     const t1BattedFirst = choseBat ? t1Won : !t1Won;
     isT1Batting =
-      matchData.current_innings === 1 ? t1BattedFirst : !t1BattedFirst;
+      Number(matchData.current_innings) === 1 ? t1BattedFirst : !t1BattedFirst;
   }
   const miniBatName = isT1Batting
     ? matchData?.team1?.short_name
@@ -261,6 +269,7 @@ export default function BroadcastOverlay({
             deliveries={deliveries}
             team1Squad={team1Squad}
             team2Squad={team2Squad}
+            themeId={config.broadcastThemeId}
           />
         </div>
       )}
@@ -288,7 +297,12 @@ export default function BroadcastOverlay({
 
       {/* 7. SCROLLING TICKER */}
       {isTickerOn && config.tickerText && !activeFullscreen && (
-        <div className="absolute bottom-0 left-0 w-full h-10 bg-amber-400 border-t-[3px] border-amber-300 text-black font-black uppercase tracking-[0.2em] text-xl flex items-center z-[250] overflow-hidden shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
+        <div
+          className="absolute bottom-0 left-0 w-full h-10 text-black font-black uppercase tracking-[0.2em] text-xl flex items-center z-[250] overflow-hidden shadow-[0_-10px_30px_rgba(0,0,0,0.4)]"
+          style={{
+            backgroundColor: broadcastTheme.tokens.warning,
+            borderTop: `3px solid ${broadcastTheme.tokens.accent}`,
+          }}>
           <div className="ticker-text px-4">
             {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
             &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}{" "}
@@ -301,7 +315,9 @@ export default function BroadcastOverlay({
 
       {/* 8. FULLSCREEN LAYERS - Passed Squads and Deliveries */}
       {activeFullscreen && (
-        <div className="absolute inset-0 w-full h-full z-[300] bg-slate-950/20 backdrop-blur-md animate-fade-in">
+        <div
+          className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
+          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}>
           {activeFullscreen === "SPONSOR_BANNER" ? (
             <img
               key={config.sponsorBanners[currentBannerIdx]}
@@ -316,6 +332,7 @@ export default function BroadcastOverlay({
               deliveries={deliveries}
               team1Squad={team1Squad}
               team2Squad={team2Squad}
+              themeId={config.broadcastThemeId}
             />
           )}
         </div>

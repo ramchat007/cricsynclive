@@ -4,12 +4,17 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { LogOut, Menu, X, User } from "lucide-react";
+import { useTheme } from "next-themes";
+import { APP_THEMES } from "@/lib/themes";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [session, setSession] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const activeTheme = mounted ? theme : "dark";
 
   useEffect(() => {
     // 1. Get initial session
@@ -25,6 +30,10 @@ export default function Navbar() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Block background scroll when mobile menu is open
@@ -86,6 +95,21 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
+
+            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full p-1">
+              {APP_THEMES.map((appTheme) => (
+                <button
+                  key={appTheme.id}
+                  onClick={() => setTheme(appTheme.id)}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                    activeTheme === appTheme.id
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}>
+                  {appTheme.label}
+                </button>
+              ))}
+            </div>
 
             {session ? (
               <div className="flex items-center gap-5 border-l border-slate-200 pl-5">
@@ -174,6 +198,26 @@ export default function Navbar() {
                     )}
                   </Link>
                 ))}
+              </div>
+
+              <div className="mt-6 bg-slate-50 border border-slate-100 rounded-2xl p-3">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                  App Theme
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {APP_THEMES.map((appTheme) => (
+                    <button
+                      key={appTheme.id}
+                      onClick={() => setTheme(appTheme.id)}
+                      className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                        activeTheme === appTheme.id
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-500 border-slate-200"
+                      }`}>
+                      {appTheme.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Bottom Auth Actions */}

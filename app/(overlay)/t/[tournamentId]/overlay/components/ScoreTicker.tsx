@@ -2,12 +2,30 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getBroadcastTheme } from "@/lib/themes";
 
 const getInitials = (name: string) => {
   if (!name) return "";
   const words = name.trim().split(/\s+/);
   if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   return name.substring(0, 3).toUpperCase();
+};
+
+const getExtraLabel = (ball: any) => {
+  const rawType = String(ball?.extras_type || "").toLowerCase();
+  const extrasRuns = Number(ball?.extras_runs) || 0;
+  const typeMap: Record<string, string> = {
+    wd: "WD",
+    wide: "WD",
+    nb: "NB",
+    "no-ball": "NB",
+    lb: "LB",
+    legbye: "LB",
+    b: "B",
+    bye: "B",
+  };
+  const typeLabel = typeMap[rawType] || rawType.toUpperCase();
+  return `${extrasRuns > 0 ? extrasRuns : ""}${typeLabel}`;
 };
 
 export default function ScoreTicker({
@@ -21,9 +39,20 @@ export default function ScoreTicker({
   const [eventTrigger, setEventTrigger] = useState<string | null>(null);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [players, setPlayers] = useState<any>({});
+  const selectedTheme = getBroadcastTheme(overlayData?.broadcastThemeId);
 
   const prevBallRef = useRef<string | null>(null);
   const prevAnimBallRef = useRef<string | null>(null);
+  const eventTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scoreAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const upsertDelivery = (list: any[], delivery: any) => {
+    const idx = list.findIndex((d) => d.id === delivery.id);
+    if (idx === -1) return [...list, delivery];
+    const next = [...list];
+    next[idx] = delivery;
+    return next;
+  };
 
   // --------------------------------------------------------
   // 1. FETCH LIVE STATS & PLAYERS (Full Match Fetch)
@@ -72,21 +101,22 @@ export default function ScoreTicker({
       .channel(`ticker_realtime_${liveMatch.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "deliveries" },
+        {
+          event: "*",
+          schema: "public",
+          table: "deliveries",
+          filter: `match_id=eq.${liveMatch.id}`,
+        },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            if (payload.new.match_id === liveMatch.id) {
-              setDeliveries((prev) => [...prev, payload.new]);
-            }
+            setDeliveries((prev) => upsertDelivery(prev, payload.new));
           } else if (payload.eventType === "UPDATE") {
             setDeliveries((prev) => {
               const exists = prev.some((d) => d.id === payload.new.id);
               if (exists) {
                 prevBallRef.current = null;
                 prevAnimBallRef.current = null;
-                return prev.map((d) =>
-                  d.id === payload.new.id ? payload.new : d,
-                );
+                return upsertDelivery(prev, payload.new);
               }
               return prev;
             });
@@ -106,6 +136,8 @@ export default function ScoreTicker({
       .subscribe();
 
     return () => {
+      if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
+      if (scoreAnimTimerRef.current) clearTimeout(scoreAnimTimerRef.current);
       supabase.removeChannel(sub);
     };
   }, [liveMatch?.id]);
@@ -157,7 +189,21 @@ export default function ScoreTicker({
 
     if (event) {
       setEventTrigger(event);
-      setTimeout(() => setEventTrigger(null), 2500);
+      if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
+      eventTimerRef.current = setTimeout(() => setEventTrigger(null), 2500);
+    }
+  }, [deliveries]);
+
+  useEffect(() => {
+    if (!deliveries.length) return;
+    const lastBall = deliveries[deliveries.length - 1];
+    if (prevAnimBallRef.current === lastBall.id) return;
+    prevAnimBallRef.current = lastBall.id;
+
+    if (lastBall.is_wicket || Number(lastBall.runs_off_bat) >= 4) {
+      setScoreAnim(true);
+      if (scoreAnimTimerRef.current) clearTimeout(scoreAnimTimerRef.current);
+      scoreAnimTimerRef.current = setTimeout(() => setScoreAnim(false), 500);
     }
   }, [deliveries]);
 
@@ -166,13 +212,14 @@ export default function ScoreTicker({
   // --------------------------------------------------------
   // 3. ROCK-SOLID DATA PIPELINE (Deriving Score + Target)
   // --------------------------------------------------------
-  const isFirstInnings = Number(liveMatch.current_innings) === 1;
+  const currentInnings = Number(liveMatch.current_innings) || 1;
+  const isFirstInnings = currentInnings === 1;
 
-  // Split deliveries by innings
+  // Split deliveries by innings (normalize to number to avoid string/number mismatch)
   const currentInningsBalls = deliveries.filter(
-    (d) => d.innings === liveMatch.current_innings,
+    (d) => Number(d.innings) === currentInnings,
   );
-  const firstInningsBalls = deliveries.filter((d) => d.innings === 1);
+  const firstInningsBalls = deliveries.filter((d) => Number(d.innings) === 1);
 
   // Live Score Math
   const score = currentInningsBalls.reduce(
@@ -208,7 +255,7 @@ export default function ScoreTicker({
   ) {
     const activeTeamId =
       currentInningsBalls[0].batting_team_id || currentInningsBalls[0].team_id;
-    team1IsBattingNow = activeTeamId === liveMatch.team1_id;
+    team1IsBattingNow = String(activeTeamId) === String(liveMatch.team1_id);
   } else {
     const choseBat = String(liveMatch.toss_decision || "")
       .toLowerCase()
@@ -327,18 +374,6 @@ export default function ScoreTicker({
     scoreContextText = `${tossWinnerName} won toss, elected to ${liveMatch.toss_decision || "bat"}`;
   }
 
-  useEffect(() => {
-    if (!deliveries.length) return;
-    const lastBall = deliveries[deliveries.length - 1];
-    if (prevAnimBallRef.current === lastBall.id) return;
-    prevAnimBallRef.current = lastBall.id;
-
-    if (lastBall.is_wicket || Number(lastBall.runs_off_bat) >= 4) {
-      setScoreAnim(true);
-      setTimeout(() => setScoreAnim(false), 500);
-    }
-  }, [deliveries]);
-
   // --------------------------------------------------------
   // UI RENDER
   // --------------------------------------------------------
@@ -365,26 +400,42 @@ export default function ScoreTicker({
             className={`absolute inset-0 blur-2xl opacity-70
               ${
                 eventTrigger === "WICKET"
-                  ? "bg-red-600"
+                  ? ""
                   : eventTrigger === "SIX"
-                    ? "bg-amber-400"
-                    : "bg-emerald-500"
+                    ? ""
+                    : ""
               }
             `}
+            style={{
+              backgroundColor:
+                eventTrigger === "WICKET"
+                  ? selectedTheme.tokens.danger
+                  : eventTrigger === "SIX"
+                    ? selectedTheme.tokens.warning
+                    : selectedTheme.tokens.success,
+            }}
           />
 
           <div className="absolute w-[600px] h-[300px] rounded-full border-[6px] border-white/20 animate-ping" />
 
           <h2
             className={`text-[90px] font-black italic uppercase tracking-tighter z-10
-            ${
-              eventTrigger === "WICKET"
-                ? "text-red-500 drop-shadow-[0_0_40px_#ef4444]"
-                : eventTrigger === "SIX"
-                  ? "text-amber-300 drop-shadow-[0_0_40px_#fbbf24]"
-                  : "text-emerald-300 drop-shadow-[0_0_40px_#10b981]"
-            }
+            
             animate-bounce`}
+            style={{
+              color:
+                eventTrigger === "WICKET"
+                  ? selectedTheme.tokens.danger
+                  : eventTrigger === "SIX"
+                    ? selectedTheme.tokens.warning
+                    : selectedTheme.tokens.success,
+              textShadow:
+                eventTrigger === "WICKET"
+                  ? `0 0 40px ${selectedTheme.tokens.danger}`
+                  : eventTrigger === "SIX"
+                    ? `0 0 40px ${selectedTheme.tokens.warning}`
+                    : `0 0 40px ${selectedTheme.tokens.success}`,
+            }}
           >
             {eventTrigger === "WICKET"
               ? "WICKET!"
@@ -406,8 +457,13 @@ export default function ScoreTicker({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-16 py-1 shadow-lg text-[12px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]">
-            <span className="text-amber-400 shrink-0">
+          <div
+            className="flex items-center gap-2 border-t border-l border-r rounded-t-xl px-16 py-1 shadow-lg text-[12px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]"
+            style={{
+              backgroundColor: selectedTheme.tokens.panelBg,
+              borderColor: selectedTheme.tokens.panelBorder,
+            }}>
+            <span className="shrink-0" style={{ color: selectedTheme.tokens.warning }}>
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -415,7 +471,7 @@ export default function ScoreTicker({
               {liveMatch.stage || "Live Match"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
-            <span className="text-cyan-400 drop-shadow-md min-w-0">
+            <span className="drop-shadow-md min-w-0" style={{ color: selectedTheme.tokens.accent }}>
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName
@@ -604,21 +660,23 @@ export default function ScoreTicker({
                 </span>
               </div>
 
-              <div className="flex items-center justify-start gap-2 overflow-hidden w-full py-1">
+              <div className="flex items-center justify-start gap-2 gap-y-1 flex-wrap overflow-hidden w-full py-1">
                 {bStats.timeline.map((b: any, i: number) => {
                   let bText =
                     Number(b.runs_off_bat) === 0 && !b.extras_runs
                       ? "•"
                       : b.runs_off_bat;
                   let bCls = "bg-white/10 border-white/20 text-white";
+                  let bShape = "w-9 h-9 rounded-full text-base";
 
                   if (b.is_wicket) {
                     bText = "W";
                     bCls =
                       "bg-rose-600 border-rose-400 text-white shadow-[0_0_10px_#ef4444]";
                   } else if (b.extras_type) {
-                    bText = `${Number(b.runs_off_bat) > 0 ? b.runs_off_bat : ""}${b.extras_type}`;
+                    bText = getExtraLabel(b);
                     bCls = "bg-indigo-600 border-indigo-400 text-white";
+                    bShape = "h-9 min-w-[46px] px-2 rounded-xl text-[12px]";
                   } else if (Number(b.runs_off_bat) === 4) {
                     bCls =
                       "bg-teal-400 border-teal-200 text-slate-900 shadow-[0_0_10px_#2dd4bf]";
@@ -630,7 +688,7 @@ export default function ScoreTicker({
                   return (
                     <div
                       key={b.id || i}
-                      className={`w-9 h-9 border-2 rounded-full shrink-0 flex items-center justify-center font-black ${bCls} text-base uppercase opacity-0`}
+                      className={`${bShape} border-2 shrink-0 flex items-center justify-center font-black ${bCls} uppercase opacity-0 leading-none`}
                       style={{
                         animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
                         animationDelay: `${i * 0.08}s`,
