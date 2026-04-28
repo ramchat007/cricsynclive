@@ -24,6 +24,8 @@ export default function FullscreenPlates({
   team1Squad,
   team2Squad,
 }: any) {
+  if (!matchData) return null;
+
   const allPlayers = useMemo(
     () => [...team1Squad, ...team2Squad],
     [team1Squad, team2Squad],
@@ -88,9 +90,115 @@ export default function FullscreenPlates({
 
   const glass =
     "bg-slate-950/40 backdrop-blur-3xl border border-white/10 shadow-2xl";
+  const tossWinner =
+    matchData.toss_winner_id === matchData.team1_id
+      ? matchData.team1
+      : matchData.team2;
+  const tossLoser =
+    matchData.toss_winner_id === matchData.team1_id
+      ? matchData.team2
+      : matchData.team1;
 
   return (
     <div className="w-full h-full flex items-center justify-center p-20 text-white font-sans">
+      {/* --- TOSS REPORT --- */}
+      {type === "TOSS_REPORT" && (
+        <div
+          className={`w-full max-w-5xl p-16 rounded-[4rem] flex flex-col items-center text-center animate-in slide-in-from-bottom-10 ${glass}`}>
+          <p className="text-amber-400 font-black uppercase tracking-[0.35em] text-sm">
+            Toss Report
+          </p>
+          <h2 className="text-7xl font-black uppercase tracking-tighter mt-6">
+            {tossWinner?.name || "Toss Winner"}
+          </h2>
+          <p className="text-3xl font-bold text-white/70 mt-4">
+            won the toss and elected to{" "}
+            <span className="text-cyan-400 uppercase">
+              {matchData.toss_decision || "bat"}
+            </span>
+          </p>
+          <div className="mt-14 grid grid-cols-2 gap-8 w-full">
+            {[tossWinner, tossLoser].map((team: any, idx: number) => (
+              <div
+                key={team?.id || idx}
+                className="bg-white/5 border border-white/10 rounded-3xl py-10 px-8">
+                <p className="text-xs text-white/40 font-black uppercase tracking-widest">
+                  {idx === 0 ? "Winner" : "Opponent"}
+                </p>
+                <p className="text-4xl font-black mt-3 uppercase">
+                  {team?.name || "Team"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* --- INNINGS BREAK --- */}
+      {type === "INNINGS_BREAK" && (
+        <div
+          className={`w-full max-w-6xl p-16 rounded-[4rem] animate-in slide-in-from-bottom-10 ${glass}`}>
+          <p className="text-amber-400 font-black uppercase tracking-[0.35em] text-sm text-center">
+            Innings Break
+          </p>
+          <div className="grid grid-cols-2 gap-12 mt-8">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-10">
+              <p className="text-white/40 text-sm font-black uppercase tracking-widest">
+                1st Innings
+              </p>
+              <h3 className="text-5xl font-black mt-3">
+                {matchData.team1?.name}
+              </h3>
+              <p className="text-7xl font-black mt-6">
+                {matchData.team1_runs || 0}/{matchData.team1_wickets || 0}
+              </p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-10">
+              <p className="text-white/40 text-sm font-black uppercase tracking-widest">
+                Chase Target
+              </p>
+              <h3 className="text-5xl font-black mt-3">
+                {matchData.team2?.name}
+              </h3>
+              <p className="text-7xl font-black mt-6 text-cyan-400">
+                {(Number(matchData.team1_runs) || 0) + 1}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MATCH RESULT --- */}
+      {type === "MATCH_RESULT" && (
+        <div
+          className={`w-full max-w-6xl p-16 rounded-[4rem] animate-in zoom-in-95 ${glass}`}>
+          <p className="text-amber-400 font-black uppercase tracking-[0.35em] text-sm text-center">
+            Result
+          </p>
+          <h2 className="text-7xl font-black uppercase text-center mt-6">
+            {matchData.match_result || "Result Pending"}
+          </h2>
+          <div className="grid grid-cols-2 gap-10 mt-12">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+              <p className="text-white/40 uppercase text-sm font-black">
+                {matchData.team1?.name}
+              </p>
+              <p className="text-6xl font-black mt-4">
+                {matchData.team1_runs || 0}/{matchData.team1_wickets || 0}
+              </p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+              <p className="text-white/40 uppercase text-sm font-black">
+                {matchData.team2?.name}
+              </p>
+              <p className="text-6xl font-black mt-4">
+                {matchData.team2_runs || 0}/{matchData.team2_wickets || 0}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- OVER SUMMARY --- */}
       {type === "OVER_SUMMARY" && overInfo && (
         <div

@@ -32,6 +32,7 @@ export default function MasterController({
   const [matches, setMatches] = useState<any[]>([]);
   const [teamASquad, setTeamASquad] = useState<any[]>([]);
   const [teamBSquad, setTeamBSquad] = useState<any[]>([]);
+  const [triggerNote, setTriggerNote] = useState<string>("");
 
   // 🔥 Notice: sponsorBanners is now an array!
   const [config, setConfig] = useState<any>({
@@ -291,6 +292,42 @@ export default function MasterController({
     publishConfig({ activeViews: views });
   };
 
+  const triggerRapidEvent = async (eventType: "FOUR" | "SIX" | "WICKET") => {
+    if (!config.activeMatchId) {
+      setTriggerNote("Select active match first.");
+      return;
+    }
+
+    const { data: lastBall } = await supabase
+      .from("deliveries")
+      .select("id, runs_off_bat, is_wicket")
+      .eq("match_id", config.activeMatchId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!lastBall) {
+      setTriggerNote("No delivery found for this match.");
+      return;
+    }
+
+    const runs = Number(lastBall.runs_off_bat) || 0;
+    const isWicket = !!lastBall.is_wicket;
+    const matchesEvent =
+      (eventType === "FOUR" && runs === 4 && !isWicket) ||
+      (eventType === "SIX" && runs === 6 && !isWicket) ||
+      (eventType === "WICKET" && isWicket);
+
+    if (!matchesEvent) {
+      setTriggerNote(`Last ball does not match ${eventType} trigger.`);
+      return;
+    }
+
+    await publishConfig({ event: eventType, eventTime: Date.now() });
+    setTriggerNote(`${eventType} trigger fired.`);
+    setTimeout(() => setTriggerNote(""), 1800);
+  };
+
   const removeBanner = (indexToRemove: number) => {
     const newBanners = config.sponsorBanners.filter(
       (_: any, i: number) => i !== indexToRemove,
@@ -381,27 +418,26 @@ export default function MasterController({
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() =>
-                  publishConfig({ event: "FOUR", eventTime: Date.now() })
-                }
+                onClick={() => triggerRapidEvent("FOUR")}
                 className="bg-emerald-50 border border-emerald-200 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-700 font-black text-sm active:scale-95 transition-all shadow-sm">
                 4 RUNS
               </button>
               <button
-                onClick={() =>
-                  publishConfig({ event: "SIX", eventTime: Date.now() })
-                }
+                onClick={() => triggerRapidEvent("SIX")}
                 className="bg-amber-50 border border-amber-200 hover:bg-amber-400 hover:text-white hover:border-amber-400 py-6 rounded-xl text-amber-700 font-black text-sm active:scale-95 transition-all shadow-sm">
                 6 RUNS
               </button>
             </div>
             <button
-              onClick={() =>
-                publishConfig({ event: "WICKET", eventTime: Date.now() })
-              }
+              onClick={() => triggerRapidEvent("WICKET")}
               className="w-full bg-rose-50 border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-700 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm">
               WICKET
             </button>
+            {!!triggerNote && (
+              <p className="text-[11px] font-bold text-gray-500 mt-1">
+                {triggerNote}
+              </p>
+            )}
 
             <div className="pt-4 mt-auto border-t border-gray-100">
               <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">

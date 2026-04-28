@@ -19,6 +19,14 @@ export default function BroadcastOverlay({
   const [team2Squad, setTeam2Squad] = useState<any[]>([]); // Added for Name Consistency
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
 
+  const upsertDelivery = (list: any[], delivery: any) => {
+    const idx = list.findIndex((d) => d.id === delivery.id);
+    if (idx === -1) return [...list, delivery];
+    const next = [...list];
+    next[idx] = delivery;
+    return next;
+  };
+
   // 1. TOURNAMENT CONFIG (Broadcast State)
   useEffect(() => {
     if (!tournamentId) return;
@@ -117,11 +125,9 @@ export default function BroadcastOverlay({
         },
         (p) => {
           if (p.eventType === "INSERT")
-            setDeliveries((prev) => [...prev, p.new]);
+            setDeliveries((prev) => upsertDelivery(prev, p.new));
           else if (p.eventType === "UPDATE")
-            setDeliveries((prev) =>
-              prev.map((d) => (d.id === p.new.id ? p.new : d)),
-            );
+            setDeliveries((prev) => upsertDelivery(prev, p.new));
           else if (p.eventType === "DELETE")
             setDeliveries((prev) => prev.filter((d) => d.id !== p.old.id));
         },
@@ -167,7 +173,7 @@ export default function BroadcastOverlay({
     const t1Won = matchData.toss_winner_id === matchData.team1_id;
     const t1BattedFirst = choseBat ? t1Won : !t1Won;
     isT1Batting =
-      matchData.current_innings === 1 ? t1BattedFirst : !t1BattedFirst;
+      Number(matchData.current_innings) === 1 ? t1BattedFirst : !t1BattedFirst;
   }
   const miniBatName = isT1Batting
     ? matchData?.team1?.short_name
