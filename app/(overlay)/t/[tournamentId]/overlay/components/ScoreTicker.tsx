@@ -10,6 +10,23 @@ const getInitials = (name: string) => {
   return name.substring(0, 3).toUpperCase();
 };
 
+const getExtraLabel = (ball: any) => {
+  const rawType = String(ball?.extras_type || "").toLowerCase();
+  const extrasRuns = Number(ball?.extras_runs) || 0;
+  const typeMap: Record<string, string> = {
+    wd: "WD",
+    wide: "WD",
+    nb: "NB",
+    "no-ball": "NB",
+    lb: "LB",
+    legbye: "LB",
+    b: "B",
+    bye: "B",
+  };
+  const typeLabel = typeMap[rawType] || rawType.toUpperCase();
+  return `${extrasRuns > 0 ? extrasRuns : ""}${typeLabel}`;
+};
+
 export default function ScoreTicker({
   overlayData,
   liveMatch,
