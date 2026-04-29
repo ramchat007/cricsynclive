@@ -39,6 +39,7 @@ export default function ScoreTicker({
   const [eventTrigger, setEventTrigger] = useState<string | null>(null);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [players, setPlayers] = useState<any>({});
+  const [currentMatch, setCurrentMatch] = useState(liveMatch);
   const selectedTheme = getBroadcastTheme(overlayData?.broadcastThemeId);
 
   const prevBallRef = useRef<string | null>(null);
@@ -97,6 +98,48 @@ export default function ScoreTicker({
 
     fetchLiveStats();
 
+    // ✅ NEW: Listen to matches table for bowler/batter changes (REAL-TIME UPDATE)
+    const matchSub = supabase
+      .channel(`ticker_match_monitor_${liveMatch.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "matches",
+          filter: `id=eq.${liveMatch.id}`,
+        },
+        async (payload) => {
+          const updatedMatch = payload.new;
+          setCurrentMatch(updatedMatch);
+
+          // When players change (bowler, striker, non-striker), fetch their names
+          const newPlayerIds = [
+            updatedMatch.live_striker_id,
+            updatedMatch.live_non_striker_id,
+            updatedMatch.live_bowler_id,
+          ].filter(Boolean);
+
+          if (newPlayerIds.length > 0) {
+            const { data: pData } = await supabase
+              .from("players")
+              .select("id, full_name")
+              .in("id", newPlayerIds);
+
+            if (pData) {
+              setPlayers((prev: any) => {
+                const updated = { ...prev };
+                pData.forEach((p: any) => {
+                  updated[p.id] = p.full_name;
+                });
+                return updated;
+              });
+            }
+          }
+        },
+      )
+      .subscribe();
+
     const sub = supabase
       .channel(`ticker_realtime_${liveMatch.id}`)
       .on(
@@ -139,6 +182,7 @@ export default function ScoreTicker({
       if (eventTimerRef.current) clearTimeout(eventTimerRef.current);
       if (scoreAnimTimerRef.current) clearTimeout(scoreAnimTimerRef.current);
       supabase.removeChannel(sub);
+      supabase.removeChannel(matchSub);
     };
   }, [liveMatch?.id]);
 
@@ -209,10 +253,13 @@ export default function ScoreTicker({
 
   if (!liveMatch) return null;
 
+  // ✅ USE currentMatch instead of liveMatch for all data (ensures real-time updates)
+  const activeMatch = currentMatch || liveMatch;
+
   // --------------------------------------------------------
   // 3. ROCK-SOLID DATA PIPELINE (Deriving Score + Target)
   // --------------------------------------------------------
-  const currentInnings = Number(liveMatch.current_innings) || 1;
+  const currentInnings = Number(activeMatch.current_innings) || 1;
   const isFirstInnings = currentInnings === 1;
 
   // Split deliveries by innings (normalize to number to avoid string/number mismatch)
@@ -255,12 +302,12 @@ export default function ScoreTicker({
   ) {
     const activeTeamId =
       currentInningsBalls[0].batting_team_id || currentInningsBalls[0].team_id;
-    team1IsBattingNow = String(activeTeamId) === String(liveMatch.team1_id);
+    team1IsBattingNow = String(activeTeamId) === String(activeMatch.team1_id);
   } else {
-    const choseBat = String(liveMatch.toss_decision || "")
+    const choseBat = String(activeMatch.toss_decision || "")
       .toLowerCase()
       .includes("bat");
-    const t1Won = liveMatch.toss_winner_id === liveMatch.team1_id;
+    const t1Won = activeMatch.toss_winner_id === activeMatch.team1_id;
     const t1BattedFirst = choseBat ? t1Won : !t1Won;
     team1IsBattingNow = isFirstInnings ? t1BattedFirst : !t1BattedFirst;
   }
@@ -268,8 +315,8 @@ export default function ScoreTicker({
   // --------------------------------------------------------
   // 4. BRANDING & COLORS
   // --------------------------------------------------------
-  const battingTeamObj = team1IsBattingNow ? liveMatch.team1 : liveMatch.team2;
-  const bowlingTeamObj = team1IsBattingNow ? liveMatch.team2 : liveMatch.team1;
+  const battingTeamObj = team1IsBattingNow ? activeMatch.team1 : activeMatch.team2;
+  const bowlingTeamObj = team1IsBattingNow ? activeMatch.team2 : activeMatch.team1;
 
   const battingName = battingTeamObj?.name || "Team 1";
   const bowlingName = bowlingTeamObj?.name || "Team 2";
@@ -320,24 +367,24 @@ export default function ScoreTicker({
   };
 
   const strikerName =
-    players[liveMatch.live_striker_id] ||
-    liveMatch?.live_striker?.full_name ||
+    players[activeMatch.live_striker_id] ||
+    activeMatch?.live_striker?.full_name ||
     "Striker";
   const nonStrikerName =
-    players[liveMatch.live_non_striker_id] ||
-    liveMatch?.live_non_striker?.full_name ||
+    players[activeMatch.live_non_striker_id] ||
+    activeMatch?.live_non_striker?.full_name ||
     "Non-Striker";
   const bowlerName =
-    players[liveMatch.live_bowler_id] ||
-    liveMatch?.live_bowler?.full_name ||
+    players[activeMatch.live_bowler_id] ||
+    activeMatch?.live_bowler?.full_name ||
     "Bowler";
 
-  const sStats = getBatsmanStats(liveMatch.live_striker_id);
-  const nsStats = getBatsmanStats(liveMatch.live_non_striker_id);
-  const bStats = getBowlerStats(liveMatch.live_bowler_id);
+  const sStats = getBatsmanStats(activeMatch.live_striker_id);
+  const nsStats = getBatsmanStats(activeMatch.live_non_striker_id);
+  const bStats = getBowlerStats(activeMatch.live_bowler_id);
 
   const crr = totalBalls > 0 ? ((score / totalBalls) * 6).toFixed(2) : "0.00";
-  const totalMatchBalls = (Number(liveMatch.overs_count) || 20) * 6;
+  const totalMatchBalls = (Number(activeMatch.overs_count) || 20) * 6;
 
   let rrrVal = "0.00";
   let equationStr = "MATCH IN PROGRESS";
@@ -365,13 +412,13 @@ export default function ScoreTicker({
   }
 
   const tossWinnerName =
-    liveMatch.toss_winner_id === liveMatch.team1_id
-      ? liveMatch.team1?.name
-      : liveMatch.team2?.name;
+    activeMatch.toss_winner_id === activeMatch.team1_id
+      ? activeMatch.team1?.name
+      : activeMatch.team2?.name;
 
   let scoreContextText = `${bowlingName} Bowling`;
   if (isFirstInnings && totalBalls < 12 && tossWinnerName) {
-    scoreContextText = `${tossWinnerName} won toss, elected to ${liveMatch.toss_decision || "bat"}`;
+    scoreContextText = `${tossWinnerName} won toss, elected to ${activeMatch.toss_decision || "bat"}`;
   }
 
   // --------------------------------------------------------
@@ -384,9 +431,9 @@ export default function ScoreTicker({
           .anim-entry { animation: slideUpFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
           @keyframes scorePop { 0% { transform: scale(1); color: white; text-shadow: none; } 30% { transform: scale(1.15); color: #fde047; text-shadow: 0 0 20px rgba(253, 224, 71, 0.8); } 100% { transform: scale(1); color: white; text-shadow: none; } }
           .animate-scorePop { animation: scorePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-          @keyframes pulseGlow { 0%, 100% { opacity: 0.7; transform: scale(0.9); filter: drop-shadow(0 0 2px rgba(251,191,36,0.5)); } 50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(251,191,36,1)); } }
+          @keyframes pulseGlow { 0%, 100% { opacity: 0.7; transform: scale(0.9); filter: drop-shadow(0 0 2px rgba(251,191,36,0.5)); } 50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(251,191,36,0.8)); } }
           .animate-pulseGlow { animation: pulseGlow 1.5s ease-in-out infinite; }
-          @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }@keyframes flash {0% { opacity: 0.8; } 100% { opacity: 0; }}
+          @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }@keyframes flash {0% { opacity: 0.8; } 100% { opacity: 0; } }
         `}</style>
 
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[1920px] h-[120px]">
@@ -468,14 +515,14 @@ export default function ScoreTicker({
             </span>
             <span className="text-white/40 shrink-0">|</span>
             <span className="drop-shadow-md min-w-0">
-              {liveMatch.stage || "Live Match"}
+              {activeMatch.stage || "Live Match"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
             <span className="drop-shadow-md min-w-0" style={{ color: selectedTheme.tokens.accent }}>
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName
-                  ? `${tossWinnerName} won toss, elected to ${liveMatch.toss_decision || "bat"}`
+                  ? `${tossWinnerName} won toss, elected to ${activeMatch.toss_decision || "bat"}`
                   : "Live Action"}
             </span>
           </div>
@@ -536,7 +583,7 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : "text-white"}`}
+                  className={`min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
                 >
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
