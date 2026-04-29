@@ -38,7 +38,12 @@ export default function Partnership({
     );
     return {
       name: findName(playerId, fallback),
-      runs: faced.reduce((sum: number, b: any) => sum + (Number(b.runs_off_bat) || 0), 0),
+      // ✅ FIX: Include extras_runs like the total partnership does
+      runs: faced.reduce(
+        (sum: number, b: any) =>
+          sum + (Number(b.runs_off_bat) || 0) + (Number(b.extras_runs) || 0),
+        0,
+      ),
       balls: faced.filter((b: any) => {
         const type = String(b.extras_type || "").toLowerCase();
         return type !== "wd" && type !== "wide";
