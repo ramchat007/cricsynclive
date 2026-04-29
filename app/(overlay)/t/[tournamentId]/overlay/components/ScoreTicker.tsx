@@ -56,7 +56,7 @@ export default function ScoreTicker({
   };
 
   // --------------------------------------------------------
-  // 1. FETCH LIVE STATS & PLAYERS (Full Match Fetch)
+  // 1. FETCH LIVE STATS & PLAYERS
   // --------------------------------------------------------
   useEffect(() => {
     if (!liveMatch?.id) return;
@@ -81,7 +81,6 @@ export default function ScoreTicker({
         setPlayers(pMap || {});
       }
 
-      // Fetch ALL deliveries for the match to remember 1st innings Target
       const { data: dData } = await supabase
         .from("deliveries")
         .select("*")
@@ -98,7 +97,6 @@ export default function ScoreTicker({
 
     fetchLiveStats();
 
-    // ✅ NEW: Listen to matches table for bowler/batter changes (REAL-TIME UPDATE)
     const matchSub = supabase
       .channel(`ticker_match_monitor_${liveMatch.id}`)
       .on(
@@ -111,9 +109,14 @@ export default function ScoreTicker({
         },
         async (payload) => {
           const updatedMatch = payload.new;
-          setCurrentMatch(updatedMatch);
 
-          // When players change (bowler, striker, non-striker), fetch their names
+          setCurrentMatch((prev: any) => ({
+            ...prev,
+            ...updatedMatch,
+            team1: prev?.team1 || liveMatch.team1,
+            team2: prev?.team2 || liveMatch.team2,
+          }));
+
           const newPlayerIds = [
             updatedMatch.live_striker_id,
             updatedMatch.live_non_striker_id,
@@ -253,22 +256,19 @@ export default function ScoreTicker({
 
   if (!liveMatch) return null;
 
-  // ✅ USE currentMatch instead of liveMatch for all data (ensures real-time updates)
   const activeMatch = currentMatch || liveMatch;
 
   // --------------------------------------------------------
-  // 3. ROCK-SOLID DATA PIPELINE (Deriving Score + Target)
+  // 3. ROCK-SOLID DATA PIPELINE
   // --------------------------------------------------------
   const currentInnings = Number(activeMatch.current_innings) || 1;
   const isFirstInnings = currentInnings === 1;
 
-  // Split deliveries by innings (normalize to number to avoid string/number mismatch)
   const currentInningsBalls = deliveries.filter(
     (d) => Number(d.innings) === currentInnings,
   );
   const firstInningsBalls = deliveries.filter((d) => Number(d.innings) === 1);
 
-  // Live Score Math
   const score = currentInningsBalls.reduce(
     (acc, d) =>
       acc + (Number(d.runs_off_bat) || 0) + (Number(d.extras_runs) || 0),
@@ -283,7 +283,6 @@ export default function ScoreTicker({
   }).length;
   const displayOvers = `${Math.floor(totalBalls / 6)}.${totalBalls % 6}`;
 
-  // Live Target Math (Derived strictly from 1st innings deliveries)
   let calculatedTarget: number | null = null;
   if (!isFirstInnings && firstInningsBalls.length > 0) {
     const inn1Score = firstInningsBalls.reduce(
@@ -294,7 +293,6 @@ export default function ScoreTicker({
     calculatedTarget = inn1Score + 1;
   }
 
-  // Batting Team Math
   let team1IsBattingNow = true;
   if (
     currentInningsBalls.length > 0 &&
@@ -315,8 +313,12 @@ export default function ScoreTicker({
   // --------------------------------------------------------
   // 4. BRANDING & COLORS
   // --------------------------------------------------------
-  const battingTeamObj = team1IsBattingNow ? activeMatch.team1 : activeMatch.team2;
-  const bowlingTeamObj = team1IsBattingNow ? activeMatch.team2 : activeMatch.team1;
+  const battingTeamObj = team1IsBattingNow
+    ? activeMatch.team1
+    : activeMatch.team2;
+  const bowlingTeamObj = team1IsBattingNow
+    ? activeMatch.team2
+    : activeMatch.team1;
 
   const battingName = battingTeamObj?.name || "Team 1";
   const bowlingName = bowlingTeamObj?.name || "Team 2";
@@ -333,7 +335,7 @@ export default function ScoreTicker({
   const bowlingColor = bowlingTeamObj?.primary_color || "#e11d48";
 
   // --------------------------------------------------------
-  // 5. INDIVIDUAL STATS & STRINGS
+  // 5. INDIVIDUAL STATS
   // --------------------------------------------------------
   const getBatsmanStats = (id: string) => {
     const d = currentInningsBalls.filter((b) => b.striker_id === id);
@@ -390,7 +392,6 @@ export default function ScoreTicker({
   let equationStr = "MATCH IN PROGRESS";
   let projScoreStr = "0";
 
-  // The fixed Target logic applied perfectly
   if (!isFirstInnings && calculatedTarget) {
     const runsNeeded = calculatedTarget - score;
     const ballsRemaining = totalMatchBalls - totalBalls;
@@ -427,32 +428,81 @@ export default function ScoreTicker({
   return (
     <>
       <style>{`
-          @keyframes slideUpFade { 0% { transform: translateY(100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-          .anim-entry { animation: slideUpFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-          @keyframes scorePop { 0% { transform: scale(1); color: white; text-shadow: none; } 30% { transform: scale(1.15); color: #fde047; text-shadow: 0 0 20px rgba(253, 224, 71, 0.8); } 100% { transform: scale(1); color: white; text-shadow: none; } }
-          .animate-scorePop { animation: scorePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-          @keyframes pulseGlow { 0%, 100% { opacity: 0.7; transform: scale(0.9); filter: drop-shadow(0 0 2px rgba(251,191,36,0.5)); } 50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(251,191,36,0.8)); } }
-          .animate-pulseGlow { animation: pulseGlow 1.5s ease-in-out infinite; }
-          @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }@keyframes flash {0% { opacity: 0.8; } 100% { opacity: 0; } }
-        `}</style>
+        /* 1. MAIN TICKER */
+        @keyframes diagonalWipe { 
+          0% { clip-path: polygon(100% 0, 120% 0, 100% 100%, 80% 100%); transform: translateX(80px); opacity: 0; } 
+          100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); transform: translateX(0); opacity: 1; } 
+        }
+        .anim-entry { animation: diagonalWipe 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        
+        /* 2. SCORE UPDATE */
+        @keyframes scorePunch { 
+          0% { transform: scale(1) translateZ(0); color: white; } 
+          20% { transform: scale(1.25) translateZ(50px); color: #fde047; text-shadow: 0 10px 25px rgba(253, 224, 71, 0.9); } 
+          100% { transform: scale(1) translateZ(0); color: white; } 
+        }
+        .animate-scorePop { animation: scorePunch 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        
+        /* 3. BATTER PULSE */
+        @keyframes heartbeat { 
+          0%, 100% { transform: scale(0.95); opacity: 0.7; } 
+          15%, 45% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 8px rgba(251,191,36,0.9)); } 
+          30% { transform: scale(1); opacity: 0.8; }
+        }
+        .animate-pulseGlow { animation: heartbeat 1.2s ease-in-out infinite; }
+        
+        /* 4. TIMELINE BALLS */
+        @keyframes shootIn { 
+          0% { transform: translateX(30px) skewX(-15deg); opacity: 0; } 
+          70% { transform: translateX(-5px) skewX(5deg); opacity: 1; } 
+          100% { transform: translateX(0) skewX(0); opacity: 1; } 
+        }
 
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[1920px] h-[120px]">
+        /* ---------------------------------------------------- */
+        /* 5. 🔥 NEW EVENT TRIGGERS (DIAMOND LAYER STYLE) 🔥    */
+        /* ---------------------------------------------------- */
+        
+        /* The text slams down from a massive size and vibrates */
+        @keyframes impactSlam {
+          0% { transform: scale(4) rotate(-5deg); opacity: 0; filter: blur(10px); }
+          15% { transform: scale(0.9) rotate(2deg); opacity: 1; filter: blur(0px); }
+          25% { transform: scale(1.05) rotate(-1deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1.2); }
+        }
+        .animate-impactSlam { animation: impactSlam 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* Solid Diamond Mask that aggressively reveals outward */
+        @keyframes diamondMaskExpand {
+          0% { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); opacity: 1; }
+          20% { opacity: 0.9; }
+          100% { clip-path: polygon(50% -150%, 250% 50%, 50% 250%, -150% 50%); opacity: 0; }
+        }
+        .animate-diamondMask { animation: diamondMaskExpand 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        /* Diamond borders that echo outward */
+        @keyframes diamondOutline {
+          0% { width: 0px; height: 0px; opacity: 1; border-width: 40px; transform: translate(-50%, -50%) rotate(45deg); }
+          100% { width: 1800px; height: 1800px; opacity: 0; border-width: 0px; transform: translate(-50%, -50%) rotate(45deg); }
+        }
+        .animate-diamondOutline { animation: diamondOutline 0.7s ease-out forwards; }
+        
+        /* Fast camera flash/strobe to make it feel energetic */
+        @keyframes strobeFlash { 
+          0%, 10% { opacity: 0.8; } 
+          5%, 15% { opacity: 0; } 
+          100% { opacity: 0; } 
+        }
+      `}</style>
+
+      {/* ✅ Added anim-entry to the main wrapper here */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[1920px] h-[120px] anim-entry">
         {/* EVENT OVERLAY */}
         <div
-          className={`absolute inset-0 z-[60] flex items-center justify-center transition-all duration-500
-            ${eventTrigger ? "opacity-100 scale-100" : "opacity-0 scale-125 pointer-events-none"}
-          `}
-        >
+          className={`absolute inset-0 z-[60] flex items-center justify-center transition-all duration-300 ${eventTrigger ? "opacity-100 scale-100" : "opacity-0 scale-125 pointer-events-none"}`}>
+          {/* Background Glow */}
           <div
-            className={`absolute inset-0 blur-2xl opacity-70
-              ${
-                eventTrigger === "WICKET"
-                  ? ""
-                  : eventTrigger === "SIX"
-                    ? ""
-                    : ""
-              }
-            `}
+            key={`diamond-fill-${eventTrigger}`}
+            className="absolute inset-0 animate-diamondMask"
             style={{
               backgroundColor:
                 eventTrigger === "WICKET"
@@ -463,27 +513,45 @@ export default function ScoreTicker({
             }}
           />
 
-          <div className="absolute w-[600px] h-[300px] rounded-full border-[6px] border-white/20 animate-ping" />
-
-          <h2
-            className={`text-[90px] font-black italic uppercase tracking-tighter z-10
-            
-            animate-bounce`}
+          <div
+            key={`diamond-line1-${eventTrigger}`}
+            className="absolute top-1/2 left-1/2 border-white/80 animate-diamondOutline mix-blend-overlay"
             style={{
-              color:
+              borderColor:
                 eventTrigger === "WICKET"
                   ? selectedTheme.tokens.danger
                   : eventTrigger === "SIX"
                     ? selectedTheme.tokens.warning
                     : selectedTheme.tokens.success,
+            }}
+          />
+
+          <div
+            key={`diamond-line2-${eventTrigger}`}
+            className="absolute top-1/2 left-1/2 border-white/40 mix-blend-overlay opacity-0"
+            style={{
+              animation: "diamondOutline 0.8s ease-out 0.15s forwards",
+              borderColor:
+                eventTrigger === "WICKET"
+                  ? selectedTheme.tokens.danger
+                  : eventTrigger === "SIX"
+                    ? selectedTheme.tokens.warning
+                    : selectedTheme.tokens.success,
+            }}
+          />
+
+          <h2
+            key={`text-${eventTrigger}`}
+            className="text-[120px] font-black italic uppercase tracking-tighter z-10 animate-impactSlam drop-shadow-2xl"
+            style={{
+              color: "white",
               textShadow:
                 eventTrigger === "WICKET"
-                  ? `0 0 40px ${selectedTheme.tokens.danger}`
+                  ? `0 10px 40px ${selectedTheme.tokens.danger}, 0 0 100px ${selectedTheme.tokens.danger}`
                   : eventTrigger === "SIX"
-                    ? `0 0 40px ${selectedTheme.tokens.warning}`
-                    : `0 0 40px ${selectedTheme.tokens.success}`,
-            }}
-          >
+                    ? `0 10px 40px ${selectedTheme.tokens.warning}, 0 0 100px ${selectedTheme.tokens.warning}`
+                    : `0 10px 40px ${selectedTheme.tokens.success}, 0 0 100px ${selectedTheme.tokens.success}`,
+            }}>
             {eventTrigger === "WICKET"
               ? "WICKET!"
               : eventTrigger === "SIX"
@@ -493,7 +561,10 @@ export default function ScoreTicker({
                   : eventTrigger}
           </h2>
 
-          <div className="absolute inset-0 bg-white opacity-0 animate-[flash_0.4s_ease-out]" />
+          <div
+            key={`flash-${eventTrigger}`}
+            className="absolute inset-0 bg-white opacity-0 animate-[strobeFlash_0.5s_ease-out]"
+          />
         </div>
 
         {/* TOP TABS */}
@@ -510,7 +581,9 @@ export default function ScoreTicker({
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
             }}>
-            <span className="shrink-0" style={{ color: selectedTheme.tokens.warning }}>
+            <span
+              className="shrink-0"
+              style={{ color: selectedTheme.tokens.warning }}>
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -518,7 +591,9 @@ export default function ScoreTicker({
               {activeMatch.stage || "Live Match"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
-            <span className="drop-shadow-md min-w-0" style={{ color: selectedTheme.tokens.accent }}>
+            <span
+              className="drop-shadow-md min-w-0"
+              style={{ color: selectedTheme.tokens.accent }}>
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName
@@ -538,15 +613,8 @@ export default function ScoreTicker({
         <div
           className="w-full h-full flex relative overflow-hidden border-t-[3px] border-white/20 shadow-2xl"
           style={{
-            background: `linear-gradient(90deg,
-              ${battingColor} 0%,
-              ${battingColor} 18%,
-              rgba(10, 10, 15, 0.98) 40%,
-              rgba(10, 10, 15, 0.98) 60%,
-              ${bowlingColor} 82%,
-              ${bowlingColor} 100%)`,
-          }}
-        >
+            background: `linear-gradient(90deg, ${battingColor} 0%, ${battingColor} 18%, rgba(10, 10, 15, 0.98) 40%, rgba(10, 10, 15, 0.98) 60%, ${bowlingColor} 82%, ${bowlingColor} 100%)`,
+          }}>
           <div
             className="absolute inset-y-0 left-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
@@ -583,8 +651,7 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
-                >
+                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}>
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -665,7 +732,6 @@ export default function ScoreTicker({
                       </div>
                     </div>
                   </div>
-
                   <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-1 rounded text-amber-400 font-black text-[11px] uppercase drop-shadow-md tracking-wider">
                     {equationStr}
                   </div>
@@ -737,10 +803,10 @@ export default function ScoreTicker({
                       key={b.id || i}
                       className={`${bShape} border-2 shrink-0 flex items-center justify-center font-black ${bCls} uppercase opacity-0 leading-none`}
                       style={{
-                        animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
+                        /* ✅ FIX 3: Swapped popIn for shootIn */
+                        animation: `shootIn 0.35s ease-out forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}
-                    >
+                      }}>
                       {bText}
                     </div>
                   );

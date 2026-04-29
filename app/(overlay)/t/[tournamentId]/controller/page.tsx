@@ -281,10 +281,10 @@ export default function MasterController({
     const fullscreenGraphics = [
       "TOSS_REPORT",
       "INNINGS_BREAK",
-      "MATCH_RESULT",
       "OVER_SUMMARY",
       "PLAYING_XI",
       "MATCH_SUMMARY",
+      "POINTS_TABLE",
     ];
     let views = [...(config.activeViews || [])];
     if (views.includes(view)) views = views.filter((v) => v !== view);
@@ -486,8 +486,8 @@ export default function MasterController({
                 { id: "INNINGS_BREAK", label: "Target", icon: Target },
                 { id: "OVER_SUMMARY", label: "Summary", icon: LayoutTemplate },
                 {
-                  id: "MATCH_SUMMARY",
-                  label: "Match Summary",
+                  id: "POINTS_TABLE",
+                  label: "POINTS_TABLE",
                   icon: ClipboardList,
                 },
               ].map((overlay) => (
@@ -508,9 +508,9 @@ export default function MasterController({
               ))}
             </div>
             <button
-              onClick={() => toggleFullscreenView("MATCH_RESULT")}
-              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_RESULT") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}>
-              <Trophy size={18} /> Match Result
+              onClick={() => toggleFullscreenView("MATCH_SUMMARY")}
+              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}>
+              <Trophy size={18} /> Match Summary
             </button>
           </div>
 

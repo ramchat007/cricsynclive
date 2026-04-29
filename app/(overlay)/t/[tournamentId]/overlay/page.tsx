@@ -16,9 +16,16 @@ export default function BroadcastOverlay({
   const [config, setConfig] = useState<any>(null);
   const [matchData, setMatchData] = useState<any>(null);
   const [deliveries, setDeliveries] = useState<any[]>([]);
-  const [team1Squad, setTeam1Squad] = useState<any[]>([]); // Added for Name Consistency
-  const [team2Squad, setTeam2Squad] = useState<any[]>([]); // Added for Name Consistency
+  const [team1Squad, setTeam1Squad] = useState<any[]>([]);
+  const [team2Squad, setTeam2Squad] = useState<any[]>([]);
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
+
+  // --- AUTO-TIMERS STATES ---
+  const [autoSummaryActive, setAutoSummaryActive] = useState(false);
+  const hasTriggeredSummary = useRef(false);
+
+  const [autoTossActive, setAutoTossActive] = useState(false);
+  const hasTriggeredToss = useRef(false);
 
   const upsertDelivery = (list: any[], delivery: any) => {
     const idx = list.findIndex((d) => d.id === delivery.id);
@@ -58,7 +65,6 @@ export default function BroadcastOverlay({
     if (!matchId) return;
 
     const fetchData = async () => {
-      // Fetch Match with Joins
       const { data: m } = await supabase
         .from("matches")
         .select(`*, team1:team1_id(*), team2:team2_id(*)`)
@@ -67,7 +73,6 @@ export default function BroadcastOverlay({
 
       if (m) {
         setMatchData(m);
-        // Fetch Squads once the match is active to resolve Player IDs to Names
         const { data: s1 } = await supabase
           .from("players")
           .select("*")
@@ -80,7 +85,6 @@ export default function BroadcastOverlay({
         if (s2) setTeam2Squad(s2);
       }
 
-      // Fetch Initial Deliveries
       const { data: d } = await supabase
         .from("deliveries")
         .select("*")
@@ -91,7 +95,6 @@ export default function BroadcastOverlay({
     };
     fetchData();
 
-    // REAL-TIME: Listen for Match Score Updates
     const mSub = supabase
       .channel(`match_update_${matchId}`)
       .on(
@@ -106,14 +109,13 @@ export default function BroadcastOverlay({
           setMatchData((curr: any) => ({
             ...curr,
             ...p.new,
-            team1: curr?.team1, // Preserve team objects
+            team1: curr?.team1,
             team2: curr?.team2,
           }));
         },
       )
       .subscribe();
 
-    // REAL-TIME: Listen for New Deliveries (Partnership, Over Summary)
     const dSub = supabase
       .channel(`deliv_update_${matchId}`)
       .on(
@@ -141,11 +143,51 @@ export default function BroadcastOverlay({
     };
   }, [config?.activeMatchId]);
 
+  // --- NEW: THE 10-SECOND AUTO-DISMISS TIMER FOR TOSS ---
+  useEffect(() => {
+    // Safety check: Only auto-trigger the toss if NO balls have been bowled yet!
+    if (
+      matchData?.toss_winner_id &&
+      matchData?.toss_decision &&
+      !hasTriggeredToss.current &&
+      deliveries.length === 0
+    ) {
+      hasTriggeredToss.current = true; // Lock it so it doesn't fire again
+      setAutoTossActive(true); // Turn on the Toss screen
+
+      // Turn it off after 10 seconds
+      const timer = setTimeout(() => {
+        setAutoTossActive(false);
+      }, 10000);
+
+      return () => clearTimeout(timer);
+    }
+    // If balls have already been bowled (e.g., page refresh mid-match), lock the toss trigger silently
+    else if (deliveries.length > 0) {
+      hasTriggeredToss.current = true;
+    }
+  }, [matchData?.toss_winner_id, matchData?.toss_decision, deliveries.length]);
+
+  // --- EXISTING: THE 15-SECOND AUTO-DISMISS TIMER FOR SUMMARY ---
+  useEffect(() => {
+    if (matchData?.status === "completed" && !hasTriggeredSummary.current) {
+      hasTriggeredSummary.current = true;
+      setAutoSummaryActive(true);
+
+      const timer = setTimeout(() => {
+        setAutoSummaryActive(false);
+      }, 15000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [matchData?.status]);
+
   if (!config || !config.activeMatchId) return null;
 
   const activeViews = config.activeViews || [];
   const broadcastTheme = getBroadcastTheme(config.broadcastThemeId);
-  const activeFullscreen = activeViews.find((v: string) =>
+
+  let activeFullscreen = activeViews.find((v: string) =>
     [
       "TOSS_REPORT",
       "INNINGS_BREAK",
@@ -154,8 +196,19 @@ export default function BroadcastOverlay({
       "PLAYING_XI",
       "SPONSOR_BANNER",
       "MATCH_SUMMARY",
+      "POINTS_TABLE",
     ].includes(v),
   );
+
+  // ✅ AUTO-TRIGGER LOGIC CASCADE
+  // Priority: 1. Manual User Selection -> 2. Auto Match Summary -> 3. Auto Toss Report
+  // if (!activeFullscreen) {
+  //   if (autoSummaryActive) {
+  //     activeFullscreen = "MATCH_SUMMARY";
+  //   } else if (autoTossActive) {
+  //     activeFullscreen = "TOSS_REPORT";
+  //   }
+  // }
 
   // --- STACKING MATH ---
   const isTickerOn = activeViews.includes("TICKER");
@@ -260,7 +313,7 @@ export default function BroadcastOverlay({
           </div>
         )}
 
-      {/* 4. PARTNERSHIP BANNER - Passed Squads for name resolution */}
+      {/* 4. PARTNERSHIP BANNER */}
       {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
         <div
           className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}>
@@ -313,7 +366,7 @@ export default function BroadcastOverlay({
         </div>
       )}
 
-      {/* 8. FULLSCREEN LAYERS - Passed Squads and Deliveries */}
+      {/* 8. FULLSCREEN LAYERS */}
       {activeFullscreen && (
         <div
           className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
