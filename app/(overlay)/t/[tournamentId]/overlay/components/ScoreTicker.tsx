@@ -492,79 +492,74 @@ export default function ScoreTicker({
           5%, 15% { opacity: 0; } 
           100% { opacity: 0; } 
         }
+          /* Smooth, centered parallelogram reveal */
+        @keyframes angledReveal {
+          0% { clip-path: polygon(50% 0, 50% 0, 50% 100%, 50% 100%); opacity: 0;}
+          /* Changed opacity from 1 to 0.85 here 👇 */
+          100% { clip-path: polygon(30px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%); opacity: 0.75;}
+        }
+        .animate-angledReveal { animation: angledReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* Text tracking in from wide to narrow */
+        @keyframes textTracking {
+          0% { letter-spacing: 0.4em; opacity: 0; transform: scale(0.85); }
+          100% { letter-spacing: 0.05em; opacity: 1; transform: scale(1); }
+        }
+        .animate-textTracking { animation: textTracking 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* Glossy light reflection sweep */
+        @keyframes lightSweep {
+          0% { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(300%) skewX(-15deg); }
+        }
+        .animate-lightSweep { animation: lightSweep 1.5s ease-in-out infinite; }
       `}</style>
 
       {/* ✅ Added anim-entry to the main wrapper here */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[1920px] h-[120px] anim-entry">
-        {/* EVENT OVERLAY */}
+        {/* EVENT OVERLAY (Premium Broadcast Style) */}
         <div
-          className={`absolute inset-0 z-[60] flex items-center justify-center transition-all duration-300 ${eventTrigger ? "opacity-100 scale-100" : "opacity-0 scale-125 pointer-events-none"}`}>
-          {/* Background Glow */}
-          <div
-            key={`diamond-fill-${eventTrigger}`}
-            className="absolute inset-0 animate-diamondMask"
-            style={{
-              backgroundColor:
-                eventTrigger === "WICKET"
-                  ? selectedTheme.tokens.danger
-                  : eventTrigger === "SIX"
-                    ? selectedTheme.tokens.warning
-                    : selectedTheme.tokens.success,
-            }}
-          />
+          className={`absolute inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${
+            eventTrigger
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          }`}
+        >
+          {eventTrigger && (
+            <>
+              {/* Sleek Angled Background */}
+              <div
+                className="absolute inset-0 animate-angledReveal backdrop-blur-md"
+                style={{
+                  background:
+                    eventTrigger === "WICKET"
+                      ? `linear-gradient(90deg, ${selectedTheme.tokens.danger} 0%, #991b1b 100%)`
+                      : eventTrigger === "SIX"
+                        ? `linear-gradient(90deg, ${selectedTheme.tokens.warning} 0%, #b45309 100%)`
+                        : `linear-gradient(90deg, ${selectedTheme.tokens.success} 0%, #047857 100%)`,
+                }}
+              >
+                {/* Subtle sweeping light effect */}
+                <div className="absolute top-0 bottom-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-lightSweep" />
+              </div>
 
-          <div
-            key={`diamond-line1-${eventTrigger}`}
-            className="absolute top-1/2 left-1/2 border-white/80 animate-diamondOutline mix-blend-overlay"
-            style={{
-              borderColor:
-                eventTrigger === "WICKET"
-                  ? selectedTheme.tokens.danger
+              {/* Animated Text */}
+              <h2
+                className="text-[64px] md:text-[80px] font-black italic uppercase z-10 animate-textTracking drop-shadow-2xl text-white"
+                style={{
+                  textShadow: "0 10px 30px rgba(0,0,0,0.6)",
+                }}
+              >
+                {eventTrigger === "WICKET"
+                  ? "WICKET!"
                   : eventTrigger === "SIX"
-                    ? selectedTheme.tokens.warning
-                    : selectedTheme.tokens.success,
-            }}
-          />
-
-          <div
-            key={`diamond-line2-${eventTrigger}`}
-            className="absolute top-1/2 left-1/2 border-white/40 mix-blend-overlay opacity-0"
-            style={{
-              animation: "diamondOutline 0.8s ease-out 0.15s forwards",
-              borderColor:
-                eventTrigger === "WICKET"
-                  ? selectedTheme.tokens.danger
-                  : eventTrigger === "SIX"
-                    ? selectedTheme.tokens.warning
-                    : selectedTheme.tokens.success,
-            }}
-          />
-
-          <h2
-            key={`text-${eventTrigger}`}
-            className="text-[120px] font-black italic uppercase tracking-tighter z-10 animate-impactSlam drop-shadow-2xl"
-            style={{
-              color: "white",
-              textShadow:
-                eventTrigger === "WICKET"
-                  ? `0 10px 40px ${selectedTheme.tokens.danger}, 0 0 100px ${selectedTheme.tokens.danger}`
-                  : eventTrigger === "SIX"
-                    ? `0 10px 40px ${selectedTheme.tokens.warning}, 0 0 100px ${selectedTheme.tokens.warning}`
-                    : `0 10px 40px ${selectedTheme.tokens.success}, 0 0 100px ${selectedTheme.tokens.success}`,
-            }}>
-            {eventTrigger === "WICKET"
-              ? "WICKET!"
-              : eventTrigger === "SIX"
-                ? "SIX!"
-                : eventTrigger === "FOUR"
-                  ? "FOUR!"
-                  : eventTrigger}
-          </h2>
-
-          <div
-            key={`flash-${eventTrigger}`}
-            className="absolute inset-0 bg-white opacity-0 animate-[strobeFlash_0.5s_ease-out]"
-          />
+                    ? "SIX!"
+                    : eventTrigger === "FOUR"
+                      ? "FOUR!"
+                      : eventTrigger}
+              </h2>
+            </>
+          )}
         </div>
 
         {/* TOP TABS */}
@@ -580,10 +575,12 @@ export default function ScoreTicker({
             style={{
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
-            }}>
+            }}
+          >
             <span
               className="shrink-0"
-              style={{ color: selectedTheme.tokens.warning }}>
+              style={{ color: selectedTheme.tokens.warning }}
+            >
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -593,7 +590,8 @@ export default function ScoreTicker({
             <span className="text-white/40 shrink-0">|</span>
             <span
               className="drop-shadow-md min-w-0"
-              style={{ color: selectedTheme.tokens.accent }}>
+              style={{ color: selectedTheme.tokens.accent }}
+            >
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName
@@ -614,7 +612,8 @@ export default function ScoreTicker({
           className="w-full h-full flex relative overflow-hidden border-t-[3px] border-white/20 shadow-2xl"
           style={{
             background: `linear-gradient(90deg, ${battingColor} 0%, ${battingColor} 18%, rgba(10, 10, 15, 0.98) 40%, rgba(10, 10, 15, 0.98) 60%, ${bowlingColor} 82%, ${bowlingColor} 100%)`,
-          }}>
+          }}
+        >
           <div
             className="absolute inset-y-0 left-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
@@ -651,7 +650,8 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}>
+                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
+                >
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -806,7 +806,8 @@ export default function ScoreTicker({
                         /* ✅ FIX 3: Swapped popIn for shootIn */
                         animation: `shootIn 0.35s ease-out forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}>
+                      }}
+                    >
                       {bText}
                     </div>
                   );

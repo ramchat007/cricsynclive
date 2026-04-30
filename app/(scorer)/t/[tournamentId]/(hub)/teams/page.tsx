@@ -133,14 +133,19 @@ export default function TeamsPage({
       return;
     }
 
+    // 1. Search the global directory without the strict null check
     const { data } = await supabase
       .from("players")
       .select("*")
       .ilike("full_name", `%${query}%`)
-      .is("team_id", null) // Only show available/unsigned players
-      .limit(5);
+      .limit(10);
 
-    if (data) setSearchResults(data);
+    if (data) {
+      // 2. Smart Filter: Just hide players who are ALREADY in the current squad
+      // This prevents you from accidentally adding the exact same player twice
+      const filteredData = data.filter((p) => p.team_id !== addingToTeam?.id);
+      setSearchResults(filteredData);
+    }
   };
 
   // ✅ FIX 2: Prevent Duplicates. Update existing players, Insert new ones.
