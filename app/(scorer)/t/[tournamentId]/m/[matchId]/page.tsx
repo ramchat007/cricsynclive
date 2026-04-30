@@ -769,7 +769,7 @@ export default function LiveScorerPage({
   // --- 5. MAIN JSX (CLEAN WEB LAYOUT) ---
   return (
     // Note the pb-[320px] on mobile! This allows the user to scroll to the very bottom of the page without the floating keypad covering it.
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 md:p-6 pb-[220px] lg:pb-6 font-sans text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 md:p-6 pb-[280px] lg:pb-6 font-sans text-slate-900 dark:text-white">
       {/* HEADER & TOP NAVIGATION */}
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6 px-2 mt-2">
         <div className="flex items-center gap-4">
@@ -840,7 +840,7 @@ export default function LiveScorerPage({
                   key={runs}
                   onClick={() => handleRecordBall(runs)}
                   disabled={engine.isSubmittingBall}
-                  className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
+                  className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
                 >
                   {runs}
                 </button>
@@ -851,7 +851,7 @@ export default function LiveScorerPage({
               <button
                 onClick={() => handleRecordBall(4)}
                 disabled={engine.isSubmittingBall}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-900 dark:text-white font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
               >
                 4
               </button>
@@ -864,7 +864,7 @@ export default function LiveScorerPage({
               </button>
               <button
                 onClick={() => setShowMoreModal(true)}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 lg:border-none dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95"
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95"
               >
                 ... More Actions
               </button>
@@ -915,7 +915,7 @@ export default function LiveScorerPage({
                   setPendingExtraType("leg-bye");
                   setShowExtrasModal(true);
                 }}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 lg:border-none dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
               >
                 LB
               </button>
@@ -924,7 +924,7 @@ export default function LiveScorerPage({
                   setPendingExtraType("bye");
                   setShowExtrasModal(true);
                 }}
-                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 lg:border-none dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
+                className="bg-white dark:bg-slate-800 lg:bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
               >
                 B
               </button>

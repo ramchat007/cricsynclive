@@ -18,7 +18,7 @@ export default function TeamsPage({
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamShort, setNewTeamShort] = useState("");
   const [newTeamColor, setNewTeamColor] = useState("#2dd4bf");
-  const [newTeamGroup, setNewTeamGroup] = useState("Group A");
+  const [newTeamGroup, setNewTeamGroup] = useState(""); // Changed default to empty string
   const [logoUrl, setLogoUrl] = useState("");
 
   // Settings
@@ -100,6 +100,7 @@ export default function TeamsPage({
     if (!error) {
       setNewTeamName("");
       setNewTeamShort("");
+      setNewTeamGroup("");
       setLogoUrl("");
       checkAdminAndFetch();
     }
@@ -114,6 +115,7 @@ export default function TeamsPage({
         short_name: editingTeam.short_name.toUpperCase(),
         primary_color: editingTeam.primary_color,
         group_name: editingTeam.group_name,
+        logo_url: editingTeam.logo_url, // Added logo_url so edits save to DB
       })
       .eq("id", editingTeam.id);
 
@@ -126,7 +128,7 @@ export default function TeamsPage({
   const searchPlayers = async (query: string) => {
     setSearchQuery(query);
     if (query.length < 3) {
-      setSearchResults([]);
+      searchResults.length > 0 && setSearchResults([]);
       return;
     }
 
@@ -195,15 +197,13 @@ export default function TeamsPage({
                 maxLength={4}
                 className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none focus:border-teal-500 uppercase text-center"
               />
-              <select
+              <input
+                type="text"
+                placeholder="Group (e.g. Pool A)"
                 value={newTeamGroup}
                 onChange={(e) => setNewTeamGroup(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none focus:border-teal-500">
-                <option value="Group A">Group A</option>
-                <option value="Group B">Group B</option>
-                <option value="Group C">Group C</option>
-                <option value="Group D">Group D</option>
-              </select>
+                className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none focus:border-teal-500"
+              />
             </div>
 
             {/* Actions (Side by side on mobile) */}
@@ -224,11 +224,13 @@ export default function TeamsPage({
                 uploadPreset={String(
                   process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
                 )}
-                onSuccess={(result: any) => setLogoUrl(result.info.secure_url)}>
+                onSuccess={(result: any) => setLogoUrl(result.info.secure_url)}
+              >
                 {({ open }) => (
                   <button
                     onClick={() => open()}
-                    className="h-[46px] w-full border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 text-slate-500 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-colors">
+                    className="h-[46px] w-full border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 text-slate-500 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-colors"
+                  >
                     {logoUrl ? (
                       <span className="text-teal-500 text-xs">✅ Done</span>
                     ) : (
@@ -242,7 +244,8 @@ export default function TeamsPage({
 
               <button
                 onClick={addTeam}
-                className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-[46px] w-full rounded-xl transition-all uppercase text-xs tracking-widest sm:col-span-full md:col-span-1">
+                className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-[46px] w-full rounded-xl transition-all uppercase text-xs tracking-widest sm:col-span-full md:col-span-1"
+              >
                 Create
               </button>
             </div>
@@ -255,7 +258,8 @@ export default function TeamsPage({
         {teams.map((team) => (
           <div
             key={team.id}
-            className="bg-white dark:bg-slate-900 rounded-[2rem] p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col justify-between">
+            className="bg-white dark:bg-slate-900 rounded-[2rem] p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col justify-between"
+          >
             {/* Background Glow */}
             <div
               className="absolute top-0 right-0 w-32 h-32 blur-3xl opacity-30 pointer-events-none"
@@ -279,7 +283,8 @@ export default function TeamsPage({
                   </span>
                   <span
                     className="text-xl md:text-2xl font-black text-slate-300 dark:text-slate-700 leading-none mt-1 truncate"
-                    style={{ color: team.primary_color }}>
+                    style={{ color: team.primary_color }}
+                  >
                     {team.short_name}
                   </span>
                 </div>
@@ -289,7 +294,8 @@ export default function TeamsPage({
               {isAdmin && (
                 <button
                   onClick={() => setEditingTeam(team)}
-                  className="bg-slate-50 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 text-slate-400 hover:text-teal-500 p-2.5 rounded-xl transition-all border border-slate-200 dark:border-slate-700 shrink-0">
+                  className="bg-slate-50 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 text-slate-400 hover:text-teal-500 p-2.5 rounded-xl transition-all border border-slate-200 dark:border-slate-700 shrink-0"
+                >
                   ✏️
                 </button>
               )}
@@ -318,7 +324,8 @@ export default function TeamsPage({
                     Remaining Purse
                   </p>
                   <p
-                    className={`text-lg font-black ${team.purse_balance < 20000 ? "text-red-500" : "text-teal-500"}`}>
+                    className={`text-lg font-black ${team.purse_balance < 20000 ? "text-red-500" : "text-teal-500"}`}
+                  >
                     ₹{team.purse_balance?.toLocaleString("en-IN") || 0}
                   </p>
                 </div>
@@ -335,7 +342,8 @@ export default function TeamsPage({
                   {isAdmin && (
                     <button
                       onClick={() => setAddingToTeam(team)}
-                      className="text-[10px] font-black uppercase text-teal-600 hover:text-teal-500 transition-colors bg-teal-50 dark:bg-teal-900/20 px-2 py-1 rounded">
+                      className="text-[10px] font-black uppercase text-teal-600 hover:text-teal-500 transition-colors bg-teal-50 dark:bg-teal-900/20 px-2 py-1 rounded"
+                    >
                       + Add Player
                     </button>
                   )}
@@ -344,11 +352,16 @@ export default function TeamsPage({
                   {team.players.map((p: any) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between bg-slate-50 dark:bg-black p-2 rounded-xl border border-slate-100 dark:border-slate-800">
+                      className="flex items-center justify-between bg-slate-50 dark:bg-black p-2 rounded-xl border border-slate-100 dark:border-slate-800"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 bg-cover bg-center shrink-0"
-                          style={{ backgroundImage: `url(${p.photo_url})` }}
+                          style={{
+                            backgroundImage: p.photo_url
+                              ? `url(${p.photo_url})`
+                              : "none",
+                          }}
                         />
                         <div className="truncate">
                           <p className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white truncate">
@@ -376,7 +389,8 @@ export default function TeamsPage({
             {(!team.players || team.players.length === 0) && isAdmin && (
               <button
                 onClick={() => setAddingToTeam(team)}
-                className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-slate-400 uppercase tracking-widest hover:border-teal-500 hover:text-teal-500 transition-colors z-10">
+                className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black text-slate-400 uppercase tracking-widest hover:border-teal-500 hover:text-teal-500 transition-colors z-10"
+              >
                 + Add First Player
               </button>
             )}
@@ -400,7 +414,8 @@ export default function TeamsPage({
               </h2>
               <button
                 onClick={() => setEditingTeam(null)}
-                className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 p-2 rounded-full transition-colors">
+                className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 p-2 rounded-full transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -426,48 +441,83 @@ export default function TeamsPage({
                   className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none uppercase text-center focus:border-teal-500"
                   placeholder="Short Name"
                 />
-                <select
-                  value={editingTeam.group_name}
+                <input
+                  type="text"
+                  value={editingTeam.group_name || ""}
                   onChange={(e) =>
                     setEditingTeam({
                       ...editingTeam,
                       group_name: e.target.value,
                     })
                   }
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-teal-500">
-                  <option value="Group A">Group A</option>
-                  <option value="Group B">Group B</option>
-                  <option value="Group C">Group C</option>
-                  <option value="Group D">Group D</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-3 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3">
-                <label className="text-[10px] font-bold text-slate-500 uppercase flex-1">
-                  Brand Color
-                </label>
-                <input
-                  type="color"
-                  value={editingTeam.primary_color}
-                  onChange={(e) =>
-                    setEditingTeam({
-                      ...editingTeam,
-                      primary_color: e.target.value,
-                    })
-                  }
-                  className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent shrink-0"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-teal-500"
+                  placeholder="Group (e.g. Pool A)"
                 />
+              </div>
+
+              {/* Edit Logo & Color Section */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase flex-1">
+                    Brand Color
+                  </label>
+                  <input
+                    type="color"
+                    value={editingTeam.primary_color}
+                    onChange={(e) =>
+                      setEditingTeam({
+                        ...editingTeam,
+                        primary_color: e.target.value,
+                      })
+                    }
+                    className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent shrink-0"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 dark:bg-slate-800 bg-contain bg-no-repeat bg-center border border-slate-200 dark:border-slate-700"
+                    style={{
+                      backgroundImage: editingTeam.logo_url
+                        ? `url(${editingTeam.logo_url})`
+                        : "none",
+                    }}
+                  />
+                  <CldUploadWidget
+                    uploadPreset={String(
+                      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+                    )}
+                    onSuccess={(result: any) =>
+                      setEditingTeam({
+                        ...editingTeam,
+                        logo_url: result.info.secure_url,
+                      })
+                    }
+                  >
+                    {({ open }) => (
+                      <button
+                        onClick={() => open()}
+                        className="flex-1 h-14 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 text-slate-500 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-colors"
+                      >
+                        <ImageIcon size={16} /> Update Logo
+                      </button>
+                    )}
+                  </CldUploadWidget>
+                </div>
               </div>
             </div>
 
             <div className="p-5 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
               <button
                 onClick={() => setEditingTeam(null)}
-                className="flex-1 py-4 rounded-xl text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-xs uppercase tracking-widest">
+                className="flex-1 py-4 rounded-xl text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-xs uppercase tracking-widest"
+              >
                 Cancel
               </button>
               <button
                 onClick={updateTeam}
-                className="flex-1 bg-teal-600 text-white font-black py-4 rounded-xl hover:bg-teal-500 text-xs uppercase tracking-widest shadow-lg shadow-teal-500/20">
+                className="flex-1 bg-teal-600 text-white font-black py-4 rounded-xl hover:bg-teal-500 text-xs uppercase tracking-widest shadow-lg shadow-teal-500/20"
+              >
                 Save
               </button>
             </div>
@@ -493,7 +543,8 @@ export default function TeamsPage({
                   setAddingToTeam(null);
                   setIsQuickAdd(false);
                 }}
-                className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-full transition-colors">
+                className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-full transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -514,7 +565,8 @@ export default function TeamsPage({
                       <button
                         key={p.id}
                         onClick={() => addPlayerToSquad(p)}
-                        className="w-full flex items-center justify-between p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-all bg-white dark:bg-black">
+                        className="w-full flex items-center justify-between p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-all bg-white dark:bg-black"
+                      >
                         <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate pr-2">
                           {p.full_name}{" "}
                           <span className="text-[10px] text-slate-400 font-normal">
@@ -535,7 +587,8 @@ export default function TeamsPage({
 
                   <button
                     onClick={() => setIsQuickAdd(true)}
-                    className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-teal-500 hover:border-teal-500 text-xs font-black uppercase tracking-widest transition-all">
+                    className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-teal-500 hover:border-teal-500 text-xs font-black uppercase tracking-widest transition-all"
+                  >
                     + Create New Player
                   </button>
                 </>
@@ -560,7 +613,8 @@ export default function TeamsPage({
                         player_role: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-100 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-teal-500">
+                    className="w-full bg-slate-100 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-teal-500"
+                  >
                     <option>Batsman</option>
                     <option>Bowler</option>
                     <option>All-Rounder</option>
@@ -570,13 +624,15 @@ export default function TeamsPage({
                   <div className="flex gap-3 pt-4">
                     <button
                       onClick={() => setIsQuickAdd(false)}
-                      className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs uppercase tracking-widest font-bold text-slate-500">
+                      className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs uppercase tracking-widest font-bold text-slate-500"
+                    >
                       Back
                     </button>
                     <button
                       onClick={() => addPlayerToSquad(quickPlayer)}
                       disabled={!quickPlayer.full_name}
-                      className="flex-[2] bg-teal-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-teal-500 disabled:opacity-50 transition-all shadow-lg shadow-teal-500/20">
+                      className="flex-[2] bg-teal-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-teal-500 disabled:opacity-50 transition-all shadow-lg shadow-teal-500/20"
+                    >
                       Add Player
                     </button>
                   </div>
