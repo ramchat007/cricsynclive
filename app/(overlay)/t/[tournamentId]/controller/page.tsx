@@ -21,6 +21,8 @@ import {
   Camera,
   X,
   ClipboardList,
+  MessageCircle,
+  Play,
 } from "lucide-react";
 import { BROADCAST_THEMES } from "@/lib/themes";
 
@@ -48,6 +50,29 @@ export default function MasterController({
     spotlightPlayerId: "",
     broadcastThemeId: "classic",
   });
+
+  // Helper function to update the broadcast config in Supabase safely
+  const updateConfig = (newSettings: any) => {
+    // By using a function inside setConfig, we guarantee 'prevConfig' is 100% up-to-date
+    setConfig((prevConfig: any) => {
+      // 1. Safely merge the newest settings with the most recent state
+      const updatedConfig = { ...prevConfig, ...newSettings };
+
+      // 2. Fire the database update in the background
+      if (tournamentId) {
+        supabase
+          .from("tournaments")
+          .update({ broadcast_state: updatedConfig })
+          .eq("id", tournamentId)
+          .then(({ error }) => {
+            if (error) console.error("Failed to sync overlay:", error);
+          });
+      }
+
+      // 3. Update the controller UI
+      return updatedConfig;
+    });
+  };
 
   const studioChannelRef = useRef<any>(null);
   // Track BOTH batters to detect strike rotation vs new batter
@@ -490,6 +515,7 @@ export default function MasterController({
                   label: "POINTS_TABLE",
                   icon: ClipboardList,
                 },
+                { id: "LIVE_QUIZ", label: "Live Quiz", icon: MessageCircle },
               ].map((overlay) => (
                 <button
                   key={overlay.id}
@@ -785,6 +811,75 @@ export default function MasterController({
                     : "Show Bug"}
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* 1. YOUTUBE SUBSCRIBE BANNER CONTROL */}
+          <div className="p-4 border rounded-xl bg-white mb-4">
+            <h3 className="font-bold mb-3 flex items-center gap-2 text-red-600">
+              <Play size={18} /> YouTube Engagement
+            </h3>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-gray-500 mb-1">
+                  Channel Name
+                </label>
+                <input
+                  type="text"
+                  value={config.youtubeChannelName || "@cricsynclive"}
+                  onChange={(e) =>
+                    updateConfig({ youtubeChannelName: e.target.value })
+                  }
+                  className="w-full border rounded p-2 text-sm"
+                />
+              </div>
+              <button
+                onClick={() =>
+                  updateConfig({
+                    showSubscribeBanner: !config.showSubscribeBanner,
+                  })
+                }
+                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700"}`}>
+                {config.showSubscribeBanner
+                  ? "Hide Subscribe Banner"
+                  : "Show Subscribe Banner"}
+              </button>
+            </div>
+          </div>
+
+          {/* 2. LIVE QUIZ GENERATOR CONTROL */}
+          <div className="p-4 border rounded-xl bg-white">
+            <h3 className="font-bold mb-3">Live Quiz Config</h3>
+            <input
+              type="text"
+              placeholder="e.g. Who scored the most runs in the 2023 season?"
+              value={config.quizData?.question || ""}
+              onChange={(e) =>
+                updateConfig({
+                  quizData: { ...config.quizData, question: e.target.value },
+                })
+              }
+              className="w-full border rounded p-2 text-sm mb-2"
+            />
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {[0, 1, 2, 3].map((i) => (
+                <input
+                  key={i}
+                  type="text"
+                  placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                  value={config.quizData?.options?.[i] || ""}
+                  onChange={(e) => {
+                    const newOpts = [
+                      ...(config.quizData?.options || ["", "", "", ""]),
+                    ];
+                    newOpts[i] = e.target.value;
+                    updateConfig({
+                      quizData: { ...config.quizData, options: newOpts },
+                    });
+                  }}
+                  className="border rounded p-2 text-sm"
+                />
+              ))}
             </div>
           </div>
         </div>

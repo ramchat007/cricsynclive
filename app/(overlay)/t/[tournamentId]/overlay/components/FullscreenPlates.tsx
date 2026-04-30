@@ -20,6 +20,7 @@ export default function FullscreenPlates({
   team2Squad,
   tournamentId,
   themeId,
+  config,
 }: any) {
   const [standings, setStandings] = useState<any[]>([]);
 
@@ -574,6 +575,40 @@ export default function FullscreenPlates({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* --- NEW: YOUTUBE LIVE QUIZ --- */}
+      {type === "LIVE_QUIZ" && config?.quizData && (
+        <div
+          className={`w-full max-w-[1200px] p-16 rounded-[4rem] flex flex-col items-center animate-in zoom-in-95 duration-500 ${glass}`}>
+          <div className="bg-red-600/20 border border-red-500/50 px-8 py-3 rounded-full flex items-center gap-4 shadow-[0_0_30px_rgba(220,38,38,0.3)] mb-12">
+            <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+            <span className="font-black uppercase tracking-[0.4em] text-red-400 text-lg">
+              YouTube Live Trivia
+            </span>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-black text-center leading-tight mb-16 tracking-tight text-white drop-shadow-lg">
+            {config.quizData.question}
+          </h2>
+
+          <div className="grid grid-cols-2 gap-8 w-full px-8">
+            {(config.quizData.options || []).map((opt: string, i: number) => (
+              <div
+                key={i}
+                className="bg-gradient-to-r from-white/10 to-transparent border border-white/20 p-8 rounded-3xl text-3xl font-bold flex items-center gap-8 shadow-xl">
+                <span className="text-amber-400 font-black text-5xl opacity-80">
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="text-white drop-shadow-md">{opt}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-16 text-white/40 font-black uppercase tracking-[0.3em] text-xl animate-pulse">
+            Comment your answer in the live chat!
+          </p>
         </div>
       )}
     </div>

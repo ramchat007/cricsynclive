@@ -430,8 +430,8 @@ export default function ScoreTicker({
       <style>{`
         /* 1. MAIN TICKER */
         @keyframes diagonalWipe { 
-          0% { clip-path: polygon(100% 0, 120% 0, 100% 100%, 80% 100%); transform: translateX(80px); opacity: 0; } 
-          100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); transform: translateX(0); opacity: 1; } 
+          0% { clip-path: polygon(100% -100px, 120% -100px, 100% 100%, 80% 100%); transform: translateX(80px); opacity: 0; } 
+          100% { clip-path: polygon(0 -100px, 100% -100px, 100% 100%, 0% 100%); transform: translateX(0); opacity: 1; } 
         }
         .anim-entry { animation: diagonalWipe 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
         

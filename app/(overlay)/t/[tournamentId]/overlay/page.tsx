@@ -197,6 +197,7 @@ export default function BroadcastOverlay({
       "SPONSOR_BANNER",
       "MATCH_SUMMARY",
       "POINTS_TABLE",
+      "LIVE_QUIZ"
     ].includes(v),
   );
 
@@ -262,6 +263,26 @@ export default function BroadcastOverlay({
             <span className="text-[9px] font-black text-white uppercase tracking-[0.4em]">
               LIVE
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 NEW: YOUTUBE SUBSCRIBE BANNER 🔥 */}
+      {config.showSubscribeBanner && (
+        <div className="absolute bottom-40 right-12 z-[400] animate-in slide-in-from-right-10 fade-in duration-500">
+          <div className="bg-slate-950/95 backdrop-blur-xl border-l-4 border-red-600 rounded-full pr-8 pl-4 py-3 flex items-center gap-5 shadow-2xl border-y border-r border-white/10">
+            <div className="bg-red-600 rounded-full w-12 h-12 flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.6)]">
+              {/* YouTube Play Triangle */}
+              <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1" />
+            </div>
+            <div>
+              <p className="text-white font-black text-2xl uppercase tracking-tight leading-none mb-1">
+                Subscribe
+              </p>
+              <p className="text-red-400 font-bold text-sm tracking-widest">
+                {config.youtubeChannelName || "@cricsynclive"}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -386,6 +407,7 @@ export default function BroadcastOverlay({
               team1Squad={team1Squad}
               team2Squad={team2Squad}
               themeId={config.broadcastThemeId}
+              config={config}
             />
           )}
         </div>
