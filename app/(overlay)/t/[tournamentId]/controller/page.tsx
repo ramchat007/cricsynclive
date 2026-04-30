@@ -38,7 +38,6 @@ export default function MasterController({
   const [triggerNote, setTriggerNote] = useState<string>("");
   const [themeNote, setThemeNote] = useState<string>("");
 
-  // 🔥 Notice: sponsorBanners is now an array!
   const [config, setConfig] = useState<any>({
     activeViews: [],
     activeMatchId: "",
@@ -51,31 +50,7 @@ export default function MasterController({
     broadcastThemeId: "classic",
   });
 
-  // Helper function to update the broadcast config in Supabase safely
-  const updateConfig = (newSettings: any) => {
-    // By using a function inside setConfig, we guarantee 'prevConfig' is 100% up-to-date
-    setConfig((prevConfig: any) => {
-      // 1. Safely merge the newest settings with the most recent state
-      const updatedConfig = { ...prevConfig, ...newSettings };
-
-      // 2. Fire the database update in the background
-      if (tournamentId) {
-        supabase
-          .from("tournaments")
-          .update({ broadcast_state: updatedConfig })
-          .eq("id", tournamentId)
-          .then(({ error }) => {
-            if (error) console.error("Failed to sync overlay:", error);
-          });
-      }
-
-      // 3. Update the controller UI
-      return updatedConfig;
-    });
-  };
-
   const studioChannelRef = useRef<any>(null);
-  // Track BOTH batters to detect strike rotation vs new batter
   const prevPlayersRef = useRef({
     striker: null,
     nonStriker: null,
@@ -83,11 +58,43 @@ export default function MasterController({
   });
   const spotlightTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use a ref for config so our websocket doesn't constantly disconnect when typing
+  // Use a ref for config so our websocket doesn't constantly disconnect when typing,
+  // and for safe array manipulation (banners)
   const configRef = useRef(config);
   useEffect(() => {
     configRef.current = config;
   }, [config]);
+
+  // 🔥 THE MASTER SYNC ENGINE 🔥
+  // Merges safe state + WebSocket + Supabase all in one bulletproof function
+  const publishConfig = (updates: any) => {
+    setConfig((prevConfig: any) => {
+      const nextConfig = { ...prevConfig, ...updates };
+
+      // 1. Fire instantly to the live overlay via WebSockets
+      if (studioChannelRef.current) {
+        studioChannelRef.current.send({
+          type: "broadcast",
+          event: "sync_graphics",
+          payload: nextConfig,
+        });
+      }
+
+      // 2. Save permanently to Supabase in the background
+      if (tournamentId) {
+        supabase
+          .from("tournaments")
+          .update({ broadcast_state: nextConfig })
+          .eq("id", tournamentId)
+          .then(({ error }) => {
+            if (error) console.error("Failed to sync overlay:", error);
+          });
+      }
+
+      // 3. Update the controller UI safely
+      return nextConfig;
+    });
+  };
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -98,9 +105,7 @@ export default function MasterController({
           `
           id, 
           team1_id, 
-          team2_id, 
-          partnership_url, 
-          mini_scorebug_url,
+          team2_id,
           team1:team1_id(short_name, name), 
           team2:team2_id(short_name, name)
         `,
@@ -166,27 +171,12 @@ export default function MasterController({
     fetchSquads();
   }, [config.activeMatchId, matches]);
 
-  const publishConfig = async (updates: any) => {
-    const newConfig = { ...config, ...updates };
-    setConfig(newConfig);
-    if (studioChannelRef.current)
-      studioChannelRef.current.send({
-        type: "broadcast",
-        event: "sync_graphics",
-        payload: newConfig,
-      });
-    await supabase
-      .from("tournaments")
-      .update({ broadcast_state: newConfig })
-      .eq("id", tournamentId);
-  };
-
   // --- SMART AUTOMATED PLAYER SPOTLIGHT ENGINE ---
   useEffect(() => {
     const matchId = config.activeMatchId;
     if (!matchId) return;
 
-    // 1. Initial Baseline Fetch (Who is currently on the pitch?)
+    // 1. Initial Baseline Fetch
     supabase
       .from("matches")
       .select("live_striker_id, live_non_striker_id, live_bowler_id")
@@ -221,35 +211,28 @@ export default function MasterController({
           const currentNonStriker = newMatch.live_non_striker_id;
           const currentBowler = newMatch.live_bowler_id;
 
-          // SMART LOGIC 1: Is the new striker completely new to the crease? (Not just strike rotation)
           if (
             currentStriker &&
             currentStriker !== oldRefs.striker &&
             currentStriker !== oldRefs.nonStriker
           ) {
             newPlayerId = currentStriker;
-          }
-          // SMART LOGIC 2: Did the non-striker change to someone completely new?
-          else if (
+          } else if (
             currentNonStriker &&
             currentNonStriker !== oldRefs.striker &&
             currentNonStriker !== oldRefs.nonStriker
           ) {
             newPlayerId = currentNonStriker;
-          }
-          // SMART LOGIC 3: Did a new over start with a new bowler?
-          else if (currentBowler && currentBowler !== oldRefs.bowler) {
+          } else if (currentBowler && currentBowler !== oldRefs.bowler) {
             newPlayerId = currentBowler;
           }
 
-          // Update the baseline for the next ball
           prevPlayersRef.current = {
             striker: currentStriker,
             nonStriker: currentNonStriker,
             bowler: currentBowler,
           };
 
-          // Fire the 10-second spotlight if we found a genuinely new player AND Auto-Show is enabled
           if (newPlayerId && configRef.current.autoSpotlight !== false) {
             if (spotlightTimerRef.current)
               clearTimeout(spotlightTimerRef.current);
@@ -265,24 +248,13 @@ export default function MasterController({
             });
 
             spotlightTimerRef.current = setTimeout(() => {
-              setConfig((prev: any) => {
-                const views = (prev.activeViews || []).filter(
+              // Safely remove PLAYER_SPOTLIGHT using configRef and our master sync engine
+              publishConfig({
+                activeViews: (configRef.current.activeViews || []).filter(
                   (v: string) => v !== "PLAYER_SPOTLIGHT",
-                );
-                const nextConfig = { ...prev, activeViews: views };
-                if (studioChannelRef.current)
-                  studioChannelRef.current.send({
-                    type: "broadcast",
-                    event: "sync_graphics",
-                    payload: nextConfig,
-                  });
-                supabase
-                  .from("tournaments")
-                  .update({ broadcast_state: nextConfig })
-                  .eq("id", tournamentId);
-                return nextConfig;
+                ),
               });
-            }, 10000); // Hide exactly 10 seconds later
+            }, 10000);
           }
         },
       )
@@ -291,7 +263,7 @@ export default function MasterController({
     return () => {
       supabase.removeChannel(sub);
     };
-  }, [config.activeMatchId]); // Notice we removed autoSpotlight from here!
+  }, [config.activeMatchId]);
 
   const toggleView = (view: string) => {
     const views = config.activeViews || [];
@@ -310,6 +282,7 @@ export default function MasterController({
       "PLAYING_XI",
       "MATCH_SUMMARY",
       "POINTS_TABLE",
+      "LIVE_QUIZ",
     ];
     let views = [...(config.activeViews || [])];
     if (views.includes(view)) views = views.filter((v) => v !== view);
@@ -357,7 +330,8 @@ export default function MasterController({
   };
 
   const removeBanner = (indexToRemove: number) => {
-    const newBanners = config.sponsorBanners.filter(
+    // ✅ Safe Array Deletion
+    const newBanners = (configRef.current.sponsorBanners || []).filter(
       (_: any, i: number) => i !== indexToRemove,
     );
     publishConfig({ sponsorBanners: newBanners });
@@ -372,6 +346,33 @@ export default function MasterController({
         : "Free theme selected.",
     );
     setTimeout(() => setThemeNote(""), 2200);
+  };
+
+  // Helper to generate dynamic questions based on current match data
+  const generateDynamicQuestions = () => {
+    const matchData = matches.find((m) => m.id === config.activeMatchId);
+    if (!matchData) return [];
+
+    return [
+      {
+        question: `Who won the toss in today's match between ${matchData.team1?.name} and ${matchData.team2?.name}?`,
+        options: [
+          matchData.team1?.name,
+          matchData.team2?.name,
+          "It was a tie",
+          "Match Abandoned",
+        ],
+      },
+      {
+        question: `Which team is currently leading the tournament points table?`,
+        options: [
+          matchData.team1?.name,
+          matchData.team2?.name,
+          "Mumbai Indians",
+          "Chennai Super Kings",
+        ],
+      },
+    ];
   };
 
   return (
@@ -512,7 +513,7 @@ export default function MasterController({
                 { id: "OVER_SUMMARY", label: "Summary", icon: LayoutTemplate },
                 {
                   id: "POINTS_TABLE",
-                  label: "POINTS_TABLE",
+                  label: "Standings",
                   icon: ClipboardList,
                 },
                 { id: "LIVE_QUIZ", label: "Live Quiz", icon: MessageCircle },
@@ -589,7 +590,6 @@ export default function MasterController({
                   <Users size={16} className="text-gray-400" /> Player Spotlight
                 </h3>
 
-                {/* Auto-Show Toggle */}
                 <label className="flex items-center gap-2 cursor-pointer bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
                   <input
                     type="checkbox"
@@ -605,7 +605,6 @@ export default function MasterController({
                 </label>
               </div>
 
-              {/* Live Crease Controls */}
               <div className="mb-5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">
                   Live Crease Controls
@@ -654,7 +653,6 @@ export default function MasterController({
                 </div>
               </div>
 
-              {/* Manual Selection */}
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">
                 Manual Selection
               </label>
@@ -703,13 +701,12 @@ export default function MasterController({
               Integration
             </h3>
             <div className="grid grid-cols-2 gap-6 h-full">
-              {/* 🔥 Banners Array Setup 🔥 */}
+              {/* 🔥 Safe Array Setup for Banners 🔥 */}
               <div className="flex flex-col gap-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">
                   Fullscreen Banners
                 </label>
 
-                {/* Cloudinary Widget Wrapper */}
                 <CldUploadWidget
                   uploadPreset={String(
                     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
@@ -717,7 +714,9 @@ export default function MasterController({
                   options={{ multiple: true, cropping: true }}
                   onSuccess={(result: any) => {
                     const url = result.info.secure_url;
-                    const currentBanners = config.sponsorBanners || [];
+                    // ✅ Reads from ref to prevent overwriting
+                    const currentBanners =
+                      configRef.current.sponsorBanners || [];
                     publishConfig({ sponsorBanners: [...currentBanners, url] });
                   }}>
                   {({ open }) => (
@@ -732,7 +731,6 @@ export default function MasterController({
                   )}
                 </CldUploadWidget>
 
-                {/* Miniature Gallery of uploaded banners */}
                 <div className="flex gap-2 overflow-x-auto py-1">
                   {(config.sponsorBanners || []).map(
                     (url: string, idx: number) => (
@@ -815,7 +813,7 @@ export default function MasterController({
           </div>
 
           {/* 1. YOUTUBE SUBSCRIBE BANNER CONTROL */}
-          <div className="p-4 border rounded-xl bg-white mb-4">
+          <div className="p-4 border rounded-xl bg-white mb-4 shadow-sm">
             <h3 className="font-bold mb-3 flex items-center gap-2 text-red-600">
               <Play size={18} /> YouTube Engagement
             </h3>
@@ -828,18 +826,18 @@ export default function MasterController({
                   type="text"
                   value={config.youtubeChannelName || "@cricsynclive"}
                   onChange={(e) =>
-                    updateConfig({ youtubeChannelName: e.target.value })
+                    publishConfig({ youtubeChannelName: e.target.value })
                   }
-                  className="w-full border rounded p-2 text-sm"
+                  className="w-full border border-gray-200 rounded p-2 text-sm bg-gray-50 focus:bg-white focus:ring-1 focus:ring-red-500 outline-none transition-all"
                 />
               </div>
               <button
                 onClick={() =>
-                  updateConfig({
+                  publishConfig({
                     showSubscribeBanner: !config.showSubscribeBanner,
                   })
                 }
-                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700"}`}>
+                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
                 {config.showSubscribeBanner
                   ? "Hide Subscribe Banner"
                   : "Show Subscribe Banner"}
@@ -848,18 +846,44 @@ export default function MasterController({
           </div>
 
           {/* 2. LIVE QUIZ GENERATOR CONTROL */}
-          <div className="p-4 border rounded-xl bg-white">
-            <h3 className="font-bold mb-3">Live Quiz Config</h3>
+          <div className="p-4 border rounded-xl bg-white shadow-sm">
+            <h3 className="font-bold mb-3 text-red-600 flex items-center gap-2">
+              Live Quiz Config
+            </h3>
+
+            {/* Dynamic Question Selector */}
+            <select
+              className="w-full border rounded p-2 text-sm mb-3 bg-gray-50 outline-none focus:ring-1 focus:ring-red-500 transition-all"
+              onChange={(e) => {
+                if (e.target.value !== "") {
+                  const q = JSON.parse(e.target.value);
+                  publishConfig({
+                    quizData: {
+                      question: q.question,
+                      options: q.options,
+                      results: null,
+                    },
+                  });
+                }
+              }}>
+              <option value="">-- Select Auto-Generated Question --</option>
+              {generateDynamicQuestions().map((q, idx) => (
+                <option key={idx} value={JSON.stringify(q)}>
+                  {q.question}
+                </option>
+              ))}
+            </select>
+
             <input
               type="text"
-              placeholder="e.g. Who scored the most runs in the 2023 season?"
+              placeholder="Or type a custom question..."
               value={config.quizData?.question || ""}
               onChange={(e) =>
-                updateConfig({
+                publishConfig({
                   quizData: { ...config.quizData, question: e.target.value },
                 })
               }
-              className="w-full border rounded p-2 text-sm mb-2"
+              className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-red-500 outline-none transition-all rounded p-2 text-sm mb-2"
             />
             <div className="grid grid-cols-2 gap-2 mb-3">
               {[0, 1, 2, 3].map((i) => (
@@ -873,20 +897,68 @@ export default function MasterController({
                       ...(config.quizData?.options || ["", "", "", ""]),
                     ];
                     newOpts[i] = e.target.value;
-                    updateConfig({
+                    publishConfig({
                       quizData: { ...config.quizData, options: newOpts },
                     });
                   }}
-                  className="border rounded p-2 text-sm"
+                  className="border border-gray-200 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-red-500 outline-none transition-all rounded p-2 text-sm"
                 />
               ))}
+            </div>
+
+            {/* Simulate Youtube Results */}
+            <div className="border-t pt-3 mt-3">
+              <label className="block text-xs font-bold text-gray-500 mb-2">
+                Simulate YouTube Chat Results
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() =>
+                    publishConfig({
+                      quizData: {
+                        ...config.quizData,
+                        results: { 0: 65, 1: 15, 2: 10, 3: 10 },
+                      },
+                    })
+                  }
+                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors">
+                  A Wins
+                </button>
+                <button
+                  onClick={() =>
+                    publishConfig({
+                      quizData: {
+                        ...config.quizData,
+                        results: { 0: 10, 1: 75, 2: 5, 3: 10 },
+                      },
+                    })
+                  }
+                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors">
+                  B Wins
+                </button>
+                <button
+                  onClick={() =>
+                    publishConfig({
+                      quizData: { ...config.quizData, results: null },
+                    })
+                  }
+                  className="flex-1 bg-gray-200 text-gray-700 py-1 rounded text-xs font-bold hover:bg-gray-300 transition-colors">
+                  Clear Results
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="pt-6">
           <button
-            onClick={() => publishConfig({ activeViews: [], event: null })}
+            onClick={() =>
+              publishConfig({
+                activeViews: [],
+                event: null,
+                showSubscribeBanner: false,
+              })
+            }
             className="w-full py-5 bg-red-50 text-red-600 font-black border border-red-200 rounded-2xl hover:bg-red-600 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm">
             🚨 Kill All Graphics 🚨
           </button>
