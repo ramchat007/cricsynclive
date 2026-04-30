@@ -350,12 +350,42 @@ export default function ScoreTicker({
 
   const getBowlerStats = (id: string) => {
     const d = currentInningsBalls.filter((b) => b.bowler_id === id);
-    const bLegalBalls = d.filter((b) => {
+
+    let oversArray = [];
+    let currentOver = [];
+    let currentValid = 0;
+    let totalValid = 0;
+
+    // Group all balls into perfect overs
+    for (const b of d) {
+      currentOver.push(b);
       const type = (b.extras_type || "").toLowerCase();
-      return (
-        type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball"
-      );
-    }).length;
+      const isLegal =
+        type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball";
+
+      if (isLegal) {
+        currentValid++;
+        totalValid++;
+      }
+
+      // When an over hits 6 valid balls, save it and reset for the next over
+      if (currentValid === 6) {
+        oversArray.push(currentOver);
+        currentOver = [];
+        currentValid = 0;
+      }
+    }
+
+    // Add any remaining balls in the currently unfinished over
+    if (currentOver.length > 0) {
+      oversArray.push(currentOver);
+    }
+
+    const timelineToDisplay =
+      oversArray.length > 0 ? oversArray[oversArray.length - 1] : [];
+    const completedOvers = Math.floor(totalValid / 6);
+    const ballsInCurrentOver = totalValid % 6;
+
     return {
       runs: d.reduce(
         (s, b) =>
@@ -363,8 +393,8 @@ export default function ScoreTicker({
         0,
       ),
       wickets: d.filter((b) => b.is_wicket).length,
-      overs: `${Math.floor(bLegalBalls / 6)}.${bLegalBalls % 6}`,
-      timeline: d.slice(-9),
+      overs: `${completedOvers}.${ballsInCurrentOver}`,
+      timeline: timelineToDisplay,
     };
   };
 
@@ -397,8 +427,19 @@ export default function ScoreTicker({
     const ballsRemaining = totalMatchBalls - totalBalls;
 
     if (runsNeeded <= 0) {
-      equationStr = "SCORES LEVEL / WON";
+      // Batting team successfully chased the target
+      equationStr = `${battingTeamObj?.short_name || battingName} WON`;
+      rrrVal = "-";
+    } else if (ballsRemaining <= 0 || activeMatch.status === "completed") {
+      // Out of balls or match manually marked complete
+      if (runsNeeded === 1 && ballsRemaining === 0) {
+        equationStr = "MATCH TIED";
+      } else {
+        equationStr = `${bowlingTeamObj?.short_name || bowlingName} WON`;
+      }
+      rrrVal = "-";
     } else {
+      // Normal live match calculation
       rrrVal =
         ballsRemaining > 0
           ? ((runsNeeded / ballsRemaining) * 6).toFixed(2)
