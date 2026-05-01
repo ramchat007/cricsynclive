@@ -92,7 +92,8 @@ export default function MatchesPage({
 
       if (
         tData?.owner_id === session.user.id ||
-        pData?.role === "super_admin"
+        pData?.role === "super_admin" ||
+        pData?.role === "scorer"
       ) {
         setIsAdmin(true);
       }

@@ -25,13 +25,12 @@ export default function FullscreenPlates({
   const [standings, setStandings] = useState<any[]>([]);
 
   // --------------------------------------------------------
-  // NEW: DYNAMIC POINTS TABLE CALCULATOR
+  // DYNAMIC POINTS TABLE CALCULATOR
   // --------------------------------------------------------
   useEffect(() => {
     if (type !== "POINTS_TABLE" || !tournamentId) return;
 
     const fetchStandings = async () => {
-      // Fetch all teams and completed matches for this tournament
       const { data: teams } = await supabase
         .from("teams")
         .select("*")
@@ -78,7 +77,7 @@ export default function FullscreenPlates({
             t2.nr += 1;
             t1.pts += 1;
             t2.pts += 1;
-          } // Tie or Abandoned
+          }
 
           t1.runsFor += m.team1_runs || 0;
           t1.ballsFor += m.team1_balls || 0;
@@ -91,7 +90,6 @@ export default function FullscreenPlates({
           t2.ballsAgainst += m.team1_balls || 0;
         });
 
-        // Calculate NRR
         table.forEach((t) => {
           const oversFor = t.ballsFor / 6;
           const oversAgainst = t.ballsAgainst / 6;
@@ -101,7 +99,6 @@ export default function FullscreenPlates({
           t.nrr = rateFor - rateAgainst;
         });
 
-        // Sort by Points, then NRR
         table.sort((a, b) => b.pts - a.pts || b.nrr - a.nrr);
         setStandings(table);
       }
@@ -120,6 +117,43 @@ export default function FullscreenPlates({
 
   const formatOvers = (balls: number) =>
     `${Math.floor((balls || 0) / 6)}.${(balls || 0) % 6}`;
+
+  // --------------------------------------------------------
+  // 🔥 THE FIX: DYNAMIC TEAM RESOLVER 🔥
+  // --------------------------------------------------------
+  const team1WonToss = matchData?.toss_winner_id === matchData?.team1_id;
+  const choseToBat = matchData?.toss_decision?.toLowerCase() === "bat";
+  const team1BattedFirst = choseToBat ? team1WonToss : !team1WonToss;
+
+  // Accurately map the Teams to their Innings
+  const firstInningsTeam = team1BattedFirst
+    ? matchData?.team1
+    : matchData?.team2;
+  const secondInningsTeam = team1BattedFirst
+    ? matchData?.team2
+    : matchData?.team1;
+
+  // Accurately map the Database Runs to their Innings
+  const firstRuns = team1BattedFirst
+    ? matchData?.team1_runs
+    : matchData?.team2_runs;
+  const firstWickets = team1BattedFirst
+    ? matchData?.team1_wickets
+    : matchData?.team2_wickets;
+  const firstBalls = team1BattedFirst
+    ? matchData?.team1_balls
+    : matchData?.team2_balls;
+
+  const secondRuns = team1BattedFirst
+    ? matchData?.team2_runs
+    : matchData?.team1_runs;
+  const secondWickets = team1BattedFirst
+    ? matchData?.team2_wickets
+    : matchData?.team1_wickets;
+  const secondBalls = team1BattedFirst
+    ? matchData?.team2_balls
+    : matchData?.team1_balls;
+  // --------------------------------------------------------
 
   const overInfo = useMemo(() => {
     const currentInn = matchData?.current_innings || 1;
@@ -236,11 +270,13 @@ export default function FullscreenPlates({
   return (
     <div
       className="w-full h-full flex items-center justify-center p-12 text-white font-sans overflow-hidden"
-      style={{ color: theme.tokens.text }}>
-      {/* --- NEW: POINTS TABLE STANDINGS --- */}
+      style={{ color: theme.tokens.text }}
+    >
+      {/* --- POINTS TABLE STANDINGS --- */}
       {type === "POINTS_TABLE" && (
         <div
-          className={`w-full max-w-[1200px] p-12 rounded-[3rem] flex flex-col animate-in zoom-in-95 duration-500 ${glass}`}>
+          className={`w-full max-w-[1200px] p-12 rounded-[3rem] flex flex-col animate-in zoom-in-95 duration-500 ${glass}`}
+        >
           <div className="flex items-center gap-4 mb-10 pb-6 border-b border-white/10">
             <ListOrdered className="text-amber-400" size={40} />
             <h2 className="text-amber-400 font-black text-3xl uppercase tracking-[0.3em]">
@@ -249,7 +285,6 @@ export default function FullscreenPlates({
           </div>
 
           <div className="w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10">
-            {/* Header Row */}
             <div className="grid grid-cols-12 gap-4 px-8 py-4 bg-white/5 border-b border-white/10 text-xs font-black uppercase tracking-widest text-white/50">
               <div className="col-span-1">#</div>
               <div className="col-span-5">Team</div>
@@ -260,12 +295,12 @@ export default function FullscreenPlates({
               <div className="col-span-2 text-right">NRR</div>
             </div>
 
-            {/* Data Rows */}
             <div className="flex flex-col">
               {standings.map((team, idx) => (
                 <div
                   key={team.id}
-                  className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-white/5 items-center bg-gradient-to-r hover:bg-white/5 transition-colors">
+                  className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-white/5 items-center bg-gradient-to-r hover:bg-white/5 transition-colors"
+                >
                   <div className="col-span-1 font-mono text-xl font-bold text-white/30">
                     {idx + 1}
                   </div>
@@ -310,10 +345,12 @@ export default function FullscreenPlates({
       {/* --- TOSS REPORT --- */}
       {type === "TOSS_REPORT" && (
         <div
-          className={`w-full max-w-5xl p-16 rounded-[4rem] flex flex-col items-center text-center animate-in slide-in-from-bottom-10 ${glass}`}>
+          className={`w-full max-w-5xl p-16 rounded-[4rem] flex flex-col items-center text-center animate-in slide-in-from-bottom-10 ${glass}`}
+        >
           <p
             className="font-black uppercase tracking-[0.35em] text-sm"
-            style={{ color: theme.tokens.warning }}>
+            style={{ color: theme.tokens.warning }}
+          >
             Toss Report
           </p>
           <h2 className="text-7xl font-black uppercase tracking-tighter mt-6">
@@ -331,10 +368,12 @@ export default function FullscreenPlates({
       {/* --- INNINGS BREAK --- */}
       {type === "INNINGS_BREAK" && (
         <div
-          className={`w-full max-w-6xl p-16 rounded-[4rem] animate-in slide-in-from-bottom-10 ${glass}`}>
+          className={`w-full max-w-6xl p-16 rounded-[4rem] animate-in slide-in-from-bottom-10 ${glass}`}
+        >
           <p
             className="font-black uppercase tracking-[0.35em] text-sm text-center"
-            style={{ color: theme.tokens.warning }}>
+            style={{ color: theme.tokens.warning }}
+          >
             Innings Break
           </p>
           <div className="grid grid-cols-2 gap-12 mt-8">
@@ -343,12 +382,12 @@ export default function FullscreenPlates({
                 1st Innings
               </p>
               <h3 className="text-5xl font-black mt-3">
-                {matchData?.team1?.name}
+                {firstInningsTeam?.name}
               </h3>
               <p className="text-7xl font-black mt-6">
-                {matchData?.team1_runs || 0}/{matchData?.team1_wickets || 0}
+                {firstRuns || 0}/{firstWickets || 0}
                 <span className="text-3xl text-white/50 ml-4">
-                  ({formatOvers(matchData?.team1_balls)})
+                  ({formatOvers(firstBalls)})
                 </span>
               </p>
             </div>
@@ -357,12 +396,13 @@ export default function FullscreenPlates({
                 Chase Target
               </p>
               <h3 className="text-5xl font-black mt-3">
-                {matchData?.team2?.name}
+                {secondInningsTeam?.name}
               </h3>
               <p
                 className="text-7xl font-black mt-6"
-                style={{ color: theme.tokens.accent }}>
-                {(Number(matchData?.team1_runs) || 0) + 1}
+                style={{ color: theme.tokens.accent }}
+              >
+                {(Number(firstRuns) || 0) + 1}
               </p>
             </div>
           </div>
@@ -372,7 +412,8 @@ export default function FullscreenPlates({
       {/* --- OVER SUMMARY --- */}
       {type === "OVER_SUMMARY" && overInfo && (
         <div
-          className={`w-full max-w-6xl p-16 rounded-[4rem] flex flex-col items-center animate-in slide-in-from-bottom-10 ${glass}`}>
+          className={`w-full max-w-6xl p-16 rounded-[4rem] flex flex-col items-center animate-in slide-in-from-bottom-10 ${glass}`}
+        >
           <div className="flex justify-between items-end w-full mb-12">
             <div>
               <p className="text-amber-400 font-black uppercase text-sm mb-2">
@@ -389,12 +430,12 @@ export default function FullscreenPlates({
               <p className="text-white/40 font-black text-sm mb-2">Score</p>
               <h2 className="text-8xl font-black tracking-tighter">
                 {matchData?.current_innings === 1
-                  ? matchData?.team1_runs
-                  : matchData?.team2_runs}
+                  ? firstRuns || 0
+                  : secondRuns || 0}
                 /
                 {matchData?.current_innings === 1
-                  ? matchData?.team1_wickets
-                  : matchData?.team2_wickets}
+                  ? firstWickets || 0
+                  : secondWickets || 0}
               </h2>
             </div>
           </div>
@@ -402,7 +443,8 @@ export default function FullscreenPlates({
             {overInfo.balls.map((b: any, i: number) => (
               <div
                 key={i}
-                className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black border-2 ${b.is_wicket ? "bg-rose-600 border-rose-400" : b.runs_off_bat === 6 ? "bg-amber-500 border-amber-300 text-slate-900" : b.runs_off_bat === 4 ? "bg-teal-500 border-teal-300 text-slate-900" : "bg-white/10 border-white/20"}`}>
+                className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black border-2 ${b.is_wicket ? "bg-rose-600 border-rose-400" : b.runs_off_bat === 6 ? "bg-amber-500 border-amber-300 text-slate-900" : b.runs_off_bat === 4 ? "bg-teal-500 border-teal-300 text-slate-900" : "bg-white/10 border-white/20"}`}
+              >
                 {b.is_wicket ? "W" : b.runs_off_bat}
               </div>
             ))}
@@ -414,7 +456,8 @@ export default function FullscreenPlates({
       {type === "MATCH_SUMMARY" && (
         <div className="w-full h-full flex flex-col items-center justify-center animate-in zoom-in-95 duration-500">
           <div
-            className={`w-full max-w-[1400px] p-12 rounded-[3rem] flex flex-col ${glass}`}>
+            className={`w-full max-w-[1400px] p-12 rounded-[3rem] flex flex-col ${glass}`}
+          >
             <div className="text-center pb-8 border-b border-white/10 mb-8">
               <p className="text-white/50 font-black tracking-[0.3em] uppercase text-sm mb-3">
                 Final Match Summary
@@ -424,26 +467,28 @@ export default function FullscreenPlates({
                 style={{
                   color: theme.tokens.warning,
                   textShadow: `0 0 20px ${theme.tokens.warning}40`,
-                }}>
+                }}
+              >
                 {finalMatchResult}
               </h1>
             </div>
 
             <div className="grid grid-cols-2 gap-12">
+              {/* 1st Innings Box */}
               <div className="flex flex-col border border-white/10 rounded-3xl bg-black/20 p-8">
                 <div className="flex justify-between items-end border-b border-white/10 pb-6 mb-6">
                   <h3 className="text-3xl font-black uppercase tracking-tight text-white/90">
-                    {matchData?.team1?.name}
+                    {firstInningsTeam?.name}
                   </h3>
                   <div className="text-right">
                     <h2 className="text-5xl font-black leading-none">
-                      {matchData?.team1_runs || 0}
+                      {firstRuns || 0}
                       <span className="text-3xl text-white/60">
-                        /{matchData?.team1_wickets || 0}
+                        /{firstWickets || 0}
                       </span>
                     </h2>
                     <p className="text-lg font-bold text-white/40 mt-1">
-                      {formatOvers(matchData?.team1_balls)} Overs
+                      {formatOvers(firstBalls)} Overs
                     </p>
                   </div>
                 </div>
@@ -451,7 +496,8 @@ export default function FullscreenPlates({
                   {inn1Stats.topBatters.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl">
+                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl"
+                    >
                       <span className="font-bold text-lg">{b.name}</span>
                       <span className="font-black text-xl">
                         {b.runs}{" "}
@@ -466,7 +512,8 @@ export default function FullscreenPlates({
                   {inn1Stats.topBowlers.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl">
+                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl"
+                    >
                       <span className="font-bold text-lg">{b.name}</span>
                       <span className="font-black text-xl text-teal-400">
                         {b.wickets}-{b.runs}{" "}
@@ -479,20 +526,21 @@ export default function FullscreenPlates({
                 </div>
               </div>
 
+              {/* 2nd Innings Box */}
               <div className="flex flex-col border border-white/10 rounded-3xl bg-black/20 p-8">
                 <div className="flex justify-between items-end border-b border-white/10 pb-6 mb-6">
                   <h3 className="text-3xl font-black uppercase tracking-tight text-white/90">
-                    {matchData?.team2?.name}
+                    {secondInningsTeam?.name}
                   </h3>
                   <div className="text-right">
                     <h2 className="text-5xl font-black leading-none">
-                      {matchData?.team2_runs || 0}
+                      {secondRuns || 0}
                       <span className="text-3xl text-white/60">
-                        /{matchData?.team2_wickets || 0}
+                        /{secondWickets || 0}
                       </span>
                     </h2>
                     <p className="text-lg font-bold text-white/40 mt-1">
-                      {formatOvers(matchData?.team2_balls)} Overs
+                      {formatOvers(secondBalls)} Overs
                     </p>
                   </div>
                 </div>
@@ -500,7 +548,8 @@ export default function FullscreenPlates({
                   {inn2Stats.topBatters.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl">
+                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl"
+                    >
                       <span className="font-bold text-lg">{b.name}</span>
                       <span className="font-black text-xl">
                         {b.runs}{" "}
@@ -515,7 +564,8 @@ export default function FullscreenPlates({
                   {inn2Stats.topBowlers.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl">
+                      className="flex justify-between items-center bg-white/5 px-4 py-2 rounded-xl"
+                    >
                       <span className="font-bold text-lg">{b.name}</span>
                       <span className="font-black text-xl text-teal-400">
                         {b.wickets}-{b.runs}{" "}
@@ -563,7 +613,8 @@ export default function FullscreenPlates({
                 {(t.s || []).slice(0, 11).map((p: any, idx: number) => (
                   <div
                     key={idx}
-                    className="flex justify-between items-center text-4xl font-black uppercase tracking-tighter">
+                    className="flex justify-between items-center text-4xl font-black uppercase tracking-tighter"
+                  >
                     <span>
                       <span className="text-white/20 mr-6 font-mono">
                         {idx + 1}
@@ -581,7 +632,8 @@ export default function FullscreenPlates({
       {/* --- NEW: YOUTUBE LIVE QUIZ --- */}
       {type === "LIVE_QUIZ" && config?.quizData && (
         <div
-          className={`w-full max-w-[1200px] p-16 rounded-[4rem] flex flex-col items-center animate-in zoom-in-95 duration-500 ${glass}`}>
+          className={`w-full max-w-[1200px] p-16 rounded-[4rem] flex flex-col items-center animate-in zoom-in-95 duration-500 ${glass}`}
+        >
           <div className="bg-red-600/20 border border-red-500/50 px-8 py-3 rounded-full flex items-center gap-4 shadow-[0_0_30px_rgba(220,38,38,0.3)] mb-12">
             <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
             <span className="font-black uppercase tracking-[0.4em] text-red-400 text-lg">
@@ -597,7 +649,8 @@ export default function FullscreenPlates({
             {(config.quizData.options || []).map((opt: string, i: number) => (
               <div
                 key={i}
-                className="bg-gradient-to-r from-white/10 to-transparent border border-white/20 p-8 rounded-3xl text-3xl font-bold flex items-center gap-8 shadow-xl">
+                className="bg-gradient-to-r from-white/10 to-transparent border border-white/20 p-8 rounded-3xl text-3xl font-bold flex items-center gap-8 shadow-xl"
+              >
                 <span className="text-amber-400 font-black text-5xl opacity-80">
                   {String.fromCharCode(65 + i)}
                 </span>

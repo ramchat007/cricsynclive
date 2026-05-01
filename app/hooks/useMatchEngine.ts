@@ -118,11 +118,15 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       team2Players,
     );
     const validDeliveries = stats?.validDeliveries || 0;
+    
+    const eTypeLower = (extrasType || "").toLowerCase();
     const isThisBallValid =
-      (extrasType !== "wide" &&
-        extrasType !== "no-ball" &&
-        extrasType !== "penalty" &&
-        extrasType !== "dead-ball") ||
+      (eTypeLower !== "wide" &&
+        eTypeLower !== "wd" &&
+        eTypeLower !== "no-ball" &&
+        eTypeLower !== "nb" &&
+        eTypeLower !== "penalty" &&
+        eTypeLower !== "dead-ball") ||
       forceLegal;
 
     const newDelivery = {
@@ -157,18 +161,34 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
 
     if (!error && data) {
       setDeliveries((prev) => [...prev, data]);
-      // let swapStrike =
-      //   runsOffBat === 1 || runsOffBat === 3 || extrasRuns % 2 !== 0;
-      // if (isThisBallValid && (validDeliveries + 1) % 6 === 0)
-      //   swapStrike = !swapStrike;
-      // if (swapStrike) await manualSwapStrike();
 
-      if (!isWicket) {
-        let swapStrike =
-          runsOffBat === 1 || runsOffBat === 3 || extrasRuns % 2 !== 0;
-        if (isThisBallValid && (validDeliveries + 1) % 6 === 0)
-          swapStrike = !swapStrike;
-        if (swapStrike) await manualSwapStrike();
+      // 🔥 1. Calculate Physical Runs Ran (Isolating the 1-run penalty for Wides/NB)
+      let physicalRunsRan = runsOffBat;
+      if (eTypeLower === "wide" || eTypeLower === "wd" || eTypeLower === "no-ball" || eTypeLower === "nb") {
+        physicalRunsRan = runsOffBat > 0 ? runsOffBat : Math.max(0, extrasRuns - 1);
+      } else if (eTypeLower) {
+        physicalRunsRan = extrasRuns;
+      }
+
+      let swapStrike = physicalRunsRan % 2 !== 0;
+
+      // 🔥 2. Wicket Logic overrides
+      if (isWicket && wicketConfig) {
+        // Run outs might have completed runs, keep the swapStrike logic.
+        // For catches/bowled/etc, new batsman takes strike under ICC rules.
+        if (wicketConfig.wicketType !== "run-out") {
+          swapStrike = false; 
+        }
+      }
+
+      // 🔥 3. End of Over overrides
+      if (isThisBallValid && (validDeliveries + 1) % 6 === 0) {
+        swapStrike = !swapStrike;
+      }
+
+      // Execute Swap
+      if (swapStrike) {
+        await manualSwapStrike();
       }
 
       setIsSubmittingBall(false);
@@ -278,7 +298,6 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
     window.location.reload();
   };
 
-  // Inside hooks/useMatchEngine.ts
   const finishMatch = async (
     winnerId: string,
     resultMargin: string,
@@ -286,7 +305,6 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
     bestBatId: string,
     bestBowlId: string,
   ) => {
-    // 1. Helper function to calculate totals for a specific innings
     const getInningsTotals = (inningNum: number) => {
       const delivs = deliveries.filter((d: any) => d.innings === inningNum);
       const runs = delivs.reduce(
@@ -295,12 +313,10 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       );
       const wickets = delivs.filter((d: any) => d.is_wicket).length;
       const balls = delivs.filter(
-        (d: any) =>
-          (d.extras_type !== "wide" &&
-            d.extras_type !== "no-ball" &&
-            d.extras_type !== "penalty" &&
-            d.extras_type !== "dead-ball") ||
-          d.force_legal_ball,
+        (d: any) => {
+          const type = (d.extras_type || "").toLowerCase();
+          return (type !== "wide" && type !== "wd" && type !== "no-ball" && type !== "nb" && type !== "penalty" && type !== "dead-ball") || d.force_legal_ball;
+        }
       ).length;
       return { runs, wickets, balls };
     };
@@ -308,17 +324,14 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
     const inn1 = getInningsTotals(1);
     const inn2 = getInningsTotals(2);
 
-    // 2. Figure out who batted first by checking the first ball of the match
     const firstBall = deliveries.find((d: any) => d.innings === 1);
     const team1BattedFirst = team1Players.some(
       (p: any) => p.id === firstBall?.striker_id,
     );
 
-    // 3. Assign the innings stats to the correct database teams
     const team1Stats = team1BattedFirst ? inn1 : inn2;
     const team2Stats = team1BattedFirst ? inn2 : inn1;
 
-    // 4. Send the massive payload to Supabase
     const { error } = await supabase
       .from("matches")
       .update({
@@ -331,7 +344,6 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
         player_of_match_id: momId || null,
         best_batsman_id: bestBatId || null,
         best_bowler_id: bestBowlId || null,
-        // NEW: The NRR Data!
         team1_runs: team1Stats.runs,
         team1_wickets: team1Stats.wickets,
         team1_balls: team1Stats.balls,
@@ -342,7 +354,6 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       .eq("id", matchId);
 
     if (!error) {
-      // Refresh the page or redirect back to tournament
       window.location.href = `/t/${tournamentId}/matches`;
     } else {
       alert("Failed to complete match: " + error.message);
@@ -351,17 +362,15 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
 
   const saveMatchSettings = async (
     oversLimit: number,
-    maxOversPerBowler: number, // <-- ADDED: The 2nd argument passed from the UI
+    maxOversPerBowler: number,
     targetOverride: number | null,
     calculatedTarget: number | null,
   ) => {
-    // Add both overs limits to the update payload
     const updateData: any = {
       overs_count: oversLimit,
       max_overs_per_bowler: maxOversPerBowler,
     };
 
-    // Only apply the revised target if it was actually changed
     if (match.current_innings === 2 && targetOverride !== calculatedTarget) {
       updateData.revised_target = targetOverride;
     }
@@ -383,7 +392,6 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
     nonStrikerId: string,
     bowlerId: string,
   ) => {
-    // 1. Updates the database
     await supabase
       .from("matches")
       .update({
@@ -393,7 +401,6 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       })
       .eq("id", matchId);
 
-    // 2. NEW: Updates the local UI state instantly!
     setMatch((prev: any) => ({
       ...prev,
       live_striker_id: strikerId,
@@ -403,13 +410,11 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
   };
 
   const refreshPlayers = async () => {
-    // Re-fetch team 1 players
     const { data: t1 } = await supabase
       .from("players")
       .select("*")
       .eq("team_id", match.team1_id);
     
-    // Re-fetch team 2 players
     const { data: t2 } = await supabase
       .from("players")
       .select("*")

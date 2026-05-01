@@ -679,7 +679,7 @@ export default function Broadcaster({
     <div className="fixed inset-0 z-[9999] h-[100dvh] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
       <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
 
-      {!isFullscreen && (
+      {/* {!isFullscreen && (
         <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200">
           <div className="flex items-center gap-2">
             <Camera className="text-teal-500" size={20} />
@@ -696,7 +696,7 @@ export default function Broadcaster({
             </div>
           )}
         </div>
-      )}
+      )} */}
 
       {error && (
         <div className="absolute top-4 left-4 right-4 bg-red-500 text-white text-xs font-bold p-3 rounded-xl text-center z-50 shadow-2xl flex items-center justify-center gap-2">

@@ -36,8 +36,15 @@ export default function PlayersPage({
         .select("role")
         .eq("id", session.user.id)
         .single();
-      if (tData?.owner_id === session.user.id || pData?.role === "super_admin")
+      if (
+        tData?.owner_id === session.user.id ||
+        pData?.role === "super_admin" ||
+        pData?.role === "scorer"
+      ) {
         setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
     }
 
     const { data } = await supabase
@@ -121,7 +128,8 @@ export default function PlayersPage({
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-black border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none">
+            className="bg-slate-50 dark:bg-black border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none"
+          >
             <option value="All">All Roles</option>
             <option value="Batsman">Batsmen</option>
             <option value="Bowler">Bowlers</option>
@@ -135,14 +143,19 @@ export default function PlayersPage({
         {filteredPlayers.map((player) => (
           <div
             key={player.id}
-            className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+            className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+          >
             <div
               className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rotate-45 ${player.status === "approved" ? "bg-teal-500" : "bg-orange-500"}`}
             />
             <div className="flex items-center gap-4">
-              <div 
-                className="w-16 h-16 shrink-0 rounded-2xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center" 
-                style={{ backgroundImage: player.photo_url ? `url(${player.photo_url})` : 'none' }} 
+              <div
+                className="w-16 h-16 shrink-0 rounded-2xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center"
+                style={{
+                  backgroundImage: player.photo_url
+                    ? `url(${player.photo_url})`
+                    : "none",
+                }}
               />
               <div className="flex-1 min-w-0 z-10">
                 <h4 className="font-black text-lg text-slate-900 dark:text-white truncate">
@@ -161,12 +174,14 @@ export default function PlayersPage({
                         onClick={() =>
                           togglePlayerStatus(player.id, player.status)
                         }
-                        className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${player.status === "approved" ? "bg-teal-50 text-teal-600 hover:bg-red-50 hover:text-red-600" : "bg-orange-50 text-orange-600 hover:bg-teal-50 hover:text-teal-600"}`}>
+                        className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${player.status === "approved" ? "bg-teal-50 text-teal-600 hover:bg-red-50 hover:text-red-600" : "bg-orange-50 text-orange-600 hover:bg-teal-50 hover:text-teal-600"}`}
+                      >
                         {player.status === "approved" ? "Revoke" : "Approve"}
                       </button>
                       <button
                         onClick={() => setEditingPlayer(player)}
-                        className="bg-slate-100 hover:bg-teal-500 text-slate-500 hover:text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors">
+                        className="bg-slate-100 hover:bg-teal-500 text-slate-500 hover:text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors"
+                      >
                         Edit
                       </button>
                     </>
@@ -202,11 +217,13 @@ export default function PlayersPage({
                       ...editingPlayer,
                       photo_url: result.info.secure_url,
                     })
-                  }>
+                  }
+                >
                   {({ open }) => (
                     <button
                       onClick={() => open()}
-                      className="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-lg hover:text-teal-500 transition-colors">
+                      className="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-lg hover:text-teal-500 transition-colors"
+                    >
                       Change Photo
                     </button>
                   )}
@@ -242,7 +259,8 @@ export default function PlayersPage({
                         player_role: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                  >
                     <option>Batsman</option>
                     <option>Bowler</option>
                     <option>All-Rounder</option>
@@ -261,7 +279,8 @@ export default function PlayersPage({
                         tshirt_size: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                  >
                     <option>S</option>
                     <option>M</option>
                     <option>L</option>
@@ -281,7 +300,8 @@ export default function PlayersPage({
                         status: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                  >
                     <option value="pending">Pending Payment</option>
                     <option value="approved">Approved</option>
                   </select>
@@ -301,7 +321,8 @@ export default function PlayersPage({
                         batting_hand: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                  >
                     <option>Right Hand</option>
                     <option>Left Hand</option>
                   </select>
@@ -318,7 +339,8 @@ export default function PlayersPage({
                         bowling_style: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                  >
                     <option>None</option>
                     <option>Right-arm Fast</option>
                     <option>Right-arm Medium</option>
@@ -333,12 +355,14 @@ export default function PlayersPage({
             <div className="flex justify-end gap-2 mt-8">
               <button
                 onClick={() => setEditingPlayer(null)}
-                className="px-6 py-3 rounded-xl text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                className="px-6 py-3 rounded-xl text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
                 Cancel
               </button>
               <button
                 onClick={updatePlayer}
-                className="bg-teal-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-teal-500 transition-all shadow-lg shadow-teal-500/20">
+                className="bg-teal-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-teal-500 transition-all shadow-lg shadow-teal-500/20"
+              >
                 Save Profile
               </button>
             </div>

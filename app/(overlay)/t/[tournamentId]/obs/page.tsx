@@ -14,7 +14,7 @@ export default function ObsReceiver({
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);``
 
   // 🔥 FIX: Track specific channels to safely close them
   const sigChannelRef = useRef<any>(null);
@@ -184,7 +184,7 @@ export default function ObsReceiver({
       .from("webrtc_signals")
       .select("offer")
       .eq("match_id", connectionId)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (data?.offer) processOffer(data.offer);
       });

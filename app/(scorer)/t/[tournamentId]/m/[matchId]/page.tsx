@@ -20,6 +20,7 @@ import {
 import Commentary from "./components/Commentary";
 import Predictor from "./components/Predictor";
 import Info from "./components/Info";
+import StudioController from "./components/StudioController"; // adjust path as needed
 
 export default function LiveScorerPage({
   params,
@@ -295,6 +296,32 @@ export default function LiveScorerPage({
       setTempTargetScore(stats?.targetScore || null);
     }
   }, [engine.match, stats?.targetScore]);
+
+  useEffect(() => {
+    if (!tournamentId) return;
+
+    const playerSyncSub = supabase
+      .channel(`player_sync_${tournamentId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "players",
+          filter: `tournament_id=eq.${tournamentId}`,
+        },
+        () => {
+          console.log("Real-time trigger: New player added to tournament!");
+          engine.refreshPlayers();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playerSyncSub);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tournamentId]);
 
   const handleQuickAddPlayer = async () => {
     if (!newPlayerName.trim()) return;
@@ -753,6 +780,7 @@ export default function LiveScorerPage({
                   ))}
               </select>
             </div>
+            <StudioController tournamentId={tournamentId} matchId={matchId} />
             <button
               onClick={() =>
                 engine.saveOpeners(setupStriker, setupNonStriker, setupBowler)
@@ -1482,6 +1510,9 @@ export default function LiveScorerPage({
             <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8">
               Match Settings
             </h2>
+            <div className="mb-10">
+              <StudioController tournamentId={tournamentId} matchId={matchId} />
+            </div>
             <div className="space-y-8 mb-10">
               {/* TOTAL OVERS */}
               <div>
