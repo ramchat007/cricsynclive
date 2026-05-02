@@ -181,8 +181,7 @@ export default function AdminManagementPage({
                     <option value="scorer">
                       Scorer (Can only score matches)
                     </option>
-                    {(currentUserRole === "owner" ||
-                      currentUserRole === "admin") && (
+                    {(currentUserRole === "owner") && (
                       <option value="admin">
                         Admin (Can edit settings & teams)
                       </option>
