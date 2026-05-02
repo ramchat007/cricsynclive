@@ -10,6 +10,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
 
   // --- EMAIL & PASSWORD AUTH ---
   const handleAuth = async (e: React.FormEvent) => {
@@ -17,7 +20,17 @@ export default function LoginPage() {
     setLoading(true);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      // Pass the extra data into the options.data object!
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: `${firstName} ${lastName}`.trim(),
+            phone: phone,
+          },
+        },
+      });
       if (error) alert(error.message);
       else alert("Check your email for the confirmation link!");
     } else {
@@ -106,6 +119,51 @@ export default function LoginPage() {
 
         {/* --- EMAIL FORM --- */}
         <form onSubmit={handleAuth} className="space-y-4">
+          {/* ONLY SHOW THESE IF SIGNING UP */}
+          {isSignUp && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full mt-1 bg-slate-100 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-white focus:border-teal-500 outline-none"
+                    required={isSignUp}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full mt-1 bg-slate-100 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-white focus:border-teal-500 outline-none"
+                    required={isSignUp}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full mt-1 bg-slate-100 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-white focus:border-teal-500 outline-none"
+                  required={isSignUp}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ALWAYS SHOW EMAIL & PASSWORD */}
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
               Email
@@ -136,7 +194,11 @@ export default function LoginPage() {
             disabled={loading || googleLoading}
             className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl mt-4 transition-all"
           >
-            {loading ? "Authenticating..." : isSignUp ? "Sign Up" : "Log In"}
+            {loading
+              ? "Authenticating..."
+              : isSignUp
+                ? "Create Account"
+                : "Log In"}
           </button>
         </form>
 

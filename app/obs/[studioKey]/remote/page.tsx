@@ -10,7 +10,9 @@ export default function StudioRemotePage({
 }) {
   const { studioKey } = use(params);
   const searchParams = useSearchParams();
-  const camId = searchParams.get("cam");
+
+  // ADDED: Fallback so it doesn't crash if you forget the URL parameter
+  const camId = searchParams.get("cam") || "cam1";
 
   const [config, setConfig] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,12 +20,13 @@ export default function StudioRemotePage({
   useEffect(() => {
     // 1. Fetch initial configuration
     const fetchConfig = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("studio_configs")
         .select("*")
         .eq("studio_key", studioKey)
-        .single();
+        .maybeSingle(); // <--- FIXED: No more 406 errors!
 
+      if (error) console.error("Config fetch error:", error);
       if (data) setConfig(data);
       setIsLoading(false);
     };
@@ -83,15 +86,20 @@ export default function StudioRemotePage({
     );
   }
 
-  const camQuery = camId ? `&cam=${camId}` : "";
+  const camQuery = `&cam=${camId}`;
 
   // 3. The Seamless Load with Camera Permissions
   return (
     <div className="w-screen h-screen bg-black overflow-hidden relative">
+      {/* Optional: Tiny indicator so the camera man knows what they are connected as */}
+      <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded font-black text-[10px] uppercase tracking-widest z-[100] shadow-lg opacity-80">
+        LIVE: {camId}
+      </div>
+
       <iframe
         src={`/t/${config.active_tournament_id}/remote?match=${config.active_match_id}${camQuery}`}
         className="w-full h-full border-none"
-        allow="camera; microphone; fullscreen; display-capture"
+        allow="camera *; microphone *; autoplay *; display-capture *"
       />
     </div>
   );

@@ -88,9 +88,9 @@ export default function StudioBroadcastPage({
       </div>
 
       <iframe
-        // Notice I changed /broadcast to /obs based on your URL!
         src={`/t/${config.active_tournament_id}/obs?match=${config.active_match_id}${camQuery}`}
         className="w-full h-full border-none bg-transparent"
+        allow="autoplay; fullscreen"
       />
     </div>
   );
