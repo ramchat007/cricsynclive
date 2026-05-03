@@ -98,7 +98,10 @@ export default function MasterController({
 
   useEffect(() => {
     if (!tournamentId) return;
-    const fetchMatches = async () => {
+
+    // We consolidate fetching the config and the live matches into one smart function
+    const fetchMatchesAndSync = async () => {
+      // 1. Get Live Matches
       const { data: mData } = await supabase
         .from("matches")
         .select(
@@ -112,42 +115,82 @@ export default function MasterController({
         )
         .eq("tournament_id", tournamentId)
         .eq("status", "live");
-      if (mData) setMatches(mData);
-    };
-    fetchMatches();
-    const channel = supabase.channel(`studio_graphics_${tournamentId}`);
-    studioChannelRef.current = channel;
-    channel.subscribe();
 
-    const init = async () => {
+      const liveMatches = mData || [];
+      setMatches(liveMatches);
+
+      // 2. Get Current Broadcast Config
       const { data: tData } = await supabase
         .from("tournaments")
         .select("broadcast_state")
         .eq("id", tournamentId)
         .single();
-      if (tData?.broadcast_state) {
-        // Ensure sponsorBanners is an array if migrating from old string logic
-        const loadedState = tData.broadcast_state;
-        if (loadedState.sponsorBannerUrl) {
-          loadedState.sponsorBanners = [loadedState.sponsorBannerUrl];
-          delete loadedState.sponsorBannerUrl;
-        }
-        setConfig(loadedState);
+
+      let loadedState = tData?.broadcast_state || {};
+
+      // Safety check for old banner string format
+      if (loadedState.sponsorBannerUrl) {
+        loadedState.sponsorBanners = [loadedState.sponsorBannerUrl];
+        delete loadedState.sponsorBannerUrl;
       }
 
-      const { data: mData } = await supabase
-        .from("matches")
-        .select(
-          "id, team1_id, team2_id, team1:team1_id(short_name), team2:team2_id(short_name)",
-        )
-        .eq("tournament_id", tournamentId)
-        .eq("status", "live");
-      if (mData) setMatches(mData);
+      // 🔥 3. THE AUTO-SELECT ENGINE 🔥
+      // Check if our currently selected match is actually still live
+      const isCurrentActiveLive = liveMatches.some(
+        (m) => m.id === loadedState.activeMatchId,
+      );
+
+      // If there are live matches, BUT we either have no match selected OR the selected match finished...
+      if (
+        liveMatches.length > 0 &&
+        (!loadedState.activeMatchId || !isCurrentActiveLive)
+      ) {
+        const newActiveId = liveMatches[0].id;
+        loadedState.activeMatchId = newActiveId;
+
+        // Instantly force-push this new match ID to the live overlay and database!
+        publishConfig({ activeMatchId: newActiveId });
+        console.log(`Auto-selected new live match: ${newActiveId}`);
+      } else if (liveMatches.length === 0 && loadedState.activeMatchId) {
+        // Optional cleanup: If no matches are live, clear the active match
+        loadedState.activeMatchId = "";
+        publishConfig({ activeMatchId: "" });
+      }
+
+      setConfig(loadedState);
     };
-    init();
+
+    // Run the initial fetch
+    fetchMatchesAndSync();
+
+    // 4. Setup Studio Graphics WebSocket (Your existing channel)
+    const channel = supabase.channel(`studio_graphics_${tournamentId}`);
+    studioChannelRef.current = channel;
+    channel.subscribe();
+
+    // 5. Setup Match Monitor WebSocket (The new listener)
+    // This listens for any changes to matches in this tournament (like a status going "live")
+    const matchMonitor = supabase
+      .channel(`match_auto_selector_${tournamentId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "matches",
+          filter: `tournament_id=eq.${tournamentId}`,
+        },
+        () => {
+          console.log("Match state changed! Auto-evaluating live matches...");
+          // Instantly re-run the logic to auto-update dropdowns and overlays
+          fetchMatchesAndSync();
+        },
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(matchMonitor);
     };
   }, [tournamentId]);
 
@@ -393,7 +436,8 @@ export default function MasterController({
           <select
             value={config.activeMatchId || ""}
             onChange={(e) => publishConfig({ activeMatchId: e.target.value })}
-            className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-3 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold uppercase tracking-wider text-sm w-full md:w-auto cursor-pointer">
+            className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-3 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold uppercase tracking-wider text-sm w-full md:w-auto cursor-pointer"
+          >
             <option value="">-- Select Active Feed --</option>
             {matches.map((m) => (
               <option key={m.id} value={m.id}>
@@ -410,7 +454,8 @@ export default function MasterController({
             </h3>
             <button
               onClick={() => toggleView("SCOREBUG")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("SCOREBUG") ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("SCOREBUG") ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+            >
               Main Score Ticker{" "}
               {config.activeViews?.includes("SCOREBUG") ? (
                 <Check size={18} />
@@ -420,7 +465,8 @@ export default function MasterController({
             </button>
             <button
               onClick={() => toggleView("MINI_SCOREBUG")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("MINI_SCOREBUG") ? "bg-cyan-600 border-cyan-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("MINI_SCOREBUG") ? "bg-cyan-600 border-cyan-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+            >
               Mini Corner Bug{" "}
               {config.activeViews?.includes("MINI_SCOREBUG") ? (
                 <Check size={18} />
@@ -430,7 +476,8 @@ export default function MasterController({
             </button>
             <button
               onClick={() => toggleView("PARTNERSHIP")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("PARTNERSHIP") ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("PARTNERSHIP") ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+            >
               Current Partnership{" "}
               {config.activeViews?.includes("PARTNERSHIP") ? (
                 <Check size={18} />
@@ -442,7 +489,8 @@ export default function MasterController({
               onClick={() =>
                 publishConfig({ showAppLogo: !config.showAppLogo })
               }
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all mt-auto ${config.showAppLogo ? "bg-gray-800 border-gray-800 text-white" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all mt-auto ${config.showAppLogo ? "bg-gray-800 border-gray-800 text-white" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+            >
               Watermark Logo{" "}
               {config.showAppLogo ? (
                 <RotateCw size={16} className="text-emerald-400" />
@@ -459,18 +507,21 @@ export default function MasterController({
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => triggerRapidEvent("FOUR")}
-                className="bg-emerald-50 border border-emerald-200 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-700 font-black text-sm active:scale-95 transition-all shadow-sm">
+                className="bg-emerald-50 border border-emerald-200 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-700 font-black text-sm active:scale-95 transition-all shadow-sm"
+              >
                 4 RUNS
               </button>
               <button
                 onClick={() => triggerRapidEvent("SIX")}
-                className="bg-amber-50 border border-amber-200 hover:bg-amber-400 hover:text-white hover:border-amber-400 py-6 rounded-xl text-amber-700 font-black text-sm active:scale-95 transition-all shadow-sm">
+                className="bg-amber-50 border border-amber-200 hover:bg-amber-400 hover:text-white hover:border-amber-400 py-6 rounded-xl text-amber-700 font-black text-sm active:scale-95 transition-all shadow-sm"
+              >
                 6 RUNS
               </button>
             </div>
             <button
               onClick={() => triggerRapidEvent("WICKET")}
-              className="w-full bg-rose-50 border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-700 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm">
+              className="w-full bg-rose-50 border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-700 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm"
+            >
               WICKET
             </button>
             {!!triggerNote && (
@@ -493,7 +544,8 @@ export default function MasterController({
                 />
                 <button
                   onClick={() => toggleView("TICKER")}
-                  className={`px-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border ${config.activeViews?.includes("TICKER") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"}`}>
+                  className={`px-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border ${config.activeViews?.includes("TICKER") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"}`}
+                >
                   {config.activeViews?.includes("TICKER") ? "Hide" : "Show"}
                 </button>
               </div>
@@ -521,7 +573,8 @@ export default function MasterController({
                 <button
                   key={overlay.id}
                   onClick={() => toggleFullscreenView(overlay.id)}
-                  className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}>
+                  className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+                >
                   <overlay.icon
                     size={18}
                     className={
@@ -536,7 +589,8 @@ export default function MasterController({
             </div>
             <button
               onClick={() => toggleFullscreenView("MATCH_SUMMARY")}
-              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}>
+              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}
+            >
               <Trophy size={18} /> Match Summary
             </button>
           </div>
@@ -559,7 +613,8 @@ export default function MasterController({
                     config.broadcastThemeId === theme.id
                       ? "border-emerald-500 bg-emerald-50"
                       : "border-gray-200 bg-gray-50 hover:bg-gray-100"
-                  }`}>
+                  }`}
+                >
                   <div className="flex items-center justify-between">
                     <span className="font-black uppercase tracking-wider text-xs text-gray-700">
                       {theme.label}
@@ -569,7 +624,8 @@ export default function MasterController({
                         theme.premium
                           ? "bg-amber-100 text-amber-700"
                           : "bg-emerald-100 text-emerald-700"
-                      }`}>
+                      }`}
+                    >
                       {theme.premium ? "Premium" : "Free"}
                     </span>
                   </div>
@@ -619,7 +675,8 @@ export default function MasterController({
                       });
                       toggleView("PLAYER_SPOTLIGHT");
                     }}
-                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
+                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                  >
                     🏏{" "}
                     {teamASquad
                       .concat(teamBSquad)
@@ -639,7 +696,8 @@ export default function MasterController({
                       });
                       toggleView("PLAYER_SPOTLIGHT");
                     }}
-                    className="flex-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
+                    className="flex-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                  >
                     🥎{" "}
                     {teamASquad
                       .concat(teamBSquad)
@@ -661,7 +719,8 @@ export default function MasterController({
                 onChange={(e) =>
                   publishConfig({ spotlightPlayerId: e.target.value })
                 }
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-bold uppercase tracking-wider text-sm mb-4 cursor-pointer">
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-bold uppercase tracking-wider text-sm mb-4 cursor-pointer"
+              >
                 <option value="">-- Choose a Player --</option>
                 {teamASquad.length > 0 && (
                   <optgroup label="Team A">
@@ -687,7 +746,8 @@ export default function MasterController({
             <button
               onClick={() => toggleView("PLAYER_SPOTLIGHT")}
               disabled={!config.spotlightPlayerId}
-              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 border transition-all ${!config.spotlightPlayerId ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("PLAYER_SPOTLIGHT") ? "bg-cyan-500 border-cyan-500 text-white shadow-md" : "bg-white border-gray-300 text-cyan-600 hover:bg-gray-50"}`}>
+              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 border transition-all ${!config.spotlightPlayerId ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("PLAYER_SPOTLIGHT") ? "bg-cyan-500 border-cyan-500 text-white shadow-md" : "bg-white border-gray-300 text-cyan-600 hover:bg-gray-50"}`}
+            >
               <Users size={18} />{" "}
               {config.activeViews?.includes("PLAYER_SPOTLIGHT")
                 ? "Hide Profile"
@@ -718,11 +778,13 @@ export default function MasterController({
                     const currentBanners =
                       configRef.current.sponsorBanners || [];
                     publishConfig({ sponsorBanners: [...currentBanners, url] });
-                  }}>
+                  }}
+                >
                   {({ open }) => (
                     <button
                       onClick={() => open()}
-                      className="border-2 border-dashed border-gray-300 rounded-xl h-24 w-full flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-amber-500 transition-colors cursor-pointer bg-gray-50/50">
+                      className="border-2 border-dashed border-gray-300 rounded-xl h-24 w-full flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-amber-500 transition-colors cursor-pointer bg-gray-50/50"
+                    >
                       <UploadCloud size={24} className="mb-1" />
                       <span className="text-[9px] font-black uppercase tracking-widest">
                         Upload Banner(s)
@@ -736,7 +798,8 @@ export default function MasterController({
                     (url: string, idx: number) => (
                       <div
                         key={idx}
-                        className="relative w-12 h-8 shrink-0 rounded border border-gray-200 group">
+                        className="relative w-12 h-8 shrink-0 rounded border border-gray-200 group"
+                      >
                         <img
                           src={url}
                           className="w-full h-full object-cover rounded"
@@ -744,7 +807,8 @@ export default function MasterController({
                         />
                         <button
                           onClick={() => removeBanner(idx)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                        >
                           <X size={10} />
                         </button>
                       </div>
@@ -758,7 +822,8 @@ export default function MasterController({
                     !(config.sponsorBanners?.length > 0) &&
                     !config.activeViews?.includes("SPONSOR_BANNER")
                   }
-                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!(config.sponsorBanners?.length > 0) && !config.activeViews?.includes("SPONSOR_BANNER") ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BANNER") ? "bg-amber-500 border-amber-500 text-white shadow-md" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}>
+                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!(config.sponsorBanners?.length > 0) && !config.activeViews?.includes("SPONSOR_BANNER") ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BANNER") ? "bg-amber-500 border-amber-500 text-white shadow-md" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}
+                >
                   {config.activeViews?.includes("SPONSOR_BANNER")
                     ? "Hide Banners"
                     : "Play Banner Ad(s)"}
@@ -777,11 +842,13 @@ export default function MasterController({
                   options={{ multiple: false, cropping: true }}
                   onSuccess={(result: any) => {
                     publishConfig({ sponsorBugUrl: result.info.secure_url });
-                  }}>
+                  }}
+                >
                   {({ open }) => (
                     <div
                       onClick={() => open()}
-                      className="border-2 border-dashed border-gray-300 rounded-xl h-24 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-pink-500 transition-colors cursor-pointer group relative overflow-hidden bg-gray-50/50">
+                      className="border-2 border-dashed border-gray-300 rounded-xl h-24 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-pink-500 transition-colors cursor-pointer group relative overflow-hidden bg-gray-50/50"
+                    >
                       {config.sponsorBugUrl ? (
                         <img
                           src={config.sponsorBugUrl}
@@ -803,7 +870,8 @@ export default function MasterController({
                     !config.sponsorBugUrl &&
                     !config.activeViews?.includes("SPONSOR_BUG")
                   }
-                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!config.sponsorBugUrl && !config.activeViews?.includes("SPONSOR_BUG") ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BUG") ? "bg-pink-600 border-pink-600 text-white shadow-md" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}>
+                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!config.sponsorBugUrl && !config.activeViews?.includes("SPONSOR_BUG") ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BUG") ? "bg-pink-600 border-pink-600 text-white shadow-md" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}
+                >
                   {config.activeViews?.includes("SPONSOR_BUG")
                     ? "Hide Bug"
                     : "Show Bug"}
@@ -837,7 +905,8 @@ export default function MasterController({
                     showSubscribeBanner: !config.showSubscribeBanner,
                   })
                 }
-                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
+                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              >
                 {config.showSubscribeBanner
                   ? "Hide Subscribe Banner"
                   : "Show Subscribe Banner"}
@@ -865,7 +934,8 @@ export default function MasterController({
                     },
                   });
                 }
-              }}>
+              }}
+            >
               <option value="">-- Select Auto-Generated Question --</option>
               {generateDynamicQuestions().map((q, idx) => (
                 <option key={idx} value={JSON.stringify(q)}>
@@ -921,7 +991,8 @@ export default function MasterController({
                       },
                     })
                   }
-                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors">
+                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors"
+                >
                   A Wins
                 </button>
                 <button
@@ -933,7 +1004,8 @@ export default function MasterController({
                       },
                     })
                   }
-                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors">
+                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors"
+                >
                   B Wins
                 </button>
                 <button
@@ -942,7 +1014,8 @@ export default function MasterController({
                       quizData: { ...config.quizData, results: null },
                     })
                   }
-                  className="flex-1 bg-gray-200 text-gray-700 py-1 rounded text-xs font-bold hover:bg-gray-300 transition-colors">
+                  className="flex-1 bg-gray-200 text-gray-700 py-1 rounded text-xs font-bold hover:bg-gray-300 transition-colors"
+                >
                   Clear Results
                 </button>
               </div>
@@ -959,7 +1032,8 @@ export default function MasterController({
                 showSubscribeBanner: false,
               })
             }
-            className="w-full py-5 bg-red-50 text-red-600 font-black border border-red-200 rounded-2xl hover:bg-red-600 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm">
+            className="w-full py-5 bg-red-50 text-red-600 font-black border border-red-200 rounded-2xl hover:bg-red-600 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm"
+          >
             🚨 Kill All Graphics 🚨
           </button>
         </div>

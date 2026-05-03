@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   ZoomIn,
@@ -22,15 +23,10 @@ import {
   Minus,
 } from "lucide-react";
 
-export default function RemoteControl({
-  params,
-}: {
-  params: Promise<{ tournamentId: string }>;
-}) {
-  const { tournamentId } = use(params);
+export default function GenericRemoteControl() {
+  const searchParams = useSearchParams();
+  const camParam = searchParams.get("cam");
 
-  const [matchId, setMatchId] = useState<string | null>(null);
-  const [camParam, setCamParam] = useState<string | null>(null);
   const [camCapabilities, setCamCapabilities] = useState<any>(null);
   const [deviceHealth, setDeviceHealth] = useState<any>(null);
 
@@ -41,7 +37,6 @@ export default function RemoteControl({
   const [remoteExposure, setRemoteExposure] = useState(0);
   const [isLive, setIsLive] = useState(false);
 
-  // 🔥 FIX: Track specific channels safely
   const signalingChannelRef = useRef<any>(null);
   const dbChannelRef = useRef<any>(null);
 
@@ -55,35 +50,17 @@ export default function RemoteControl({
   }, [remoteZoom]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const cameraQuery = searchParams.get("cam");
-    if (cameraQuery) setCamParam(cameraQuery);
-  }, []);
-
-  useEffect(() => {
     if (!camParam) return;
-    const fetchConfig = async () => {
-      const { data } = await supabase
-        .from("tournaments")
-        .select("broadcast_state")
-        .eq("id", tournamentId)
-        .single();
-      if (data?.broadcast_state?.activeMatchId)
-        setMatchId(data.broadcast_state.activeMatchId);
-    };
-    fetchConfig();
-  }, [tournamentId, camParam]);
 
-  useEffect(() => {
-    if (!matchId || !camParam) return;
-
-    const connectionId = `${matchId}_${camParam}`;
+    // Use the camParam directly as the connection room!
+    const connectionId = camParam;
 
     // Clean old channels
     if (signalingChannelRef.current)
       supabase.removeChannel(signalingChannelRef.current);
     if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
 
+    // Check if the camera is currently live
     supabase
       .from("webrtc_signals")
       .select("status")
@@ -93,6 +70,7 @@ export default function RemoteControl({
         if (data?.status === "live") setIsLive(true);
       });
 
+    // Connect to the signaling channel
     const channel = supabase.channel(`webrtc_broadcast_${connectionId}`);
     signalingChannelRef.current = channel;
 
@@ -123,6 +101,7 @@ export default function RemoteControl({
       }
     });
 
+    // Watch the database for the camera disconnecting (row deleted)
     const dbSub = supabase
       .channel(`db_webrtc_remote_${connectionId}_${Date.now()}`)
       .on(
@@ -143,13 +122,12 @@ export default function RemoteControl({
 
     dbChannelRef.current = dbSub;
 
-    // 🔥 FIX: Clean up EXACT channels
     return () => {
       if (signalingChannelRef.current)
         supabase.removeChannel(signalingChannelRef.current);
       if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
     };
-  }, [matchId, camParam]);
+  }, [camParam]);
 
   const sendCommand = (type: string, value: any) => {
     if (signalingChannelRef.current) {
@@ -187,9 +165,11 @@ export default function RemoteControl({
       lastZoomTime.current = Date.now();
     }, 150);
   };
+
   const stopSmoothZoom = () => {
     if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
   };
+
   const snapZoom = (targetVal: number) => {
     const min = camCapabilities?.zoom?.min || 1;
     const max = camCapabilities?.zoom?.max || 10;

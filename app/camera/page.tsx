@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Camera,
@@ -16,23 +16,17 @@ import {
   Minimize,
   Flashlight,
   ZapOff,
-  ZoomIn,
+  Plus,
+  Minus,
   Video,
   Moon,
   Sun,
-  Plus,
-  Minus,
 } from "lucide-react";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-export default function Broadcaster({
-  params,
-}: {
-  params: Promise<{ tournamentId: string }>;
-}) {
-  const { tournamentId } = use(params);
-
+// Removed the params requirement so it can live at /camera globally!
+export default function GenericBroadcaster() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const activeStreamRef = useRef<MediaStream | null>(null);
@@ -45,7 +39,6 @@ export default function Broadcaster({
   const currentConnectionIdRef = useRef<string | null>(null);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [matchId, setMatchId] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState<string>("");
   const [cameraId, setCameraId] = useState("cam-1");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -101,17 +94,6 @@ export default function Broadcaster({
     }
     setDeviceId(savedId);
 
-    const init = async () => {
-      const { data } = await supabase
-        .from("tournaments")
-        .select("broadcast_state")
-        .eq("id", tournamentId)
-        .single();
-      if (data?.broadcast_state?.activeMatchId)
-        setMatchId(data.broadcast_state.activeMatchId);
-    };
-    init();
-
     const loadCameras = async () => {
       try {
         const tempStream = await navigator.mediaDevices.getUserMedia({
@@ -143,8 +125,9 @@ export default function Broadcaster({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       handleStopStream();
     };
-  }, [tournamentId]);
+  }, []);
 
+  // Sync state to remote
   useEffect(() => {
     if (
       isStreaming &&
@@ -172,6 +155,7 @@ export default function Broadcaster({
     }
   }, [isMuted, torchOn, zoomLevel, exposureLevel, isOledSleep, isStreaming]);
 
+  // Telemetry updates
   useEffect(() => {
     if (
       !isStreaming ||
@@ -201,7 +185,6 @@ export default function Broadcaster({
       try {
         if (peerConnectionRef.current) {
           const stats = await peerConnectionRef.current.getStats();
-          let foundActivePair = false;
           stats.forEach((report) => {
             if (
               report.type === "outbound-rtp" &&
@@ -223,7 +206,6 @@ export default function Broadcaster({
               report.state === "succeeded" &&
               report.nominated
             ) {
-              foundActivePair = true;
               if (report.currentRoundTripTime !== undefined)
                 cachedStats.latency = Math.round(
                   report.currentRoundTripTime * 1000,
@@ -254,17 +236,16 @@ export default function Broadcaster({
     return () => clearInterval(telemetryInterval);
   }, [isStreaming]);
 
+  // NEW GLOBAL ROUTING LINKS
   const copyLinkUrl = (type: "obs" | "remote") => {
     if (type === "obs") {
       navigator.clipboard.writeText(
-        `${origin}/t/${tournamentId}/obs?cam=${deviceId}`,
+        `${origin}/camera/receiver?cam=${deviceId}`,
       );
       setCopiedObs(true);
       setTimeout(() => setCopiedObs(false), 2000);
     } else {
-      navigator.clipboard.writeText(
-        `${origin}/t/${tournamentId}/remote?cam=${deviceId}`,
-      );
+      navigator.clipboard.writeText(`${origin}/camera/remote?cam=${deviceId}`);
       setCopiedRemote(true);
       setTimeout(() => setCopiedRemote(false), 2000);
     }
@@ -428,7 +409,6 @@ export default function Broadcaster({
   };
 
   const handleStartStream = async () => {
-    if (!matchId) return setError("No Active Match found.");
     try {
       setError("");
       if (sigChannelRef.current) {
@@ -442,7 +422,8 @@ export default function Broadcaster({
       if (activeStreamRef.current)
         activeStreamRef.current.getTracks().forEach((t) => t.stop());
 
-      const connectionId = `${matchId}_${deviceId}`;
+      // Use the deviceId purely as the connection room!
+      const connectionId = deviceId;
       currentConnectionIdRef.current = connectionId;
 
       const width = resolution === "1080p" ? 1920 : 1280;
@@ -486,8 +467,6 @@ export default function Broadcaster({
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-      // 🔥 THE FIX: NON-TRICKLE WEBRTC 🔥
-      // Wait for all ICE candidates to gather natively before sending the Offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -502,21 +481,18 @@ export default function Broadcaster({
             }
           };
           pc.addEventListener("icegatheringstatechange", checkState);
-          setTimeout(resolve, 2000); // 2 second safety timeout
+          setTimeout(resolve, 2000);
         }
       });
       setError("Connecting...");
 
-      // Write the complete package to the database ONCE
-      await supabase
-        .from("webrtc_signals")
-        .upsert({
-          match_id: connectionId,
-          offer: JSON.parse(JSON.stringify(pc.localDescription)),
-          status: "live",
-        });
+      // Store offer in Supabase purely based on connectionId (which is just the deviceId)
+      await supabase.from("webrtc_signals").upsert({
+        match_id: connectionId, // Still using this column name, but providing the generic device ID
+        offer: JSON.parse(JSON.stringify(pc.localDescription)),
+        status: "live",
+      });
 
-      // Clean Remote Control Channel (No candidates sent here anymore!)
       const signalingChannel = supabase.channel(
         `webrtc_broadcast_${connectionId}`,
       );
@@ -594,12 +570,10 @@ export default function Broadcaster({
             filter: `match_id=eq.${connectionId}`,
           },
           async (payload) => {
-            if (
-              payload.new.answer &&
-              pc.signalingState === "have-local-offer"
-            ) {
+            const newRow = payload.new as any; // <-- Fix is here
+            if (newRow.answer && pc.signalingState === "have-local-offer") {
               await pc.setRemoteDescription(
-                new RTCSessionDescription(payload.new.answer),
+                new RTCSessionDescription(newRow.answer),
               );
               setError("");
             }
@@ -653,6 +627,7 @@ export default function Broadcaster({
         .getAudioTracks()
         .forEach((track) => (track.enabled = !newState));
   };
+
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
@@ -678,25 +653,6 @@ export default function Broadcaster({
   return (
     <div className="fixed inset-0 z-[9999] h-[100dvh] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
       <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
-
-      {/* {!isFullscreen && (
-        <div className="px-4 py-3 border-b flex justify-between items-center shrink-0 z-20 bg-white border-gray-200">
-          <div className="flex items-center gap-2">
-            <Camera className="text-teal-500" size={20} />
-            <h1 className="font-black uppercase tracking-widest text-sm md:text-lg italic">
-              Pro Cam V2
-            </h1>
-          </div>
-          {isStreaming && (
-            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1 rounded-full animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                Live
-              </span>
-            </div>
-          )}
-        </div>
-      )} */}
 
       {error && (
         <div className="absolute top-4 left-4 right-4 bg-red-500 text-white text-xs font-bold p-3 rounded-xl text-center z-50 shadow-2xl flex items-center justify-center gap-2">

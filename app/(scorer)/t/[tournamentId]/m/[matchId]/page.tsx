@@ -21,7 +21,6 @@ import FullScorecard from "./components/FullScorecard";
 import Commentary from "./components/Commentary";
 import Predictor from "./components/Predictor";
 import Info from "./components/Info";
-import StudioController from "./components/StudioController";
 
 // IMPORT ENGINE & MATH
 import { useMatchEngine } from "../../../../../hooks/useMatchEngine";
@@ -808,7 +807,6 @@ export default function LiveScorerPage({
                   ))}
               </select>
             </div>
-            <StudioController tournamentId={tournamentId} matchId={matchId} />
             <button
               onClick={() =>
                 engine.saveOpeners(setupStriker, setupNonStriker, setupBowler)
@@ -1553,9 +1551,6 @@ export default function LiveScorerPage({
             <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8">
               Match Settings
             </h2>
-            <div className="mb-10">
-              <StudioController tournamentId={tournamentId} matchId={matchId} />
-            </div>
             <div className="space-y-8 mb-10">
               {/* TOTAL OVERS */}
               <div>
