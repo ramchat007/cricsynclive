@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
-import { Search } from "lucide-react";
+import { UserPlus, Search, Edit, Trash2 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 
 export default function PlayersPage({
@@ -89,6 +89,27 @@ export default function PlayersPage({
       checkAdminAndFetch();
     } else {
       alert("Failed to update player details.");
+    }
+  };
+
+  const handleDeletePlayer = async (playerId: string, playerName: string) => {
+    // 1. Safety Check
+    const confirmDelete = window.confirm(
+      `Are you absolutely sure you want to permanently delete ${playerName}?\n\nWarning: If this player has already batted or bowled in a match, deleting them will break those scorecards!`,
+    );
+    if (!confirmDelete) return;
+
+    // 2. Delete from Supabase
+    const { error } = await supabase
+      .from("players")
+      .delete()
+      .eq("id", playerId);
+
+    if (error) {
+      alert("Error deleting player: " + error.message);
+    } else {
+      // 3. Instantly remove them from the UI without needing to refresh
+      setPlayers((prevPlayers) => prevPlayers.filter((p) => p.id !== playerId));
     }
   };
 
@@ -184,6 +205,16 @@ export default function PlayersPage({
                       >
                         Edit
                       </button>
+
+                      <button
+                        onClick={() =>
+                          handleDeletePlayer(player.id, player.full_name)
+                        }
+                        title="Delete Player"
+                        className="p-2 bg-red-50 dark:bg-red-900/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </>
                   )}
                 </div>
@@ -252,7 +283,7 @@ export default function PlayersPage({
                     Role
                   </label>
                   <select
-                    value={editingPlayer.player_role}
+                    value={editingPlayer.player_role || ""}
                     onChange={(e) =>
                       setEditingPlayer({
                         ...editingPlayer,

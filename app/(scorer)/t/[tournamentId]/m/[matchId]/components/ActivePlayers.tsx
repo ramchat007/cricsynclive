@@ -68,12 +68,12 @@ export default function ActivePlayers({
           <div className="flex gap-2">
             <button
               onClick={manualSwapStrike}
-              className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold uppercase hover:bg-teal-500 hover:text-white transition-colors">
+              className="text-[12px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold uppercase hover:bg-teal-500 hover:text-white transition-colors">
               🔄 Swap
             </button>
             <button
               onClick={() => setShowEditPlayersModal(true)}
-              className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold uppercase hover:bg-blue-500 hover:text-white transition-colors">
+              className="text-[12px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold uppercase hover:bg-blue-500 hover:text-white transition-colors">
               ✏️ Edit
             </button>
           </div>
@@ -118,7 +118,7 @@ export default function ActivePlayers({
           </p>
           <button
             onClick={() => setShowEditPlayersModal(true)}
-            className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold uppercase hover:bg-teal-500 hover:text-white transition-colors">
+            className="text-[12px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold uppercase hover:bg-teal-500 hover:text-white transition-colors">
             ✏️ Edit
           </button>
         </div>

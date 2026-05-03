@@ -1,14 +1,27 @@
 "use client";
-import { useEffect, useState, use, useRef } from "react"; // <-- Added useRef
+import { useEffect, useState, use, useRef } from "react";
 import { fetchAICommentary } from "../../../../../utils/gemini";
 import Link from "next/link";
-import { ArrowLeft, Coins, Settings, RotateCcw, Square } from "lucide-react";
+import {
+  ArrowLeft,
+  Coins,
+  Settings,
+  RotateCcw,
+  Square,
+  UserPlus,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 // SUB-COMPONENTS
 import Scoreboard from "./components/Scoreboard";
 import ActivePlayers from "./components/ActivePlayers";
 import RecentBalls from "./components/RecentBalls";
 import FullScorecard from "./components/FullScorecard";
+import Commentary from "./components/Commentary";
+import Predictor from "./components/Predictor";
+import Info from "./components/Info";
+import StudioController from "./components/StudioController";
 
 // IMPORT ENGINE & MATH
 import { useMatchEngine } from "../../../../../hooks/useMatchEngine";
@@ -17,10 +30,6 @@ import {
   deriveMatchStats,
   getPlayerMatchStats,
 } from "../../../../../utils/cricketMath";
-import Commentary from "./components/Commentary";
-import Predictor from "./components/Predictor";
-import Info from "./components/Info";
-import StudioController from "./components/StudioController"; // adjust path as needed
 
 export default function LiveScorerPage({
   params,
@@ -65,7 +74,7 @@ export default function LiveScorerPage({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [tempOversLimit, setTempOversLimit] = useState<number>(0);
   const [tempTargetScore, setTempTargetScore] = useState<number | null>(null);
-  const [tempMaxOversPerBowler, setTempMaxOversPerBowler] = useState<number>(0); // <-- ADD THIS
+  const [tempMaxOversPerBowler, setTempMaxOversPerBowler] = useState<number>(0);
 
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [moreActionType, setMoreActionType] = useState<
@@ -83,8 +92,15 @@ export default function LiveScorerPage({
   const [bestBowlerId, setBestBowlerId] = useState("");
   const [strictMom, setStrictMom] = useState(true);
 
+  // Dynamic Add Player States
   const [showQuickAddPlayer, setShowQuickAddPlayer] = useState(false);
+  const [quickAddRole, setQuickAddRole] = useState<"batter" | "bowler">(
+    "batter",
+  );
   const [newPlayerName, setNewPlayerName] = useState("");
+
+  const [completedRuns, setCompletedRuns] = useState(0);
+  const [isScoringPanelOpen, setIsScoringPanelOpen] = useState(true);
 
   const stats = deriveMatchStats(
     engine.match,
@@ -181,14 +197,12 @@ export default function LiveScorerPage({
   useEffect(() => {
     if (!engine.deliveries || engine.deliveries.length === 0 || !stats) return;
 
-    // Grab the most recently bowled ball
     const latestBall = engine.deliveries[engine.deliveries.length - 1];
 
-    // If it already has commentary, or we are currently processing it, skip!
     if (latestBall.ai_commentary || processingBalls.current.has(latestBall.id))
       return;
 
-    processingBalls.current.add(latestBall.id); // Lock it
+    processingBalls.current.add(latestBall.id);
 
     const generateAndSaveCommentary = async () => {
       try {
@@ -204,7 +218,6 @@ export default function LiveScorerPage({
         let finalCommentaryText = "";
 
         if (isMajorEvent) {
-          // 1. Try Gemini for Major Events (Boundaries & Wickets)
           const ballContext = {
             bowler: bowlerName,
             batter: batterName,
@@ -216,7 +229,6 @@ export default function LiveScorerPage({
           finalCommentaryText = (await fetchAICommentary(ballContext)) || "";
         }
 
-        // 2. If it's a standard ball (or if Gemini API failed), generate local slang!
         if (!finalCommentaryText) {
           finalCommentaryText = getFallbackCommentary(
             latestBall,
@@ -225,7 +237,6 @@ export default function LiveScorerPage({
           );
         }
 
-        // 3. Save to Supabase
         if (finalCommentaryText) {
           await supabase
             .from("deliveries")
@@ -234,24 +245,16 @@ export default function LiveScorerPage({
         }
       } catch (err) {
         console.error("Failed to save commentary:", err);
-        processingBalls.current.delete(latestBall.id); // Unlock on failure so it can retry
+        processingBalls.current.delete(latestBall.id);
       }
     };
 
     generateAndSaveCommentary();
   }, [engine.deliveries, stats, engine.match?.current_innings]);
 
-  useEffect(() => {
-    if (engine.match) {
-      setTempOversLimit(engine.match.overs_count || 0);
-      setTempTargetScore(stats?.targetScore || null);
-    }
-  }, [engine.match, stats?.targetScore]);
-
   // --- AUTO-MVP CALCULATION ---
   useEffect(() => {
-    if (showPostMatchModal && stats) {
-      // 1. Calculate points for everyone
+    if (showPostMatchModal && stats && engine.match) {
       const allPlayers = [...engine.team1Players, ...engine.team2Players].map(
         (p) => {
           const pStats = getPlayerMatchStats(p.id, engine.deliveries);
@@ -259,18 +262,15 @@ export default function LiveScorerPage({
         },
       );
 
-      // 2. Best Batsman (Most Runs)
       const bestBat = [...allPlayers].sort((a, b) => b.runs - a.runs)[0];
       if (bestBat && bestBat.runs > 0) setBestBatsmanId(bestBat.id);
 
-      // 3. Best Bowler (Most Wickets, tie-breaker: MVP points)
       const bestBowl = [...allPlayers].sort((a, b) => {
         if (b.wickets !== a.wickets) return b.wickets - a.wickets;
         return b.points - a.points;
       })[0];
       if (bestBowl && bestBowl.wickets > 0) setBestBowlerId(bestBowl.id);
 
-      // 4. MOM Logic (Respecting the Strict Winner Rule)
       const winningTeamId =
         stats.currentScore >= stats.targetScore!
           ? stats.battingTeam?.id
@@ -284,7 +284,7 @@ export default function LiveScorerPage({
       const mom = [...momCandidates].sort((a, b) => b.points - a.points)[0];
       if (mom && mom.points > 0) setMomId(mom.id);
     }
-  }, [showPostMatchModal, strictMom, stats]); // Runs automatically if they toggle the checkbox!
+  }, [showPostMatchModal, strictMom, stats]);
 
   useEffect(() => {
     if (engine.match) {
@@ -292,7 +292,7 @@ export default function LiveScorerPage({
       setTempMaxOversPerBowler(
         engine.match.max_overs_per_bowler ||
           Math.ceil((engine.match.overs_count || 20) / 5),
-      ); // Default to 1/5th of total overs
+      );
       setTempTargetScore(stats?.targetScore || null);
     }
   }, [engine.match, stats?.targetScore]);
@@ -320,37 +320,88 @@ export default function LiveScorerPage({
     return () => {
       supabase.removeChannel(playerSyncSub);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId]);
 
   const handleQuickAddPlayer = async () => {
-    if (!newPlayerName.trim()) return;
+    if (!newPlayerName.trim() || !engine.match || !stats) return;
 
-    const battingTeamId =
-      engine.match.current_innings === 1
-        ? engine.match.team1_id
-        : engine.match.team2_id;
+    const normalizedName = newPlayerName.trim();
+    const targetTeamId =
+      quickAddRole === "batter" ? stats.battingTeam?.id : stats.bowlingTeam?.id;
+
+    if (!targetTeamId) {
+      alert("Error: Team data is missing. Please refresh.");
+      return;
+    }
+
+    // 1. SMART DUPLICATE CHECK: Does this name already exist in this tournament?
+    // (We use .limit(1) just in case your database already has duplicates in it from testing)
+    const { data: existingPlayers, error: searchError } = await supabase
+      .from("players")
+      .select("id, full_name, team_id")
+      .ilike("full_name", normalizedName)
+      .eq("tournament_id", tournamentId)
+      .limit(1);
+
+    const existingPlayer = existingPlayers?.[0];
+
+    if (existingPlayer) {
+      // 2. SCENARIO A: They already exist on THIS team!
+      if (existingPlayer.team_id === targetTeamId) {
+        alert(
+          `"${existingPlayer.full_name}" is already on the roster! Auto-selecting them now.`,
+        );
+
+        // Auto-select them in the dropdown
+        if (quickAddRole === "batter") {
+          setNewBatsmanId(existingPlayer.id);
+        } else {
+          setSelectedNewBowlerId(existingPlayer.id);
+        }
+
+        setNewPlayerName("");
+        setShowQuickAddPlayer(false);
+        return; // Stop here, do not create a duplicate!
+      }
+      // 3. SCENARIO B: They exist on a DIFFERENT team!
+      else {
+        alert(
+          `WARNING: "${existingPlayer.full_name}" is already registered to another team in this tournament!`,
+        );
+        return; // Block the creation
+      }
+    }
+
+    // 4. SCENARIO C: Player is completely new. Insert them safely.
+    console.log(`Adding new ${quickAddRole} to Team ID: ${targetTeamId}`);
 
     const { data, error } = await supabase
       .from("players")
       .insert({
-        full_name: newPlayerName.trim(),
-        team_id: battingTeamId,
+        full_name: normalizedName,
+        team_id: targetTeamId,
         tournament_id: tournamentId,
+        role: quickAddRole,
+        status: "active",
       })
       .select()
       .single();
 
-    if (!error) {
-      // Refresh the engine's player list so the new player shows up in dropdowns
-      await engine.refreshPlayers();
+    if (!error && data) {
+      await engine.fetchMatchData();
+
+      if (quickAddRole === "batter") {
+        setNewBatsmanId(data.id);
+      } else {
+        setSelectedNewBowlerId(data.id);
+      }
+
       setNewPlayerName("");
       setShowQuickAddPlayer(false);
     } else {
-      alert("Error adding player: " + error.message);
+      alert("Error: " + error?.message);
     }
   };
-
   const handleRecordBall = async (runs: number) => {
     const res = await engine.recordDelivery(runs);
     if (res?.isOverComplete) setTimeout(() => setShowBowlerModal(true), 500);
@@ -388,8 +439,11 @@ export default function LiveScorerPage({
       if (eType === "wide" || eType === "no-ball") eRuns += 1;
     }
 
+    // Pass completed runs to engine if it was a run-out!
+    const runsOffBat = wicketType === "run-out" ? completedRuns : 0;
+
     const res = await engine.recordDelivery(
-      0,
+      runsOffBat,
       eType,
       eRuns,
       true,
@@ -397,8 +451,7 @@ export default function LiveScorerPage({
       { playerOutId, wicketType, fielderId },
     );
 
-    if (res?.success) {
-      // 1. Substitute the dismissed player with the new batsman exactly where they stood
+    if (res?.success && engine.match) {
       let nextStriker =
         playerOutId === engine.match.live_striker_id
           ? newBatsmanId
@@ -408,26 +461,21 @@ export default function LiveScorerPage({
           ? newBatsmanId
           : engine.match.live_non_striker_id;
 
-      // 2. ICC Modern Rule: Crossed batsmen don't change strike on a catch.
-      // Only Run Outs with odd runs change the strike.
       let swapStrike = false;
-      if (wicketType === "run-out" && eRuns % 2 !== 0) {
+      if (wicketType === "run-out" && (eRuns + runsOffBat) % 2 !== 0) {
         swapStrike = true;
       }
 
-      // 3. End of Over overrides everything (they swap ends)
       if (res.isOverComplete) {
         swapStrike = !swapStrike;
       }
 
-      // 4. Apply the final calculated swap
       if (swapStrike) {
         const temp = nextStriker;
         nextStriker = nextNonStriker;
         nextNonStriker = temp;
       }
 
-      // 5. Save to database
       await engine.updateLivePlayers(
         nextStriker,
         nextNonStriker,
@@ -443,6 +491,7 @@ export default function LiveScorerPage({
     setWicketHasExtra(false);
     setWicketExtraRuns(0);
     setForceLegalBall(false);
+    setCompletedRuns(0);
   };
 
   const submitMoreAction = async () => {
@@ -478,27 +527,6 @@ export default function LiveScorerPage({
       </div>
     );
 
-  // --- EARLY RETURNS ---
-  if (matchId === "null" || !matchId)
-    return (
-      <div className="p-20 text-center text-slate-500 font-bold text-lg">
-        Initializing Match...
-      </div>
-    );
-  if (engine.isLoading || !stats)
-    return (
-      <div className="min-h-screen flex items-center justify-center font-black text-slate-400 text-xl animate-pulse">
-        LOADING MATCH...
-      </div>
-    );
-  if (!engine.match)
-    return (
-      <div className="p-20 text-center text-slate-500 font-bold text-lg">
-        Match not found.
-      </div>
-    );
-
-  // THE FIX: Catch completed matches immediately!
   // THE FIX: Catch completed matches and show a beautiful Match Summary + Scorecard
   if (engine.match.status === "completed") {
     return (
@@ -547,7 +575,7 @@ export default function LiveScorerPage({
                     <p className="font-black text-lg">
                       {engine.team1Players
                         .concat(engine.team2Players)
-                        .find((p) => p.id === engine.match.player_of_match_id)
+                        .find((p) => p.id === engine.match!.player_of_match_id)
                         ?.full_name || "TBD"}
                     </p>
                   </div>
@@ -558,7 +586,7 @@ export default function LiveScorerPage({
                     <p className="font-black text-lg">
                       {engine.team1Players
                         .concat(engine.team2Players)
-                        .find((p) => p.id === engine.match.best_batsman_id)
+                        .find((p) => p.id === engine.match!.best_batsman_id)
                         ?.full_name || "TBD"}
                     </p>
                   </div>
@@ -569,7 +597,7 @@ export default function LiveScorerPage({
                     <p className="font-black text-lg">
                       {engine.team1Players
                         .concat(engine.team2Players)
-                        .find((p) => p.id === engine.match.best_bowler_id)
+                        .find((p) => p.id === engine.match!.best_bowler_id)
                         ?.full_name || "TBD"}
                     </p>
                   </div>
@@ -659,13 +687,13 @@ export default function LiveScorerPage({
               </label>
               <div className="flex gap-4">
                 <button
-                  onClick={() => setTossWinnerId(engine.match.team1_id)}
+                  onClick={() => setTossWinnerId(engine.match!.team1_id)}
                   className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossWinnerId === engine.match.team1_id ? "border-teal-500 bg-teal-500/10 text-teal-600" : "border-slate-200 text-slate-500"}`}
                 >
                   {engine.match.team1?.name}
                 </button>
                 <button
-                  onClick={() => setTossWinnerId(engine.match.team2_id)}
+                  onClick={() => setTossWinnerId(engine.match!.team2_id)}
                   className={`flex-1 py-4 rounded-xl font-bold border-2 ${tossWinnerId === engine.match.team2_id ? "border-teal-500 bg-teal-500/10 text-teal-600" : "border-slate-200 text-slate-500"}`}
                 >
                   {engine.match.team2?.name}
@@ -772,7 +800,7 @@ export default function LiveScorerPage({
               >
                 <option value="">Select...</option>
                 {stats.bowlingSquad
-                  .filter((p) => p.id !== engine.match.live_bowler_id)
+                  .filter((p) => p.id !== engine.match!.live_bowler_id)
                   .map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.full_name}
@@ -797,7 +825,7 @@ export default function LiveScorerPage({
   // --- 5. MAIN JSX (CLEAN WEB LAYOUT) ---
   return (
     // Note the pb-[320px] on mobile! This allows the user to scroll to the very bottom of the page without the floating keypad covering it.
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 md:p-6 pb-[280px] lg:pb-6 font-sans text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 md:p-6 pb-[280px] lg:pb-6 font-sans text-slate-900 dark:text-white relative overflow-hidden lg:overflow-visible">
       {/* HEADER & TOP NAVIGATION */}
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6 px-2 mt-2">
         <div className="flex items-center gap-4">
@@ -820,23 +848,10 @@ export default function LiveScorerPage({
             </p>
           </div>
         </div>
-
-        {/* <div className="flex gap-2 sm:gap-4">
-          <button
-            onClick={() => engine.deleteLastBall()}
-            className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-3 bg-red-100 dark:bg-red-900/20 text-red-600 font-bold rounded-xl text-[10px] sm:text-sm uppercase tracking-wider hover:bg-red-200 transition-colors">
-            <RotateCcw size={16} className="hidden sm:block" /> Undo
-          </button>
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-100 transition-colors">
-            <Settings size={20} />
-          </button>
-        </div> */}
       </div>
 
       {/* MAIN CONTAINER */}
-      <div className="max-w-[1400px] mx-auto flex flex-col-reverse lg:flex-row gap-4">
+      <div className="max-w-[1400px] mx-auto flex flex-col-reverse lg:flex-row gap-4 relative">
         {/* LEFT COLUMN: THE SCORE, PITCH & FLOATING KEYPAD */}
         <div className="flex-1 flex flex-col gap-4 lg:max-w-[50%] xl:max-w-[40%] w-full">
           <ActivePlayers
@@ -856,13 +871,34 @@ export default function LiveScorerPage({
           />
 
           {/* THE MAGIC FLOATING KEYPAD */}
-          {/* On mobile: fixed to the bottom and floating above content. On desktop: snapping back into the grid as a static card. */}
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-100/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] lg:static lg:bg-white lg:dark:bg-slate-900 lg:p-6 lg:rounded-3xl lg:border lg:shadow-sm lg:backdrop-blur-none">
+          {/* Notice translate-y-full pushes it exactly down, leaving the top tab visible */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-40 bg-slate-100/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] lg:static lg:bg-white lg:dark:bg-slate-900 lg:p-6 lg:rounded-3xl lg:border lg:shadow-sm lg:backdrop-blur-none transition-transform duration-300 ease-in-out ${
+              isScoringPanelOpen
+                ? "translate-y-0"
+                : "translate-y-full lg:translate-y-0"
+            }`}
+          >
             <h3 className="hidden lg:block text-xs font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">
               Record Next Ball
             </h3>
+            <button
+              onClick={() => setIsScoringPanelOpen(!isScoringPanelOpen)}
+              className="lg:hidden absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-b-0 rounded-t-2xl px-6 py-2 shadow-[0_-5px_10px_rgba(0,0,0,0.05)] text-slate-500 h-10 flex items-center justify-center"
+            >
+              {isScoringPanelOpen ? (
+                <ChevronDown size={24} />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <ChevronUp size={20} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    Score Ball
+                  </span>
+                </div>
+              )}
+            </button>
 
-            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3 pb-safe">
               {[0, 1, 2, 3].map((runs) => (
                 <button
                   key={runs}
@@ -894,7 +930,7 @@ export default function LiveScorerPage({
                 onClick={() => setShowMoreModal(true)}
                 className="bg-white dark:bg-slate-800 lg:bg-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95"
               >
-                ... More Actions
+                ... More
               </button>
               <button
                 onClick={() => {
@@ -903,15 +939,15 @@ export default function LiveScorerPage({
                       "Are you sure you want to end this innings manually?",
                     )
                   ) {
-                    engine.match.current_innings === 1
+                    engine.match!.current_innings === 1
                       ? engine.startSecondInnings()
                       : setShowPostMatchModal(true);
                   }
                 }}
                 className="items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-2xl border border-orange-200 dark:border-orange-800/30"
               >
-                <Square size={20} className="mb-1" />
-                <span className="text-[10px] font-black uppercase tracking-widest">
+                <Square size={20} className="mb-1 mx-auto" />
+                <span className="text-[10px] font-black uppercase tracking-widest block text-center mt-1">
                   End Innings
                 </span>
               </button>
@@ -958,7 +994,7 @@ export default function LiveScorerPage({
               </button>
               <button
                 onClick={() => {
-                  setPlayerOutId(engine.match.live_striker_id);
+                  setPlayerOutId(engine.match!.live_striker_id);
                   setShowWicketModal(true);
                 }}
                 className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all"
@@ -977,7 +1013,7 @@ export default function LiveScorerPage({
         </div>
 
         {/* RIGHT COLUMN: TABS & SCORECARD */}
-        <div className="flex-1 w-full lg:max-w-[50%] xl:max-w-[60%]">
+        <div className="flex-1 w-full lg:max-w-[50%] xl:max-w-[60%] z-10 relative">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="flex overflow-x-auto border-b border-slate-100 dark:border-slate-800 p-2 gap-2 hide-scrollbar">
               {[
@@ -1022,7 +1058,6 @@ export default function LiveScorerPage({
                   match={engine.match}
                 />
               )}
-              {/* Placeholders */}
               {activeTab === "commentary" && (
                 <Commentary
                   match={engine.match}
@@ -1032,11 +1067,7 @@ export default function LiveScorerPage({
                 />
               )}
               {activeTab === "predictor" && (
-                <Predictor
-                  match={engine.match}
-                  stats={stats}
-                  // You can pass standingsData={yourRealStandingsArray} here later!
-                />
+                <Predictor match={engine.match} stats={stats} />
               )}
               {activeTab === "info" && (
                 <Info
@@ -1050,7 +1081,7 @@ export default function LiveScorerPage({
         </div>
       </div>
 
-      {/* --- ALL YOUR MODALS REMAIN EXACTLY THE SAME BELOW THIS LINE --- */}
+      {/* --- MODALS --- */}
       {/* 1. NEW BOWLER MODAL */}
       {showBowlerModal && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[60] flex items-center justify-center p-4">
@@ -1064,7 +1095,7 @@ export default function LiveScorerPage({
               </label>
               <div className="grid grid-cols-1 gap-3 max-h-72 overflow-y-auto custom-scrollbar">
                 {stats.bowlingSquad
-                  .filter((p) => p.id !== engine.match.live_bowler_id)
+                  .filter((p) => p.id !== engine.match!.live_bowler_id)
                   .map((p) => (
                     <button
                       key={p.id}
@@ -1086,6 +1117,16 @@ export default function LiveScorerPage({
               >
                 Confirm Bowler
               </button>
+              <button
+                onClick={() => {
+                  setQuickAddRole("bowler");
+                  setShowQuickAddPlayer(true);
+                }}
+                className="w-full mt-4 flex items-center justify-center gap-2 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 border-dashed rounded-xl py-3 font-bold transition-colors"
+              >
+                <UserPlus size={18} />
+                Quick Add Bowler
+              </button>
             </div>
           </div>
         </div>
@@ -1105,8 +1146,8 @@ export default function LiveScorerPage({
                 </label>
                 <div className="flex gap-3">
                   {[
-                    engine.match.live_striker_id,
-                    engine.match.live_non_striker_id,
+                    engine.match!.live_striker_id,
+                    engine.match!.live_non_striker_id,
                   ].map((id) => (
                     <button
                       key={id}
@@ -1153,6 +1194,29 @@ export default function LiveScorerPage({
                   </select>
                 </div>
               )}
+              {wicketType === "run-out" && (
+                <div className="mt-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl animate-in fade-in slide-in-from-top-2">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-3">
+                    Runs completed before wicket?
+                  </label>
+                  <div className="flex gap-2">
+                    {[0, 1, 2, 3].map((runs) => (
+                      <button
+                        key={runs}
+                        type="button"
+                        onClick={() => setCompletedRuns(runs)}
+                        className={`flex-1 py-2 rounded-lg font-black text-lg transition-all ${
+                          completedRuns === runs
+                            ? "bg-teal-600 text-white shadow-md"
+                            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                        }`}
+                      >
+                        {runs}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">
                   Incoming Batsman
@@ -1166,8 +1230,8 @@ export default function LiveScorerPage({
                   {stats.battingSquad
                     .filter(
                       (p) =>
-                        p.id !== engine.match.live_striker_id &&
-                        p.id !== engine.match.live_non_striker_id &&
+                        p.id !== engine.match!.live_striker_id &&
+                        p.id !== engine.match!.live_non_striker_id &&
                         !stats.dismissedPlayerIds.includes(p.id),
                     )
                     .map((p) => (
@@ -1176,10 +1240,13 @@ export default function LiveScorerPage({
                       </option>
                     ))}
                 </select>
-                <div className="mt-4 pt-4 border-t border-slate-100">
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
-                    onClick={() => setShowQuickAddPlayer(true)}
-                    className="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl text-xs font-black uppercase"
+                    onClick={() => {
+                      setQuickAddRole("batter");
+                      setShowQuickAddPlayer(true);
+                    }}
+                    className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 text-slate-500 rounded-xl text-xs font-black uppercase transition-colors"
                   >
                     + Add Extra Player to Squad
                   </button>
@@ -1265,7 +1332,7 @@ export default function LiveScorerPage({
                 <button
                   onClick={submitWicket}
                   disabled={!newBatsmanId || engine.isSubmittingBall}
-                  className="flex-[2] bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest"
+                  className="flex-[2] bg-red-600 hover:bg-red-500 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors"
                 >
                   Confirm OUT
                 </button>
@@ -1305,7 +1372,7 @@ export default function LiveScorerPage({
               </button>
               <button
                 onClick={submitExtra}
-                className="flex-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest"
+                className="flex-[2] bg-slate-900 dark:bg-white hover:opacity-80 transition-opacity text-white dark:text-slate-900 font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest"
               >
                 Confirm
               </button>
@@ -1322,30 +1389,6 @@ export default function LiveScorerPage({
               Correct Delivery
             </h2>
             <div className="space-y-8">
-              {/* <div>
-                <label className="text-xs font-black text-slate-400 uppercase block mb-3 text-center">
-                  Runs off Bat
-                </label>
-                <div className="grid grid-cols-4 gap-3">
-                  {[0, 2, 4, 6].map((r) => (
-                    <button
-                      key={r}
-                      onClick={async () => {
-                        await engine.updateBallDetails(editingBall, {
-                          runs_off_bat: r,
-                        });
-                        setEditingBall(null);
-                      }}
-                      className={`py-5 rounded-2xl font-black text-2xl ${editingBall.runs_off_bat === r ? "bg-teal-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"}`}>
-                      {r}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-500 mt-4 font-medium text-center">
-                  Note: Only even runs can be edited here to prevent
-                  strike-rotation bugs.
-                </p>
-              </div> */}
               <button
                 onClick={() => setEditingBall(null)}
                 className="w-full py-5 font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-2xl text-lg"
@@ -1378,13 +1421,13 @@ export default function LiveScorerPage({
               </span>{" "}
               in {stats.currentOvers} overs.
             </p>
-            {engine.match.current_innings === 2 && !stats.isTargetReached && (
+            {engine.match!.current_innings === 2 && !stats.isTargetReached && (
               <p className="text-red-400 font-bold text-lg mb-10 bg-red-500/10 p-4 rounded-2xl border border-red-500/20">
                 Target was {stats.targetScore}. {stats.battingTeam?.short_name}{" "}
                 lost by {stats.targetScore! - 1 - stats.currentScore} runs.
               </p>
             )}
-            {engine.match.current_innings === 1 ? (
+            {engine.match!.current_innings === 1 ? (
               <button
                 onClick={engine.startSecondInnings}
                 className="w-full bg-teal-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-teal-400 transition-colors shadow-lg shadow-teal-500/20"
@@ -1393,7 +1436,7 @@ export default function LiveScorerPage({
               </button>
             ) : (
               <button
-                onClick={() => setShowPostMatchModal(true)} // <-- THIS IS THE FIX! Opens the awards modal.
+                onClick={() => setShowPostMatchModal(true)}
                 className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
               >
                 POST-MATCH AWARDS 🏆
@@ -1416,10 +1459,10 @@ export default function LiveScorerPage({
                   Striker
                 </label>
                 <select
-                  value={engine.match.live_striker_id || ""}
+                  value={engine.match!.live_striker_id || ""}
                   onChange={(e) =>
                     engine.setMatch({
-                      ...engine.match,
+                      ...engine.match!,
                       live_striker_id: e.target.value,
                     })
                   }
@@ -1437,10 +1480,10 @@ export default function LiveScorerPage({
                   Non-Striker
                 </label>
                 <select
-                  value={engine.match.live_non_striker_id || ""}
+                  value={engine.match!.live_non_striker_id || ""}
                   onChange={(e) =>
                     engine.setMatch({
-                      ...engine.match,
+                      ...engine.match!,
                       live_non_striker_id: e.target.value,
                     })
                   }
@@ -1458,10 +1501,10 @@ export default function LiveScorerPage({
                   Bowler
                 </label>
                 <select
-                  value={engine.match.live_bowler_id || ""}
+                  value={engine.match!.live_bowler_id || ""}
                   onChange={(e) =>
                     engine.setMatch({
-                      ...engine.match,
+                      ...engine.match!,
                       live_bowler_id: e.target.value,
                     })
                   }
@@ -1488,9 +1531,9 @@ export default function LiveScorerPage({
               <button
                 onClick={async () => {
                   await engine.updateLivePlayers(
-                    engine.match.live_striker_id,
-                    engine.match.live_non_striker_id,
-                    engine.match.live_bowler_id,
+                    engine.match!.live_striker_id,
+                    engine.match!.live_non_striker_id,
+                    engine.match!.live_bowler_id,
                   );
                   setShowEditPlayersModal(false);
                 }}
@@ -1571,7 +1614,7 @@ export default function LiveScorerPage({
               </div>
 
               {/* REVISED TARGET (DLS) */}
-              {engine.match.current_innings === 2 && (
+              {engine.match!.current_innings === 2 && (
                 <div className="pt-8 border-t border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
                   <label className="text-xs font-black text-orange-500 uppercase tracking-widest mb-4 block text-center">
                     Revised Target (Rain Rule)
@@ -1613,10 +1656,9 @@ export default function LiveScorerPage({
               </button>
               <button
                 onClick={() => {
-                  // NOTE: You will need to update `engine.saveMatchSettings` in your hooks file to accept this new parameter!
                   engine.saveMatchSettings(
                     tempOversLimit,
-                    tempMaxOversPerBowler, // New parameter
+                    tempMaxOversPerBowler,
                     tempTargetScore,
                     stats?.targetScore,
                   );
@@ -1721,7 +1763,6 @@ export default function LiveScorerPage({
               Final Details
             </h2>
 
-            {/* Auto-Calculated Result Text */}
             <div className="bg-slate-50 dark:bg-black p-4 rounded-2xl text-center mb-6 border border-slate-200 dark:border-slate-800">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
                 Match Result
@@ -1733,7 +1774,6 @@ export default function LiveScorerPage({
               </p>
             </div>
 
-            {/* NEW: Strict MOM Checkbox */}
             <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-2xl border border-yellow-200 dark:border-yellow-900/30 mb-6">
               <input
                 type="checkbox"
@@ -1764,9 +1804,9 @@ export default function LiveScorerPage({
                   {[...engine.team1Players, ...engine.team2Players].map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.full_name} (
-                      {p.team_id === engine.match.team1_id
-                        ? engine.match.team1?.short_name
-                        : engine.match.team2?.short_name}
+                      {p.team_id === engine.match!.team1_id
+                        ? engine.match!.team1?.short_name
+                        : engine.match!.team2?.short_name}
                       )
                     </option>
                   ))}
@@ -1835,7 +1875,7 @@ export default function LiveScorerPage({
                       bestBowlerId,
                     );
                   }}
-                  className="flex-[2] bg-yellow-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20"
+                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors"
                 >
                   Save & Complete
                 </button>
@@ -1845,14 +1885,18 @@ export default function LiveScorerPage({
         </div>
       )}
 
+      {/* UNIVERSAL QUICK ADD PLAYER MODAL */}
       {showQuickAddPlayer && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[120] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
             <h2 className="text-xl font-black uppercase tracking-tight mb-2">
-              Quick Add Player
+              Quick Add {quickAddRole === "batter" ? "Batter" : "Bowler"}
             </h2>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">
-              Adding to {stats.battingTeam?.name}
+              Adding to{" "}
+              {quickAddRole === "batter"
+                ? stats.battingTeam?.name
+                : stats.bowlingTeam?.name}
             </p>
 
             <input
@@ -1860,21 +1904,22 @@ export default function LiveScorerPage({
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
               placeholder="Enter Full Name"
-              className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-lg font-bold outline-none mb-6"
+              className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-lg font-bold outline-none mb-6 focus:border-teal-500 transition-colors"
             />
 
             <div className="flex gap-4">
               <button
                 onClick={() => setShowQuickAddPlayer(false)}
-                className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl"
+                className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors rounded-2xl"
               >
                 Cancel
               </button>
               <button
                 onClick={handleQuickAddPlayer}
-                className="flex-[2] bg-teal-500 text-white font-black uppercase py-4 rounded-2xl"
+                disabled={!newPlayerName.trim()}
+                className="flex-[2] bg-teal-500 hover:bg-teal-400 disabled:opacity-50 transition-colors text-white font-black uppercase py-4 rounded-2xl shadow-lg shadow-teal-500/20"
               >
-                Add Player
+                Add {quickAddRole === "batter" ? "Batter" : "Bowler"}
               </button>
             </div>
           </div>

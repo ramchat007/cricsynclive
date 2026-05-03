@@ -410,19 +410,27 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
   };
 
   const refreshPlayers = async () => {
-    const { data: t1 } = await supabase
-      .from("players")
+    // 1. Fetch the match again to ensure we have the latest IDs
+    const { data: currentMatch } = await supabase
+      .from("matches")
       .select("*")
-      .eq("team_id", match.team1_id);
-    
-    const { data: t2 } = await supabase
-      .from("players")
-      .select("*")
-      .eq("team_id", match.team2_id);
+      .eq("id", matchId)
+      .single();
 
-    if (t1) setTeam1Players(t1);
-    if (t2) setTeam2Players(t2);
-  };  
+    if (!currentMatch) return;
+
+    // 2. Now fetch all players for this tournament
+    const { data: allPlayers } = await supabase
+      .from("players")
+      .select("*")
+      .eq("tournament_id", tournamentId);
+
+    if (allPlayers) {
+      // 3. Update the state squads based on the FRESH match data
+      setTeam1Players(allPlayers.filter(p => p.team_id === currentMatch.team1_id));
+      setTeam2Players(allPlayers.filter(p => p.team_id === currentMatch.team2_id));
+    }
+  };
 
   return {
     match,
