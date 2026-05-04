@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function CameraReceiverPage() {
+// 1. We moved your existing logic into this "Content" component
+function ReceiverContent() {
   const searchParams = useSearchParams();
-  const camId = searchParams.get("cam"); // Grabs the ?cam=xxxxxx from URL
+  const camId = searchParams.get("cam");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState("Waiting for Camera...");
@@ -60,7 +61,6 @@ export default function CameraReceiverPage() {
                 filter: `match_id=eq.${camId}`,
               },
               async (payload) => {
-                // FIXED TYPESCRIPT ERROR HERE using "as any"
                 const newRow = payload.new as any;
                 if (newRow.offer && pc?.signalingState === "stable") {
                   await processOffer(pc!, newRow.offer);
@@ -114,15 +114,12 @@ export default function CameraReceiverPage() {
   }, [camId]);
 
   return (
-    <div className="w-screen h-screen bg-transparent overflow-hidden relative flex items-center justify-center">
-      <style>{`body { background: transparent !important; margin: 0; overflow: hidden; }`}</style>
-
+    <>
       {status && (
         <div className="absolute top-4 left-4 z-50 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl font-bold uppercase tracking-widest text-xs border border-white/10 animate-pulse">
           {status}
         </div>
       )}
-
       <video
         ref={videoRef}
         autoPlay
@@ -130,6 +127,24 @@ export default function CameraReceiverPage() {
         muted
         className="w-full h-full object-cover"
       />
+    </>
+  );
+}
+
+// 2. This is the main page export. It wraps the logic in a Suspense boundary!
+export default function CameraReceiverPage() {
+  return (
+    <div className="w-screen h-screen bg-transparent overflow-hidden relative flex items-center justify-center">
+      <style>{`body { background: transparent !important; margin: 0; overflow: hidden; }`}</style>
+      <Suspense
+        fallback={
+          <div className="text-white bg-black/50 p-4 rounded">
+            Loading Receiver...
+          </div>
+        }
+      >
+        <ReceiverContent />
+      </Suspense>
     </div>
   );
 }
