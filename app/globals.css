@@ -1,12 +1,22 @@
 @import "tailwindcss";
 
 :root {
+  /* Light Theme */
   --background: #ffffff;
   --foreground: #171717;
   --surface-1: #ffffff;
   --surface-2: #f8fafc;
   --border-1: #e2e8f0;
   --text-muted: #64748b;
+  --text-secondary: #64748b;
+  --accent: #2dd4bf;
+  --accent-hover: #14b8a6;
+  --warning: #fbbf24;
+  --danger: #ef4444;
+  --success: #10b981;
+  --navbar-bg: #ffffff;
+  --navbar-text: #171717;
+  --navbar-border: #e2e8f0;
 }
 
 :root[data-theme="dark"] {
@@ -16,6 +26,15 @@
   --surface-2: #111827;
   --border-1: #1f2937;
   --text-muted: #94a3b8;
+  --text-secondary: #94a3b8;
+  --accent: #2dd4bf;
+  --accent-hover: #14b8a6;
+  --warning: #fbbf24;
+  --danger: #ef4444;
+  --success: #10b981;
+  --navbar-bg: #0f172a;
+  --navbar-text: #e2e8f0;
+  --navbar-border: #1f2937;
 }
 
 :root[data-theme="ocean"] {
@@ -25,6 +44,15 @@
   --surface-2: #a5f3fc;
   --border-1: #67e8f9;
   --text-muted: #155e75;
+  --text-secondary: #155e75;
+  --accent: #22d3ee;
+  --accent-hover: #06b6d4;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --success: #10b981;
+  --navbar-bg: #cffafe;
+  --navbar-text: #0f172a;
+  --navbar-border: #67e8f9;
 }
 
 :root[data-theme="sunset"] {
@@ -34,6 +62,15 @@
   --surface-2: #fed7aa;
   --border-1: #fdba74;
   --text-muted: #9a3412;
+  --text-secondary: #9a3412;
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --success: #10b981;
+  --navbar-bg: #ffedd5;
+  --navbar-text: #431407;
+  --navbar-border: #fdba74;
 }
 
 @theme inline {
@@ -47,42 +84,104 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ============ TAILWIND COLOR MAPPING TO CSS VARIABLES ============ */
+
+/* Background Colors */
 :root[data-theme] .bg-white {
   background-color: var(--surface-1) !important;
 }
-:root[data-theme] .bg-gray-50,
-:root[data-theme] .bg-slate-50 {
+
+:root[data-theme] .bg-slate-50,
+:root[data-theme] .bg-gray-50 {
   background-color: var(--surface-2) !important;
 }
-:root[data-theme] .border-gray-200,
-:root[data-theme] .border-slate-200 {
+
+:root[data-theme] .bg-slate-100,
+:root[data-theme] .bg-gray-100 {
+  background-color: var(--surface-2) !important;
+}
+
+/* Border Colors */
+:root[data-theme] .border-slate-200,
+:root[data-theme] .border-gray-200 {
   border-color: var(--border-1) !important;
 }
-:root[data-theme] .text-gray-900,
-:root[data-theme] .text-gray-800,
+
+:root[data-theme] .border-slate-100,
+:root[data-theme] .border-gray-100 {
+  border-color: var(--border-1) !important;
+}
+
+/* Text Colors - Foreground (Dark text on light/primary text) */
 :root[data-theme] .text-slate-900,
-:root[data-theme] .text-slate-800 {
+:root[data-theme] .text-gray-900,
+:root[data-theme] .text-slate-800,
+:root[data-theme] .text-gray-800,
+:root[data-theme] .text-slate-700,
+:root[data-theme] .text-gray-700 {
   color: var(--foreground) !important;
 }
-:root[data-theme] .text-gray-600,
-:root[data-theme] .text-gray-500,
-:root[data-theme] .text-gray-400,
+
+/* Text Colors - Muted (Secondary text) */
 :root[data-theme] .text-slate-600,
+:root[data-theme] .text-gray-600,
 :root[data-theme] .text-slate-500,
-:root[data-theme] .text-slate-400 {
+:root[data-theme] .text-gray-500,
+:root[data-theme] .text-slate-400,
+:root[data-theme] .text-gray-400 {
   color: var(--text-muted) !important;
+}
+
+/* Navbar specific styling */
+:root[data-theme] .navbar-bg {
+  background-color: var(--navbar-bg) !important;
+}
+
+:root[data-theme] .navbar-text {
+  color: var(--navbar-text) !important;
+}
+
+:root[data-theme] .navbar-border {
+  border-color: var(--navbar-border) !important;
+}
+
+/* Accent colors */
+:root[data-theme] .accent-text {
+  color: var(--accent) !important;
+}
+
+:root[data-theme] .accent-bg {
+  background-color: var(--accent) !important;
+}
+
+/* Hover states */
+:root[data-theme] .hover\:navbar-border:hover {
+  border-color: var(--navbar-border) !important;
+}
+
+:root[data-theme] .bg-slate-900,
+:root[data-theme] .bg-gray-900 {
+  background-color: var(--surface-1) !important;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  @apply transition-colors duration-300;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2dd4bf;
+  background: var(--accent);
   border-radius: 10px;
 }
 
