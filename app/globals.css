@@ -6,6 +6,7 @@
   --foreground: #171717;
   --surface-1: #ffffff;
   --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
   --border-1: #e2e8f0;
   --text-muted: #64748b;
   --text-secondary: #64748b;
@@ -17,6 +18,8 @@
   --navbar-bg: #ffffff;
   --navbar-text: #171717;
   --navbar-border: #e2e8f0;
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.9);
 }
 
 :root[data-theme="dark"] {
@@ -24,6 +27,7 @@
   --foreground: #e2e8f0;
   --surface-1: #0f172a;
   --surface-2: #111827;
+  --surface-3: #1e293b;
   --border-1: #1f2937;
   --text-muted: #94a3b8;
   --text-secondary: #94a3b8;
@@ -35,6 +39,8 @@
   --navbar-bg: #0f172a;
   --navbar-text: #e2e8f0;
   --navbar-border: #1f2937;
+  --overlay-bg: rgba(15, 23, 42, 0.8);
+  --glass-bg: rgba(15, 23, 42, 0.9);
 }
 
 :root[data-theme="ocean"] {
@@ -42,6 +48,7 @@
   --foreground: #0f172a;
   --surface-1: #cffafe;
   --surface-2: #a5f3fc;
+  --surface-3: #7dd3fc;
   --border-1: #67e8f9;
   --text-muted: #155e75;
   --text-secondary: #155e75;
@@ -53,6 +60,8 @@
   --navbar-bg: #cffafe;
   --navbar-text: #0f172a;
   --navbar-border: #67e8f9;
+  --overlay-bg: rgba(207, 250, 254, 0.8);
+  --glass-bg: rgba(207, 250, 254, 0.9);
 }
 
 :root[data-theme="sunset"] {
@@ -60,6 +69,7 @@
   --foreground: #431407;
   --surface-1: #ffedd5;
   --surface-2: #fed7aa;
+  --surface-3: #fdba74;
   --border-1: #fdba74;
   --text-muted: #9a3412;
   --text-secondary: #9a3412;
@@ -71,6 +81,8 @@
   --navbar-bg: #ffedd5;
   --navbar-text: #431407;
   --navbar-border: #fdba74;
+  --overlay-bg: rgba(255, 237, 213, 0.8);
+  --glass-bg: rgba(255, 237, 213, 0.9);
 }
 
 @theme inline {
@@ -104,6 +116,17 @@ body {
   background-color: var(--surface-2) !important;
 }
 
+:root[data-theme] .bg-slate-900,
+:root[data-theme] .bg-gray-900,
+:root[data-theme] .bg-slate-950 {
+  background-color: var(--surface-1) !important;
+}
+
+:root[data-theme] .bg-slate-800,
+:root[data-theme] .bg-gray-800 {
+  background-color: var(--surface-2) !important;
+}
+
 /* Border Colors */
 :root[data-theme] .border-slate-200,
 :root[data-theme] .border-gray-200 {
@@ -111,7 +134,9 @@ body {
 }
 
 :root[data-theme] .border-slate-100,
-:root[data-theme] .border-gray-100 {
+:root[data-theme] .border-gray-100,
+:root[data-theme] .border-slate-800,
+:root[data-theme] .border-gray-800 {
   border-color: var(--border-1) !important;
 }
 
@@ -155,16 +180,6 @@ body {
 
 :root[data-theme] .accent-bg {
   background-color: var(--accent) !important;
-}
-
-/* Hover states */
-:root[data-theme] .hover\:navbar-border:hover {
-  border-color: var(--navbar-border) !important;
-}
-
-:root[data-theme] .bg-slate-900,
-:root[data-theme] .bg-gray-900 {
-  background-color: var(--surface-1) !important;
 }
 
 /* Smooth transitions for theme changes */
