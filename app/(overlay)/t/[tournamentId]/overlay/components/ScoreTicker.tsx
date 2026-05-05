@@ -537,7 +537,7 @@ export default function ScoreTicker({
         @keyframes angledReveal {
           0% { clip-path: polygon(50% 0, 50% 0, 50% 100%, 50% 100%); opacity: 0;}
           /* Changed opacity from 1 to 0.85 here 👇 */
-          100% { clip-path: polygon(30px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%); opacity: 0.75;}
+          100% { clip-path: polygon(0 0, 100% 0, calc(100% - 0) 100%, 0% 100%); opacity: 0.75;}
         }
         .animate-angledReveal { animation: angledReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 

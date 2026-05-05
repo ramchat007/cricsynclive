@@ -337,38 +337,11 @@ export default function MasterController({
   };
 
   const triggerRapidEvent = async (eventType: "FOUR" | "SIX" | "WICKET") => {
-    if (!config.activeMatchId) {
-      setTriggerNote("Select active match first.");
-      return;
-    }
+    // Pure Manual Override - No database validation needed!
+    // As long as the button is clicked, we force the graphic to the screen.
+    publishConfig({ event: eventType, eventTime: Date.now() });
 
-    const { data: lastBall } = await supabase
-      .from("deliveries")
-      .select("id, runs_off_bat, is_wicket")
-      .eq("match_id", config.activeMatchId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!lastBall) {
-      setTriggerNote("No delivery found for this match.");
-      return;
-    }
-
-    const runs = Number(lastBall.runs_off_bat) || 0;
-    const isWicket = !!lastBall.is_wicket;
-    const matchesEvent =
-      (eventType === "FOUR" && runs === 4 && !isWicket) ||
-      (eventType === "SIX" && runs === 6 && !isWicket) ||
-      (eventType === "WICKET" && isWicket);
-
-    if (!matchesEvent) {
-      setTriggerNote(`Last ball does not match ${eventType} trigger.`);
-      return;
-    }
-
-    await publishConfig({ event: eventType, eventTime: Date.now() });
-    setTriggerNote(`${eventType} trigger fired.`);
+    setTriggerNote(`${eventType} graphic fired! 🚀`);
     setTimeout(() => setTriggerNote(""), 1800);
   };
 

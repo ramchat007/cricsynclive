@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  Mail,
+  MessageCircleCheck,
   Phone,
   Globe,
   Play,
@@ -53,10 +53,10 @@ export default function ContactPage() {
       link: "tel:+9198920160376",
     },
     {
-      icon: Mail,
-      title: "Email",
-      value: "ramchat007@gmail.com",
-      link: "mailto:ramchat007@gmail.com",
+      icon: MessageCircleCheck,
+      title: "WhatsApp",
+      value: "+91 97024 85146",
+      link: "https://wa.me/9702485146",
     },
     {
       icon: Globe,
@@ -93,7 +93,8 @@ export default function ContactPage() {
         {/* Navigation Back */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-500 uppercase tracking-widest mt-4 mb-8 transition-colors">
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-500 uppercase tracking-widest mt-4 mb-8 transition-colors"
+        >
           <Home size={14} /> Back to Hub
         </Link>
 
@@ -130,7 +131,8 @@ export default function ContactPage() {
                       {item.link ? (
                         <a
                           href={item.link}
-                          className="font-bold text-slate-900 hover:text-teal-500 transition-colors">
+                          className="font-bold text-slate-900 hover:text-teal-500 transition-colors"
+                        >
                           {item.value}
                         </a>
                       ) : (
@@ -153,7 +155,8 @@ export default function ContactPage() {
                       href={social.link}
                       target="_blank"
                       rel="noreferrer"
-                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-2 bg-slate-50 border-slate-200 text-slate-600 ${social.color}`}>
+                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-2 bg-slate-50 border-slate-200 text-slate-600 ${social.color}`}
+                    >
                       <social.icon size={18} />
                       <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline-block">
                         {social.name}
@@ -189,14 +192,16 @@ export default function ContactPage() {
                   </p>
                   <button
                     onClick={() => setStatus("idle")}
-                    className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-4">
+                    className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-4"
+                  >
                     Send another message
                   </button>
                 </div>
               ) : (
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-5 relative z-10">
+                  className="space-y-5 relative z-10"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-slate-500">
@@ -204,7 +209,7 @@ export default function ContactPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="John Doe"
+                        placeholder="Full Name"
                         required
                         className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-white border-slate-200 text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
                         value={formData.name}
@@ -219,7 +224,7 @@ export default function ContactPage() {
                       </label>
                       <input
                         type="email"
-                        placeholder="john@example.in"
+                        placeholder="email@example.com"
                         required
                         className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-white border-slate-200 text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
                         value={formData.email}
@@ -255,7 +260,8 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={status === "submitting"}
-                    className="w-full py-4 bg-teal-600 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-teal-500 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-70 disabled:active:scale-100">
+                    className="w-full py-4 bg-teal-600 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-teal-500 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-70 disabled:active:scale-100"
+                  >
                     {status === "submitting" ? (
                       <span className="animate-pulse">Sending...</span>
                     ) : (

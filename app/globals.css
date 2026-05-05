@@ -86,6 +86,7 @@ body {
   border-radius: 10px;
 }
 
-button, a {
+button,
+a {
   cursor: pointer;
 }

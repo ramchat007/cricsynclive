@@ -1,11 +1,12 @@
 import "./globals.css";
 import { Providers } from "./providers";
 import LayoutWrapper from "./components/LayoutWrapper";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata = {
-  title: "CricSync V2 | Pro Sports Management",
+  title: "CricSync | The Industry Standard Tournament OS",
   description:
-    "Broadcast-grade cricket tournament management and live scoring.",
+    "Elevating local and mega cricket tournaments with professional live scoring, IPL-style auctions, and TV-quality broadcast overlays.",
 };
 
 export default function RootLayout({
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <LayoutWrapper>{children}</LayoutWrapper>
+          <GoogleAnalytics gaId="G-NGL0G335B2" />
         </Providers>
       </body>
     </html>

@@ -1,143 +1,175 @@
-"use client";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { Search } from "lucide-react";
 import Link from "next/link";
-import {
-  Trophy,
-  Users,
-  Activity,
-  ChevronRight,
-  PlayCircle,
-} from "lucide-react";
 
-export default function V2LandingPage() {
-  const [tournaments, setTournaments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchActiveTournaments();
-  }, []);
-
-  const fetchActiveTournaments = async () => {
-    const { data } = await supabase
-      .from("tournaments")
-      .select("id, name, location, format, banner_url")
-      .order("created_at", { ascending: false })
-      .limit(6);
-
-    if (data) setTournaments(data);
-    setLoading(false);
-  };
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-teal-500/30">
-      {/* HERO SECTION */}
-      <div className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-500/10 to-transparent"></div>
+    <main className="relative min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 selection:bg-cyan-500 selection:text-white">
+      {/* 1. GLOBAL BACKGROUND (z-0) */}
+      <div className="fixed inset-0 z-0 bg-[url('/light-stadium.png')] bg-cover bg-center bg-no-repeat opacity-70 dark:opacity-70 transition-opacity duration-300" />
 
-        <div className="relative max-w-7xl mx-auto px-6 py-24 md:py-32 flex flex-col items-center text-center">
-          <span className="bg-teal-500/10 text-teal-400 border border-teal-500/20 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
-            Tournament Operating System
-          </span>
-          <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-6 leading-tight drop-shadow-2xl">
-            Pro-Level Scoring <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-              For Every Pitch
-            </span>
-          </h1>
-          <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl mb-10">
-            Live broadcasts, dynamic overlays, franchise auctions, and real-time
-            global player directories. Run your tournament like the pros.
-          </p>
+      {/* 2. GLOBAL OVERLAY (z-10) - Matches the Explore page's solid colors but frosted */}
+      <div className="fixed inset-0 z-10 pointer-events-none bg-slate-50/90 dark:bg-slate-950/90 transition-colors duration-300" />
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Link
-              href="/players"
-              className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl flex items-center justify-center gap-2">
-              <Users size={18} /> Global Directory
-            </Link>
-            {/* You can point this to your actual login/dashboard route */}
-            <Link
-              href="/dashboard"
-              className="bg-teal-600 hover:bg-teal-500 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
-              <PlayCircle size={18} /> Organizer Hub
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ACTIVE TOURNAMENTS GRID */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <div className="flex justify-between items-end mb-10">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-              <Trophy className="text-teal-500" /> Active Tournaments
-            </h2>
-            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-2">
-              Follow the latest action
+      {/* 3. CONTENT WRAPPER (z-20) */}
+      <div className="relative z-20">
+        {/* --- HERO SECTION --- */}
+        <section className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-20">
+          <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-10 duration-1000">
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none drop-shadow-xl text-slate-900 dark:text-slate-200 transition-colors duration-300">
+              CricSync <br className="md:hidden" />{" "}
+              <span className="text-cyan-600 dark:text-cyan-400 drop-shadow-md">
+                Live
+              </span>
+            </h1>
+            <p className="text-base md:text-xl font-black uppercase tracking-[0.3em] mt-6 text-slate-600 dark:text-slate-400 transition-colors duration-300">
+              The Industry-Standard Tournament OS
             </p>
           </div>
-        </div>
+        </section>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-64 bg-slate-200 dark:bg-slate-800 rounded-[2rem] animate-pulse"></div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tournaments.length === 0 ? (
-              <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem]">
-                <Activity size={32} className="mx-auto text-slate-400 mb-4" />
-                <h3 className="text-lg font-black uppercase tracking-widest text-slate-900 dark:text-white">
-                  No Active Tournaments
-                </h3>
-                <p className="text-slate-500 font-bold mt-1">
-                  Check back soon for upcoming events.
-                </p>
+        {/* --- FEATURES GRID SECTION --- */}
+        <section className="max-w-7xl mx-auto px-6 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Module 01 */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 bg-blue-600 dark:bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.3)]" />
+                <span className="text-blue-600 dark:text-blue-500 font-bold uppercase tracking-widest text-xs transition-colors">
+                  Module 01
+                </span>
               </div>
-            ) : (
-              tournaments.map((t) => (
-                <Link
-                  key={t.id}
-                  href={`/t/${t.id}/`} // Or whichever public page you want them to land on
-                  className="group block relative h-64 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all">
-                  <div
-                    className="absolute inset-0 bg-slate-300 dark:bg-slate-800 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                    style={{
-                      backgroundImage: t.banner_url
-                        ? `url(${t.banner_url})`
-                        : "none",
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-90"></div>
+              <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 dark:text-white transition-colors">
+                Total{" "}
+                <span className="text-blue-600 dark:text-blue-500">
+                  Control
+                </span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 transition-colors leading-relaxed">
+                Organise tournaments seamlessly. From expert umpire management
+                to assigning dedicated offline scorers, online scorers, and
+                on-demand commentators.
+              </p>
+            </div>
 
-                  <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                    <span className="bg-teal-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded w-max mb-2">
-                      {t.format || "T20"}
-                    </span>
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-teal-400 transition-colors">
-                      {t.name}
-                    </h3>
-                    <div className="flex justify-between items-center mt-2">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                        📍 {t.location || "Local Ground"}
-                      </p>
-                      <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-teal-500 transition-colors">
-                        <ChevronRight size={16} />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            )}
+            {/* Module 02 */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 bg-teal-600 dark:bg-teal-500 rounded-full shadow-[0_0_10px_rgba(20,184,166,0.3)]" />
+                <span className="text-teal-600 dark:text-teal-500 font-bold uppercase tracking-widest text-xs transition-colors">
+                  Module 02
+                </span>
+              </div>
+              <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 dark:text-white transition-colors">
+                Real-Time{" "}
+                <span className="text-teal-600 dark:text-teal-500">
+                  Precision
+                </span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 transition-colors leading-relaxed">
+                Lightning-fast, ball-by-ball digital scoresheets engineered for
+                professional match management. Track every delivery with
+                industry-standard accuracy.
+              </p>
+            </div>
+
+            {/* Module 03 */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 bg-amber-600 dark:bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.3)]" />
+                <span className="text-amber-600 dark:text-amber-500 font-bold uppercase tracking-widest text-xs transition-colors">
+                  Module 03
+                </span>
+              </div>
+              <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 dark:text-white transition-colors">
+                Live{" "}
+                <span className="text-amber-600 dark:text-amber-500">
+                  Auctions
+                </span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 transition-colors leading-relaxed">
+                Host IPL-style mega auctions with zero compromises. Manage
+                extensive player registrations, verify team wallets, and execute
+                live bidding wars.
+              </p>
+            </div>
+
+            {/* Module 04 */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 bg-red-600 dark:bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.3)]" />
+                <span className="text-red-600 dark:text-red-500 font-bold uppercase tracking-widest text-xs transition-colors">
+                  Module 04
+                </span>
+              </div>
+              <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 dark:text-white transition-colors">
+                Broadcast{" "}
+                <span className="text-red-600 dark:text-red-500">Overlays</span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 transition-colors leading-relaxed">
+                Bring TV-network quality to grassroots streams. Seamless Live
+                YouTube streaming integration featuring professional
+                broadcast-ready OBS overlays.
+              </p>
+            </div>
+
+            {/* Module 05 */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 bg-fuchsia-600 dark:bg-fuchsia-500 rounded-full shadow-[0_0_10px_rgba(217,70,239,0.3)]" />
+                <span className="text-fuchsia-600 dark:text-fuchsia-500 font-bold uppercase tracking-widest text-xs transition-colors">
+                  Module 05
+                </span>
+              </div>
+              <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 dark:text-white transition-colors">
+                Smart{" "}
+                <span className="text-fuchsia-600 dark:text-fuchsia-500">
+                  Brackets
+                </span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 transition-colors leading-relaxed">
+                Intelligent tournament trees and dynamic round-robin standings.
+                Automatically advance winners and keep your teams perfectly
+                synced.
+              </p>
+            </div>
+
+            {/* Module 06 */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 bg-purple-600 dark:bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.3)]" />
+                <span className="text-purple-600 dark:text-purple-500 font-bold uppercase tracking-widest text-xs transition-colors">
+                  Module 06
+                </span>
+              </div>
+              <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 dark:text-white transition-colors">
+                Digital{" "}
+                <span className="text-purple-600 dark:text-purple-500">
+                  Identity
+                </span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 transition-colors leading-relaxed">
+                Track career milestones globally! Every run and wicket is
+                automatically tallied across all tournaments, providing a
+                shareable digital resume.
+              </p>
+            </div>
           </div>
-        )}
+        </section>
+
+        {/* --- CTA SECTION --- */}
+        <section className="py-24 flex items-center justify-center px-4">
+          <Link
+            href="/explore"
+            className="group flex items-center gap-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all active:scale-95"
+          >
+            <Search
+              size={18}
+              className="text-white dark:text-slate-900 group-hover:text-cyan-400 dark:group-hover:text-cyan-600 transition-colors"
+            />
+            Explore All Tournaments
+          </Link>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

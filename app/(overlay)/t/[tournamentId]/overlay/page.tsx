@@ -197,7 +197,7 @@ export default function BroadcastOverlay({
       "SPONSOR_BANNER",
       "MATCH_SUMMARY",
       "POINTS_TABLE",
-      "LIVE_QUIZ"
+      "LIVE_QUIZ",
     ].includes(v),
   );
 
@@ -222,15 +222,43 @@ export default function BroadcastOverlay({
 
   // --- MINI SCOREBUG MATH ---
   let isT1Batting = true;
+  let liveScore = 0;
+  let liveWickets = 0;
+  let liveOvers = "0.0";
+
   if (matchData) {
     const choseBat = String(matchData.toss_decision || "")
       .toLowerCase()
       .includes("bat");
     const t1Won = matchData.toss_winner_id === matchData.team1_id;
     const t1BattedFirst = choseBat ? t1Won : !t1Won;
-    isT1Batting =
-      Number(matchData.current_innings) === 1 ? t1BattedFirst : !t1BattedFirst;
+
+    const currentInnings = Number(matchData.current_innings) || 1;
+    isT1Batting = currentInnings === 1 ? t1BattedFirst : !t1BattedFirst;
+
+    // Calculate score exactly like the Main Ticker does!
+    const currentInningsBalls = deliveries.filter(
+      (d) => Number(d.innings) === currentInnings,
+    );
+
+    liveScore = currentInningsBalls.reduce(
+      (acc, d) =>
+        acc + (Number(d.runs_off_bat) || 0) + (Number(d.extras_runs) || 0),
+      0,
+    );
+
+    liveWickets = currentInningsBalls.filter((d) => d.is_wicket).length;
+
+    const totalValidBalls = currentInningsBalls.filter((d) => {
+      const type = (d.extras_type || "").toLowerCase();
+      return (
+        type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball"
+      );
+    }).length;
+
+    liveOvers = `${Math.floor(totalValidBalls / 6)}.${totalValidBalls % 6}`;
   }
+
   const miniBatName = isT1Batting
     ? matchData?.team1?.short_name
     : matchData?.team2?.short_name;
@@ -251,7 +279,8 @@ export default function BroadcastOverlay({
         <div className="absolute top-8 right-8 z-[100] animate-fade-in flex flex-col items-center">
           <div
             className="relative bg-cyan-100 rounded-full p-2.5 border-[3px] border-white ring-2 ring-black/20 flex items-center justify-center shadow-lg"
-            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}>
+            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}
+          >
             <img
               src="/cricsync-light-logo.png"
               className="h-14 w-auto"
@@ -315,10 +344,7 @@ export default function BroadcastOverlay({
                     {miniBatName}
                   </span>
                   <span className="text-white font-black text-3xl tabular-nums">
-                    {isT1Batting ? matchData.team1_runs : matchData.team2_runs}/
-                    {isT1Batting
-                      ? matchData.team1_wickets
-                      : matchData.team2_wickets}
+                    {liveScore}/{liveWickets}
                   </span>
                 </div>
               </div>
@@ -327,7 +353,7 @@ export default function BroadcastOverlay({
                   OVERS
                 </span>
                 <span className="text-white font-bold text-xl tabular-nums">
-                  {isT1Batting ? matchData.team1_overs : matchData.team2_overs}
+                  {liveOvers}
                 </span>
               </div>
             </div>
@@ -337,7 +363,8 @@ export default function BroadcastOverlay({
       {/* 4. PARTNERSHIP BANNER */}
       {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
         <div
-          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}>
+          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
+        >
           <Partnership
             matchData={matchData}
             deliveries={deliveries}
@@ -364,7 +391,8 @@ export default function BroadcastOverlay({
       {/* 6. MAIN SCORE TICKER */}
       {isScorebugOn && matchData && !activeFullscreen && (
         <div
-          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}>
+          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
+        >
           <ScoreTicker overlayData={config} liveMatch={matchData} />
         </div>
       )}
@@ -376,7 +404,8 @@ export default function BroadcastOverlay({
           style={{
             backgroundColor: broadcastTheme.tokens.warning,
             borderTop: `3px solid ${broadcastTheme.tokens.accent}`,
-          }}>
+          }}
+        >
           <div className="ticker-text px-4">
             {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
             &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}{" "}
@@ -391,7 +420,8 @@ export default function BroadcastOverlay({
       {activeFullscreen && (
         <div
           className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
-          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}>
+          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}
+        >
           {activeFullscreen === "SPONSOR_BANNER" ? (
             <img
               key={config.sponsorBanners[currentBannerIdx]}
