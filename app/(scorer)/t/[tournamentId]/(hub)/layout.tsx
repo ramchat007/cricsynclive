@@ -18,6 +18,7 @@ import {
   Video,
   MonitorPlay,
   ShieldAlert,
+  Brackets,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 
@@ -144,6 +145,11 @@ export default function TournamentLayout({
       name: "Match Schedule",
       href: `/t/${tournamentId}/matches`,
       icon: CalendarDays,
+    },
+    {
+      name: "Brackets & Fixtures",
+      href: `/t/${tournamentId}/brackets`,
+      icon: Brackets,
     },
     { name: "Player Roster", href: `/t/${tournamentId}/players`, icon: Shirt },
     {

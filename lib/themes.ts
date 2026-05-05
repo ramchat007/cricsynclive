@@ -78,8 +78,9 @@ export const THEME_COLORS = {
 } as const;
 
 export type ThemeId = typeof APP_THEMES[number]["id"];
-export type ThemeColors = typeof THEME_COLORS["light"];
-
+export type ThemeColors = {
+  [K in keyof typeof THEME_COLORS.light]: string;
+};
 export const BROADCAST_THEMES = [
   {
     id: "classic",
