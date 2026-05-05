@@ -5,6 +5,81 @@ export const APP_THEMES = [
   { id: "sunset", label: "Sunset" },
 ] as const;
 
+// Comprehensive theme color palette
+export const THEME_COLORS = {
+  light: {
+    background: "#ffffff",
+    foreground: "#171717",
+    surface1: "#ffffff",
+    surface2: "#f8fafc",
+    border1: "#e2e8f0",
+    textMuted: "#64748b",
+    textSecondary: "#64748b",
+    accent: "#2dd4bf",
+    accentHover: "#14b8a6",
+    warning: "#fbbf24",
+    danger: "#ef4444",
+    success: "#10b981",
+    navbar: "#ffffff",
+    navbarText: "#171717",
+    navbarBorder: "#e2e8f0",
+  },
+  dark: {
+    background: "#020617",
+    foreground: "#e2e8f0",
+    surface1: "#0f172a",
+    surface2: "#111827",
+    border1: "#1f2937",
+    textMuted: "#94a3b8",
+    textSecondary: "#94a3b8",
+    accent: "#2dd4bf",
+    accentHover: "#14b8a6",
+    warning: "#fbbf24",
+    danger: "#ef4444",
+    success: "#10b981",
+    navbar: "#0f172a",
+    navbarText: "#e2e8f0",
+    navbarBorder: "#1f2937",
+  },
+  ocean: {
+    background: "#ecfeff",
+    foreground: "#0f172a",
+    surface1: "#cffafe",
+    surface2: "#a5f3fc",
+    border1: "#67e8f9",
+    textMuted: "#155e75",
+    textSecondary: "#155e75",
+    accent: "#22d3ee",
+    accentHover: "#06b6d4",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    success: "#10b981",
+    navbar: "#cffafe",
+    navbarText: "#0f172a",
+    navbarBorder: "#67e8f9",
+  },
+  sunset: {
+    background: "#fff7ed",
+    foreground: "#431407",
+    surface1: "#ffedd5",
+    surface2: "#fed7aa",
+    border1: "#fdba74",
+    textMuted: "#9a3412",
+    textSecondary: "#9a3412",
+    accent: "#f97316",
+    accentHover: "#ea580c",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    success: "#10b981",
+    navbar: "#ffedd5",
+    navbarText: "#431407",
+    navbarBorder: "#fdba74",
+  },
+} as const;
+
+export type ThemeId = typeof APP_THEMES[number]["id"];
+export type ThemeColors = typeof THEME_COLORS["light"];
+
 export const BROADCAST_THEMES = [
   {
     id: "classic",
@@ -55,3 +130,8 @@ export const BROADCAST_THEMES = [
 
 export const getBroadcastTheme = (themeId?: string) =>
   BROADCAST_THEMES.find((theme) => theme.id === themeId) || BROADCAST_THEMES[0];
+
+export const getThemeColors = (themeId?: string): ThemeColors => {
+  const id = (themeId || "light") as ThemeId;
+  return THEME_COLORS[id] || THEME_COLORS.light;
+};
