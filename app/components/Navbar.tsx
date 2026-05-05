@@ -14,7 +14,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
-  const activeTheme = mounted ? theme : "dark";
+  const activeTheme = mounted ? theme : "light";
 
   useEffect(() => {
     // 1. Get initial session

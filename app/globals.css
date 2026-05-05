@@ -96,69 +96,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* ============ TAILWIND COLOR MAPPING TO CSS VARIABLES ============ */
-
-/* Background Colors */
-:root[data-theme] .bg-white {
-  background-color: var(--surface-1) !important;
-}
-
-:root[data-theme] .bg-slate-50,
-:root[data-theme] .bg-gray-50 {
-  background-color: var(--surface-2) !important;
-}
-
-:root[data-theme] .bg-slate-100,
-:root[data-theme] .bg-gray-100 {
-  background-color: var(--surface-2) !important;
-}
-
-:root[data-theme] .bg-slate-900,
-:root[data-theme] .bg-gray-900,
-:root[data-theme] .bg-slate-950 {
-  background-color: var(--surface-1) !important;
-}
-
-:root[data-theme] .bg-slate-800,
-:root[data-theme] .bg-gray-800 {
-  background-color: var(--surface-2) !important;
-}
-
-/* Border Colors */
-:root[data-theme] .border-slate-200,
-:root[data-theme] .border-gray-200 {
-  border-color: var(--border-1) !important;
-}
-
-:root[data-theme] .border-slate-100,
-:root[data-theme] .border-gray-100,
-:root[data-theme] .border-slate-800,
-:root[data-theme] .border-gray-800 {
-  border-color: var(--border-1) !important;
-}
-
-/* Text Colors - Foreground (Dark text on light/primary text) */
-:root[data-theme] .text-slate-900,
-:root[data-theme] .text-gray-900,
-:root[data-theme] .text-slate-800,
-:root[data-theme] .text-gray-800,
-:root[data-theme] .text-slate-700,
-:root[data-theme] .text-gray-700 {
-  color: var(--foreground) !important;
-}
-
-/* Text Colors - Muted (Secondary text) */
-:root[data-theme] .text-slate-600,
-:root[data-theme] .text-gray-600,
-:root[data-theme] .text-slate-500,
-:root[data-theme] .text-gray-500,
-:root[data-theme] .text-slate-400,
-:root[data-theme] .text-gray-400 {
-  color: var(--text-muted) !important;
-}
 
 /* Navbar specific styling */
 :root[data-theme] .navbar-bg {
