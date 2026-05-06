@@ -16,12 +16,12 @@ import {
   Minimize,
   Flashlight,
   ZapOff,
-  Plus,
-  Minus,
   Video,
   Moon,
   Sun,
-  X
+  X,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
@@ -42,7 +42,6 @@ export default function GenericBroadcaster() {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const activeStreamRef = useRef<MediaStream | null>(null);
   const wakeLockRef = useRef<any>(null);
-  const zoomIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastCommandTimeRef = useRef(0);
 
   const sigChannelRef = useRef<any>(null);
@@ -65,7 +64,7 @@ export default function GenericBroadcaster() {
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState("");
   
-  // New Quality States
+  // Quality States
   const [selectedRes, setSelectedRes] = useState(RESOLUTIONS[0]); // Default 720p
   const [selectedFps, setSelectedFps] = useState(FRAMERATES[0]);  // Default 30fps
 
@@ -198,7 +197,7 @@ export default function GenericBroadcaster() {
             fps: cachedStats.fps,
             bitrate: cachedStats.bitrate,
             latency: cachedStats.latency,
-            resolution: selectedRes.label // Include resolution in telemetry
+            resolution: selectedRes.label 
           },
         }).catch(() => {});
       }
@@ -259,6 +258,12 @@ export default function GenericBroadcaster() {
     }
   };
 
+  // NEW: Local Zoom Handler
+  const handleZoomChange = async (newZoom: number) => {
+    setZoomLevel(newZoom);
+    await applyVideoConstraint({ zoom: newZoom });
+  };
+
   const handleExposureChange = async (val: number) => {
     setExposureLevel(val);
     await applyVideoConstraint({ exposureCompensation: val });
@@ -270,7 +275,6 @@ export default function GenericBroadcaster() {
     setTorchOn(newState);
   };
 
-  // Upgraded: Handles both physical camera switching AND quality hot-swapping
   const switchLiveCamera = async (newDeviceId: string, res = selectedRes, fps = selectedFps) => {
     if (!isStreaming || !peerConnectionRef.current) return;
     try {
@@ -622,6 +626,37 @@ export default function GenericBroadcaster() {
               <Play size={20} fill="currentColor" /> Go Live
             </button>
           </div>
+        </div>
+      )}
+
+      {/* RIGHT SIDE ZOOM SLIDER (Visible when streaming and hardware supports it) */}
+      {isStreaming && zoomCap && !isOledSleep && (
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 h-[280px] bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-4 px-2 flex flex-col items-center justify-between z-40">
+          <button 
+            onClick={() => handleZoomChange(Math.min(zoomCap.max, zoomLevel + zoomCap.step))} 
+            className="text-white p-2 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+          >
+            <ZoomIn size={18} />
+          </button>
+          
+          <input
+            type="range"
+            orient="vertical"
+            min={zoomCap.min}
+            max={zoomCap.max}
+            step={zoomCap.step}
+            value={zoomLevel}
+            onChange={(e) => handleZoomChange(Number(e.target.value))}
+            className="w-1.5 h-32 appearance-none bg-white/20 rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full cursor-ns-resize"
+            style={{ writingMode: "vertical-lr" }}
+          />
+          
+          <button 
+            onClick={() => handleZoomChange(Math.max(zoomCap.min, zoomLevel - zoomCap.step))} 
+            className="text-white p-2 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+          >
+            <ZoomOut size={18} />
+          </button>
         </div>
       )}
 
