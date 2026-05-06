@@ -11,7 +11,7 @@ import {
   Medal,
   Settings,
   Copy,
-  CheckCircle2,
+  PersonStanding,
   Camera,
   X,
   Trash2,
@@ -19,6 +19,8 @@ import {
   MonitorPlay,
   ShieldAlert,
   Brackets,
+  Flag,
+  Gavel,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 
@@ -115,6 +117,26 @@ export default function TournamentLayout({
     } else alert("Error saving details");
   };
 
+  // --- NEW: Manual Completion Function ---
+  const finalizeTournament = async () => {
+    const confirmFinalize = window.confirm(
+      "Are you sure you want to manually mark this tournament as completed? This will update the status badge across the platform.",
+    );
+    if (confirmFinalize) {
+      const { error } = await supabase
+        .from("tournaments")
+        .update({ status: "completed" })
+        .eq("id", tournamentId);
+      if (!error) {
+        alert("Tournament successfully marked as completed!");
+        setShowSettings(false);
+        fetchLayoutData();
+      } else {
+        alert("Failed to update status: " + error.message);
+      }
+    }
+  };
+
   const deleteTournament = async () => {
     const confirmDelete = window.confirm(
       "WARNING: Are you absolutely sure you want to delete this tournament? This will erase all matches, teams, and stats forever.",
@@ -134,7 +156,7 @@ export default function TournamentLayout({
 
   if (!tournament)
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center animate-pulse font-black text-slate-400">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center animate-pulse font-black text-slate-400">
         LOADING HUB...
       </div>
     );
@@ -173,7 +195,7 @@ export default function TournamentLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-20 relative">
+    <div className="min-h-screen bg-[var(--background)] font-sans pb-20 relative">
       {/* 1. RESPONSIVE BANNER */}
       <div
         className="w-full bg-slate-900 bg-cover bg-center relative group min-h-[18rem] md:min-h-[22rem] flex flex-col justify-end"
@@ -190,6 +212,13 @@ export default function TournamentLayout({
               uploadPreset={String(
                 process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
               )}
+              options={{
+                multiple: false,
+                cropping: true,
+                showSkipCropButton: false,
+                croppingAspectRatio: 1,
+                showCompletedButton: true,
+              }}
               onSuccess={(result: any) => updateBanner(result.info.secure_url)}>
               {({ open }) => (
                 <button
@@ -202,12 +231,11 @@ export default function TournamentLayout({
           </div>
         )}
 
-        {/* Changed from absolute to relative to allow natural growth on mobile */}
         <div className="relative z-10 w-full p-4 sm:p-6 md:p-12">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               <div className="flex flex-wrap gap-2 mb-3 md:mb-4">
-                <span className="bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                <span className="bg-white/10 backdrop-blur-md border border-white/10 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
                   {tournament.format || "T20"}
                 </span>
                 {tournament.live_stream_url && (
@@ -229,35 +257,22 @@ export default function TournamentLayout({
             </div>
 
             <div className="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto mt-2 md:mt-0">
-              {/* <button
-                onClick={() =>
-                  copyLink(`${window.location.origin}/register/${tournamentId}`)
-                }
+              <a
+                href={`${window.location.origin}/t/${tournamentId}/auction`}
                 className="flex-1 md:flex-none justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-2 transition-all">
-                {copied ? (
-                  <CheckCircle2 size={16} className="text-teal-400" />
-                ) : (
-                  <Copy size={16} />
-                )}{" "}
-                Register Link
-              </button> */}
-              <button
-                onClick={() =>
-                  copyLink(`${window.location.origin}/t/${tournamentId}/broadcast`)
-                }
+                <Gavel size={16} /> Auction
+              </a>
+              <a
+                href={`${window.location.origin}/register/${tournamentId}/`}
                 className="flex-1 md:flex-none justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-2 transition-all">
-                {copied ? (
-                  <CheckCircle2 size={16} className="text-teal-400" />
-                ) : (
-                  <Copy size={16} />
-                )}{" "}
-                Broadcast
-              </button>
+                <PersonStanding size={16} /> Register Player
+              </a>
 
+              {/* FIXED SETTINGS BUTTON: Uses safe frosted glass to match Broadcast button */}
               {isAdmin && (
                 <button
                   onClick={() => setShowSettings(true)}
-                  className="flex-1 md:flex-none justify-center bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-2 transition-all">
+                  className="flex-1 md:flex-none justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-2 transition-all">
                   <Settings size={16} /> Settings
                 </button>
               )}
@@ -268,23 +283,23 @@ export default function TournamentLayout({
 
       {/* TOURNAMENT SETTINGS MODAL */}
       {showSettings && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          {/* Added slide-in-from-bottom for mobile app feel */}
-          <div className="bg-white dark:bg-slate-900 w-full sm:rounded-[2rem] rounded-t-[2rem] max-w-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
-            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
-              <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest">
+        <div className="fixed inset-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <div className="bg-white w-full sm:rounded-[2rem] rounded-t-[2rem] max-w-xl border border-slate-200 flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
+            <div className="p-5 sm:p-6 border-b border-slate-200 flex justify-between items-center shrink-0">
+              <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest text-slate-900">
                 Tournament Settings
               </h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800 rounded-full p-2">
+                className="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 hover:bg-slate-100 rounded-full p-2">
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-5 sm:p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+              {/* Basic Info */}
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
                   Basic Info
                 </h3>
                 <div>
@@ -296,7 +311,7 @@ export default function TournamentLayout({
                     onChange={(e) =>
                       setEditForm({ ...editForm, name: e.target.value })
                     }
-                    className="w-full mt-1 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-teal-500 transition-colors"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm font-bold text-slate-900 outline-none focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
                 <div>
@@ -308,10 +323,10 @@ export default function TournamentLayout({
                     onChange={(e) =>
                       setEditForm({ ...editForm, location: e.target.value })
                     }
-                    className="w-full mt-1 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-teal-500 transition-colors"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm font-bold text-slate-900 outline-none focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
-                {/* Fixed Grid for Mobile */}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
@@ -322,7 +337,7 @@ export default function TournamentLayout({
                       onChange={(e) =>
                         setEditForm({ ...editForm, format: e.target.value })
                       }
-                      className="w-full mt-1 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none">
+                      className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm font-bold text-slate-900 outline-none focus:border-[var(--accent)] transition-colors">
                       <option value="T10">T10</option>
                       <option value="T20">T20</option>
                       <option value="ODI">ODI (50 Over)</option>
@@ -343,19 +358,20 @@ export default function TournamentLayout({
                           squad_limit: parseInt(e.target.value),
                         })
                       }
-                      className="w-full mt-1 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none"
+                      className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm font-bold text-slate-900 outline-none focus:border-[var(--accent)] transition-colors"
                     />
                   </div>
                 </div>
               </div>
 
+              {/* Rules */}
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
                   Tournament Rules
                 </h3>
-                <div className="flex items-center justify-between bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-4 gap-4">
+                <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-4 gap-4">
                   <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">
                       Enable Franchise Auction
                     </h4>
                     <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
@@ -374,16 +390,16 @@ export default function TournamentLayout({
                         })
                       }
                     />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent)]"></div>
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 rounded-xl p-4 gap-4">
+                <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 gap-4">
                   <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-yellow-800 dark:text-yellow-500">
+                    <h4 className="text-xs sm:text-sm font-bold text-amber-600">
                       Strict Player of the Match
                     </h4>
-                    <p className="text-[9px] sm:text-[10px] text-yellow-600/70 dark:text-yellow-500/70 font-bold uppercase tracking-widest mt-1">
+                    <p className="text-[9px] sm:text-[10px] text-amber-600/70 font-bold uppercase tracking-widest mt-1">
                       Must be from winning team.
                     </p>
                   </div>
@@ -399,13 +415,14 @@ export default function TournamentLayout({
                         })
                       }
                     />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                   </label>
                 </div>
               </div>
 
+              {/* Broadcast */}
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
                   Broadcast Studio
                 </h3>
                 <div>
@@ -421,7 +438,7 @@ export default function TournamentLayout({
                         live_stream_url: e.target.value,
                       })
                     }
-                    className="w-full mt-1 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 text-sm font-bold outline-none focus:border-red-500 transition-colors"
+                    className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 text-sm font-bold text-slate-900 outline-none focus:border-red-500 transition-colors"
                   />
                 </div>
 
@@ -441,7 +458,7 @@ export default function TournamentLayout({
                           `${window.location.origin}/t/${tournamentId}/overlay`,
                         )
                       }
-                      className="bg-white border border-slate-200 text-slate-500 hover:text-slate-900 p-2.5 rounded-xl transition-colors shrink-0 shadow-sm">
+                      className="bg-white border border-slate-200 text-slate-500 hover:text-[var(--accent)] p-2.5 rounded-xl transition-colors shrink-0 shadow-sm">
                       <Copy size={16} />
                     </button>
                   </div>
@@ -458,30 +475,38 @@ export default function TournamentLayout({
                       onClick={() =>
                         window.open(`/t/${tournamentId}/controller`, "_blank")
                       }
-                      className="bg-teal-50 text-teal-600 font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-teal-100 transition-colors shrink-0">
+                      className="bg-[var(--accent)]/10 text-[var(--accent)] font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:opacity-80 transition-opacity shrink-0">
                       Open
                     </button>
                   </div>
                 </div>
               </div>
 
+              {/* Lifecycle & Danger Zone */}
               <div className="space-y-4 pt-4">
-                <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-red-100 dark:border-red-900/30 pb-2">
-                  Danger Zone
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                  Tournament Lifecycle
                 </h3>
+
+                {/* NEW: Manual Finalize Button */}
+                <button
+                  onClick={finalizeTournament}
+                  className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-900 font-black text-xs uppercase tracking-widest py-4 rounded-xl transition-colors border border-slate-200 mb-2">
+                  <Flag size={16} /> Mark as Completed
+                </button>
+
                 <button
                   onClick={deleteTournament}
-                  className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 font-black text-xs uppercase tracking-widest py-4 rounded-xl transition-colors border border-red-100 dark:border-red-900/30">
+                  className="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black text-xs uppercase tracking-widest py-4 rounded-xl transition-colors border border-red-500/30">
                   <Trash2 size={16} /> Delete Tournament
                 </button>
               </div>
             </div>
 
-            <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shrink-0">
-              {/* Full width button on mobile, auto width on desktop */}
+            <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50 shrink-0">
               <button
                 onClick={saveSettings}
-                className="w-full sm:w-auto sm:float-right bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs py-4 px-8 rounded-xl transition-all shadow-lg shadow-teal-500/20">
+                className="w-full sm:w-auto sm:float-right accent-bg text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest text-xs py-4 px-8 rounded-xl transition-all shadow-lg active:scale-95">
                 Save Changes
               </button>
             </div>
@@ -491,8 +516,7 @@ export default function TournamentLayout({
 
       {/* TABS & CHILDREN */}
       <div className="max-w-[1400px] mx-auto px-0 md:px-6 mt-6">
-        {/* Added px-4 so horizontal scrolling starts from the edge but content aligns */}
-        <div className="flex overflow-x-auto gap-2 pb-4 mb-4 md:mb-8 border-b border-slate-200 dark:border-slate-800 px-4 md:px-0 [&::-webkit-scrollbar]:hidden">
+        <div className="flex overflow-x-auto gap-2 pb-4 mb-4 md:mb-8 border-b border-slate-200 px-4 md:px-0 [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = pathname.includes(tab.href);
@@ -500,7 +524,11 @@ export default function TournamentLayout({
               <Link
                 key={tab.name}
                 href={tab.href}
-                className={`flex items-center gap-2 px-5 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all whitespace-nowrap ${isActive ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg" : "bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"}`}>
+                className={`flex items-center gap-2 px-5 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all whitespace-nowrap ${
+                  isActive
+                    ? "bg-[var(--foreground)] text-[var(--background)] shadow-lg"
+                    : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
+                }`}>
                 <Icon size={16} className={isActive ? "" : "opacity-50"} />{" "}
                 {tab.name}
               </Link>
@@ -508,7 +536,6 @@ export default function TournamentLayout({
           })}
         </div>
 
-        {/* Added px-4 back here for the inner page content */}
         <div className="px-4 md:px-0">{children}</div>
       </div>
     </div>

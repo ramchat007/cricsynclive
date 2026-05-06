@@ -17,12 +17,10 @@ export default function Navbar() {
   const activeTheme = mounted ? theme : "light";
 
   useEffect(() => {
-    // 1. Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    // 2. Listen for real-time login/logout changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -36,7 +34,6 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
-  // Block background scroll when mobile menu is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -69,14 +66,14 @@ export default function Navbar() {
   return (
     <>
       {/* 1. MAIN DESKTOP NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm transition-colors duration-300">
+      <nav className="sticky top-0 z-50 bg-[var(--glass-bg)] backdrop-blur-xl border-b border-slate-200 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* LOGO */}
+          {/* Note: Consider using an SVG with fill="currentColor" here so it adapts to dark mode automatically! */}
           <Link
             href="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center"
-          >
+            className="flex items-center">
             <img
               src="/cricsync-light-logo.png"
               alt="CricSync"
@@ -92,14 +89,14 @@ export default function Navbar() {
                 href={link.path}
                 className={`text-[11px] font-black uppercase tracking-widest transition-all ${
                   isActive(link.path)
-                    ? "text-teal-600"
+                    ? "accent-text" // Automatically becomes Teal/Cyan/Orange based on theme!
                     : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
+                }`}>
                 {link.name}
               </Link>
             ))}
 
+            {/* THEME TOGGLE (Desktop) */}
             <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full p-1">
               {APP_THEMES.map((appTheme) => (
                 <button
@@ -107,10 +104,9 @@ export default function Navbar() {
                   onClick={() => setTheme(appTheme.id)}
                   className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
                     activeTheme === appTheme.id
-                      ? "bg-slate-900 text-white"
+                      ? "bg-[var(--foreground)] text-[var(--background)]" // Perfect high-contrast inversion
                       : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
+                  }`}>
                   {appTheme.label}
                 </button>
               ))}
@@ -122,16 +118,14 @@ export default function Navbar() {
                   href="/dashboard"
                   className={`text-[11px] font-black uppercase tracking-widest transition-all ${
                     isActive("/dashboard")
-                      ? "text-teal-600"
+                      ? "accent-text"
                       : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
+                  }`}>
                   Dashboard
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition-colors tracking-widest flex items-center gap-1.5"
-                >
+                  className="text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition-colors tracking-widest flex items-center gap-1.5">
                   <LogOut size={14} /> Logout
                 </button>
               </div>
@@ -139,8 +133,7 @@ export default function Navbar() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/login"
-                  className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-slate-900 text-white hover:bg-teal-600 transition-all shadow-lg"
-                >
+                  className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-[var(--foreground)] text-[var(--background)] hover:opacity-80 transition-all shadow-lg">
                   Login / Register
                 </Link>
               </div>
@@ -150,8 +143,7 @@ export default function Navbar() {
           {/* MOBILE MENU TRIGGER */}
           <button
             onClick={() => setIsOpen(true)}
-            className="md:hidden w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 active:scale-90 transition-transform"
-          >
+            className="md:hidden w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
             <Menu size={20} />
           </button>
         </div>
@@ -160,9 +152,9 @@ export default function Navbar() {
       {/* 2. FULL SCREEN MOBILE DRAWER */}
       {isOpen && (
         <div className="fixed inset-0 z-[9999] isolate md:hidden">
-          {/* Backdrop Blur */}
+          {/* Backdrop Blur - Uses the CSS Variable now! */}
           <div
-            className="absolute inset-0 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300"
+            className="absolute inset-0 bg-[var(--overlay-bg)] backdrop-blur-md animate-in fade-in duration-300"
             onClick={() => setIsOpen(false)}
           />
 
@@ -179,8 +171,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 transition-all active:scale-90"
-              >
+                className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 transition-all active:scale-90">
                 <X size={20} />
               </button>
             </div>
@@ -199,19 +190,19 @@ export default function Navbar() {
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center justify-between p-6 rounded-[2rem] text-xl font-black uppercase tracking-tighter transition-all active:scale-95 ${
                       isActive(link.path)
-                        ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-xl shadow-teal-500/20"
-                        : "bg-slate-50 border border-slate-100 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
+                        ? "accent-bg text-[var(--background)] shadow-xl" // Uses global accent color safely
+                        : "bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}>
                     {link.name}
                     {isActive(link.path) && (
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]"></div>
+                      <div className="w-2 h-2 bg-[var(--background)] rounded-full animate-pulse shadow-sm"></div>
                     )}
                   </Link>
                 ))}
               </div>
 
-              <div className="mt-6 bg-slate-50 border border-slate-100 rounded-2xl p-3">
+              {/* THEME TOGGLE (Mobile) */}
+              <div className="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
                   App Theme
                 </p>
@@ -222,10 +213,9 @@ export default function Navbar() {
                       onClick={() => setTheme(appTheme.id)}
                       className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                         activeTheme === appTheme.id
-                          ? "bg-slate-900 text-white border-slate-900"
+                          ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)]"
                           : "bg-white text-slate-500 border-slate-200"
-                      }`}
-                    >
+                      }`}>
                       {appTheme.label}
                     </button>
                   ))}
@@ -239,17 +229,15 @@ export default function Navbar() {
                     <Link
                       href="/dashboard"
                       onClick={() => setIsOpen(false)}
-                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] border border-slate-200 bg-slate-50 active:bg-slate-100 transition-colors"
-                    >
-                      <User size={24} className="text-teal-600" />
+                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] border border-slate-200 bg-slate-50 active:bg-slate-100 transition-colors">
+                      <User size={24} className="accent-text" />
                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
                         Dashboard
                       </span>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-red-50 border border-red-100 active:bg-red-100 transition-all"
-                    >
+                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-red-500/10 border border-red-500/30 active:bg-red-500/20 transition-all">
                       <LogOut size={24} className="text-red-500" />
                       <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">
                         Logout
@@ -261,8 +249,7 @@ export default function Navbar() {
                     <Link
                       href="/login"
                       onClick={() => setIsOpen(false)}
-                      className="w-full py-5 rounded-[2rem] text-center font-black uppercase tracking-widest text-sm shadow-xl bg-slate-900 text-white active:scale-[0.98] transition-transform"
-                    >
+                      className="w-full py-5 rounded-[2rem] text-center font-black uppercase tracking-widest text-sm shadow-xl bg-[var(--foreground)] text-[var(--background)] active:scale-[0.98] transition-transform">
                       Login / Register
                     </Link>
                   </div>

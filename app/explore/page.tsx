@@ -36,17 +36,15 @@ export default function ExploreTournamentsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-32 pb-20 px-6 transition-colors duration-300">
+    <main className="min-h-screen bg-[var(--background)] pt-32 pb-20 px-6 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight text-slate-900 dark:text-white mb-4 transition-colors">
-            Explore{" "}
-            <span className="text-cyan-600 dark:text-cyan-500">
-              Tournaments
-            </span>
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight text-slate-900 mb-4 transition-colors">
+            Explore {/* Safe Accent Text */}
+            <span className="accent-text">Tournaments</span>
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 font-medium text-lg uppercase tracking-widest transition-colors">
+          <p className="text-slate-500 font-medium text-lg uppercase tracking-widest transition-colors">
             Find local matches, leagues, and live streams
           </p>
         </div>
@@ -55,7 +53,8 @@ export default function ExploreTournamentsPage() {
         <div className="max-w-2xl mx-auto mb-16">
           <div className="relative group">
             <Search
-              className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-500 transition-colors"
+              // Dynamically changes to your theme's accent color on focus
+              className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--accent)] transition-colors"
               size={20}
             />
             <input
@@ -63,7 +62,8 @@ export default function ExploreTournamentsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by tournament name or city..."
-              className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-full py-4 pl-14 pr-6 shadow-sm focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 text-lg font-medium"
+              // Stripped all dark: classes, using safe mapped variables and dynamic focus rings
+              className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-full py-4 pl-14 pr-6 shadow-sm focus:outline-none focus:border-[var(--accent)] transition-all placeholder:text-slate-400 text-lg font-medium"
             />
           </div>
         </div>
@@ -75,20 +75,17 @@ export default function ExploreTournamentsPage() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="h-64 bg-slate-200 dark:bg-slate-800/50 rounded-[2rem] animate-pulse transition-colors"
-              ></div>
+                // Uses mapped surface-2 background seamlessly
+                className="h-64 bg-slate-100 rounded-[2rem] animate-pulse transition-colors"></div>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTournaments.length === 0 ? (
               // Empty State (No search results or no tournaments at all)
-              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-[2rem] transition-colors bg-white/50 dark:bg-black/20 backdrop-blur-sm">
-                <Activity
-                  size={40}
-                  className="mx-auto text-slate-300 dark:text-slate-700 mb-4"
-                />
-                <h3 className="text-xl font-black uppercase tracking-widest text-slate-900 dark:text-white">
+              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[2rem] transition-colors bg-[var(--glass-bg)] backdrop-blur-sm">
+                <Activity size={40} className="mx-auto text-slate-400 mb-4" />
+                <h3 className="text-xl font-black uppercase tracking-widest text-slate-900">
                   No Tournaments Found
                 </h3>
                 <p className="text-slate-500 font-bold mt-2">
@@ -99,42 +96,48 @@ export default function ExploreTournamentsPage() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="mt-6 text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
-                  >
+                    className="mt-6 accent-text font-bold hover:underline">
                     Clear Search
                   </button>
                 )}
               </div>
             ) : (
-              // The Actual Tournament Cards (Reused from Homepage)
+              // The Actual Tournament Cards
               filteredTournaments.map((t) => (
                 <Link
                   key={t.id}
                   href={`/t/${t.id}/`}
-                  className="group block relative h-64 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all"
-                >
+                  className="group block relative h-64 rounded-[2rem] overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all">
                   <div
-                    className="absolute inset-0 bg-slate-300 dark:bg-slate-800 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    // Fallback background before image loads uses surface-2
+                    className="absolute inset-0 bg-slate-100 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                     style={{
                       backgroundImage: t.banner_url
                         ? `url(${t.banner_url})`
                         : "none",
                     }}
                   />
+
+                  {/* Keep gradient as dark to ensure white text is always readable over images */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-90"></div>
 
                   <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                    <span className="bg-teal-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded w-max mb-2 shadow-md">
+                    {/* Theme-Adaptive Format Badge */}
+                    <span className="accent-bg text-[var(--background)] text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded w-max mb-2 shadow-md">
                       {t.format || "T20"}
                     </span>
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-cyan-400 transition-colors drop-shadow-md">
+
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-[var(--accent)] transition-colors drop-shadow-md">
                       {t.name}
                     </h3>
+
                     <div className="flex justify-between items-center mt-2">
                       <p className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1 drop-shadow">
                         📍 {t.location || "Local Ground"}
                       </p>
-                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-cyan-500 transition-colors shadow-lg">
+
+                      {/* Hover Arrow dynamically matches theme */}
+                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[var(--accent)] transition-colors shadow-lg">
                         <ChevronRight size={16} />
                       </div>
                     </div>

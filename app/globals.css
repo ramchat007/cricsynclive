@@ -104,7 +104,7 @@ body {
 /* ============ TAILWIND COLOR MAPPING TO CSS VARIABLES ============ */
 
 /* Background Colors */
-/* :root[data-theme] .bg-white {
+ :root[data-theme] .bg-white {
   background-color: var(--surface-1) !important;
 }
 
@@ -130,7 +130,7 @@ body {
 }
 
 /* Border Colors */
-/* :root[data-theme] .border-slate-200,
+:root[data-theme] .border-slate-200,
 :root[data-theme] .border-gray-200 {
   border-color: var(--border-1) !important;
 }
@@ -143,7 +143,7 @@ body {
 }
 
 /* Text Colors - Foreground (Dark text on light/primary text) */
-/* :root[data-theme] .text-slate-900,
+:root[data-theme] .text-slate-900,
 :root[data-theme] .text-gray-900,
 :root[data-theme] .text-slate-800,
 :root[data-theme] .text-gray-800,
@@ -153,14 +153,14 @@ body {
 }
 
 /* Text Colors - Muted (Secondary text) */
-/* :root[data-theme] .text-slate-600,
+:root[data-theme] .text-slate-600,
 :root[data-theme] .text-gray-600,
 :root[data-theme] .text-slate-500,
 :root[data-theme] .text-gray-500,
 :root[data-theme] .text-slate-400,
 :root[data-theme] .text-gray-400 {
   color: var(--text-muted) !important;
-} */
+}
 
 /* Navbar specific styling */
 :root[data-theme] .navbar-bg {

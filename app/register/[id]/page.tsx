@@ -287,6 +287,10 @@ export default function PublicPlayerRegistration({
                     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
                   )}
                   options={{
+                    cropping: true,
+                    showSkipCropButton: false,
+                    croppingAspectRatio: 1,
+                    showCompletedButton: true,
                     multiple: false,
                     publicId: `payment_${tournamentId}_${formData.mobile_number}`,
                     tags: [tournamentId, "payment_proof"],
