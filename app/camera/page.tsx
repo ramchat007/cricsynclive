@@ -21,11 +21,22 @@ import {
   Video,
   Moon,
   Sun,
+  X
 } from "lucide-react";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// Removed the params requirement so it can live at /camera globally!
+const RESOLUTIONS = [
+  { label: "720p (HD)", width: 1280, height: 720 },
+  { label: "1080p (FHD)", width: 1920, height: 1080 },
+  { label: "4K (UHD)", width: 3840, height: 2160 },
+];
+
+const FRAMERATES = [
+  { label: "30 FPS", value: 30 },
+  { label: "60 FPS", value: 60 },
+];
+
 export default function GenericBroadcaster() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -40,12 +51,12 @@ export default function GenericBroadcaster() {
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [deviceId, setDeviceId] = useState<string>("");
-  const [cameraId, setCameraId] = useState("cam-1");
   const [isStreaming, setIsStreaming] = useState(false);
 
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOledSleep, setIsOledSleep] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [copiedObs, setCopiedObs] = useState(false);
   const [copiedRemote, setCopiedRemote] = useState(false);
@@ -53,7 +64,10 @@ export default function GenericBroadcaster() {
 
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState("");
-  const [resolution, setResolution] = useState("720p");
+  
+  // New Quality States
+  const [selectedRes, setSelectedRes] = useState(RESOLUTIONS[0]); // Default 720p
+  const [selectedFps, setSelectedFps] = useState(FRAMERATES[0]);  // Default 30fps
 
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
@@ -96,29 +110,20 @@ export default function GenericBroadcaster() {
 
     const loadCameras = async () => {
       try {
-        const tempStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter((d) => d.kind === "videoinput");
         setCameras(videoInputs);
-        const backCam = videoInputs.find(
-          (d) =>
-            d.label.toLowerCase().includes("back") ||
-            d.label.toLowerCase().includes("environment"),
-        );
+        const backCam = videoInputs.find((d) => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment"));
         if (backCam) setSelectedCamera(backCam.deviceId);
-        else if (videoInputs.length > 0)
-          setSelectedCamera(videoInputs[0].deviceId);
+        else if (videoInputs.length > 0) setSelectedCamera(videoInputs[0].deviceId);
         tempStream.getTracks().forEach((t) => t.stop());
       } catch (err) {}
     };
 
     loadCameras();
 
-    const handleFullscreenChange = () =>
-      setIsFullscreen(!!document.fullscreenElement);
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
@@ -129,49 +134,28 @@ export default function GenericBroadcaster() {
 
   // Sync state to remote
   useEffect(() => {
-    if (
-      isStreaming &&
-      currentConnectionIdRef.current &&
-      sigChannelRef.current
-    ) {
-      sigChannelRef.current
-        .send({
-          type: "broadcast",
-          event: "sync_state",
-          payload: {
-            capabilities: {
-              torch: torchSupported,
-              zoom: zoomCap,
-              exposure: exposureCap,
-            },
-            zoom: zoomLevel,
-            exposure: exposureLevel,
-            torch: torchOn,
-            isMuted: isMuted,
-            oled: isOledSleep,
-          },
-        })
-        .catch(() => {});
+    if (isStreaming && currentConnectionIdRef.current && sigChannelRef.current) {
+      sigChannelRef.current.send({
+        type: "broadcast",
+        event: "sync_state",
+        payload: {
+          capabilities: { torch: torchSupported, zoom: zoomCap, exposure: exposureCap },
+          zoom: zoomLevel,
+          exposure: exposureLevel,
+          torch: torchOn,
+          isMuted: isMuted,
+          oled: isOledSleep,
+        },
+      }).catch(() => {});
     }
   }, [isMuted, torchOn, zoomLevel, exposureLevel, isOledSleep, isStreaming]);
 
   // Telemetry updates
   useEffect(() => {
-    if (
-      !isStreaming ||
-      !currentConnectionIdRef.current ||
-      !peerConnectionRef.current
-    )
-      return;
+    if (!isStreaming || !currentConnectionIdRef.current || !peerConnectionRef.current) return;
     let lastBytesSent = 0;
     let lastTime = Date.now();
-    let cachedStats = {
-      fps: 0,
-      bitrate: 0,
-      latency: 0,
-      batteryLevel: 100,
-      isCharging: false,
-    };
+    let cachedStats = { fps: 0, bitrate: 0, latency: 0, batteryLevel: 100, isCharging: false };
 
     const telemetryInterval = setInterval(async () => {
       try {
@@ -186,62 +170,46 @@ export default function GenericBroadcaster() {
         if (peerConnectionRef.current) {
           const stats = await peerConnectionRef.current.getStats();
           stats.forEach((report) => {
-            if (
-              report.type === "outbound-rtp" &&
-              (report.kind === "video" || report.mediaType === "video")
-            ) {
-              if (report.framesPerSecond !== undefined)
-                cachedStats.fps = Math.round(report.framesPerSecond);
+            if (report.type === "outbound-rtp" && (report.kind === "video" || report.mediaType === "video")) {
+              if (report.framesPerSecond !== undefined) cachedStats.fps = Math.round(report.framesPerSecond);
               const bytes = report.bytesSent;
               const now = Date.now();
               if (lastBytesSent > 0 && bytes > lastBytesSent)
-                cachedStats.bitrate = Math.round(
-                  (8 * (bytes - lastBytesSent)) / (now - lastTime),
-                );
+                cachedStats.bitrate = Math.round((8 * (bytes - lastBytesSent)) / (now - lastTime));
               lastBytesSent = bytes || lastBytesSent;
               lastTime = now;
             }
-            if (
-              report.type === "candidate-pair" &&
-              report.state === "succeeded" &&
-              report.nominated
-            ) {
+            if (report.type === "candidate-pair" && report.state === "succeeded" && report.nominated) {
               if (report.currentRoundTripTime !== undefined)
-                cachedStats.latency = Math.round(
-                  report.currentRoundTripTime * 1000,
-                );
+                cachedStats.latency = Math.round(report.currentRoundTripTime * 1000);
             }
           });
         }
       } catch (e) {}
 
       if (sigChannelRef.current) {
-        sigChannelRef.current
-          .send({
-            type: "broadcast",
-            event: "telemetry",
-            payload: {
-              timestamp: Date.now(),
-              batteryLevel: cachedStats.batteryLevel,
-              isCharging: cachedStats.isCharging,
-              fps: cachedStats.fps,
-              bitrate: cachedStats.bitrate,
-              latency: cachedStats.latency,
-            },
-          })
-          .catch(() => {});
+        sigChannelRef.current.send({
+          type: "broadcast",
+          event: "telemetry",
+          payload: {
+            timestamp: Date.now(),
+            batteryLevel: cachedStats.batteryLevel,
+            isCharging: cachedStats.isCharging,
+            fps: cachedStats.fps,
+            bitrate: cachedStats.bitrate,
+            latency: cachedStats.latency,
+            resolution: selectedRes.label // Include resolution in telemetry
+          },
+        }).catch(() => {});
       }
     }, 3000);
 
     return () => clearInterval(telemetryInterval);
-  }, [isStreaming]);
+  }, [isStreaming, selectedRes]);
 
-  // NEW GLOBAL ROUTING LINKS
   const copyLinkUrl = (type: "obs" | "remote") => {
     if (type === "obs") {
-      navigator.clipboard.writeText(
-        `${origin}/camera/receiver?cam=${deviceId}`,
-      );
+      navigator.clipboard.writeText(`${origin}/camera/receiver?cam=${deviceId}`);
       setCopiedObs(true);
       setTimeout(() => setCopiedObs(false), 2000);
     } else {
@@ -261,29 +229,19 @@ export default function GenericBroadcaster() {
   };
 
   const mapHardwareCapabilities = (videoTrack: MediaStreamTrack) => {
-    let zCap = null,
-      eCap = null,
-      tCap = false;
+    let zCap = null, eCap = null, tCap = false;
     if (typeof videoTrack.getCapabilities === "function") {
       const caps = videoTrack.getCapabilities() as Record<string, any>;
       const settings = videoTrack.getSettings() as Record<string, any>;
       tCap = !!caps.torch;
       setTorchSupported(tCap);
       if (caps.zoom) {
-        zCap = {
-          min: caps.zoom.min,
-          max: caps.zoom.max,
-          step: caps.zoom.step || 0.1,
-        };
+        zCap = { min: caps.zoom.min, max: caps.zoom.max, step: caps.zoom.step || 0.1 };
         setZoomCap(zCap);
         setZoomLevel(settings.zoom || caps.zoom.min || 1);
       } else setZoomCap(null);
       if (caps.exposureCompensation) {
-        eCap = {
-          min: caps.exposureCompensation.min,
-          max: caps.exposureCompensation.max,
-          step: caps.exposureCompensation.step || 0.1,
-        };
+        eCap = { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, step: caps.exposureCompensation.step || 0.1 };
         setExposureCap(eCap);
         setExposureLevel(settings.exposureCompensation || 0);
       } else setExposureCap(null);
@@ -301,37 +259,7 @@ export default function GenericBroadcaster() {
     }
   };
 
-  const startSmoothZoom = (direction: number) => {
-    if (!activeStreamRef.current || !zoomCap) return;
-    const track = activeStreamRef.current.getVideoTracks()[0];
-    const stepSpeed = (zoomCap.max - zoomCap.min) * 0.015;
-    zoomIntervalRef.current = setInterval(() => {
-      setZoomLevel((prevZoom) => {
-        let newZoom = prevZoom + stepSpeed * direction;
-        if (newZoom >= zoomCap.max) newZoom = zoomCap.max;
-        if (newZoom <= zoomCap.min) newZoom = zoomCap.min;
-        if (track.applyConstraints)
-          track
-            .applyConstraints({ advanced: [{ zoom: newZoom }] } as any)
-            .catch(() => {});
-        return newZoom;
-      });
-    }, 40);
-  };
-
-  const stopSmoothZoom = () => {
-    if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
-  };
-
-  const snapZoom = async (targetVal: number) => {
-    if (!zoomCap) return;
-    let clamped = Math.min(Math.max(targetVal, zoomCap.min), zoomCap.max);
-    setZoomLevel(clamped);
-    await applyVideoConstraint({ zoom: clamped });
-  };
-
-  const handleExposureChange = async (e: any) => {
-    const val = Number(Number(e.target.value).toFixed(1));
+  const handleExposureChange = async (val: number) => {
     setExposureLevel(val);
     await applyVideoConstraint({ exposureCompensation: val });
   };
@@ -342,41 +270,35 @@ export default function GenericBroadcaster() {
     setTorchOn(newState);
   };
 
-  const switchLiveCamera = async (newDeviceId: string) => {
+  // Upgraded: Handles both physical camera switching AND quality hot-swapping
+  const switchLiveCamera = async (newDeviceId: string, res = selectedRes, fps = selectedFps) => {
     if (!isStreaming || !peerConnectionRef.current) return;
     try {
       setSelectedCamera(newDeviceId);
-      const width = resolution === "1080p" ? 1920 : 1280;
-      const height = resolution === "1080p" ? 1080 : 720;
+      
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: newDeviceId },
-          width: { ideal: width },
-          height: { ideal: height },
+          width: { ideal: res.width },
+          height: { ideal: res.height },
+          frameRate: { ideal: fps.value }
         },
         audio: true,
       });
 
-      newStream.getAudioTracks().forEach((track) => {
-        track.enabled = !isMuted;
-      });
+      newStream.getAudioTracks().forEach((track) => track.enabled = !isMuted);
       const videoTrack = newStream.getVideoTracks()[0];
       const { zCap, eCap, tCap } = mapHardwareCapabilities(videoTrack);
       setTorchOn(false);
 
       const senders = peerConnectionRef.current.getSenders();
-      const videoSender = senders.find(
-        (s) => s.track && s.track.kind === "video",
-      );
-      const audioSender = senders.find(
-        (s) => s.track && s.track.kind === "audio",
-      );
+      const videoSender = senders.find((s) => s.track && s.track.kind === "video");
+      const audioSender = senders.find((s) => s.track && s.track.kind === "audio");
+      
       if (videoSender) await videoSender.replaceTrack(videoTrack);
-      if (audioSender)
-        await audioSender.replaceTrack(newStream.getAudioTracks()[0]);
+      if (audioSender) await audioSender.replaceTrack(newStream.getAudioTracks()[0]);
 
-      if (activeStreamRef.current)
-        activeStreamRef.current.getTracks().forEach((t) => t.stop());
+      if (activeStreamRef.current) activeStreamRef.current.getTracks().forEach((t) => t.stop());
       activeStreamRef.current = newStream;
       setLocalStream(newStream);
 
@@ -394,18 +316,17 @@ export default function GenericBroadcaster() {
           },
         });
       }
-    } catch (err) {}
+    } catch (err) {
+        setError(`Failed to apply ${res.label} resolution to this camera.`);
+    }
   };
 
-  const handleCycleCamera = () => {
-    if (cameras.length <= 1) return;
-    const currentIndex = cameras.findIndex(
-      (c) => c.deviceId === selectedCamera,
-    );
-    const nextIndex = (currentIndex + 1) % cameras.length;
-    const nextCamId = cameras[nextIndex].deviceId;
-    if (isStreaming) switchLiveCamera(nextCamId);
-    else setSelectedCamera(nextCamId);
+  const handleQualityChange = async (res: any, fps: any) => {
+    setSelectedRes(res);
+    setSelectedFps(fps);
+    if (isStreaming) {
+      await switchLiveCamera(selectedCamera, res, fps);
+    }
   };
 
   const handleStartStream = async () => {
@@ -419,34 +340,30 @@ export default function GenericBroadcaster() {
         await supabase.removeChannel(dbChannelRef.current);
         dbChannelRef.current = null;
       }
-      if (activeStreamRef.current)
-        activeStreamRef.current.getTracks().forEach((t) => t.stop());
+      if (activeStreamRef.current) activeStreamRef.current.getTracks().forEach((t) => t.stop());
 
-      // Use the deviceId purely as the connection room!
       const connectionId = deviceId;
       currentConnectionIdRef.current = connectionId;
 
-      const width = resolution === "1080p" ? 1920 : 1280;
-      const height = resolution === "1080p" ? 1080 : 720;
       const videoConstraints = selectedCamera
         ? {
             deviceId: { exact: selectedCamera },
-            width: { ideal: width },
-            height: { ideal: height },
+            width: { ideal: selectedRes.width },
+            height: { ideal: selectedRes.height },
+            frameRate: { ideal: selectedFps.value }
           }
         : {
             facingMode: "environment",
-            width: { ideal: width },
-            height: { ideal: height },
+            width: { ideal: selectedRes.width },
+            height: { ideal: selectedRes.height },
+            frameRate: { ideal: selectedFps.value }
           };
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: videoConstraints,
         audio: true,
       });
-      stream.getAudioTracks().forEach((track) => {
-        track.enabled = !isMuted;
-      });
+      stream.getAudioTracks().forEach((track) => track.enabled = !isMuted);
       const videoTrack = stream.getVideoTracks()[0];
 
       const { zCap, tCap, eCap } = mapHardwareCapabilities(videoTrack);
@@ -457,10 +374,7 @@ export default function GenericBroadcaster() {
       peerConnectionRef.current = pc;
 
       pc.onconnectionstatechange = () => {
-        if (
-          pc.connectionState === "disconnected" ||
-          pc.connectionState === "failed"
-        ) {
+        if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
           setError("⚠️ CONNECTION LOST! Please Stop and Go Live again.");
         } else if (pc.connectionState === "connected") setError("");
       };
@@ -486,16 +400,13 @@ export default function GenericBroadcaster() {
       });
       setError("Connecting...");
 
-      // Store offer in Supabase purely based on connectionId (which is just the deviceId)
       await supabase.from("webrtc_signals").upsert({
-        match_id: connectionId, // Still using this column name, but providing the generic device ID
+        match_id: connectionId, 
         offer: JSON.parse(JSON.stringify(pc.localDescription)),
         status: "live",
       });
 
-      const signalingChannel = supabase.channel(
-        `webrtc_broadcast_${connectionId}`,
-      );
+      const signalingChannel = supabase.channel(`webrtc_broadcast_${connectionId}`);
       sigChannelRef.current = signalingChannel;
 
       signalingChannel.on("broadcast", { event: "ptz_command" }, (message) => {
@@ -515,9 +426,7 @@ export default function GenericBroadcaster() {
         } else if (cmd.type === "mute") {
           setIsMuted(cmd.value);
           if (activeStreamRef.current)
-            activeStreamRef.current
-              .getAudioTracks()
-              .forEach((t) => (t.enabled = !cmd.value));
+            activeStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = !cmd.value));
         } else if (cmd.type === "oled") setIsOledSleep(cmd.value);
         else if (cmd.type === "stop") handleStopStream();
         else if (cmd.type === "switch_camera") switchLiveCamera(cmd.value);
@@ -555,26 +464,17 @@ export default function GenericBroadcaster() {
         }
       });
 
-      const dbChannel = supabase.channel(
-        `webrtc_db_${connectionId}_${Date.now()}`,
-      );
+      const dbChannel = supabase.channel(`webrtc_db_${connectionId}_${Date.now()}`);
       dbChannelRef.current = dbChannel;
 
       dbChannel
         .on(
           "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "webrtc_signals",
-            filter: `match_id=eq.${connectionId}`,
-          },
+          { event: "UPDATE", schema: "public", table: "webrtc_signals", filter: `match_id=eq.${connectionId}` },
           async (payload) => {
-            const newRow = payload.new as any; // <-- Fix is here
+            const newRow = payload.new as any; 
             if (newRow.answer && pc.signalingState === "have-local-offer") {
-              await pc.setRemoteDescription(
-                new RTCSessionDescription(newRow.answer),
-              );
+              await pc.setRemoteDescription(new RTCSessionDescription(newRow.answer));
               setError("");
             }
           },
@@ -592,8 +492,7 @@ export default function GenericBroadcaster() {
     setIsStreaming(false);
     setIsOledSleep(false);
     releaseWakeLock();
-    if (document.fullscreenElement && document.exitFullscreen)
-      document.exitFullscreen().catch(() => {});
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     setIsFullscreen(false);
     setTorchOn(false);
 
@@ -611,371 +510,246 @@ export default function GenericBroadcaster() {
     if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
 
     if (currentConnectionIdRef.current) {
-      await supabase
-        .from("webrtc_signals")
-        .delete()
-        .eq("match_id", currentConnectionIdRef.current);
+      await supabase.from("webrtc_signals").delete().eq("match_id", currentConnectionIdRef.current);
       currentConnectionIdRef.current = null;
     }
   };
 
-  const toggleMute = () => {
-    const newState = !isMuted;
-    setIsMuted(newState);
-    if (activeStreamRef.current)
-      activeStreamRef.current
-        .getAudioTracks()
-        .forEach((track) => (track.enabled = !newState));
-  };
-
-  const toggleFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    } catch (err) {}
-  };
-
-  const currentCameraLabel =
-    cameras.find((c) => c.deviceId === selectedCamera)?.label ||
-    "Default Camera";
-  const verticalSliderStyle: any = {
-    writingMode: "vertical-lr",
-    direction: "rtl",
-    WebkitAppearance: "slider-vertical",
-    appearance: "slider-vertical",
-  };
-
   return (
-    <div className="fixed inset-0 z-[9999] h-[100dvh] flex flex-col font-sans overflow-hidden bg-gray-50 text-gray-900">
-      <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; } * { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+    <div className="relative w-screen h-screen bg-black overflow-hidden font-sans">
+      
+      {/* OLED SLEEP OVERLAY */}
+      {isOledSleep && (
+        <div className="absolute inset-0 z-[60] bg-black flex flex-col items-center justify-center">
+          <Moon size={48} className="text-gray-800 mb-4" />
+          <p className="text-gray-600 font-bold tracking-widest uppercase text-sm">OLED Sleep Mode Active</p>
+          <p className="text-gray-700 text-xs mt-2">Streaming is continuing in the background.</p>
+          <button 
+            onClick={() => setIsOledSleep(false)}
+            className="mt-8 px-6 py-3 border border-gray-800 text-gray-400 rounded-xl hover:bg-gray-900 transition-colors uppercase text-xs font-black"
+          >
+            Wake Screen
+          </button>
+        </div>
+      )}
 
       {error && (
-        <div className="absolute top-4 left-4 right-4 bg-red-500 text-white text-xs font-bold p-3 rounded-xl text-center z-50 shadow-2xl flex items-center justify-center gap-2">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 text-white px-4 py-2 rounded-xl flex items-center gap-2 backdrop-blur-md text-sm font-bold shadow-2xl">
           <AlertCircle size={16} /> {error}
         </div>
       )}
 
-      {isOledSleep && (
-        <div
-          onClick={() => setIsOledSleep(false)}
-          className="fixed inset-0 z-[99999] bg-black flex items-center justify-center cursor-pointer"
-        >
-          <div className="flex flex-col items-center opacity-30">
-            <Moon size={48} className="text-indigo-500 mb-4" />
-            <p className="text-white text-xs font-black uppercase tracking-widest">
-              OLED Sleep Mode
-            </p>
-            <p className="text-gray-500 text-[10px] mt-2">
-              Tap anywhere to wake screen
-            </p>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-full object-cover"
+      />
+
+      {/* TOP CONTROLS */}
+      <div className="absolute top-0 left-0 w-full p-4 sm:p-6 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-start z-40">
+        <div>
+           {isStreaming && (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span className="text-white font-black tracking-widest uppercase text-xs">Live Broadcast</span>
+                </div>
+                <div className="bg-black/40 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-full w-max flex items-center gap-1">
+                    {selectedRes.label} @ {selectedFps.label}
+                </div>
+              </div>
+           )}
+        </div>
+        
+        <div className="flex gap-2">
+            <button onClick={() => setShowSettings(true)} className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/10">
+                <Settings2 size={20} />
+            </button>
+            <button
+                onClick={() => {
+                    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+                    else document.exitFullscreen().catch(() => {});
+                }}
+                className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/10"
+            >
+                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
+        </div>
+      </div>
+
+      {/* CENTER CONNECTION HUB (Only visible when not streaming) */}
+      {!isStreaming && !isOledSleep && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 p-4">
+          <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-8 w-full max-w-md shadow-2xl flex flex-col items-center text-center">
+            
+            <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6">
+              <Camera size={32} className="text-blue-400" />
+            </div>
+            
+            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Camera Hub</h2>
+            <p className="text-gray-400 text-sm mb-6">Connect this device to OBS or control it remotely.</p>
+
+            <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Device ID</span>
+                <button onClick={regenerateId} className="text-blue-400 flex items-center gap-1 text-[10px] font-bold uppercase hover:text-blue-300">
+                  <RefreshCw size={12} /> Regenerate
+                </button>
+              </div>
+              <p className="font-mono text-xl font-black text-white tracking-widest">{deviceId}</p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full mb-8">
+              <button onClick={() => copyLinkUrl("obs")} className="flex-1 bg-white/10 hover:bg-white/20 border border-white/10 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                {copiedObs ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} className="text-gray-300" />}
+                <span className="text-xs font-black uppercase text-white tracking-widest">{copiedObs ? "Copied" : "OBS Link"}</span>
+              </button>
+              <button onClick={() => copyLinkUrl("remote")} className="flex-1 bg-white/10 hover:bg-white/20 border border-white/10 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                {copiedRemote ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} className="text-gray-300" />}
+                <span className="text-xs font-black uppercase text-white tracking-widest">{copiedRemote ? "Copied" : "Remote Link"}</span>
+              </button>
+            </div>
+
+            <button
+              onClick={handleStartStream}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-[0_0_40px_rgba(59,130,246,0.4)]"
+            >
+              <Play size={20} fill="currentColor" /> Go Live
+            </button>
           </div>
         </div>
       )}
 
-      {!isStreaming ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto bg-gray-50">
-          <div className="w-full max-w-md p-6 rounded-3xl border shadow-2xl bg-white border-gray-200">
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Settings2 size={24} />
-              </div>
-              <h2 className="text-xl font-black uppercase tracking-tight text-gray-900">
-                Broadcast Setup
-              </h2>
+      {/* BOTTOM CONTROLS (Only visible when streaming) */}
+      {isStreaming && !isOledSleep && (
+        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 to-transparent flex flex-col gap-4 z-40">
+          
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsOledSleep(true)}
+                className="w-14 h-14 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-gray-300 transition-colors hover:text-white"
+              >
+                <Moon size={24} />
+              </button>
+              <button
+                onClick={() => {
+                  const newState = !isMuted;
+                  setIsMuted(newState);
+                  if (activeStreamRef.current) activeStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newState);
+                }}
+                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors ${
+                  isMuted ? "bg-red-500/20 border-red-500/50 text-red-400" : "bg-black/50 border-white/10 text-gray-300 hover:text-white"
+                }`}
+              >
+                {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
+              </button>
+              {torchSupported && (
+                <button
+                  onClick={toggleTorch}
+                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors ${
+                    torchOn ? "bg-amber-500/20 border-amber-500/50 text-amber-400" : "bg-black/50 border-white/10 text-gray-300 hover:text-white"
+                  }`}
+                >
+                  {torchOn ? <Flashlight size={24} /> : <ZapOff size={24} />}
+                </button>
+              )}
             </div>
 
-            <div className="bg-slate-900 rounded-2xl p-4 mb-6 text-white shadow-inner">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Device ID
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded">
-                    {deviceId}
-                  </span>
-                  <button
-                    onClick={regenerateId}
-                    className="p-1 hover:bg-slate-800 rounded text-slate-400"
-                  >
-                    <RefreshCw size={12} />
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => copyLinkUrl("obs")}
-                  className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors"
-                >
-                  {copiedObs ? (
-                    <Check size={14} className="text-emerald-400" />
-                  ) : (
-                    <Copy size={14} className="text-slate-400" />
-                  )}{" "}
-                  OBS Link
-                </button>
-                <button
-                  onClick={() => copyLinkUrl("remote")}
-                  className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-colors"
-                >
-                  {copiedRemote ? (
-                    <Check size={14} className="text-emerald-400" />
-                  ) : (
-                    <Copy size={14} className="text-slate-400" />
-                  )}{" "}
-                  Remote Link
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">
-                  Camera Name
-                </label>
-                <select
-                  className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500"
-                  value={cameraId}
-                  onChange={(e) => setCameraId(e.target.value)}
-                >
-                  <option value="cam-1">Camera 1 (Main / Bowler)</option>
-                  <option value="cam-2">Camera 2 (Square Leg)</option>
-                  <option value="cam-3">Camera 3 (Boundary / Roving)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">
-                  Active Lens
-                </label>
-                <button
-                  onClick={handleCycleCamera}
-                  disabled={cameras.length <= 1}
-                  className={`w-full flex items-center justify-between border rounded-xl px-4 py-3 text-xs font-bold outline-none transition-all ${cameras.length > 1 ? "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200 active:scale-95 cursor-pointer" : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"}`}
-                >
-                  <span className="truncate pr-2">{currentCameraLabel}</span>
-                  {cameras.length > 1 && (
-                    <RefreshCw size={16} className="text-teal-500 shrink-0" />
-                  )}
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">
-                    Resolution
-                  </label>
-                  <select
-                    className="w-full border rounded-xl px-4 py-3 bg-gray-50 text-xs font-bold text-gray-700 outline-none focus:border-teal-500"
-                    value={resolution}
-                    onChange={(e) => setResolution(e.target.value)}
-                  >
-                    <option value="720p">720p (Smooth)</option>
-                    <option value="1080p">1080p (FHD)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-gray-500">
-                    Microphone
-                  </label>
-                  <button
-                    onClick={toggleMute}
-                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-xs font-black uppercase tracking-wider transition-all ${isMuted ? "border-red-500 text-red-500 bg-red-50" : "border-gray-200 text-gray-700 bg-gray-50"}`}
-                  >
-                    {isMuted ? (
-                      <>
-                        <MicOff size={16} /> Muted
-                      </>
-                    ) : (
-                      <>
-                        <Mic size={16} /> Active
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
             <button
-              onClick={handleStartStream}
-              className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black py-4 rounded-xl uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(20,184,166,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2"
+              onClick={handleStopStream}
+              className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_20px_rgba(239,68,68,0.5)]"
             >
-              <Play size={18} fill="currentColor" /> Go Live
+              <Square size={20} fill="currentColor" />
             </button>
           </div>
         </div>
-      ) : (
-        <div className="flex-1 relative bg-black flex flex-col justify-end overflow-hidden">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+      )}
 
-          <div className="relative z-10 w-full p-4 flex flex-col gap-4 pointer-events-none">
-            <div className="absolute right-4 bottom-[80px] flex flex-col gap-2 pointer-events-auto">
-              {zoomCap && (
-                <div className="bg-black/60 backdrop-blur-xl rounded-xl p-1.5 border border-white/10 flex flex-col gap-1 mb-2 shadow-2xl">
-                  <span className="text-[8px] text-white/50 text-center font-black uppercase tracking-widest mb-1 mt-1">
-                    Framing
-                  </span>
-                  <button
-                    onClick={() => snapZoom(zoomCap.min)}
-                    className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] py-2 px-3 rounded shadow active:scale-95 uppercase tracking-widest"
-                  >
-                    Wide
-                  </button>
-                  <button
-                    onClick={() =>
-                      snapZoom(zoomCap.min + (zoomCap.max - zoomCap.min) * 0.3)
-                    }
-                    className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] py-2 px-3 rounded shadow active:scale-95 uppercase tracking-widest"
-                  >
-                    Pitch
-                  </button>
-                  <button
-                    onClick={() => snapZoom(zoomCap.max)}
-                    className="bg-white/10 hover:bg-teal-500/50 text-teal-400 font-black text-[10px] py-2 px-3 rounded shadow active:scale-95 uppercase tracking-widest"
-                  >
-                    Tight
-                  </button>
-                </div>
-              )}
-              {zoomCap && (
-                <div className="bg-black/60 backdrop-blur-xl rounded-full p-1 border border-white/10 flex flex-col items-center gap-1 shadow-2xl py-2">
-                  <button
-                    onMouseDown={() => startSmoothZoom(1)}
-                    onMouseUp={stopSmoothZoom}
-                    onMouseLeave={stopSmoothZoom}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      startSmoothZoom(1);
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      stopSmoothZoom();
-                    }}
-                    className="w-10 h-10 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-full flex items-center justify-center text-white select-none touch-none mb-1"
-                  >
-                    <Plus size={18} strokeWidth={3} />
-                  </button>
-                  <div className="h-24 w-full flex justify-center py-2">
-                    <input
-                      type="range"
-                      min={zoomCap.min}
-                      max={zoomCap.max}
-                      step={zoomCap.step || 0.1}
-                      value={zoomLevel}
-                      onChange={(e) => snapZoom(Number(e.target.value))}
-                      className="w-1.5 h-full appearance-none bg-white/20 rounded-full accent-cyan-400"
-                      style={verticalSliderStyle}
-                    />
-                  </div>
-                  <span className="text-[10px] font-black text-white/70 font-mono drop-shadow-md my-1">
-                    {Number(zoomLevel || 1).toFixed(1)}x
-                  </span>
-                  <button
-                    onMouseDown={() => startSmoothZoom(-1)}
-                    onMouseUp={stopSmoothZoom}
-                    onMouseLeave={stopSmoothZoom}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      startSmoothZoom(-1);
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      stopSmoothZoom();
-                    }}
-                    className="w-10 h-10 bg-white/10 hover:bg-white/20 active:bg-teal-500 rounded-full flex items-center justify-center text-white select-none touch-none mt-1"
-                  >
-                    <Minus size={18} strokeWidth={3} />
-                  </button>
-                </div>
-              )}
+      {/* SETTINGS MODAL (Resolution / FPS / Camera Swap) */}
+      {showSettings && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+          <div className="w-full sm:w-[400px] bg-slate-900 border border-white/10 sm:rounded-[2.5rem] rounded-t-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
+            
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-white font-black uppercase tracking-widest text-lg flex items-center gap-2">
+                <Video size={20} className="text-emerald-400"/> Camera Settings
+              </h2>
+              <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-white bg-white/5 p-2 rounded-full"><X size={16}/></button>
             </div>
 
-            {exposureCap && (
-              <div className="absolute left-4 bottom-[80px] bg-black/60 backdrop-blur-xl p-3 rounded-full border border-white/10 shadow-2xl h-48 flex flex-col items-center justify-between pointer-events-auto">
-                <Sun size={14} className="text-amber-400 drop-shadow-md" />
-                <input
-                  type="range"
-                  min={exposureCap.min}
-                  max={exposureCap.max}
-                  step={exposureCap.step || 0.1}
-                  value={Number(exposureLevel || 0)}
-                  onChange={handleExposureChange}
-                  className="w-2 h-24 appearance-none bg-white/20 rounded-full accent-amber-400 outline-none flex-1 my-2"
-                  style={verticalSliderStyle}
-                />
-                <span className="text-[8px] font-mono text-white/80 font-black">
-                  {Number(exposureLevel) > 0 ? "+" : ""}
-                  {Number(exposureLevel || 0).toFixed(1)}
-                </span>
+            <div className="space-y-6">
+              
+              {/* Lens Selection */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Select Lens</label>
+                <select
+                  value={selectedCamera}
+                  onChange={(e) => {
+                    setSelectedCamera(e.target.value);
+                    if (isStreaming) switchLiveCamera(e.target.value, selectedRes, selectedFps);
+                  }}
+                  className="w-full bg-slate-800 border border-white/10 text-white rounded-xl py-4 px-4 text-sm font-bold outline-none focus:border-emerald-500"
+                >
+                  {cameras.map((c) => (
+                    <option key={c.deviceId} value={c.deviceId}>{c.label || `Camera ${c.deviceId.substring(0, 5)}`}</option>
+                  ))}
+                </select>
               </div>
-            )}
 
-            <div className="flex justify-between items-center gap-2 overflow-x-auto pb-2 mt-auto bg-gradient-to-t from-black/90 to-transparent p-4 -mx-4 -mb-4 pointer-events-auto">
-              <button
-                onClick={() => setIsOledSleep(true)}
-                className="flex items-center gap-2 border rounded-full px-4 py-2 backdrop-blur-xl bg-black/40 border-white/10 active:scale-95 text-cyan-400 shadow-xl shrink-0"
-              >
-                <Moon size={16} />{" "}
-                <span className="text-white text-[10px] font-bold uppercase">
-                  Save Battery
-                </span>
-              </button>
+              {/* Resolution Selector */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Video Resolution</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {RESOLUTIONS.map((res) => (
+                    <button
+                      key={res.label}
+                      onClick={() => handleQualityChange(res, selectedFps)}
+                      className={`py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                        selectedRes.label === res.label 
+                        ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400" 
+                        : "bg-slate-800 border-transparent text-slate-300 hover:bg-slate-700"
+                      }`}
+                    >
+                      {res.label.split(" ")[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={handleCycleCamera}
-                  disabled={cameras.length <= 1}
-                  className={`flex items-center gap-2 border rounded-full px-3 py-2 backdrop-blur-xl transition-all shadow-xl ${cameras.length > 1 ? "bg-black/40 border-white/10 active:scale-95 cursor-pointer" : "bg-black/20 border-white/5 opacity-50"}`}
-                >
-                  <Video
-                    size={16}
-                    className={
-                      cameras.length > 1 ? "text-white" : "text-gray-500"
-                    }
-                  />
-                  {cameras.length > 1 && (
-                    <RefreshCw size={12} className="text-white/70" />
-                  )}
-                </button>
-                {torchSupported && (
-                  <button
-                    onClick={toggleTorch}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-xl active:scale-95 border ${torchOn ? "bg-amber-500 border-amber-400 text-black" : "bg-black/40 border-white/10 text-white backdrop-blur-xl"}`}
-                  >
-                    {torchOn ? <Flashlight size={16} /> : <ZapOff size={16} />}
-                  </button>
-                )}
-                <button
-                  onClick={toggleFullscreen}
-                  className="w-10 h-10 rounded-full flex items-center justify-center shadow-xl active:scale-95 border border-white/10 bg-black/40 text-white backdrop-blur-xl"
-                >
-                  {isFullscreen ? (
-                    <Minimize size={16} />
-                  ) : (
-                    <Maximize size={16} />
-                  )}
-                </button>
-                <button
-                  onClick={toggleMute}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shadow-xl active:scale-95 border border-white/10 ${isMuted ? "bg-red-500 text-white border-red-400" : "bg-black/40 text-white backdrop-blur-xl"}`}
-                >
-                  {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                </button>
-                <button
-                  onClick={handleStopStream}
-                  className="h-10 px-5 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center gap-2 text-[10px]"
-                >
-                  <Square size={12} fill="currentColor" /> Stop
-                </button>
+              {/* Frame Rate Selector */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Frame Rate</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {FRAMERATES.map((fps) => (
+                    <button
+                      key={fps.label}
+                      onClick={() => handleQualityChange(selectedRes, fps)}
+                      className={`py-3 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
+                        selectedFps.label === fps.label 
+                        ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400" 
+                        : "bg-slate-800 border-transparent text-slate-300 hover:bg-slate-700"
+                      }`}
+                    >
+                      {fps.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-3 text-center">Note: 4K @ 60FPS requires high-end hardware.</p>
               </div>
             </div>
+
+            <button 
+              onClick={() => setShowSettings(false)}
+              className="w-full mt-8 bg-white text-black font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-lg active:scale-95 transition-transform"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
