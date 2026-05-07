@@ -496,7 +496,7 @@ export default function MatchesPage({
               </>
             ) : (
               <>
-                <CalendarRange size={16} /> Scheduler Config
+                <CalendarRange size={16} /> Create Matches
               </>
             )}
           </button>
