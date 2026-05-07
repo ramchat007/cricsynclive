@@ -1,3 +1,5 @@
+"use client";
+
 export default function RecentBalls({
   deliveries = [],
   currentOvers,
@@ -5,8 +7,8 @@ export default function RecentBalls({
   deleteLastBall,
 }: any) {
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-      <p className="text-[10px] font-black text-slate-400 uppercase mb-4">
+    <div className="bg-[var(--surface-1)] p-6 rounded-[2rem] border border-[var(--border-1)] shadow-sm transition-colors duration-300">
+      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
         Recent Balls (Over {currentOvers})
       </p>
       <div className="flex flex-wrap gap-2">
@@ -21,26 +23,30 @@ export default function RecentBalls({
                 className={`w-10 h-10 rounded-full font-black text-xs border-2 transition-all hover:scale-110 
                 ${
                   d.is_wicket
-                    ? "bg-red-500 border-red-600 text-white"
+                    ? "bg-red-500 border-red-600 text-white shadow-sm shadow-red-500/30"
                     : d.runs_off_bat >= 4
-                      ? "bg-teal-500 border-teal-600 text-white"
+                      ? "bg-[var(--accent)] border-[var(--accent)] text-[var(--background)] shadow-sm shadow-[var(--accent)]/30"
                       : d.extras_type
-                        ? "bg-orange-100 dark:bg-orange-900/30 border-orange-200 text-orange-600"
-                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600"
-                }`}>
+                        ? "bg-orange-500/10 border-orange-500/20 text-orange-500"
+                        : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--border-1)]"
+                }`}
+              >
                 {d.is_wicket
                   ? "W"
                   : d.extras_type
                     ? `${d.extras_runs}${d.extras_type[0]}`
                     : d.runs_off_bat}
               </button>
+
+              {/* DELETE LATEST BALL BUTTON */}
               {i === 0 && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteLastBall(d.id);
                   }}
-                  className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-lg">
+                  className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center border-2 border-[var(--surface-1)] shadow-lg hover:scale-110 transition-transform"
+                >
                   ✕
                 </button>
               )}

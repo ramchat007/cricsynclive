@@ -67,7 +67,7 @@ export default function Navbar() {
     <>
       {/* 1. MAIN DESKTOP NAVBAR */}
       <nav className="sticky top-0 z-50 bg-[var(--glass-bg)] backdrop-blur-xl border-b border-slate-200 shadow-sm transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="mx-auto px-6 h-16 flex items-center justify-between">
           {/* LOGO */}
           {/* Note: Consider using an SVG with fill="currentColor" here so it adapts to dark mode automatically! */}
           <Link

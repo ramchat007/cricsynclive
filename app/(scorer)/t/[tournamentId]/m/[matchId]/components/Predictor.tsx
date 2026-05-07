@@ -96,10 +96,10 @@ export default function Predictor({ match, stats }: any) {
   if (!match || !stats) {
     return (
       <div className="text-center py-20 animate-in fade-in">
-        <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mx-auto mb-6 animate-pulse">
+        <div className="w-20 h-20 bg-[var(--surface-2)] rounded-full flex items-center justify-center text-3xl mx-auto mb-6 animate-pulse border border-[var(--border-1)]">
           📊
         </div>
-        <h3 className="font-black text-slate-400 uppercase tracking-widest text-lg">
+        <h3 className="font-black text-[var(--text-muted)] uppercase tracking-widest text-lg">
           Match Predictor
         </h3>
       </div>
@@ -107,22 +107,22 @@ export default function Predictor({ match, stats }: any) {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-in fade-in pb-10">
+    <div className="flex flex-col gap-6 w-full animate-in fade-in pb-10 transition-colors duration-300">
       {/* TOP ROW: WIN PREDICTOR & STANDINGS */}
       <div className="flex flex-col xl:flex-row gap-6 w-full">
-        {/* LEFT COLUMN: WIN PREDICTOR */}
-        <div className="flex-1 space-y-6">
-          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 px-2">
+        {/* LEFT COLUMN: WIN PREDICTOR (Added min-w-0 fix) */}
+        <div className="flex-1 min-w-0 space-y-6">
+          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
             Live Win Probability
           </h3>
 
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden p-6 sm:p-8">
+          <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 transition-colors">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center">
                 <TrendingUp size={20} />
               </div>
               <div>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                <p className="text-sm font-black text-[var(--foreground)] uppercase tracking-wider">
                   {match.current_innings === 1
                     ? "1st Innings Projection"
                     : "Run Chase Analysis"}
@@ -130,13 +130,13 @@ export default function Predictor({ match, stats }: any) {
               </div>
             </div>
 
-            <div className="relative h-6 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-6 flex shadow-inner">
+            <div className="relative h-6 w-full bg-[var(--surface-2)] rounded-full overflow-hidden mb-6 flex shadow-inner border border-[var(--border-1)]">
               <div
-                className="h-full bg-teal-500 transition-all duration-1000 ease-out flex items-center px-3"
+                className="h-full bg-[var(--accent)] transition-all duration-1000 ease-out flex items-center px-3"
                 style={{ width: `${winProb.batting}%` }}
               >
                 {winProb.batting > 15 && (
-                  <span className="text-[10px] font-black text-white">
+                  <span className="text-[10px] font-black text-[var(--background)]">
                     {winProb.batting}%
                   </span>
                 )}
@@ -154,33 +154,37 @@ export default function Predictor({ match, stats }: any) {
             </div>
 
             <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
-              <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
-                <div className="w-3 h-3 rounded-full bg-teal-500"></div>
-                {stats.battingTeam?.name || "Batting"}
+              <div className="flex items-center gap-2 text-[var(--accent)]">
+                <div className="w-3 h-3 rounded-full bg-[var(--accent)] shrink-0"></div>
+                <span className="truncate max-w-[100px] sm:max-w-none">
+                  {stats.battingTeam?.name || "Batting"}
+                </span>
                 <span className="text-xl ml-2">{winProb.batting}%</span>
               </div>
-              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2 text-rose-500">
                 <span className="text-xl mr-2">{winProb.bowling}%</span>
-                {stats.bowlingTeam?.name || "Bowling"}
-                <div className="w-3 h-3 rounded-full bg-rose-500"></div>
+                <span className="truncate max-w-[100px] sm:max-w-none">
+                  {stats.bowlingTeam?.name || "Bowling"}
+                </span>
+                <div className="w-3 h-3 rounded-full bg-rose-500 shrink-0"></div>
               </div>
             </div>
 
-            <hr className="border-slate-100 dark:border-slate-800 my-6" />
+            <hr className="border-[var(--border-1)] my-6" />
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  Current Run Rate
+              <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                  Current RR
                 </p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <p className="text-2xl font-black text-[var(--foreground)] flex items-center gap-2">
                   {stats.runRate}{" "}
-                  <Activity size={16} className="text-slate-400" />
+                  <Activity size={16} className="text-[var(--text-muted)]" />
                 </p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  Required Run Rate
+              <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                  Required RR
                 </p>
                 <p className="text-2xl font-black text-amber-500 flex items-center gap-2">
                   {match.current_innings === 2 ? stats.rrr : "N/A"}{" "}
@@ -189,7 +193,7 @@ export default function Predictor({ match, stats }: any) {
                     className={
                       match.current_innings === 2
                         ? "text-amber-500/50"
-                        : "text-slate-400"
+                        : "text-[var(--text-muted)]"
                     }
                   />
                 </p>
@@ -198,37 +202,40 @@ export default function Predictor({ match, stats }: any) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: REAL POINTS TABLE */}
-        <div className="flex-[1.2] space-y-6">
-          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 px-2">
+        {/* RIGHT COLUMN: REAL POINTS TABLE (Added min-w-0 fix) */}
+        <div className="flex-[1.2] min-w-0 space-y-6">
+          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
             Tournament Standings
           </h3>
 
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+          <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors w-full">
+            <div className="p-4 sm:p-5 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-500/20">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
                   <Award size={16} />
                 </div>
-                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
                   Group Stage
                 </span>
               </div>
               {isLoadingStandings && (
-                <Loader2 size={16} className="text-teal-500 animate-spin" />
+                <Loader2
+                  size={16}
+                  className="text-[var(--accent)] animate-spin"
+                />
               )}
             </div>
 
-            <div className="overflow-x-auto custom-scrollbar min-h-[300px]">
+            <div className="overflow-x-auto custom-scrollbar min-h-[300px] w-full">
               {isLoadingStandings ? (
-                <div className="flex flex-col items-center justify-center h-full py-20 text-slate-400">
+                <div className="flex flex-col items-center justify-center h-full py-20 text-[var(--text-muted)]">
                   <Loader2
                     size={32}
-                    className="animate-spin mb-4 text-slate-300 dark:text-slate-700"
+                    className="animate-spin mb-4 text-[var(--border-1)]"
                   />
                 </div>
               ) : standings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full py-20 text-slate-400">
+                <div className="flex flex-col items-center justify-center h-full py-20 text-[var(--text-muted)]">
                   <p className="text-xs font-bold uppercase tracking-widest">
                     No standings data found.
                   </p>
@@ -236,14 +243,14 @@ export default function Predictor({ match, stats }: any) {
               ) : (
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
-                    <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[9px] sm:text-[10px] uppercase font-black text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[10px] uppercase font-black text-[var(--text-muted)] border-b border-[var(--border-1)]">
                       <th className="p-3 sm:p-4 w-12 text-center">#</th>
                       <th className="p-3 sm:p-4">Team</th>
                       <th className="p-3 sm:p-4 text-center">P</th>
                       <th className="p-3 sm:p-4 text-center">W</th>
                       <th className="p-3 sm:p-4 text-center">L</th>
                       <th className="p-3 sm:p-4 text-center">NRR</th>
-                      <th className="p-3 sm:p-4 text-center text-teal-600 dark:text-teal-400">
+                      <th className="p-3 sm:p-4 text-center text-[var(--accent)]">
                         Pts
                       </th>
                     </tr>
@@ -255,40 +262,40 @@ export default function Predictor({ match, stats }: any) {
                       return (
                         <tr
                           key={row.id || idx}
-                          className={`border-b border-slate-50 dark:border-slate-800/50 transition-colors ${isPlayingMatch ? "bg-teal-50/50 dark:bg-teal-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800/30"}`}
+                          className={`border-b border-[var(--border-1)] transition-colors ${isPlayingMatch ? "bg-[var(--accent)]/10" : "hover:bg-[var(--surface-2)]"}`}
                         >
-                          <td className="p-3 sm:p-4 text-center text-slate-400 font-black">
+                          <td className="p-3 sm:p-4 text-center text-[var(--text-muted)] font-black">
                             {idx + 1}
                           </td>
                           <td className="p-3 sm:p-4">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`text-slate-900 dark:text-white font-black ${isPlayingMatch ? "text-teal-700 dark:text-teal-400" : ""}`}
+                                className={`text-[var(--foreground)] font-black ${isPlayingMatch ? "text-[var(--accent)]" : ""}`}
                               >
                                 {row.short_name || row.name}
                               </span>
                               {isPlayingMatch && (
-                                <span className="text-[8px] bg-teal-500 text-white px-2 py-0.5 rounded-full font-black tracking-widest animate-pulse">
+                                <span className="text-[8px] bg-[var(--accent)] text-[var(--background)] px-2 py-0.5 rounded-full font-black tracking-widest animate-pulse shadow-sm">
                                   LIVE
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="p-3 sm:p-4 text-center text-slate-500 dark:text-slate-400">
+                          <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
                             {row.played || 0}
                           </td>
-                          <td className="p-3 sm:p-4 text-center text-emerald-600 dark:text-emerald-400">
+                          <td className="p-3 sm:p-4 text-center text-emerald-500">
                             {row.won || 0}
                           </td>
-                          <td className="p-3 sm:p-4 text-center text-rose-500 dark:text-rose-400">
+                          <td className="p-3 sm:p-4 text-center text-rose-500">
                             {row.lost || 0}
                           </td>
-                          <td className="p-3 sm:p-4 text-center text-slate-500 dark:text-slate-400 font-mono">
+                          <td className="p-3 sm:p-4 text-center text-[var(--text-muted)] font-mono">
                             {Number(row.nrr) > 0
                               ? `+${row.nrr}`
                               : row.nrr || "0.000"}
                           </td>
-                          <td className="p-3 sm:p-4 text-center text-teal-600 dark:text-teal-400 font-black text-base">
+                          <td className="p-3 sm:p-4 text-center text-[var(--accent)] font-black text-base">
                             {row.points || 0}
                           </td>
                         </tr>
@@ -302,13 +309,12 @@ export default function Predictor({ match, stats }: any) {
         </div>
       </div>
 
-      {/* BOTTOM ROW: PRO MATCH ANALYSIS (THE NEW FEATURE!) */}
-      <div className="w-full">
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 px-2 mb-3">
+      {/* BOTTOM ROW: PRO MATCH ANALYSIS */}
+      <div className="w-full mt-2">
+        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2 mb-3">
           Tournament Impact
         </h3>
-        <div className="w-full bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 rounded-[2rem] p-6 sm:p-8 shadow-xl relative overflow-hidden border border-indigo-500/30">
-          {/* Decorative Glow */}
+        <div className="w-full bg-gradient-to-br from-indigo-900 via-indigo-950 to-indigo-900 rounded-[2rem] p-6 sm:p-8 shadow-xl relative overflow-hidden border border-indigo-500/30">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full pointer-events-none"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">

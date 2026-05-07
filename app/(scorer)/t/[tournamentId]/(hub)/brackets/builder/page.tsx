@@ -877,7 +877,7 @@ export default function BracketBuilder() {
     setActiveConfigMatch(null);
   };
 
-  // --- SUPABASE BULK SAVE (FIXED FOR UUID) ---
+  // --- SUPABASE BULK SAVE ---
   const handleSaveBracket = async () => {
     if (matches.length === 0) return alert("Add at least one match to save.");
     if (
@@ -925,7 +925,6 @@ export default function BracketBuilder() {
         .eq("tournament_id", id)
         .eq("is_bracket_match", true);
 
-      // Map "M1", "M2" -> actual UUID in Postgres
       const existingMatchMap = new Map(
         existingMatches?.map((m) => [m.bracket_match_id, m.id]) || [],
       );
@@ -982,7 +981,6 @@ export default function BracketBuilder() {
           teamBName = "BYE";
         }
 
-        // Build base payload (without ID so Postgres generates a UUID if new)
         const payload: any = {
           tournament_id: id,
           match_title: m.title,
@@ -1000,7 +998,6 @@ export default function BracketBuilder() {
           stage: rounds.find((r) => r.id === m.roundId)?.name || "Knockout",
         };
 
-        // If this bracket match already exists in Postgres, attach its UUID to update it
         if (existingMatchMap.has(m.id)) {
           payload.id = existingMatchMap.get(m.id);
         }
@@ -1008,7 +1005,6 @@ export default function BracketBuilder() {
         return payload;
       });
 
-      // 4. Bulk Upsert
       const { error: matchesError } = await supabase
         .from("matches")
         .upsert(matchPayloads, { onConflict: "id" });
@@ -1025,7 +1021,6 @@ export default function BracketBuilder() {
     }
   };
 
-  // --- SUPABASE BULK DELETE ---
   const handleClearEntireBracket = async () => {
     if (
       !window.confirm(
@@ -1036,13 +1031,11 @@ export default function BracketBuilder() {
 
     setLoading(true);
     try {
-      // 1. Wipe layout from Tournament
       await supabase
         .from("tournaments")
         .update({ bracket_layout: null })
         .eq("id", id);
 
-      // 2. Delete all matches associated with this bracket
       await supabase
         .from("matches")
         .delete()
@@ -1117,21 +1110,21 @@ export default function BracketBuilder() {
     return (
       <div className="relative mb-2">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400">
+          <span className="text-[9px] font-black uppercase text-[var(--text-muted)]">
             {slotKey === "slotA" ? "Team 1" : "Team 2"}
           </span>
           <button
             onClick={() => cycleSlotType(match.id, slotKey)}
             className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase border transition-colors ${
               slot.type === "link"
-                ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/30"
+                ? "bg-purple-500/10 text-purple-500 border-purple-500/30"
                 : slot.type === "loser_link"
-                  ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/30"
+                  ? "bg-rose-500/10 text-rose-500 border-rose-500/30"
                   : slot.type === "standing"
-                    ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30"
+                    ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
                     : slot.type === "bye"
-                      ? "bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-500/30"
-                      : "bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-500/30"
+                      ? "bg-gray-500/10 text-gray-500 border-gray-500/30"
+                      : "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30"
             }`}
           >
             {slot.type === "link"
@@ -1147,8 +1140,8 @@ export default function BracketBuilder() {
         </div>
 
         {slot.type === "bye" ? (
-          <div className="h-10 rounded-lg border flex items-center justify-center bg-gray-50 border-gray-200 dark:bg-white/5 dark:border-white/10 transition-colors">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-50 text-slate-500 dark:text-slate-400">
+          <div className="h-10 rounded-lg border flex items-center justify-center bg-[var(--surface-2)] border-[var(--border-1)] transition-colors">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-50 text-[var(--text-muted)]">
               BYE (Advances)
             </span>
           </div>
@@ -1158,46 +1151,56 @@ export default function BracketBuilder() {
             onDragOver={handleDragOver}
             className={`h-10 rounded-lg border flex items-center justify-center relative transition-colors ${
               slot.team
-                ? "bg-white border-teal-300 shadow-sm dark:bg-teal-900/20 dark:border-teal-500/30"
-                : "bg-gray-50 border-gray-200 border-dashed dark:bg-black/20 dark:border-white/10"
+                ? "bg-[var(--surface-2)] border-[var(--accent)]/50 shadow-sm"
+                : "bg-[var(--surface-1)] border-[var(--border-1)] border-dashed"
             }`}
           >
             {slot.team ? (
               <>
-                <span className="font-bold text-xs text-slate-900 dark:text-white">
+                <span className="font-bold text-xs text-[var(--foreground)]">
                   {slot.team.name}
                 </span>
                 <button
                   onClick={() => removeTeamFromSlot(match.id, slotKey)}
-                  className="absolute right-2 text-red-500 text-[10px] font-bold hover:text-red-600"
+                  className="absolute right-2 text-red-500 text-[10px] font-bold hover:opacity-75"
                 >
                   X
                 </button>
               </>
             ) : (
-              <span className="text-[10px] font-bold italic opacity-40 flex items-center gap-1 text-slate-900 dark:text-white">
+              <span className="text-[10px] font-bold italic opacity-40 flex items-center gap-1 text-[var(--foreground)]">
                 <Users size={12} /> Drag Team Here
               </span>
             )}
           </div>
         ) : slot.type === "standing" ? (
           <div className="flex items-center gap-2">
-            <div className="h-10 px-3 rounded-lg border flex-1 flex items-center gap-2 bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-500/30 transition-colors">
+            <div className="h-10 px-3 rounded-lg border flex-1 flex items-center gap-2 bg-amber-500/10 border-amber-500/30 transition-colors">
               <ListOrdered size={12} className="text-amber-500" />
               <select
                 value={slot.sourceMatchId}
                 onChange={(e) =>
                   updateSlotLink(match.id, slotKey, e.target.value)
                 }
-                className="w-full bg-transparent text-xs font-bold outline-none text-amber-900 dark:text-amber-200"
+                className="w-full bg-transparent text-xs font-bold outline-none text-amber-500"
               >
-                <option value="">Select Table Placement</option>
+                <option
+                  value=""
+                  className="bg-[var(--surface-1)] text-[var(--foreground)]"
+                >
+                  Select Table Placement
+                </option>
                 {["A", "B", "C", "D", "E", "F", "G", "H"].map((group) => (
-                  <optgroup key={group} label={`Group ${group}`}>
+                  <optgroup
+                    key={group}
+                    label={`Group ${group}`}
+                    className="bg-[var(--surface-1)] text-[var(--text-muted)]"
+                  >
                     {[1, 2, 3, 4].map((pos) => (
                       <option
                         key={`${group}-${pos}`}
                         value={`STANDING_${group}_${pos}`}
+                        className="text-[var(--foreground)]"
                       >
                         {pos}
                         {pos === 1
@@ -1217,7 +1220,9 @@ export default function BracketBuilder() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="h-10 px-3 rounded-lg border flex-1 flex items-center gap-2 bg-purple-50 border-purple-200 dark:bg-purple-900/10 dark:border-purple-500/30 transition-colors">
+            <div
+              className={`h-10 px-3 rounded-lg border flex-1 flex items-center gap-2 transition-colors ${slot.type === "loser_link" ? "bg-rose-500/10 border-rose-500/30" : "bg-purple-500/10 border-purple-500/30"}`}
+            >
               <LinkIcon
                 size={12}
                 className={
@@ -1231,15 +1236,22 @@ export default function BracketBuilder() {
                 onChange={(e) =>
                   updateSlotLink(match.id, slotKey, e.target.value)
                 }
-                className="w-full bg-transparent text-xs font-bold outline-none text-purple-900 dark:text-purple-200"
+                className={`w-full bg-transparent text-xs font-bold outline-none ${slot.type === "loser_link" ? "text-rose-500" : "text-purple-500"}`}
               >
-                <option value="">
+                <option
+                  value=""
+                  className="bg-[var(--surface-1)] text-[var(--foreground)]"
+                >
                   Select Match {slot.type === "loser_link" ? "Loser" : "Winner"}
                 </option>
                 {matches
                   .filter((m) => m.id !== match.id)
                   .map((m) => (
-                    <option key={m.id} value={m.id}>
+                    <option
+                      key={m.id}
+                      value={m.id}
+                      className="bg-[var(--surface-1)] text-[var(--foreground)]"
+                    >
                       {slot.type === "loser_link" ? "Loser" : "Winner"} of{" "}
                       {m.id} ({m.title})
                     </option>
@@ -1254,46 +1266,46 @@ export default function BracketBuilder() {
 
   if (loading)
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300">
+      <div className="h-screen flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
         <div className="text-center font-bold flex flex-col items-center gap-4">
-          <Activity className="animate-spin text-cyan-500" size={32} />
+          <Activity className="animate-spin text-[var(--accent)]" size={32} />
           Loading Bracket Builder...
         </div>
       </div>
     );
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-300">
+    <div className="h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)] overflow-hidden transition-colors duration-300">
       {/* HEADER */}
-      <div className="p-4 border-b flex justify-between items-center shrink-0 shadow-sm z-10 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-slate-200 dark:border-slate-800 transition-colors duration-300">
+      <div className="p-4 border-b flex justify-between items-center shrink-0 shadow-sm z-10 bg-[var(--background)]/80 backdrop-blur-md border-[var(--border-1)] transition-colors duration-300">
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg bg-[var(--surface-2)] hover:bg-[var(--surface-3)] transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
           <h1 className="text-lg font-black uppercase tracking-widest italic flex items-center gap-2">
-            <Shield className="text-cyan-500" /> Bracket Setup
+            <Shield className="text-[var(--accent)]" /> Bracket Setup
           </h1>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowWizard(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest border transition-all bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest border transition-all bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)] hover:bg-[var(--accent)]/20"
           >
             <Wand2 size={16} /> Auto-Generate
           </button>
           <button
             onClick={() => setShowGlobalConfig(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest border transition-all bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 dark:bg-white/5 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/10"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest border transition-all bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"
           >
             <Settings size={16} /> Global Defaults
           </button>
           <button
             onClick={handleSaveBracket}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-cyan-500 transition-all shadow-lg active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--foreground)] text-[var(--background)] rounded-lg font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg active:scale-95"
           >
             <Save size={16} /> Save Setup
           </button>
@@ -1302,9 +1314,9 @@ export default function BracketBuilder() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* SIDEBAR (Available Teams) */}
-        <div className="w-64 border-r flex flex-col shrink-0 bg-slate-100/50 dark:bg-[#0F1115]/80 backdrop-blur-sm border-slate-200 dark:border-white/5 transition-colors duration-300">
-          <div className="p-4 border-b z-10 shadow-sm border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0F1115] transition-colors duration-300">
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <div className="w-64 border-r flex flex-col shrink-0 bg-[var(--surface-1)]/50 backdrop-blur-sm border-[var(--border-1)] transition-colors duration-300">
+          <div className="p-4 border-b z-10 shadow-sm border-[var(--border-1)] bg-[var(--surface-1)] transition-colors duration-300">
+            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
               Available Teams
             </h2>
           </div>
@@ -1314,12 +1326,12 @@ export default function BracketBuilder() {
               .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
               .map(([groupName, groupTeams]) => (
                 <div key={groupName} className="space-y-2">
-                  <div className="flex items-center gap-2 mb-1 border-b pb-1 border-slate-200 dark:border-white/10 transition-colors">
-                    <Shield size={12} className="text-teal-500" />
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">
+                  <div className="flex items-center gap-2 mb-1 border-b pb-1 border-[var(--border-1)] transition-colors">
+                    <Shield size={12} className="text-[var(--accent)]" />
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--foreground)]">
                       {groupName}
                     </h3>
-                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-400 transition-colors">
+                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)] transition-colors">
                       {groupTeams.length}
                     </span>
                   </div>
@@ -1329,11 +1341,11 @@ export default function BracketBuilder() {
                       key={team.id}
                       draggable
                       onDragStart={(e) => handleDragStartTeam(e, team)}
-                      className="p-2.5 rounded-lg border flex items-center gap-2 cursor-grab active:cursor-grabbing hover:-translate-y-0.5 transition-all shadow-sm bg-white border-slate-200 hover:border-cyan-400 dark:bg-[#1C2128] dark:border-white/5 dark:hover:border-cyan-500/50"
+                      className="p-2.5 rounded-lg border flex items-center gap-2 cursor-grab active:cursor-grabbing hover:-translate-y-0.5 transition-all shadow-sm bg-[var(--surface-2)] border-[var(--border-1)] hover:border-[var(--accent)]"
                     >
                       <GripVertical
                         size={14}
-                        className="text-gray-400 opacity-50 shrink-0"
+                        className="text-[var(--text-muted)] shrink-0"
                       />
                       <span className="font-bold text-[11px] truncate leading-tight">
                         {team.name}
@@ -1343,7 +1355,7 @@ export default function BracketBuilder() {
                 </div>
               ))}
             {teams.length === 0 && !loading && (
-              <div className="text-center text-xs italic py-10 text-slate-500 dark:text-slate-400">
+              <div className="text-center text-xs italic py-10 text-[var(--text-muted)]">
                 No teams found.
               </div>
             )}
@@ -1351,7 +1363,7 @@ export default function BracketBuilder() {
         </div>
 
         {/* MAIN CANVAS (Rounds & Matches) */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden flex p-6 gap-6 custom-scrollbar bg-slate-200/30 dark:bg-black/20 transition-colors duration-300">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden flex p-6 gap-6 custom-scrollbar bg-[var(--surface-1)]/50 transition-colors duration-300">
           {rounds.map((round) => (
             <div key={round.id} className="w-80 flex flex-col shrink-0 h-full">
               <div className="flex justify-between items-center mb-4 px-1 group relative">
@@ -1364,12 +1376,12 @@ export default function BracketBuilder() {
                       ),
                     )
                   }
-                  className="font-black uppercase tracking-widest text-sm outline-none bg-transparent border-b border-transparent focus:border-cyan-500 transition-colors w-full pb-1 text-slate-900 dark:text-white"
+                  className="font-black uppercase tracking-widest text-sm outline-none bg-transparent border-b border-transparent focus:border-[var(--accent)] transition-colors w-full pb-1 text-[var(--foreground)]"
                   title="Click to edit round name"
                 />
                 <Edit3
                   size={14}
-                  className="absolute right-2 opacity-30 group-hover:opacity-100 transition-opacity text-slate-500 dark:text-slate-400 pointer-events-none"
+                  className="absolute right-2 opacity-30 group-hover:opacity-100 transition-opacity text-[var(--text-muted)] pointer-events-none"
                 />
               </div>
 
@@ -1388,15 +1400,15 @@ export default function BracketBuilder() {
                       }}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleMatchDrop(e, match.id, round.id)}
-                      className="p-3 rounded-xl border shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-400 transition-all bg-white border-slate-200 dark:bg-[#1C2128] dark:border-white/10"
+                      className="p-3 rounded-xl border shadow-sm cursor-grab active:cursor-grabbing hover:border-[var(--accent)]/50 transition-all bg-[var(--surface-1)] border-[var(--border-1)]"
                     >
-                      <div className="flex justify-between items-center border-b pb-2 mb-2 border-slate-100 dark:border-white/10 transition-colors">
+                      <div className="flex justify-between items-center border-b pb-2 mb-2 border-[var(--border-1)] transition-colors">
                         <div className="flex items-center gap-2">
                           <GripVertical
                             size={14}
-                            className="text-gray-400 opacity-50 shrink-0"
+                            className="text-[var(--text-muted)] shrink-0"
                           />
-                          <span className="bg-cyan-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded">
+                          <span className="bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 text-[9px] font-black px-1.5 py-0.5 rounded">
                             {match.id}
                           </span>
                           <input
@@ -1404,7 +1416,7 @@ export default function BracketBuilder() {
                             onChange={(e) =>
                               updateMatchTitle(match.id, e.target.value)
                             }
-                            className="text-xs font-bold outline-none bg-transparent w-24 text-slate-900 dark:text-white"
+                            className="text-xs font-bold outline-none bg-transparent w-24 text-[var(--foreground)]"
                             placeholder="Match Title"
                           />
                         </div>
@@ -1415,21 +1427,21 @@ export default function BracketBuilder() {
                               setTempMatchId(match.id);
                             }}
                             title="Match Settings"
-                            className="p-1.5 rounded-md transition-colors bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-400"
+                            className="p-1.5 rounded-md transition-colors bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
                           >
                             <Settings size={14} />
                           </button>
                           <button
                             onClick={() => deleteMatch(match.id)}
                             title="Delete Match"
-                            className="p-1.5 rounded-md transition-colors bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400"
+                            className="p-1.5 rounded-md transition-colors bg-red-500/10 hover:bg-red-500/20 text-red-500"
                           >
                             <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
                       {renderSlot(match, "slotA")}
-                      <div className="text-center text-[8px] font-black italic opacity-30 my-0.5 text-slate-900 dark:text-white">
+                      <div className="text-center text-[8px] font-black italic opacity-30 my-0.5 text-[var(--text-muted)]">
                         VS
                       </div>
                       {renderSlot(match, "slotB")}
@@ -1437,7 +1449,7 @@ export default function BracketBuilder() {
                   ))}
                 <button
                   onClick={() => addMatchToRound(round.id)}
-                  className="w-full py-3 rounded-xl border border-dashed flex items-center justify-center gap-2 text-xs font-bold uppercase transition-colors border-slate-300 text-slate-500 hover:bg-slate-50 hover:text-cyan-600 hover:border-cyan-300 dark:border-white/20 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-cyan-400 dark:hover:border-cyan-500/50"
+                  className="w-full py-3 rounded-xl border border-dashed flex items-center justify-center gap-2 text-xs font-bold uppercase transition-colors border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
                 >
                   <Plus size={14} /> Add Match Here
                 </button>
@@ -1447,7 +1459,7 @@ export default function BracketBuilder() {
           <div className="w-80 shrink-0 h-full">
             <button
               onClick={addRound}
-              className="w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-colors border-slate-300 text-slate-400 hover:bg-slate-50 hover:text-cyan-600 dark:border-white/10 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-cyan-400"
+              className="w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-colors border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
             >
               <Plus size={20} /> Add Next Round
             </button>
@@ -1457,19 +1469,19 @@ export default function BracketBuilder() {
 
       {/* 🔥 WIZARD MODAL */}
       {showWizard && (
-        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-[420px] p-6 rounded-3xl border shadow-2xl bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors">
-            <h3 className="text-lg font-black uppercase mb-4 text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-[420px] p-6 rounded-3xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
+            <h3 className="text-lg font-black uppercase mb-4 text-[var(--accent)] flex items-center gap-2">
               <Wand2 size={18} /> Bracket Wizard
             </h3>
 
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6 border border-[var(--border-1)] bg-[var(--surface-2)] p-1 rounded-xl">
               <button
                 onClick={() => setWizardMode("standard")}
                 className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all border ${
                   wizardMode === "standard"
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                    ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-sm"
+                    : "bg-transparent text-[var(--text-muted)] border-transparent hover:text-[var(--foreground)]"
                 }`}
               >
                 Knockout
@@ -1478,8 +1490,8 @@ export default function BracketBuilder() {
                 onClick={() => setWizardMode("groups_knockout")}
                 className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all border ${
                   wizardMode === "groups_knockout"
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                    ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-sm"
+                    : "bg-transparent text-[var(--text-muted)] border-transparent hover:text-[var(--foreground)]"
                 }`}
               >
                 Groups + KO
@@ -1488,8 +1500,8 @@ export default function BracketBuilder() {
                 onClick={() => setWizardMode("round_robin")}
                 className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all border ${
                   wizardMode === "round_robin"
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                    ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-sm"
+                    : "bg-transparent text-[var(--text-muted)] border-transparent hover:text-[var(--foreground)]"
                 }`}
               >
                 Round Robin
@@ -1498,13 +1510,13 @@ export default function BracketBuilder() {
 
             {wizardMode === "round_robin" ? (
               <>
-                <p className="text-[11px] leading-relaxed mb-4 font-bold text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] leading-relaxed mb-4 font-bold text-[var(--text-muted)]">
                   Generates a pure league schedule followed by Knockouts
                   (Semis/Finals).
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-2 block text-slate-500 dark:text-slate-400">
+                    <label className="text-[10px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
                       Total Teams
                     </label>
                     <input
@@ -1514,11 +1526,11 @@ export default function BracketBuilder() {
                       onChange={(e) =>
                         setWizardTeamsCount(Number(e.target.value))
                       }
-                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-2 block text-slate-500 dark:text-slate-400">
+                    <label className="text-[10px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
                       Top Teams Advance
                     </label>
                     <select
@@ -1526,7 +1538,7 @@ export default function BracketBuilder() {
                       onChange={(e) =>
                         setWizardRoundRobinAdvancing(Number(e.target.value))
                       }
-                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                     >
                       <option value={2}>Top 2 (Direct to Final)</option>
                       <option value={4}>Top 4 (Semi-Finals)</option>
@@ -1537,11 +1549,11 @@ export default function BracketBuilder() {
               </>
             ) : wizardMode === "standard" ? (
               <>
-                <p className="text-xs mb-4 text-slate-500 dark:text-slate-400">
+                <p className="text-xs mb-4 text-[var(--text-muted)]">
                   Enter the number of teams. The wizard will automatically map
                   perfect powers of 2 and place Byes where necessary.
                 </p>
-                <label className="text-[10px] font-bold uppercase mb-2 block text-slate-500 dark:text-slate-400">
+                <label className="text-[10px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
                   Total Teams
                 </label>
                 <input
@@ -1549,18 +1561,18 @@ export default function BracketBuilder() {
                   min="2"
                   value={wizardTeamsCount}
                   onChange={(e) => setWizardTeamsCount(Number(e.target.value))}
-                  className="w-full p-4 rounded-xl border outline-none font-black text-xl mb-4 bg-slate-50 border-slate-200 text-indigo-600 dark:bg-black/40 dark:border-white/10 dark:text-indigo-400 transition-colors"
+                  className="w-full p-4 rounded-xl border outline-none font-black text-xl mb-4 bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--accent)] focus:border-[var(--accent)] transition-colors"
                 />
               </>
             ) : (
               <>
-                <p className="text-[11px] leading-relaxed mb-4 font-bold text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] leading-relaxed mb-4 font-bold text-[var(--text-muted)]">
                   Generates an interleaved Round Robin Stage followed by a
                   Knockout bracket.
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                    <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                       Number of Groups
                     </label>
                     <input
@@ -1570,11 +1582,11 @@ export default function BracketBuilder() {
                       onChange={(e) =>
                         setWizardGroupCount(Number(e.target.value))
                       }
-                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                    <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                       Teams Per Group
                     </label>
                     <input
@@ -1584,18 +1596,18 @@ export default function BracketBuilder() {
                       onChange={(e) =>
                         setWizardTeamsPerGroup(Number(e.target.value))
                       }
-                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                      className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                     />
                   </div>
                 </div>
                 <div className="mb-4">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Advancing (Per Group)
                   </label>
                   <select
                     value={wizardAdvancing}
                     onChange={(e) => setWizardAdvancing(Number(e.target.value))}
-                    className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-3 rounded-xl border outline-none font-black text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   >
                     <option value={1}>
                       Top 1 (Total {wizardGroupCount * 1} advance)
@@ -1612,7 +1624,7 @@ export default function BracketBuilder() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl border mb-3 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30 transition-colors">
+                <div className="flex items-center gap-3 p-3 rounded-xl border mb-3 bg-[var(--surface-2)] border-[var(--border-1)] transition-colors">
                   <input
                     type="checkbox"
                     id="interleaveToggle"
@@ -1620,11 +1632,11 @@ export default function BracketBuilder() {
                     onChange={(e) =>
                       setWizardInterleaveGroups(e.target.checked)
                     }
-                    className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+                    className="w-5 h-5 rounded cursor-pointer"
                   />
                   <label
                     htmlFor="interleaveToggle"
-                    className="text-[10px] font-bold uppercase tracking-widest cursor-pointer text-slate-900 dark:text-white"
+                    className="text-[10px] font-bold uppercase tracking-widest cursor-pointer text-[var(--foreground)]"
                   >
                     Interleave Group Matches
                   </label>
@@ -1632,17 +1644,17 @@ export default function BracketBuilder() {
               </>
             )}
 
-            <div className="flex items-center gap-3 p-3 rounded-xl border mb-6 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30 transition-colors">
+            <div className="flex items-center gap-3 p-3 rounded-xl border mb-6 bg-[var(--surface-2)] border-[var(--border-1)] transition-colors">
               <input
                 type="checkbox"
                 id="thirdPlaceToggle"
                 checked={wizardIncludeThirdPlace}
                 onChange={(e) => setWizardIncludeThirdPlace(e.target.checked)}
-                className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+                className="w-5 h-5 rounded cursor-pointer"
               />
               <label
                 htmlFor="thirdPlaceToggle"
-                className="text-[10px] font-bold uppercase tracking-widest cursor-pointer text-slate-900 dark:text-white"
+                className="text-[10px] font-bold uppercase tracking-widest cursor-pointer text-[var(--foreground)]"
               >
                 Generate 3rd Place Match
               </label>
@@ -1651,13 +1663,13 @@ export default function BracketBuilder() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowWizard(false)}
-                className="flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                className="flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateWizard}
-                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-lg shadow-indigo-500/30"
+                className="flex-1 py-3 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-lg"
               >
                 Generate
               </button>
@@ -1668,26 +1680,26 @@ export default function BracketBuilder() {
 
       {/* 🔴 MATCH-LEVEL SETTINGS MODAL */}
       {activeConfigMatch && (
-        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-sm p-6 rounded-3xl border shadow-2xl bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors">
-            <h3 className="text-lg font-black uppercase mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-sm p-6 rounded-3xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
+            <h3 className="text-lg font-black uppercase mb-4 text-[var(--foreground)] flex items-center gap-2">
               <Calendar size={18} /> Match Settings
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                   Match ID (Code)
                 </label>
                 <input
                   type="text"
                   value={tempMatchId}
                   onChange={(e) => setTempMatchId(e.target.value.toUpperCase())}
-                  className="w-full p-2.5 rounded-xl border outline-none font-black text-sm uppercase tracking-wider bg-cyan-50 border-cyan-200 text-cyan-800 dark:bg-cyan-900/20 dark:border-cyan-500/30 dark:text-cyan-400 transition-colors"
+                  className="w-full p-2.5 rounded-xl border outline-none font-black text-sm uppercase tracking-wider bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Overs
                   </label>
                   <input
@@ -1711,11 +1723,11 @@ export default function BracketBuilder() {
                         ),
                       )
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Time
                   </label>
                   <input
@@ -1739,12 +1751,12 @@ export default function BracketBuilder() {
                         ),
                       )
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                   <Calendar size={10} /> Date
                 </label>
                 <input
@@ -1765,11 +1777,11 @@ export default function BracketBuilder() {
                       ),
                     )
                   }
-                  className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                  className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                   <MapPin size={10} /> Venue
                 </label>
                 <input
@@ -1794,13 +1806,13 @@ export default function BracketBuilder() {
                       ),
                     )
                   }
-                  className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                  className="w-full p-2.5 rounded-xl border outline-none font-bold text-sm bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                 />
               </div>
             </div>
             <button
               onClick={handleCloseSettingsModal}
-              className="w-full mt-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-all active:scale-95"
+              className="w-full mt-6 py-3 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] rounded-xl font-bold uppercase tracking-widest text-xs transition-all active:scale-95"
             >
               Done
             </button>
@@ -1810,19 +1822,19 @@ export default function BracketBuilder() {
 
       {/* 🟢 GLOBAL SETTINGS MODAL */}
       {showGlobalConfig && (
-        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-md p-6 rounded-3xl border shadow-2xl bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-colors">
-            <h3 className="text-lg font-black uppercase mb-1 text-cyan-600 dark:text-cyan-500 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-md p-6 rounded-3xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
+            <h3 className="text-lg font-black uppercase mb-1 text-[var(--foreground)] flex items-center gap-2">
               <Settings size={18} /> Global Match Settings
             </h3>
-            <p className="text-[10px] uppercase font-bold mb-4 text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] uppercase font-bold mb-4 text-[var(--text-muted)]">
               These defaults apply to all NEW matches and Auto-Schedules.
             </p>
 
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                     <Calendar size={10} /> Starting Date
                   </label>
                   <input
@@ -1834,11 +1846,11 @@ export default function BracketBuilder() {
                         date: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                     <Clock size={10} /> Start Time
                   </label>
                   <input
@@ -1850,12 +1862,12 @@ export default function BracketBuilder() {
                         time: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                   Default Venue
                 </label>
                 <input
@@ -1868,12 +1880,12 @@ export default function BracketBuilder() {
                       venue: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                  className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Overs
                   </label>
                   <input
@@ -1885,11 +1897,11 @@ export default function BracketBuilder() {
                         overs: Number(e.target.value),
                       })
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Duration (m)
                   </label>
                   <input
@@ -1901,11 +1913,11 @@ export default function BracketBuilder() {
                         matchDuration: Number(e.target.value),
                       })
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-slate-500 dark:text-slate-400">
+                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Gap (m)
                   </label>
                   <input
@@ -1917,7 +1929,7 @@ export default function BracketBuilder() {
                         matchGap: Number(e.target.value),
                       })
                     }
-                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-slate-50 border-slate-200 dark:bg-black/40 dark:border-white/10 dark:text-white transition-colors"
+                    className="w-full p-2.5 rounded-xl border outline-none text-sm font-bold bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] transition-colors"
                   />
                 </div>
               </div>
@@ -1926,19 +1938,19 @@ export default function BracketBuilder() {
             <div className="flex flex-col gap-2 mt-6">
               <button
                 onClick={handleClearEntireBracket}
-                className="w-full py-3 mb-2 rounded-xl font-black uppercase tracking-widest text-[10px] border transition-all flex justify-center items-center gap-2 shadow-sm bg-red-50 text-red-600 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-500 dark:border-red-500/30 dark:hover:bg-red-900/40"
+                className="w-full py-3 mb-2 rounded-xl font-black uppercase tracking-widest text-[10px] border transition-all flex justify-center items-center gap-2 shadow-sm bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
               >
                 <Trash2 size={14} /> Clear Entire Bracket
               </button>
               <button
                 onClick={applyChronologicalSettings}
-                className="w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] border transition-all bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-500/30 dark:hover:bg-purple-900/40"
+                className="w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] border transition-all bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20 hover:bg-[var(--accent)]/20"
               >
                 Auto-Schedule Current Matches
               </button>
               <button
                 onClick={() => setShowGlobalConfig(false)}
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-all active:scale-95"
+                className="w-full py-3 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] rounded-xl font-bold uppercase tracking-widest text-xs transition-all active:scale-95"
               >
                 Save Defaults & Close
               </button>

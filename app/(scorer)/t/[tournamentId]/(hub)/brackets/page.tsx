@@ -84,8 +84,11 @@ export default function BracketsViewPage({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400 transition-colors">
-        <Activity className="animate-spin text-cyan-500 mb-4" size={32} />
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] transition-colors">
+        <Activity
+          className="animate-spin text-[var(--accent)] mb-4"
+          size={32}
+        />
         <p className="font-bold uppercase tracking-widest text-xs">
           Syncing Live Bracket...
         </p>
@@ -97,20 +100,20 @@ export default function BracketsViewPage({
   if (!bracketData) {
     return (
       <div className="animate-in fade-in transition-colors duration-300">
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-6 gap-4">
-          <h2 className="text-2xl font-black uppercase text-slate-900 dark:text-white">
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border-1)] pb-4 mb-6 gap-4">
+          <h2 className="text-2xl font-black uppercase text-[var(--foreground)]">
             Tournament Bracket
           </h2>
         </div>
-        <div className="text-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] bg-white dark:bg-slate-900 transition-colors">
+        <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-[2rem] bg-[var(--surface-1)] transition-colors">
           <GitMerge
             size={40}
-            className="mx-auto text-slate-300 dark:text-slate-700 mb-4"
+            className="mx-auto text-[var(--text-muted)] mb-4"
           />
-          <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest mb-1">
+          <h3 className="text-lg font-black text-[var(--foreground)] uppercase tracking-widest mb-1">
             No Bracket Generated
           </h3>
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-6">
+          <p className="text-sm font-bold text-[var(--text-muted)] mb-6">
             {isAdmin
               ? "Use the Bracket Builder to create knockouts and auto-schedule matches."
               : "Check back later when the organizers publish the bracket."}
@@ -118,7 +121,7 @@ export default function BracketsViewPage({
           {isAdmin && (
             <Link
               href={`/t/${tournamentId}/brackets/builder`}
-              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-black text-xs uppercase tracking-widest px-6 py-4 rounded-xl shadow-lg transition-all active:scale-95"
+              className="inline-flex items-center gap-2 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] font-black text-xs uppercase tracking-widest px-6 py-4 rounded-xl shadow-lg transition-all active:scale-95"
             >
               <Wand2 size={16} /> Launch Bracket Builder
             </Link>
@@ -163,15 +166,13 @@ export default function BracketsViewPage({
       <div
         className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
           isWinner
-            ? "bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-500/30"
-            : "bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700"
+            ? "bg-[var(--accent)]/10 border-[var(--accent)]/30"
+            : "bg-[var(--surface-2)] border-[var(--border-1)]"
         }`}
       >
         <span
           className={`font-bold text-xs truncate max-w-[140px] ${
-            isWinner
-              ? "text-teal-700 dark:text-teal-400"
-              : "text-slate-900 dark:text-white"
+            isWinner ? "text-[var(--accent)]" : "text-[var(--foreground)]"
           } ${isBye ? "opacity-50 italic" : ""}`}
         >
           {isBye ? "BYE" : name}
@@ -180,11 +181,11 @@ export default function BracketsViewPage({
         {hasScore && !isBye && (
           <div className="flex items-baseline gap-1">
             <span
-              className={`font-black text-sm ${isWinner ? "text-teal-700 dark:text-teal-400" : "text-slate-900 dark:text-white"}`}
+              className={`font-black text-sm ${isWinner ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}
             >
               {score}/{wickets || 0}
             </span>
-            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
+            <span className="text-[9px] font-bold text-[var(--text-muted)]">
               ({overs || "0.0"})
             </span>
           </div>
@@ -196,27 +197,27 @@ export default function BracketsViewPage({
   // --- RENDER THE BRACKET TREE ---
   return (
     <div className="animate-in fade-in transition-colors duration-300">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-6 gap-4">
-        <h2 className="text-2xl font-black uppercase text-slate-900 dark:text-white">
+      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border-1)] pb-4 mb-6 gap-4">
+        <h2 className="text-2xl font-black uppercase text-[var(--foreground)]">
           Tournament Bracket
         </h2>
         {isAdmin && (
           <Link
             href={`/t/${tournamentId}/brackets/builder`}
-            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-md transition-all active:scale-95 shrink-0"
+            className="flex items-center gap-2 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-md transition-all active:scale-95 shrink-0"
           >
             <Shield size={16} /> Edit Blueprint
           </Link>
         )}
       </div>
 
-      <div className="flex overflow-x-auto overflow-y-hidden p-6 gap-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-sm custom-scrollbar min-h-[60vh] transition-colors">
+      <div className="flex overflow-x-auto overflow-y-hidden p-6 gap-6 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] shadow-sm custom-scrollbar min-h-[60vh] transition-colors">
         {bracketData.rounds?.map((round: any) => (
           <div
             key={round.id}
             className="w-[320px] flex flex-col shrink-0 h-full"
           >
-            <h3 className="font-black uppercase tracking-widest text-sm text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2 mb-4">
+            <h3 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)] border-b border-[var(--border-1)] pb-2 mb-4">
               {round.name}
             </h3>
             <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
@@ -245,8 +246,8 @@ export default function BracketsViewPage({
                       key={matchNode.id}
                       className={`relative p-1 rounded-2xl border shadow-sm transition-all ${
                         isLive
-                          ? "bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-500/30"
-                          : "bg-white border-slate-200 dark:bg-slate-950 dark:border-slate-800"
+                          ? "bg-red-500/10 border-red-500/30"
+                          : "bg-[var(--surface-1)] border-[var(--border-1)]"
                       }`}
                     >
                       {/* Live Badge */}
@@ -257,11 +258,11 @@ export default function BracketsViewPage({
                       )}
 
                       <div className="p-3">
-                        <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
-                          <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest transition-colors">
+                        <div className="flex justify-between items-center border-b border-[var(--border-1)] pb-2 mb-3">
+                          <span className="bg-[var(--surface-2)] text-[var(--text-muted)] text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest transition-colors">
                             {matchNode.id}
                           </span>
-                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate w-36 text-right transition-colors">
+                          <span className="text-xs font-bold text-[var(--text-muted)] truncate w-36 text-right transition-colors">
                             {matchNode.title}
                           </span>
                         </div>
@@ -283,11 +284,11 @@ export default function BracketsViewPage({
                       </div>
 
                       {/* Footer: Venue & Time */}
-                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-b-[1.2rem] p-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 transition-colors">
+                      <div className="bg-[var(--surface-2)] rounded-b-[1.2rem] p-3 border-t border-[var(--border-1)] flex items-center justify-between text-[10px] font-bold text-[var(--text-muted)] transition-colors">
                         <div className="flex items-center gap-1.5 truncate max-w-[150px]">
                           <MapPin
                             size={12}
-                            className="shrink-0 text-cyan-500"
+                            className="shrink-0 text-[var(--accent)]"
                           />
                           <span className="truncate">
                             {liveMatch?.venue ||
@@ -296,7 +297,10 @@ export default function BracketsViewPage({
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <Clock size={12} className="text-indigo-500" />
+                          <Clock
+                            size={12}
+                            className="text-[var(--text-muted)]"
+                          />
                           <span>{matchTime}</span>
                         </div>
                       </div>

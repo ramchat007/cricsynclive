@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen bg-[var(--background)] transition-colors duration-300 selection:bg-[var(--accent)] selection:text-white">
       {/* 1. GLOBAL BACKGROUND (z-0) */}
-      <div className="fixed inset-0 z-0 bg-[url('/light-stadium.png')] bg-cover bg-center bg-no-repeat opacity-70 transition-opacity duration-300" />
+      <div className="fixed inset-0 z-0 bg-[url('/light-stadium.png')] bg-cover bg-center bg-no-repeat opacity-20 transition-opacity duration-300" />
 
       {/* 2. GLOBAL OVERLAY (z-10) - Uses the global CSS variable for a perfect frosted blend */}
       <div className="fixed inset-0 z-10 pointer-events-none bg-[var(--overlay-bg)] transition-colors duration-300" />
@@ -13,7 +13,7 @@ export default function Home() {
       {/* 3. CONTENT WRAPPER (z-20) */}
       <div className="relative z-20">
         {/* --- HERO SECTION --- */}
-        <section className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-20">
+        <section className="min-h-[40vh] flex flex-col items-center justify-center text-center px-4 pt-20">
           <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-10 duration-1000">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none drop-shadow-xl text-slate-900 transition-colors duration-300">
               CricSync <br className="md:hidden" />{" "}
@@ -140,10 +140,11 @@ export default function Home() {
         </section>
 
         {/* --- CTA SECTION --- */}
-        <section className="py-24 flex items-center justify-center px-4">
+        <section className="py-14 flex items-center justify-center px-4">
           <Link
             href="/explore"
-            className="group flex items-center gap-3 bg-[var(--foreground)] text-[var(--background)] px-8 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all active:scale-95 hover:opacity-90">
+            className="group flex items-center gap-3 bg-[var(--foreground)] text-[var(--background)] px-8 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all active:scale-95 hover:opacity-90"
+          >
             <Search
               size={18}
               className="text-[var(--background)] transition-opacity"

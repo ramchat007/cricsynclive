@@ -122,13 +122,13 @@ export default function PlayersPage({
   });
 
   return (
-    <div className="animate-in fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-6 mb-6 gap-4">
+    <div className="animate-in fade-in transition-colors duration-300">
+      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border-1)] pb-6 mb-6 gap-4">
         <div>
-          <h2 className="text-2xl font-black uppercase text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-black uppercase text-[var(--foreground)]">
             Player Roster
           </h2>
-          <p className="text-sm font-bold text-slate-500">
+          <p className="text-sm font-bold text-[var(--text-muted)]">
             Manage {players.length} total registrations
           </p>
         </div>
@@ -136,25 +136,36 @@ export default function PlayersPage({
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
               size={16}
             />
             <input
               placeholder="Search name..."
               value={playerSearch}
               onChange={(e) => setPlayerSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-black border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-sm font-bold outline-none"
+              className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl py-2.5 pl-9 pr-4 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
             />
           </div>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-black border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none">
-            <option value="All">All Roles</option>
-            <option value="Batsman">Batsmen</option>
-            <option value="Bowler">Bowlers</option>
-            <option value="All-Rounder">All-Rounders</option>
-            <option value="Wicket-Keeper">Keepers</option>
+            className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-2.5 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+          >
+            <option value="All" className="bg-[var(--surface-1)]">
+              All Roles
+            </option>
+            <option value="Batsman" className="bg-[var(--surface-1)]">
+              Batsmen
+            </option>
+            <option value="Bowler" className="bg-[var(--surface-1)]">
+              Bowlers
+            </option>
+            <option value="All-Rounder" className="bg-[var(--surface-1)]">
+              All-Rounders
+            </option>
+            <option value="Wicket-Keeper" className="bg-[var(--surface-1)]">
+              Keepers
+            </option>
           </select>
         </div>
       </div>
@@ -163,13 +174,19 @@ export default function PlayersPage({
         {filteredPlayers.map((player) => (
           <div
             key={player.id}
-            className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+            className="bg-[var(--surface-1)] rounded-2xl p-4 border border-[var(--border-1)] shadow-sm relative overflow-hidden transition-all hover:border-[var(--accent)]/50 hover:shadow-md"
+          >
+            {/* Status Ribbon */}
             <div
-              className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rotate-45 ${player.status === "approved" ? "bg-teal-500" : "bg-orange-500"}`}
+              className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rotate-45 transition-colors ${
+                player.status === "approved"
+                  ? "bg-[var(--accent)]"
+                  : "bg-amber-500"
+              }`}
             />
             <div className="flex items-center gap-4">
               <div
-                className="w-16 h-16 shrink-0 rounded-2xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center"
+                className="w-16 h-16 shrink-0 rounded-2xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)]"
                 style={{
                   backgroundImage: player.photo_url
                     ? `url(${player.photo_url})`
@@ -177,14 +194,14 @@ export default function PlayersPage({
                 }}
               />
               <div className="flex-1 min-w-0 z-10">
-                <h4 className="font-black text-lg text-slate-900 dark:text-white truncate">
+                <h4 className="font-black text-lg text-[var(--foreground)] truncate">
                   {player.full_name}
                 </h4>
-                <p className="text-xs font-bold text-slate-500 mb-2">
+                <p className="text-xs font-bold text-[var(--text-muted)] mb-2">
                   {player.player_role}
                 </p>
                 <div className="flex gap-2">
-                  <span className="bg-slate-100 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded text-slate-600">
+                  <span className="bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)] text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded">
                     Shirt: {player.tshirt_size}
                   </span>
                   {isAdmin && (
@@ -193,12 +210,18 @@ export default function PlayersPage({
                         onClick={() =>
                           togglePlayerStatus(player.id, player.status)
                         }
-                        className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${player.status === "approved" ? "bg-teal-50 text-teal-600 hover:bg-red-50 hover:text-red-600" : "bg-orange-50 text-orange-600 hover:bg-teal-50 hover:text-teal-600"}`}>
+                        className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${
+                          player.status === "approved"
+                            ? "bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-red-500/10 hover:text-red-500"
+                            : "bg-amber-500/10 text-amber-600 hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]"
+                        }`}
+                      >
                         {player.status === "approved" ? "Revoke" : "Approve"}
                       </button>
                       <button
                         onClick={() => setEditingPlayer(player)}
-                        className="bg-slate-100 hover:bg-teal-500 text-slate-500 hover:text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors">
+                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--background)] text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors"
+                      >
                         Edit
                       </button>
 
@@ -207,8 +230,9 @@ export default function PlayersPage({
                           handleDeletePlayer(player.id, player.full_name)
                         }
                         title="Delete Player"
-                        className="p-2 bg-red-50 dark:bg-red-900/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all">
-                        <Trash2 size={16} />
+                        className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-[var(--background)] rounded-md transition-all"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </>
                   )}
@@ -217,13 +241,18 @@ export default function PlayersPage({
             </div>
           </div>
         ))}
+        {filteredPlayers.length === 0 && (
+          <div className="col-span-full py-12 text-center text-[var(--text-muted)] font-bold text-sm uppercase tracking-widest">
+            No players found.
+          </div>
+        )}
       </div>
 
       {/* EDIT PLAYER MODAL */}
       {editingPlayer && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-md p-6 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
-            <h2 className="text-xl font-black uppercase tracking-widest mb-6">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[var(--surface-1)] rounded-[2rem] w-full max-w-md p-6 border border-[var(--border-1)] shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar transition-colors">
+            <h2 className="text-xl font-black uppercase tracking-widest mb-6 text-[var(--foreground)]">
               Edit Player Profile
             </h2>
 
@@ -231,7 +260,7 @@ export default function PlayersPage({
               {/* Photo Upload */}
               <div className="flex items-center gap-4">
                 <div
-                  className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center border border-slate-200 dark:border-slate-700 shrink-0"
+                  className="w-16 h-16 rounded-2xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)] shrink-0"
                   style={{ backgroundImage: `url(${editingPlayer.photo_url})` }}
                 />
                 <CldUploadWidget
@@ -250,11 +279,13 @@ export default function PlayersPage({
                       ...editingPlayer,
                       photo_url: result.info.secure_url,
                     })
-                  }>
+                  }
+                >
                   {({ open }) => (
                     <button
                       onClick={() => open()}
-                      className="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-lg hover:text-teal-500 transition-colors">
+                      className="text-xs font-bold bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] px-4 py-2 rounded-lg hover:text-[var(--foreground)] hover:border-[var(--accent)] transition-colors"
+                    >
                       Change Photo
                     </button>
                   )}
@@ -262,7 +293,7 @@ export default function PlayersPage({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1 block">
+                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                   Full Name
                 </label>
                 <input
@@ -273,13 +304,13 @@ export default function PlayersPage({
                       full_name: e.target.value,
                     })
                   }
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none"
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Role
                   </label>
                   <select
@@ -290,15 +321,20 @@ export default function PlayersPage({
                         player_role: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
-                    <option>Batsman</option>
-                    <option>Bowler</option>
-                    <option>All-Rounder</option>
-                    <option>Wicket-Keeper</option>
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+                  >
+                    <option className="bg-[var(--surface-1)]">Batsman</option>
+                    <option className="bg-[var(--surface-1)]">Bowler</option>
+                    <option className="bg-[var(--surface-1)]">
+                      All-Rounder
+                    </option>
+                    <option className="bg-[var(--surface-1)]">
+                      Wicket-Keeper
+                    </option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Jersey Size
                   </label>
                   <select
@@ -309,16 +345,17 @@ export default function PlayersPage({
                         tshirt_size: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
-                    <option>S</option>
-                    <option>M</option>
-                    <option>L</option>
-                    <option>XL</option>
-                    <option>XXL</option>
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+                  >
+                    <option className="bg-[var(--surface-1)]">S</option>
+                    <option className="bg-[var(--surface-1)]">M</option>
+                    <option className="bg-[var(--surface-1)]">L</option>
+                    <option className="bg-[var(--surface-1)]">XL</option>
+                    <option className="bg-[var(--surface-1)]">XXL</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1 block">
+                <div className="col-span-2">
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Status
                   </label>
                   <select
@@ -329,16 +366,21 @@ export default function PlayersPage({
                         status: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
-                    <option value="pending">Pending Payment</option>
-                    <option value="approved">Approved</option>
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+                  >
+                    <option value="pending" className="bg-[var(--surface-1)]">
+                      Pending Payment
+                    </option>
+                    <option value="approved" className="bg-[var(--surface-1)]">
+                      Approved
+                    </option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Batting
                   </label>
                   <select
@@ -349,13 +391,16 @@ export default function PlayersPage({
                         batting_hand: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
-                    <option>Right Hand</option>
-                    <option>Left Hand</option>
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+                  >
+                    <option className="bg-[var(--surface-1)]">
+                      Right Hand
+                    </option>
+                    <option className="bg-[var(--surface-1)]">Left Hand</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Bowling
                   </label>
                   <select
@@ -366,13 +411,24 @@ export default function PlayersPage({
                         bowling_style: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm font-bold outline-none">
-                    <option>None</option>
-                    <option>Right-arm Fast</option>
-                    <option>Right-arm Medium</option>
-                    <option>Right-arm Spin</option>
-                    <option>Left-arm Fast</option>
-                    <option>Left-arm Spin</option>
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+                  >
+                    <option className="bg-[var(--surface-1)]">None</option>
+                    <option className="bg-[var(--surface-1)]">
+                      Right-arm Fast
+                    </option>
+                    <option className="bg-[var(--surface-1)]">
+                      Right-arm Medium
+                    </option>
+                    <option className="bg-[var(--surface-1)]">
+                      Right-arm Spin
+                    </option>
+                    <option className="bg-[var(--surface-1)]">
+                      Left-arm Fast
+                    </option>
+                    <option className="bg-[var(--surface-1)]">
+                      Left-arm Spin
+                    </option>
                   </select>
                 </div>
               </div>
@@ -381,12 +437,14 @@ export default function PlayersPage({
             <div className="flex justify-end gap-2 mt-8">
               <button
                 onClick={() => setEditingPlayer(null)}
-                className="px-6 py-3 rounded-xl text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                className="px-6 py-3 rounded-xl text-[var(--text-muted)] font-bold hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors"
+              >
                 Cancel
               </button>
               <button
                 onClick={updatePlayer}
-                className="bg-teal-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-teal-500 transition-all shadow-lg shadow-teal-500/20">
+                className="bg-[var(--foreground)] text-[var(--background)] font-bold py-3 px-8 rounded-xl hover:opacity-90 transition-all shadow-lg active:scale-95"
+              >
                 Save Profile
               </button>
             </div>

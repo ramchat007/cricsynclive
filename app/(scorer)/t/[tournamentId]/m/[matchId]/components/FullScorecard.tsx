@@ -238,12 +238,12 @@ export default function FullScorecard({
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in">
+    <div className="space-y-6 animate-in fade-in transition-colors duration-300">
       {/* 0. MATCHUP HEADER (Dynamic Highlighting based on Tab) */}
-      <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-[1.5rem] sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-3">
+      <div className="bg-[var(--surface-1)] p-3 sm:p-4 rounded-[1.5rem] sm:rounded-2xl border border-[var(--border-1)] shadow-sm flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-3 transition-colors">
         {/* Match Stage & Innings Badge */}
-        <div className="inline-block bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-[10px] sm:text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+        <div className="inline-block bg-[var(--surface-2)] px-3 py-1.5 rounded-lg border border-[var(--border-1)]">
+          <p className="text-[10px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
             {match?.stage || "Match"} <span className="mx-1 opacity-50">•</span>{" "}
             Innings {selectedInnings}
           </p>
@@ -252,18 +252,24 @@ export default function FullScorecard({
         {/* VS Banner with Batting Team Highlight */}
         <div className="flex items-center justify-center gap-3 text-sm sm:text-lg font-black uppercase tracking-tight">
           <span
-            className={`transition-colors ${isTeam1Batting ? "text-teal-500 drop-shadow-sm" : "text-slate-600 dark:text-slate-300"}`}>
+            className={`transition-colors ${isTeam1Batting ? "text-[var(--accent)] drop-shadow-sm" : "text-[var(--text-muted)]"}`}
+          >
             {t1Full}{" "}
-            {isTeam1Batting && <span className="text-teal-500 ml-1">🏏</span>}
+            {isTeam1Batting && (
+              <span className="text-[var(--accent)] ml-1">🏏</span>
+            )}
           </span>
 
-          <span className="text-slate-300 dark:text-slate-600 text-xs sm:text-sm font-bold">
+          <span className="text-[var(--text-muted)] opacity-50 text-xs sm:text-sm font-bold">
             VS
           </span>
 
           <span
-            className={`transition-colors ${!isTeam1Batting ? "text-teal-500 drop-shadow-sm" : "text-slate-600 dark:text-slate-300"}`}>
-            {!isTeam1Batting && <span className="text-teal-500 mr-1">🏏</span>}{" "}
+            className={`transition-colors ${!isTeam1Batting ? "text-[var(--accent)] drop-shadow-sm" : "text-[var(--text-muted)]"}`}
+          >
+            {!isTeam1Batting && (
+              <span className="text-[var(--accent)] mr-1">🏏</span>
+            )}{" "}
             {t2Full}
           </span>
         </div>
@@ -271,14 +277,15 @@ export default function FullScorecard({
 
       {/* 1. INNINGS TABS WITH TEAM NAMES */}
       {(match.current_innings === 2 || match.status === "completed") && (
-        <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-max">
+        <div className="flex gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] p-1.5 rounded-2xl w-max">
           <button
             onClick={() => setSelectedInnings(1)}
             className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${
               selectedInnings === 1
-                ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-            }`}>
+                ? "bg-[var(--surface-1)] shadow text-[var(--accent)] border border-[var(--border-1)]"
+                : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
+            }`}
+          >
             {inn1TeamName}{" "}
             <span className="opacity-50 text-[10px]">(1st Inn)</span>
           </button>
@@ -286,9 +293,10 @@ export default function FullScorecard({
             onClick={() => setSelectedInnings(2)}
             className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${
               selectedInnings === 2
-                ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-            }`}>
+                ? "bg-[var(--surface-1)] shadow text-[var(--accent)] border border-[var(--border-1)]"
+                : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
+            }`}
+          >
             {inn2TeamName}{" "}
             <span className="opacity-50 text-[10px]">(2nd Inn)</span>
           </button>
@@ -297,14 +305,14 @@ export default function FullScorecard({
 
       {/* 2. BATTING SCORECARD */}
       <div>
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4 px-2">
+        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 sm:mb-4 px-2">
           Batting Scorecard
         </h3>
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] overflow-hidden transition-colors">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 text-[9px] sm:text-[10px] uppercase font-black text-slate-400">
+                <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[10px] uppercase font-black text-[var(--text-muted)]">
                   <th className="p-3 sm:p-4">Batsman</th>
                   <th className="p-3 sm:p-4 text-center">R</th>
                   <th className="p-3 sm:p-4 text-center">B</th>
@@ -317,35 +325,36 @@ export default function FullScorecard({
                 {batsmen.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-slate-100 dark:border-slate-800/50">
+                    className="border-t border-[var(--border-1)] transition-colors"
+                  >
                     <td className="p-3 sm:p-4">
                       <div className="flex items-center gap-1 sm:gap-2">
-                        <p className="text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-xs">
+                        <p className="text-[var(--foreground)] truncate max-w-[120px] sm:max-w-xs">
                           {p.full_name}
-                          <span className="text-teal-500 ml-1">
+                          <span className="text-[var(--accent)] ml-1">
                             {isCurrentInnings && p.id === match.live_striker_id
                               ? "*"
                               : ""}
                           </span>
                         </p>
                       </div>
-                      <p className="text-[9px] sm:text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 truncate max-w-[150px] sm:max-w-xs">
+                      <p className="text-[9px] sm:text-[10px] font-medium text-[var(--text-muted)] mt-0.5 sm:mt-1 truncate max-w-[150px] sm:max-w-xs">
                         {p.dismissalText}
                       </p>
                     </td>
-                    <td className="p-3 sm:p-4 text-center font-black text-slate-900 dark:text-white">
+                    <td className="p-3 sm:p-4 text-center font-black text-[var(--foreground)]">
                       {p.runs}
                     </td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 dark:text-slate-400">
+                    <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
                       {p.balls}
                     </td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 dark:text-slate-400">
+                    <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
                       {p.fours}
                     </td>
-                    <td className="p-3 sm:p-4 text-center text-slate-500 dark:text-slate-400">
+                    <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
                       {p.sixes}
                     </td>
-                    <td className="p-3 sm:p-4 text-right text-teal-600 dark:text-teal-400">
+                    <td className="p-3 sm:p-4 text-right text-[var(--accent)]">
                       {p.sr}
                     </td>
                   </tr>
@@ -356,11 +365,11 @@ export default function FullScorecard({
 
           {/* YET TO BAT SECTION */}
           {yetToBat.length > 0 && (
-            <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex gap-2 items-start">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 mt-0.5">
+            <div className="bg-[var(--surface-2)] p-4 sm:p-5 border-t border-[var(--border-1)] flex gap-2 items-start transition-colors">
+              <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest shrink-0 mt-0.5">
                 Yet to bat:
               </span>
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
+              <span className="text-xs font-bold text-[var(--foreground)] opacity-80 leading-relaxed">
                 {yetToBat.map((p: any) => p.full_name).join(", ")}
               </span>
             </div>
@@ -370,14 +379,14 @@ export default function FullScorecard({
 
       {/* 3. BOWLING FIGURES */}
       <div>
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4 px-2">
+        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 sm:mb-4 px-2">
           Bowling Figures
         </h3>
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] overflow-hidden transition-colors">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse min-w-[400px]">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 text-[9px] sm:text-[10px] uppercase font-black text-slate-400">
+                <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[10px] uppercase font-black text-[var(--text-muted)]">
                   <th className="p-3 sm:p-4">Bowler</th>
                   <th className="p-3 sm:p-4 text-center">O</th>
                   <th className="p-3 sm:p-4 text-center">M</th>
@@ -390,24 +399,27 @@ export default function FullScorecard({
                 {bowlers.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-slate-100 dark:border-slate-800/50">
-                    <td className="p-3 sm:p-4 text-slate-900 dark:text-white flex items-center gap-2 truncate max-w-[120px] sm:max-w-xs">
+                    className="border-t border-[var(--border-1)] transition-colors"
+                  >
+                    <td className="p-3 sm:p-4 text-[var(--foreground)] flex items-center gap-2 truncate max-w-[120px] sm:max-w-xs">
                       {p.full_name}
                       {isCurrentInnings && p.id === match.live_bowler_id && (
-                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-teal-500 shrink-0"></span>
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[var(--accent)] shrink-0"></span>
                       )}
                     </td>
-                    <td className="p-3 sm:p-4 text-center text-slate-600 dark:text-slate-300">
+                    <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
                       {p.overs}
                     </td>
-                    <td className="p-3 sm:p-4 text-center text-slate-400">0</td>
-                    <td className="p-3 sm:p-4 text-center text-slate-600 dark:text-slate-300">
+                    <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
+                      0
+                    </td>
+                    <td className="p-3 sm:p-4 text-center text-[var(--text-muted)]">
                       {p.runs}
                     </td>
                     <td className="p-3 sm:p-4 text-center font-black text-red-500">
                       {p.wickets}
                     </td>
-                    <td className="p-3 sm:p-4 text-right text-slate-500 dark:text-slate-400">
+                    <td className="p-3 sm:p-4 text-right text-[var(--text-muted)]">
                       {p.econ}
                     </td>
                   </tr>
@@ -418,11 +430,11 @@ export default function FullScorecard({
 
           {/* YET TO BOWL SECTION */}
           {yetToBowl.length > 0 && (
-            <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex gap-2 items-start">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 mt-0.5">
+            <div className="bg-[var(--surface-2)] p-4 sm:p-5 border-t border-[var(--border-1)] flex gap-2 items-start transition-colors">
+              <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest shrink-0 mt-0.5">
                 Yet to bowl:
               </span>
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
+              <span className="text-xs font-bold text-[var(--foreground)] opacity-80 leading-relaxed">
                 {yetToBowl.map((p: any) => p.full_name).join(", ")}
               </span>
             </div>

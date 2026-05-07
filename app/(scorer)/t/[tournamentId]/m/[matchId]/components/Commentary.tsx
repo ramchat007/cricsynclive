@@ -285,14 +285,14 @@ export default function Commentary({
   // Graceful loading state instead of returning null
   if (!match || Object.keys(match).length === 0) {
     return (
-      <div className="text-center py-20 animate-in fade-in">
-        <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-3xl mx-auto mb-6 animate-pulse">
+      <div className="text-center py-20 animate-in fade-in transition-colors duration-300">
+        <div className="w-20 h-20 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-full flex items-center justify-center text-3xl mx-auto mb-6 animate-pulse">
           🎙️
         </div>
-        <h3 className="font-black text-slate-400 uppercase tracking-widest text-lg">
+        <h3 className="font-black text-[var(--text-muted)] uppercase tracking-widest text-lg">
           Live Commentary
         </h3>
-        <p className="text-base font-bold text-slate-500 mt-2">
+        <p className="text-base font-bold text-[var(--text-muted)] opacity-80 mt-2">
           Awaiting match data...
         </p>
       </div>
@@ -300,16 +300,16 @@ export default function Commentary({
   }
 
   return (
-    <div className="flex flex-col gap-5 w-full animate-in fade-in pb-20">
+    <div className="flex flex-col gap-5 w-full animate-in fade-in pb-20 transition-colors duration-300">
       {/* 1. INNINGS TABS */}
       {(match.current_innings === 2 || match.status === "completed") && (
-        <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-max">
+        <div className="flex gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] p-1.5 rounded-2xl w-max">
           <button
             onClick={() => setSelectedInnings(1)}
             className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${
               selectedInnings === 1
-                ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                ? "bg-[var(--surface-1)] shadow-sm text-[var(--accent)] border border-[var(--border-1)]"
+                : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
             }`}
           >
             1st Innings
@@ -318,8 +318,8 @@ export default function Commentary({
             onClick={() => setSelectedInnings(2)}
             className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${
               selectedInnings === 2
-                ? "bg-white dark:bg-slate-900 shadow text-teal-600 dark:text-teal-400"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                ? "bg-[var(--surface-1)] shadow-sm text-[var(--accent)] border border-[var(--border-1)]"
+                : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
             }`}
           >
             2nd Innings
@@ -331,11 +331,11 @@ export default function Commentary({
       {(matchContext.resultText || matchContext.chaseText) && (
         <div className="flex justify-start mb-1 animate-in slide-in-from-top-2 duration-500">
           {matchContext.resultText ? (
-            <div className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+            <div className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm">
               🏆 {matchContext.resultText}
             </div>
           ) : matchContext.chaseText ? (
-            <div className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20">
+            <div className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 shadow-sm">
               🎯 {matchContext.chaseText}
             </div>
           ) : null}
@@ -344,49 +344,49 @@ export default function Commentary({
 
       {/* 3. COMMENTARY FEED */}
       <div>
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 mb-3 px-2">
+        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 px-2">
           Ball-by-Ball Feed
         </h3>
 
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors duration-300">
           {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500 dark:text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+          <div className="p-4 sm:p-5 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex justify-between items-center">
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--accent)] shadow-sm animate-pulse"></span>
               Live Updates
             </span>
             {isTyping && (
-              <span className="text-[9px] text-teal-500 animate-pulse font-black tracking-widest flex items-center gap-1">
+              <span className="text-[9px] text-[var(--accent)] animate-pulse font-black tracking-widest flex items-center gap-1">
                 <Mic size={10} /> GEMINI ANALYZING...
               </span>
             )}
           </div>
 
           {/* Feed Container */}
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-[var(--border-1)]">
             {timelineData.map((event) => {
               // --- OVER SUMMARY ROW ---
               if (event.type === "SUMMARY") {
                 return (
                   <div
                     key={event.id}
-                    className="p-5 border-y border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30"
+                    className="p-5 border-y border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]/50 transition-colors"
                   >
                     <div>
-                      <div className="text-[10px] font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-1">
+                      <div className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest mb-1">
                         Over {event.over} Done
                       </div>
-                      <div className="font-black text-base text-slate-900 dark:text-white">
+                      <div className="font-black text-base text-[var(--foreground)]">
                         {event.runs} Runs • {event.wickets} Wickets
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] uppercase font-black mb-1 text-slate-400">
+                      <div className="text-[10px] uppercase font-black mb-1 text-[var(--text-muted)]">
                         Score
                       </div>
-                      <div className="text-2xl sm:text-3xl font-mono font-black text-slate-900 dark:text-white leading-none">
+                      <div className="text-2xl sm:text-3xl font-mono font-black text-[var(--foreground)] leading-none">
                         {event.totalScore}
-                        <span className="text-lg sm:text-xl text-slate-400 ml-1">
+                        <span className="text-lg sm:text-xl text-[var(--text-muted)] opacity-70 ml-1">
                           /{event.totalWickets}
                         </span>
                       </div>
@@ -399,20 +399,20 @@ export default function Commentary({
               return (
                 <div
                   key={event.id}
-                  className="p-4 sm:p-5 flex gap-4 sm:gap-5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/20"
+                  className="p-4 sm:p-5 flex gap-4 sm:gap-5 transition-colors hover:bg-[var(--surface-2)]"
                 >
                   {/* Badge */}
                   <div
-                    className={`w-12 h-12 shrink-0 rounded-[14px] flex items-center justify-center font-black text-xs sm:text-sm border-2 shadow-sm ${
+                    className={`w-12 h-12 shrink-0 rounded-[14px] flex items-center justify-center font-black text-xs sm:text-sm border-2 shadow-sm transition-colors ${
                       event.isWicket
-                        ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400"
+                        ? "bg-red-500/10 border-red-500/20 text-red-500"
                         : event.runs >= 6
-                          ? "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-400"
+                          ? "bg-[var(--accent)] border-[var(--accent)] text-[var(--background)] shadow-[var(--accent)]/30"
                           : event.runs >= 4
-                            ? "bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/30 text-teal-700 dark:text-teal-400"
+                            ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)]"
                             : event.extrasType
-                              ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400"
-                              : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                              ? "bg-orange-500/10 border-orange-500/20 text-orange-500"
+                              : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)]"
                     }`}
                   >
                     {getBadgeText(
@@ -426,20 +426,22 @@ export default function Commentary({
                   {/* Text Context */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-black text-[10px] sm:text-xs uppercase tracking-wider truncate text-slate-700 dark:text-slate-300">
+                      <span className="font-black text-[10px] sm:text-xs uppercase tracking-wider truncate text-[var(--foreground)]">
                         {event.bowler}{" "}
-                        <span className="text-slate-400 mx-1">➜</span>{" "}
+                        <span className="text-[var(--text-muted)] opacity-50 mx-1">
+                          ➜
+                        </span>{" "}
                         {event.batter}
                       </span>
                       {/* Optional AI Badge for generated comments */}
                       {event.isAI && (
-                        <span className="text-[8px] bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300 px-2 py-0.5 rounded-full font-black tracking-widest">
+                        <span className="text-[8px] bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 px-2 py-0.5 rounded-full font-black tracking-widest">
                           AI GENERATED
                         </span>
                       )}
                     </div>
                     <p
-                      className={`text-xs sm:text-sm leading-relaxed font-semibold ${event.isWicket ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
+                      className={`text-xs sm:text-sm leading-relaxed font-semibold ${event.isWicket ? "text-red-500" : "text-[var(--text-muted)]"}`}
                     >
                       {event.text}
                     </p>
