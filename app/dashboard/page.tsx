@@ -304,12 +304,18 @@ export default function DashboardHub() {
                   multiple: false,
                   cropping: true,
                   showSkipCropButton: false,
-                  croppingAspectRatio: 1,
                   showCompletedButton: true,
                 }}
-                onSuccess={(result: any) =>
-                  setBannerUrl(result.info.secure_url)
-                }>
+                onSuccess={(result: any) => {
+                  let url = result.info.secure_url;
+                  if (
+                    result.info.coordinates &&
+                    result.info.coordinates.custom
+                  ) {
+                    url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                  }
+                  setBannerUrl(result.url);
+                }}>
                 {({ open }) => (
                   <button
                     onClick={() => open()}

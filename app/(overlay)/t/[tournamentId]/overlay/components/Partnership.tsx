@@ -38,7 +38,7 @@ export default function Partnership({
     );
     return {
       name: findName(playerId, fallback),
-      // ✅ FIX: Include extras_runs like the total partnership does
+      // ✅ Include extras_runs like the total partnership does
       runs: faced.reduce(
         (sum: number, b: any) =>
           sum + (Number(b.runs_off_bat) || 0) + (Number(b.extras_runs) || 0),
@@ -69,7 +69,7 @@ export default function Partnership({
 
   return (
     <div
-      className="px-10 py-4 rounded-t-[2rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md flex items-center gap-12 animate-in slide-in-from-bottom-10"
+      className="px-10 py-5 rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md flex items-center gap-12 animate-in slide-in-from-bottom-10 border-x border-white/10"
       style={{
         background: theme.tokens.panelBg,
         borderTop: `4px solid ${theme.tokens.accent}`,
@@ -81,34 +81,38 @@ export default function Partnership({
           Partnership
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="text-white font-black text-4xl">{totalRuns}</span>
-          <span className="text-white/40 font-bold text-sm uppercase">Runs</span>
-          <span className="text-white/20 font-medium text-xs ml-1">
-            ({totalBalls} b)
+          <span className="text-white font-black text-4xl leading-none drop-shadow-md">
+            {totalRuns}
+          </span>
+          <span className="text-white/50 font-bold text-sm uppercase">
+            Runs
+          </span>
+          <span className="text-white/30 font-bold text-xs ml-1 bg-white/5 px-2 py-0.5 rounded-md">
+            {totalBalls} b
           </span>
         </div>
       </div>
 
-      <div className="flex gap-10">
+      <div className="flex gap-12">
         {[
           { label: "Striker", ...strikerStats },
           { label: "Non-Striker", ...nonStrikerStats },
         ].map((player) => (
-          <div key={player.label} className="flex flex-col">
+          <div key={player.label} className="flex flex-col justify-center">
             <span className="text-white/40 font-black uppercase tracking-widest text-[9px] mb-1">
               {player.label}
             </span>
-            <div className="flex items-center gap-3">
-              <span className="text-white font-black uppercase text-lg tracking-tight">
+            <div className="flex items-center gap-4">
+              <span className="text-white font-black uppercase text-xl tracking-tight drop-shadow-sm max-w-[200px] truncate">
                 {player.name}
               </span>
-              <div className="bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+              <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/5 flex items-baseline gap-1 shadow-inner">
                 <span
-                  className="font-black text-lg"
+                  className="font-black text-2xl leading-none"
                   style={{ color: theme.tokens.accent }}>
                   {player.runs}
                 </span>
-                <span className="text-white/30 font-bold text-xs ml-1">
+                <span className="text-white/40 font-bold text-xs">
                   ({player.balls})
                 </span>
               </div>

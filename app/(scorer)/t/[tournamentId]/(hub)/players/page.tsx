@@ -274,11 +274,19 @@ export default function PlayersPage({
                     croppingAspectRatio: 1,
                     showCompletedButton: true,
                   }}
-                  onSuccess={(result: any) =>
+                  onSuccess={(result: any) =>{
+                    let url = result.info.secure_url;
+                    if (
+                      result.info.coordinates &&
+                      result.info.coordinates.custom
+                    ) {
+                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                    }
                     setEditingPlayer({
                       ...editingPlayer,
-                      photo_url: result.info.secure_url,
+                      photo_url: url,
                     })
+                  }
                   }
                 >
                   {({ open }) => (

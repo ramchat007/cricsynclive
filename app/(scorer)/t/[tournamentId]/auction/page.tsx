@@ -51,6 +51,9 @@ export default function AuctionConsole({
   const channelRef = useRef<any>(null);
   const stateRef = useRef({ activePlayer, currentBid, highestBidder });
 
+  // 🚀 NEW: Tracks if we've loaded the backup so we don't accidentally overwrite it
+  const isRestored = useRef(false);
+
   // Keep a ref updated so the Admin can respond to new spectators with fresh data
   useEffect(() => {
     stateRef.current = { activePlayer, currentBid, highestBidder };
@@ -62,7 +65,6 @@ export default function AuctionConsole({
 
     channel
       .on("broadcast", { event: "state_sync" }, ({ payload }) => {
-        // Only Spectators listen to these updates (Admin dictates the state)
         if (!isAdmin) {
           setActivePlayer(payload.activePlayer);
           setCurrentBid(payload.currentBid);
@@ -70,7 +72,6 @@ export default function AuctionConsole({
         }
       })
       .on("broadcast", { event: "request_sync" }, () => {
-        // If a new Spectator joins, Admin beams the current podium data to them
         if (isAdmin) {
           channel.send({
             type: "broadcast",
@@ -80,12 +81,10 @@ export default function AuctionConsole({
         }
       })
       .on("broadcast", { event: "global_refresh" }, () => {
-        // Admin tells all Spectators to re-fetch DB data (budgets/pool) after a sale
         if (!isAdmin) fetchAuctionData();
       })
       .subscribe((status) => {
         if (status === "SUBSCRIBED" && !isAdmin) {
-          // When Spectator connects, ask the Admin for the live state
           channel.send({ type: "broadcast", event: "request_sync" });
         }
       });
@@ -95,9 +94,28 @@ export default function AuctionConsole({
     };
   }, [isAdmin, tournamentId]);
 
-  // Admin Auto-Broadcaster (Beams state to all devices on every click)
+  // 1. 🚀 LOAD ADMIN'S BACKUP FIRST
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && !isRestored.current) {
+      const savedState = localStorage.getItem(`auction_podium_${tournamentId}`);
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          setActivePlayer(parsed.player);
+          setCurrentBid(parsed.bid);
+          setHighestBidder(parsed.bidder);
+        } catch (e) {
+          console.error("Error loading auction state", e);
+        }
+      }
+      isRestored.current = true; // Mark as successfully restored
+    }
+  }, [isAdmin, tournamentId]);
+
+  // 2. 🚀 SAVE STATE (Only runs AFTER restore is complete)
+  useEffect(() => {
+    // We only broadcast and save if `isRestored` is true
+    if (isAdmin && isRestored.current) {
       if (channelRef.current) {
         channelRef.current.send({
           type: "broadcast",
@@ -105,6 +123,7 @@ export default function AuctionConsole({
           payload: { activePlayer, currentBid, highestBidder },
         });
       }
+
       if (activePlayer) {
         localStorage.setItem(
           `auction_podium_${tournamentId}`,
@@ -115,10 +134,12 @@ export default function AuctionConsole({
           }),
         );
       } else {
+        // Only clear storage if the activePlayer was actually cleared by the admin
         localStorage.removeItem(`auction_podium_${tournamentId}`);
       }
     }
   }, [activePlayer, currentBid, highestBidder, isAdmin, tournamentId]);
+  // ==========================================
 
   // Load Admin's local backup on mount
   useEffect(() => {
@@ -366,29 +387,30 @@ export default function AuctionConsole({
 
   if (loading)
     return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center accent-text font-black animate-pulse text-2xl tracking-widest">
+      <div className="h-[calc(100vh-65px)] bg-[var(--background)] flex items-center justify-center text-[var(--accent)] font-black animate-pulse text-2xl tracking-widest p-4 text-center">
         SYNCING AUCTION ENGINE...
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans flex flex-col transition-colors duration-300 relative">
+    // 🚀 FIXED: h-[calc(100vh-65px)] (or 100dvh) and overflow-hidden lock the screen!
+    <div className="h-[calc(100dvh-65px)] md:h-[calc(100vh-65px)] overflow-hidden bg-[var(--background)] text-[var(--foreground)] font-sans flex flex-col transition-colors duration-300 relative">
       {/* HEADER */}
-      <div className="bg-[var(--glass-bg)] border-b border-[var(--border-1)] p-4 flex justify-between items-center backdrop-blur-md z-20">
+      <div className="bg-[var(--glass-bg)] border-b border-[var(--border-1)] p-4 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur-md z-20 transition-colors shrink-0">
         <div className="flex items-center gap-3">
-          <Gavel className="text-[var(--accent)]" size={24} />
-          <h1 className="text-xl font-black uppercase tracking-widest">
+          <Gavel className="text-[var(--accent)] hidden md:block" size={24} />
+          <h1 className="text-lg md:text-xl font-black uppercase tracking-widest text-[var(--foreground)]">
             Live Auction Console
           </h1>
           {!isAdmin && (
-            <span className="bg-blue-500/10 border border-blue-500/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ml-2">
+            <span className="bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ml-2">
               Spectator View
             </span>
           )}
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap justify-center items-center gap-3 md:gap-6 w-full md:w-auto">
           {isAdmin && config?.allow_direct_buy && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full shrink-0">
               <Zap size={14} className="text-amber-500" />
               <span className="text-[10px] font-black text-amber-500 uppercase">
                 Direct Buy Active
@@ -398,25 +420,25 @@ export default function AuctionConsole({
           {isAdmin && (
             <Link
               href={`/t/${tournamentId}/auction/admin`}
-              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors">
+              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors shrink-0">
               Admin
             </Link>
           )}
           <Link
             href={`/t/${tournamentId}`}
-            className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors">
+            className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors shrink-0">
             Exit
           </Link>
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* LEFT COLUMN: Player Preview Pool */}
-        <div className="w-80 bg-[var(--surface-1)] border-r border-[var(--border-1)] flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
-            <div className="flex items-center justify-between mb-3">
+        <div className="w-full md:w-80 bg-[var(--surface-1)] border-b md:border-b-0 md:border-r border-[var(--border-1)] flex flex-col md:h-full max-h-[25vh] md:max-h-none overflow-hidden transition-colors shrink-0">
+          <div className="p-3 md:p-4 border-b border-[var(--border-1)] bg-[var(--surface-2)] shrink-0">
+            <div className="flex items-center justify-between mb-2 md:mb-3">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                Upcoming Queue ({pendingPlayers.length})
+                Upcoming ({pendingPlayers.length})
               </h2>
               <Filter size={14} className="text-[var(--text-muted)]" />
             </div>
@@ -424,7 +446,7 @@ export default function AuctionConsole({
               <select
                 value={selectedSlotId}
                 onChange={(e) => setSelectedSlotId(e.target.value)}
-                className="w-full bg-[var(--surface-3)] border border-[var(--border-1)] text-[var(--foreground)] text-xs font-bold p-2.5 rounded-xl outline-none focus:border-[var(--accent)]">
+                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] text-xs font-bold p-2 md:p-2.5 rounded-xl outline-none focus:border-[var(--accent)]">
                 <option value="all">All Rounds</option>
                 <option value="unassigned">Unassigned Players</option>
                 {slots.map((s) => (
@@ -434,19 +456,19 @@ export default function AuctionConsole({
                 ))}
               </select>
             ) : (
-              <div className="text-xs font-bold text-[var(--text-muted)] py-2">
+              <div className="text-xs font-bold text-[var(--text-muted)] py-1 md:py-2">
                 Filtering managed by Auctioneer
               </div>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar opacity-70 pointer-events-none">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 custom-scrollbar opacity-70 pointer-events-none">
             {pendingPlayers.map((p) => (
               <div
                 key={p.id}
-                className={`bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-3 flex items-center gap-3 transition-all ${activePlayer?.id === p.id ? "ring-2 ring-[var(--accent)] opacity-100 shadow-md" : "grayscale"}`}>
+                className={`bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-2 md:p-3 flex items-center gap-3 transition-all ${activePlayer?.id === p.id ? "ring-2 ring-[var(--accent)] opacity-100 shadow-md" : "grayscale"}`}>
                 <div
-                  className="w-10 h-10 rounded-lg bg-[var(--surface-3)] bg-cover bg-center shrink-0 border border-[var(--border-1)] flex items-center justify-center font-black text-xs"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-[var(--surface-1)] bg-cover bg-center shrink-0 border border-[var(--border-1)] flex items-center justify-center font-black text-xs text-[var(--text-muted)]"
                   style={{
                     backgroundImage: p.photo_url
                       ? `url(${p.photo_url})`
@@ -455,15 +477,17 @@ export default function AuctionConsole({
                   {!p.photo_url && p.full_name?.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm truncate">{p.full_name}</p>
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                  <p className="font-bold text-xs md:text-sm truncate text-[var(--foreground)]">
+                    {p.full_name}
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                     {p.player_role}
                   </p>
                 </div>
               </div>
             ))}
             {pendingPlayers.length === 0 && (
-              <div className="text-center text-[var(--text-muted)] text-sm font-bold pt-10">
+              <div className="text-center text-[var(--text-muted)] text-xs md:text-sm font-bold pt-4 md:pt-10">
                 Queue is empty.
               </div>
             )}
@@ -471,16 +495,16 @@ export default function AuctionConsole({
         </div>
 
         {/* CENTER COLUMN: The Hammer Podium */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden md:border-r border-[var(--border-1)] min-h-[40vh] md:min-h-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--surface-1),_transparent)] opacity-60 z-0"></div>
 
           {!activePlayer ? (
-            <div className="text-center opacity-70 flex flex-col items-center z-10">
+            <div className="text-center opacity-70 flex flex-col items-center z-10 w-full px-4">
               <Users
-                size={100}
-                className="mb-6 opacity-20 text-[var(--foreground)]"
+                size={80}
+                className="mb-4 md:mb-6 opacity-20 text-[var(--foreground)] md:w-[100px] md:h-[100px]"
               />
-              <h2 className="text-3xl font-black uppercase tracking-widest text-[var(--foreground)] mb-8">
+              <h2 className="text-xl md:text-3xl font-black uppercase tracking-widest text-[var(--foreground)] mb-6 md:mb-8">
                 Podium Ready
               </h2>
 
@@ -488,20 +512,21 @@ export default function AuctionConsole({
                 <button
                   onClick={drawRandomPlayer}
                   disabled={pendingPlayers.length === 0 || isProcessing}
-                  className="accent-bg text-[var(--background)] px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-3 shadow-2xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
-                  <Shuffle size={20} /> Draw Next Random Player
+                  className="w-full max-w-sm bg-[var(--accent)] text-[var(--background)] px-6 py-4 md:px-10 md:py-5 rounded-2xl font-black uppercase tracking-widest text-xs md:text-sm flex items-center justify-center gap-3 shadow-2xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+                  <Shuffle size={16} className="md:w-[20px] md:h-[20px]" /> Draw
+                  Next Random Player
                 </button>
               ) : (
-                <p className="text-lg font-bold text-[var(--text-muted)]">
+                <p className="text-sm md:text-lg font-bold text-[var(--text-muted)]">
                   Waiting for Auctioneer to draw...
                 </p>
               )}
             </div>
           ) : (
-            <div className="w-full max-w-2xl animate-in zoom-in-95 duration-300 z-10">
-              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2.5rem] p-8 shadow-2xl flex items-center gap-8 mb-8 relative overflow-hidden">
+            <div className="w-full max-w-2xl animate-in zoom-in-95 duration-300 z-10 flex flex-col h-full justify-center">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 shadow-2xl flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-8 mb-6 md:mb-8 relative overflow-hidden transition-colors">
                 <div
-                  className="w-48 h-48 rounded-3xl bg-[var(--surface-3)] bg-cover bg-center shrink-0 ring-4 ring-[var(--surface-2)] shadow-xl flex items-center justify-center font-black text-5xl text-[var(--text-muted)]"
+                  className="w-32 h-32 md:w-48 md:h-48 rounded-3xl bg-[var(--surface-2)] bg-cover bg-center shrink-0 ring-4 ring-[var(--surface-1)] shadow-xl flex items-center justify-center font-black text-3xl md:text-5xl text-[var(--text-muted)] border border-[var(--border-1)]"
                   style={{
                     backgroundImage: activePlayer.photo_url
                       ? `url(${activePlayer.photo_url})`
@@ -510,33 +535,33 @@ export default function AuctionConsole({
                   {!activePlayer.photo_url && activePlayer.full_name?.charAt(0)}
                 </div>
 
-                <div className="flex-1">
-                  <span className="bg-[var(--surface-3)] text-[var(--foreground)] border border-[var(--border-1)] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4 inline-block">
+                <div className="flex-1 text-center sm:text-left w-full">
+                  <span className="bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3 md:mb-4 inline-block">
                     Base: ₹
                     {activePlayer.base_price?.toLocaleString() ||
                       config?.min_base_price?.toLocaleString()}
                   </span>
-                  <h2 className="text-4xl font-black uppercase tracking-tighter leading-none mb-2 text-[var(--foreground)]">
+                  <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none mb-2 text-[var(--foreground)] break-words">
                     {activePlayer.full_name}
                   </h2>
-                  <p className="accent-text font-bold uppercase tracking-widest text-sm mb-6">
+                  <p className="text-[var(--accent)] font-bold uppercase tracking-widest text-xs md:text-sm mb-4 md:mb-6">
                     {activePlayer.player_role}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2 md:gap-4 bg-[var(--surface-2)] sm:bg-transparent p-3 sm:p-0 rounded-xl">
                     <div>
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                      <p className="text-[9px] md:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                         Batting
                       </p>
-                      <p className="text-sm font-bold text-[var(--foreground)]">
+                      <p className="text-xs md:text-sm font-bold text-[var(--foreground)]">
                         {activePlayer.batting_hand || "N/A"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                      <p className="text-[9px] md:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                         Bowling
                       </p>
-                      <p className="text-sm font-bold text-[var(--foreground)]">
+                      <p className="text-xs md:text-sm font-bold text-[var(--foreground)]">
                         {activePlayer.bowling_style || "N/A"}
                       </p>
                     </div>
@@ -544,25 +569,25 @@ export default function AuctionConsole({
                 </div>
               </div>
 
-              <div className="text-center mb-8">
-                <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">
+              <div className="text-center mb-6 md:mb-8 flex-1 flex flex-col justify-center">
+                <p className="text-xs md:text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 md:mb-2">
                   Current Bid
                 </p>
-                <div className="text-8xl font-black text-[var(--foreground)] tracking-tighter mb-4 tabular-nums drop-shadow-sm">
+                <div className="text-5xl sm:text-6xl md:text-8xl font-black text-[var(--foreground)] tracking-tighter mb-4 tabular-nums drop-shadow-sm">
                   ₹{currentBid.toLocaleString("en-IN")}
                 </div>
                 {highestBidder ? (
-                  <div className="inline-flex items-center gap-3 bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-8 py-3 rounded-full animate-bounce">
+                  <div className="inline-flex items-center gap-2 md:gap-3 bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-6 md:px-8 py-2 md:py-3 rounded-full animate-bounce">
                     <div
-                      className="w-4 h-4 rounded-full shadow-sm"
+                      className="w-3 h-3 md:w-4 md:h-4 rounded-full shadow-sm shrink-0"
                       style={{ backgroundColor: highestBidder.primary_color }}
                     />
-                    <span className="font-black accent-text uppercase tracking-widest text-lg">
+                    <span className="font-black text-[var(--accent)] uppercase tracking-widest text-sm md:text-lg truncate max-w-[200px]">
                       {highestBidder.short_name}
                     </span>
                   </div>
                 ) : (
-                  <div className="inline-block bg-[var(--surface-3)] text-[var(--text-muted)] border border-[var(--border-1)] px-8 py-3 rounded-full font-black text-sm uppercase tracking-widest">
+                  <div className="inline-block bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)] px-6 md:px-8 py-2 md:py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-widest">
                     Awaiting Opening Bid
                   </div>
                 )}
@@ -570,24 +595,27 @@ export default function AuctionConsole({
 
               {/* ADMIN CONTROLS ONLY */}
               {isAdmin && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4 mt-auto">
                   <button
                     onClick={drawRandomPlayer}
                     disabled={isProcessing || !!highestBidder}
-                    className="bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border-1)] text-[var(--text-muted)] font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-colors uppercase tracking-widest text-xs active:scale-95 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed">
-                    <Shuffle size={16} /> Draw Next
+                    className="bg-[var(--surface-2)] hover:bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] font-black py-3 md:py-5 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 transition-colors uppercase tracking-widest text-[9px] md:text-xs active:scale-95 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed">
+                    <Shuffle size={14} className="md:w-4 md:h-4" />{" "}
+                    <span className="hidden sm:inline">Draw</span> Next
                   </button>
                   <button
                     onClick={() => markUnsold(activePlayer.id)}
                     disabled={isProcessing || !!highestBidder}
-                    className="bg-[var(--surface-2)] hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-[var(--border-1)] text-[var(--text-muted)] font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-colors uppercase tracking-widest text-xs active:scale-95 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed">
-                    <XCircle size={16} /> Pass / Unsold
+                    className="bg-[var(--surface-2)] hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-[var(--border-1)] text-[var(--text-muted)] font-black py-3 md:py-5 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 transition-colors uppercase tracking-widest text-[9px] md:text-xs active:scale-95 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed">
+                    <XCircle size={14} className="md:w-4 md:h-4" />{" "}
+                    <span className="hidden sm:inline">Pass /</span> Unsold
                   </button>
                   <button
                     onClick={sellPlayer}
                     disabled={!highestBidder || isProcessing}
-                    className="accent-bg text-[var(--background)] disabled:opacity-50 font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest text-xs shadow-xl hover:opacity-90 active:scale-95">
-                    <CheckCircle2 size={16} /> Sell Player
+                    className="bg-[var(--accent)] text-[var(--background)] disabled:opacity-50 font-black py-3 md:py-5 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 transition-all uppercase tracking-widest text-[9px] md:text-xs shadow-xl hover:opacity-90 active:scale-95">
+                    <CheckCircle2 size={14} className="md:w-4 md:h-4" /> Sell{" "}
+                    <span className="hidden sm:inline">Player</span>
                   </button>
                 </div>
               )}
@@ -596,13 +624,14 @@ export default function AuctionConsole({
         </div>
 
         {/* RIGHT COLUMN: Franchise Bidding Controls */}
-        <div className="w-[400px] bg-[var(--surface-1)] border-l border-[var(--border-1)] flex flex-col z-10">
-          <div className="p-4 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
+        <div className="w-full md:w-[400px] bg-[var(--surface-1)] md:border-l border-[var(--border-1)] flex flex-col z-10 transition-colors md:h-full max-h-[40vh] md:max-h-full border-t md:border-t-0 shrink-0">
+          <div className="p-3 md:p-4 border-b border-[var(--border-1)] bg-[var(--surface-2)] shrink-0">
             <h2 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
               Franchise Desk
             </h2>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 custom-scrollbar">
             {teams.map((team) => {
               const alreadyBoughtInSlot =
                 config?.limit_one_per_slot &&
@@ -617,23 +646,23 @@ export default function AuctionConsole({
               return (
                 <div
                   key={team.id}
-                  className={`bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 shadow-sm transition-opacity ${alreadyBoughtInSlot ? "opacity-40" : ""}`}>
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
+                  className={`bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm transition-opacity ${alreadyBoughtInSlot ? "opacity-40" : ""}`}>
+                  <div className="flex justify-between items-center mb-3 md:mb-4">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shrink-0"
                         style={{
                           backgroundColor: team.primary_color,
                           boxShadow: `0 0 10px ${team.primary_color}`,
                         }}
                       />
-                      <h3 className="font-black uppercase tracking-tighter text-lg leading-none text-[var(--foreground)]">
+                      <h3 className="font-black uppercase tracking-tighter text-base md:text-lg leading-none text-[var(--foreground)] truncate">
                         {team.short_name}
                       </h3>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0 ml-2">
                       <p
-                        className={`text-lg font-black ${team.purse_balance < 20000 ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+                        className={`text-sm md:text-lg font-black ${team.purse_balance < 20000 ? "text-red-500" : "text-emerald-500"}`}>
                         ₹{team.purse_balance.toLocaleString("en-IN")}
                       </p>
                     </div>
@@ -650,9 +679,9 @@ export default function AuctionConsole({
                           isHighestBidder ||
                           isProcessing
                         }
-                        className={`flex-1 disabled:opacity-50 text-xs font-black py-4 rounded-xl transition-all border shadow-sm active:scale-95 ${isHighestBidder ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30" : "bg-[var(--surface-1)] hover:bg-[var(--surface-3)] text-[var(--foreground)] border-[var(--border-1)]"}`}>
+                        className={`flex-1 disabled:opacity-50 text-[10px] md:text-xs font-black py-3 md:py-4 rounded-lg md:rounded-xl transition-all border shadow-sm active:scale-95 ${isHighestBidder ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30" : "bg-[var(--surface-1)] hover:bg-[var(--surface-3)] text-[var(--foreground)] border-[var(--border-1)]"}`}>
                         {isHighestBidder
-                          ? "LEADING BID"
+                          ? "LEADING"
                           : `BID +₹${currentIncrement.toLocaleString()}`}
                       </button>
 
@@ -663,10 +692,10 @@ export default function AuctionConsole({
                           disabled={
                             !activePlayer || alreadyBoughtInSlot || isProcessing
                           }
-                          className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-4 py-4 rounded-xl hover:bg-amber-500 hover:text-amber-950 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-1"
+                          className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-3 md:px-4 py-3 md:py-4 rounded-lg md:rounded-xl hover:bg-amber-500 hover:text-amber-950 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-1 shrink-0"
                           title="Offline / Direct Assign">
                           <Zap size={14} />
-                          <span className="text-[10px] font-black uppercase">
+                          <span className="text-[10px] font-black uppercase hidden sm:inline">
                             Buy
                           </span>
                         </button>
@@ -683,7 +712,7 @@ export default function AuctionConsole({
               );
             })}
             {teams.length === 0 && (
-              <div className="text-center text-[var(--text-muted)] text-sm font-bold pt-10">
+              <div className="text-center text-[var(--text-muted)] text-xs md:text-sm font-bold pt-10">
                 No franchises registered.
               </div>
             )}
@@ -696,13 +725,13 @@ export default function AuctionConsole({
         directBuyModal.isOpen &&
         directBuyModal.team &&
         activePlayer && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[var(--overlay-bg)] backdrop-blur-md animate-in fade-in">
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-md rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 overflow-hidden">
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 overflow-hidden">
               {/* Header */}
-              <div className="bg-amber-500 p-6 text-amber-950 flex justify-between items-center">
+              <div className="bg-amber-500 p-4 md:p-6 text-amber-950 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <Zap size={20} />
-                  <h3 className="font-black uppercase tracking-widest">
+                  <h3 className="font-black uppercase tracking-widest text-sm md:text-base">
                     Offline Direct Buy
                   </h3>
                 </div>
@@ -716,10 +745,10 @@ export default function AuctionConsole({
               </div>
 
               {/* Content */}
-              <div className="p-8">
-                <div className="flex items-center gap-4 mb-8 bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+              <div className="p-6 md:p-8">
+                <div className="flex items-center gap-4 mb-6 md:mb-8 bg-[var(--surface-2)] p-4 rounded-xl md:rounded-2xl border border-[var(--border-1)]">
                   <div
-                    className="w-12 h-12 rounded-xl bg-[var(--surface-3)] bg-cover bg-center shrink-0 border border-[var(--border-1)] flex items-center justify-center font-black"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[var(--surface-3)] bg-cover bg-center shrink-0 border border-[var(--border-1)] flex items-center justify-center font-black text-[var(--text-muted)]"
                     style={{
                       backgroundImage: activePlayer.photo_url
                         ? `url(${activePlayer.photo_url})`
@@ -728,17 +757,17 @@ export default function AuctionConsole({
                     {!activePlayer.photo_url &&
                       activePlayer.full_name?.charAt(0)}
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] md:text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
                       Assigning
                     </p>
-                    <p className="font-black text-[var(--foreground)] text-lg leading-none mt-1">
+                    <p className="font-black text-[var(--foreground)] text-base md:text-lg leading-none mt-1 truncate">
                       {activePlayer.full_name}
                     </p>
                   </div>
                 </div>
 
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                   <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex justify-between">
                     <span>Final Sale Price (₹)</span>
                     <span className="text-[var(--foreground)]">
@@ -750,10 +779,10 @@ export default function AuctionConsole({
                     autoFocus
                     value={manualPrice}
                     onChange={(e) => setManualPrice(Number(e.target.value))}
-                    className={`w-full bg-[var(--surface-2)] border-2 rounded-xl py-4 px-5 text-2xl font-black outline-none transition-colors ${Number(manualPrice) > directBuyModal.team.purse_balance ? "border-[var(--danger)] text-[var(--danger)]" : "border-[var(--border-1)] text-[var(--foreground)] focus:border-amber-500"}`}
+                    className={`w-full bg-[var(--surface-2)] border-2 rounded-xl py-3 px-4 md:py-4 md:px-5 text-xl md:text-2xl font-black outline-none transition-colors ${Number(manualPrice) > directBuyModal.team.purse_balance ? "border-red-500 text-red-500" : "border-[var(--border-1)] text-[var(--foreground)] focus:border-amber-500"}`}
                   />
                   {Number(manualPrice) > directBuyModal.team.purse_balance && (
-                    <p className="text-[10px] font-bold text-[var(--danger)] mt-2 uppercase tracking-widest flex items-center gap-1">
+                    <p className="text-[10px] font-bold text-red-500 mt-2 uppercase tracking-widest flex items-center gap-1">
                       <AlertCircle size={12} /> Exceeds Available Budget
                     </p>
                   )}
@@ -767,7 +796,7 @@ export default function AuctionConsole({
                     Number(manualPrice) <= 0 ||
                     Number(manualPrice) > directBuyModal.team.purse_balance
                   }
-                  className="w-full bg-amber-500 text-amber-950 font-black py-4 rounded-xl uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+                  className="w-full bg-amber-500 text-amber-950 font-black py-3 md:py-4 rounded-xl uppercase tracking-widest text-xs md:text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
                   {isProcessing
                     ? "Processing..."
                     : `Confirm Sale to ${directBuyModal.team.short_name}`}

@@ -6,7 +6,7 @@ import { deriveMatchStats } from "../../utils/cricketMath";
 // REUSE YOUR COMPONENTS!
 import Scoreboard from "../../(scorer)/t/[tournamentId]/m/[matchId]/components/Scoreboard";
 import FullScorecard from "../../(scorer)/t/[tournamentId]/m/[matchId]/components/FullScorecard";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Trophy, Activity } from "lucide-react";
 import Link from "next/link";
 
 export default function PublicMatchCenter({
@@ -57,8 +57,14 @@ export default function PublicMatchCenter({
 
   if (!match)
     return (
-      <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest">
-        LOADING LIVE SCORE...
+      <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center text-[var(--text-muted)] p-4 transition-colors duration-300">
+        <Activity
+          className="animate-spin text-[var(--accent)] mb-4"
+          size={40}
+        />
+        <p className="font-black uppercase tracking-widest text-xs">
+          Loading Live Score...
+        </p>
       </div>
     );
 
@@ -71,38 +77,40 @@ export default function PublicMatchCenter({
     match.status === "completed" || match.stage === "completed";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 font-sans max-w-4xl mx-auto pb-20">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 font-sans max-w-4xl mx-auto pb-20 transition-colors duration-300">
       <Link
         href={`/`}
-        className="flex items-center gap-2 text-slate-500 font-bold mb-8 hover:text-teal-500 w-max transition-colors">
+        className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--foreground)] font-bold mb-8 w-max transition-colors">
         <ArrowLeft size={16} /> Back to Home
       </Link>
 
       {/* PUBLIC HEADER */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 text-center mb-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+      <div className="bg-[var(--surface-1)] rounded-[2rem] p-6 text-center mb-6 shadow-sm border border-[var(--border-1)] transition-colors">
+        <h1 className="text-2xl font-black uppercase tracking-tight text-[var(--foreground)]">
           {match.team1.name}{" "}
-          <span className="text-slate-400 mx-2 text-lg">VS</span>{" "}
+          <span className="text-[var(--text-muted)] opacity-50 mx-2 text-lg">
+            VS
+          </span>{" "}
           {match.team2.name}
         </h1>
-        <p className="text-teal-500 font-bold text-xs tracking-[0.2em] uppercase mt-2">
+        <p className="text-[var(--accent)] font-bold text-xs tracking-[0.2em] uppercase mt-2">
           Match Center
         </p>
       </div>
 
       <div className="animate-in fade-in slide-in-from-bottom-4">
-        {/* 🔥 THE FIX: Conditional Rendering for Completed Matches 🔥 */}
+        {/* Conditional Rendering for Completed Matches */}
         {isCompleted ? (
-          <div className="mb-6 bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 rounded-[2rem] p-8 text-center shadow-xl border border-teal-500/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-teal-500/5 blur-3xl rounded-full scale-150 pointer-events-none"></div>
+          <div className="mb-6 bg-[var(--foreground)] rounded-[2rem] p-8 text-center shadow-xl border border-[var(--border-1)] relative overflow-hidden transition-colors">
+            <div className="absolute inset-0 bg-[var(--accent)]/10 blur-3xl rounded-full scale-150 pointer-events-none"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-yellow-500/20 text-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+              <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl border border-amber-500/20 shadow-sm">
                 <Trophy size={32} />
               </div>
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-400 mb-2">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--background)] opacity-80 mb-2">
                 Match Completed
               </h2>
-              <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white drop-shadow-md leading-tight">
+              <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-[var(--background)] drop-shadow-md leading-tight">
                 {match.result_margin || "Result Processing..."}
               </p>
             </div>
@@ -121,17 +129,21 @@ export default function PublicMatchCenter({
               remainingRuns={stats.remainingRuns}
               remainingBalls={stats.remainingBalls}
               extras={stats.extrasBreakdown}
-              openSettings={() => alert("Scorer only!")}
+              openSettings={() =>
+                alert("Scoring settings are locked for spectators.")
+              }
             />
           </div>
         )}
 
-        <FullScorecard
-          deliveries={deliveries}
-          battingSquad={stats.battingSquad}
-          bowlingSquad={stats.bowlingSquad}
-          match={match}
-        />
+        <div className="bg-[var(--surface-1)] rounded-[2.5rem] p-4 sm:p-8 shadow-sm border border-[var(--border-1)] transition-colors">
+          <FullScorecard
+            deliveries={deliveries}
+            battingSquad={stats.battingSquad}
+            bowlingSquad={stats.bowlingSquad}
+            match={match}
+          />
+        </div>
       </div>
     </div>
   );

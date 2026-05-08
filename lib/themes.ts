@@ -1,10 +1,10 @@
+import { Sun, Moon, Droplets, Sunrise } from "lucide-react";
 export const APP_THEMES = [
-  { id: "light", label: "Light" },
-  { id: "dark", label: "Dark" },
-  { id: "ocean", label: "Ocean" },
-  { id: "sunset", label: "Sunset" },
+  { id: "light", label: "Light", icon: Sun },
+  { id: "dark", label: "Dark", icon: Moon },
+  { id: "ocean", label: "Ocean", icon: Droplets },
+  { id: "sunset", label: "Sunset", icon: Sunrise },
 ] as const;
-
 // Comprehensive theme color palette
 export const THEME_COLORS = {
   light: {
@@ -77,7 +77,7 @@ export const THEME_COLORS = {
   },
 } as const;
 
-export type ThemeId = typeof APP_THEMES[number]["id"];
+export type ThemeId = (typeof APP_THEMES)[number]["id"];
 export type ThemeColors = {
   [K in keyof typeof THEME_COLORS.light]: string;
 };

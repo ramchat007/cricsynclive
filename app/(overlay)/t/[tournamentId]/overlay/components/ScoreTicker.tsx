@@ -564,8 +564,7 @@ export default function ScoreTicker({
             eventTrigger
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
-          }`}
-        >
+          }`}>
           {eventTrigger && (
             <>
               {/* Sleek Angled Background */}
@@ -578,8 +577,7 @@ export default function ScoreTicker({
                       : eventTrigger === "SIX"
                         ? `linear-gradient(90deg, ${selectedTheme.tokens.warning} 0%, #b45309 100%)`
                         : `linear-gradient(90deg, ${selectedTheme.tokens.success} 0%, #047857 100%)`,
-                }}
-              >
+                }}>
                 {/* Subtle sweeping light effect */}
                 <div className="absolute top-0 bottom-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-lightSweep" />
               </div>
@@ -589,8 +587,7 @@ export default function ScoreTicker({
                 className="text-[64px] md:text-[80px] font-black italic uppercase z-10 animate-textTracking drop-shadow-2xl text-white"
                 style={{
                   textShadow: "0 10px 30px rgba(0,0,0,0.6)",
-                }}
-              >
+                }}>
                 {eventTrigger === "WICKET"
                   ? "WICKET!"
                   : eventTrigger === "SIX"
@@ -606,7 +603,7 @@ export default function ScoreTicker({
         {/* TOP TABS */}
         <div className="absolute -top-[32px] left-0 w-full flex justify-between items-end px-24 z-10">
           <div className="w-[220px] text-center">
-            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[13px] font-black uppercase text-white pb-1">
+            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[14px] font-black uppercase text-white pb-1">
               {battingName}
             </span>
           </div>
@@ -616,12 +613,10 @@ export default function ScoreTicker({
             style={{
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
-            }}
-          >
+            }}>
             <span
               className="shrink-0"
-              style={{ color: selectedTheme.tokens.warning }}
-            >
+              style={{ color: selectedTheme.tokens.warning }}>
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -631,8 +626,7 @@ export default function ScoreTicker({
             <span className="text-white/40 shrink-0">|</span>
             <span
               className="drop-shadow-md min-w-0"
-              style={{ color: selectedTheme.tokens.accent }}
-            >
+              style={{ color: selectedTheme.tokens.accent }}>
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName
@@ -642,7 +636,7 @@ export default function ScoreTicker({
           </div>
 
           <div className="w-[220px] text-center">
-            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[13px] font-black uppercase text-white pb-1">
+            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[14px] font-black uppercase text-white pb-1">
               {bowlingName}
             </span>
           </div>
@@ -653,8 +647,7 @@ export default function ScoreTicker({
           className="w-full h-full flex relative overflow-hidden border-t-[3px] border-white/20 shadow-2xl"
           style={{
             background: `linear-gradient(90deg, ${battingColor} 0%, ${battingColor} 18%, rgba(10, 10, 15, 0.98) 40%, rgba(10, 10, 15, 0.98) 60%, ${bowlingColor} 82%, ${bowlingColor} 100%)`,
-          }}
-        >
+          }}>
           <div
             className="absolute inset-y-0 left-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
@@ -683,7 +676,7 @@ export default function ScoreTicker({
 
             {/* 2. SCORE COLUMN */}
             <div className="w-[430px] h-full flex flex-col justify-center shrink-0 relative border-r border-white/10">
-              <div className="text-white text-[13px] font-black tracking-[0.25em] uppercase drop-shadow-md absolute top-2 left-8 right-8 opacity-90 ">
+              <div className="text-white text-[15px] font-black tracking-[0.25em] uppercase drop-shadow-md absolute top-2 left-8 right-8 opacity-90 ">
                 {battingInitials}{" "}
                 <span className="text-white/40 mx-2 text-[11px]">VS</span>{" "}
                 {bowlingInitials}
@@ -691,8 +684,7 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
-                >
+                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}>
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -707,7 +699,7 @@ export default function ScoreTicker({
                 </span>
               </div>
 
-              <div className="text-[11px] text-amber-400 font-bold uppercase mt-1 drop-shadow-sm px-8">
+              <div className="text-[12px] text-amber-400 font-bold uppercase mt-1 drop-shadow-sm px-8">
                 {scoreContextText}
               </div>
             </div>
@@ -715,8 +707,8 @@ export default function ScoreTicker({
             {/* 3. BATSMEN COLUMN */}
             <div className="w-[450px] h-full flex flex-col justify-center px-12 shrink-0 text-white border-r border-white/10">
               <div className="flex justify-between items-end font-bold">
-                <span className="pr-3 flex items-center gap-2 text-xl drop-shadow-md min-w-0">
-                  <span className="truncate max-w-[200px]">{strikerName}</span>
+                <span className="pr-3 flex items-center gap-2 text-[23px] drop-shadow-md min-w-0">
+                  <span className="truncate max-w-[250px]">{strikerName}</span>
                   <Zap
                     size={18}
                     className="text-amber-400 fill-amber-400 animate-pulseGlow shrink-0"
@@ -731,7 +723,7 @@ export default function ScoreTicker({
               </div>
 
               <div className="flex justify-between items-end mt-2 text-white/70">
-                <span className="pr-3 text-lg drop-shadow-md min-w-0 truncate max-w-[200px]">
+                <span className="pr-3 text-[23px] drop-shadow-md min-w-0 truncate max-w-[250px]">
                   {nonStrikerName}
                 </span>
                 <span className="font-mono text-2xl font-bold drop-shadow-md leading-none shrink-0">
@@ -847,8 +839,7 @@ export default function ScoreTicker({
                         /* ✅ FIX 3: Swapped popIn for shootIn */
                         animation: `shootIn 0.35s ease-out forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}
-                    >
+                      }}>
                       {bText}
                     </div>
                   );

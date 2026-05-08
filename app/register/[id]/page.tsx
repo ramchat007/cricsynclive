@@ -135,8 +135,7 @@ export default function PublicPlayerRegistration({
                   setIsEditing(false);
                   setFormData({ ...formData, id: "", full_name: "" });
                 }}
-                className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 px-3 py-1.5 rounded-full transition-all hover:opacity-80 flex items-center gap-1"
-              >
+                className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 px-3 py-1.5 rounded-full transition-all hover:opacity-80 flex items-center gap-1">
                 {lookupMode ? (
                   "New Entry"
                 ) : (
@@ -203,8 +202,7 @@ export default function PublicPlayerRegistration({
                 <button
                   onClick={handleLookup}
                   disabled={loading || !formData.mobile_number}
-                  className="w-full bg-[var(--foreground)] text-[var(--background)] font-bold py-5 rounded-2xl mt-6 flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 active:scale-95"
-                >
+                  className="w-full bg-[var(--foreground)] text-[var(--background)] font-bold py-5 rounded-2xl mt-6 flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 active:scale-95">
                   {loading ? (
                     <Loader2 className="animate-spin" size={18} />
                   ) : (
@@ -217,8 +215,7 @@ export default function PublicPlayerRegistration({
                 <button
                   onClick={() => setStep(2)}
                   disabled={!formData.full_name || !formData.mobile_number}
-                  className="w-full bg-[var(--accent)] text-[var(--background)] font-bold py-5 rounded-2xl mt-6 flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50"
-                >
+                  className="w-full bg-[var(--accent)] text-[var(--background)] font-bold py-5 rounded-2xl mt-6 flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50">
                   Next Step <ChevronRight size={18} />
                 </button>
               )}
@@ -247,24 +244,28 @@ export default function PublicPlayerRegistration({
                 options={{
                   cropping: true,
                   showSkipCropButton: false,
-                  croppingAspectRatio: 1,
                   showCompletedButton: true,
                   multiple: false,
                   publicId: `player_${formData.mobile_number}`,
                   tags: [tournamentId, "player_registration"],
                 }}
-                onSuccess={(result: any) =>
+                onSuccess={(result: any) => {
+                  let url = result.info.secure_url;
+                  if (
+                    result.info.coordinates &&
+                    result.info.coordinates.custom
+                  ) {
+                    url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                  }
                   setFormData({
                     ...formData,
-                    photo_url: result.info.secure_url,
-                  })
-                }
-              >
+                    photo_url: url,
+                  });
+                }}>
                 {({ open }) => (
                   <button
                     onClick={() => open()}
-                    className="w-full h-32 border-2 border-dashed border-[var(--border-1)] rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)] hover:border-[var(--accent)] transition-all overflow-hidden shrink-0"
-                  >
+                    className="w-full h-32 border-2 border-dashed border-[var(--border-1)] rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)] hover:border-[var(--accent)] transition-all overflow-hidden shrink-0">
                     {formData.photo_url ? (
                       <img
                         src={formData.photo_url}
@@ -294,24 +295,28 @@ export default function PublicPlayerRegistration({
                   options={{
                     cropping: true,
                     showSkipCropButton: false,
-                    croppingAspectRatio: 1,
                     showCompletedButton: true,
                     multiple: false,
                     publicId: `payment_${tournamentId}_${formData.mobile_number}`,
                     tags: [tournamentId, "payment_proof"],
                   }}
-                  onSuccess={(result: any) =>
+                  onSuccess={(result: any) => {
+                    let url = result.info.secure_url;
+                    if (
+                      result.info.coordinates &&
+                      result.info.coordinates.custom
+                    ) {
+                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                    }
                     setFormData({
                       ...formData,
-                      payment_url: result.info.secure_url,
-                    })
-                  }
-                >
+                      payment_url: url,
+                    });
+                  }}>
                   {({ open }) => (
                     <button
                       onClick={() => open()}
-                      className="w-full h-20 border-2 border-dashed border-[var(--accent)]/30 bg-[var(--accent)]/5 rounded-2xl flex items-center justify-center gap-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all overflow-hidden"
-                    >
+                      className="w-full h-20 border-2 border-dashed border-[var(--accent)]/30 bg-[var(--accent)]/5 rounded-2xl flex items-center justify-center gap-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all overflow-hidden">
                       {formData.payment_url ? (
                         <span className="font-bold text-sm">
                           ✅ Payment Uploaded
@@ -339,8 +344,7 @@ export default function PublicPlayerRegistration({
                     onChange={(e) =>
                       setFormData({ ...formData, batting_hand: e.target.value })
                     }
-                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
-                  >
+                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none">
                     <option className="bg-[var(--surface-1)]">
                       Right Hand
                     </option>
@@ -356,8 +360,7 @@ export default function PublicPlayerRegistration({
                     onChange={(e) =>
                       setFormData({ ...formData, bowling_hand: e.target.value })
                     }
-                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
-                  >
+                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none">
                     <option className="bg-[var(--surface-1)]">Right Arm</option>
                     <option className="bg-[var(--surface-1)]">Left Arm</option>
                   </select>
@@ -374,8 +377,7 @@ export default function PublicPlayerRegistration({
                     onChange={(e) =>
                       setFormData({ ...formData, player_role: e.target.value })
                     }
-                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
-                  >
+                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none">
                     <option className="bg-[var(--surface-1)]">Batsman</option>
                     <option className="bg-[var(--surface-1)]">Bowler</option>
                     <option className="bg-[var(--surface-1)]">
@@ -395,8 +397,7 @@ export default function PublicPlayerRegistration({
                     onChange={(e) =>
                       setFormData({ ...formData, tshirt_size: e.target.value })
                     }
-                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
-                  >
+                    className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none">
                     <option className="bg-[var(--surface-1)]">S</option>
                     <option className="bg-[var(--surface-1)]">M</option>
                     <option className="bg(--surface-1)">L</option>
@@ -415,8 +416,7 @@ export default function PublicPlayerRegistration({
                   onChange={(e) =>
                     setFormData({ ...formData, bowling_style: e.target.value })
                   }
-                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
-                >
+                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none">
                   <option className="bg-[var(--surface-1)]">Fast</option>
                   <option className="bg-[var(--surface-1)]">Medium Fast</option>
                   <option className="bg-[var(--surface-1)]">Off Spin</option>
@@ -427,15 +427,13 @@ export default function PublicPlayerRegistration({
               <div className="flex gap-4 pt-4 shrink-0">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 bg-[var(--surface-2)] text-[var(--text-muted)] font-bold py-4 rounded-2xl transition-all hover:bg-[var(--border-1)]"
-                >
+                  className="flex-1 bg-[var(--surface-2)] text-[var(--text-muted)] font-bold py-4 rounded-2xl transition-all hover:bg-[var(--border-1)]">
                   Back
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-1 bg-[var(--foreground)] text-[var(--background)] font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50"
-                >
+                  className="flex-1 bg-[var(--foreground)] text-[var(--background)] font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50">
                   {loading ? (
                     <Loader2 className="animate-spin mx-auto" size={18} />
                   ) : isEditing ? (
@@ -465,8 +463,7 @@ export default function PublicPlayerRegistration({
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-8 text-[var(--accent)] font-bold text-sm uppercase tracking-widest hover:underline transition-all"
-            >
+              className="mt-8 text-[var(--accent)] font-bold text-sm uppercase tracking-widest hover:underline transition-all">
               Back to Start
             </button>
           </div>

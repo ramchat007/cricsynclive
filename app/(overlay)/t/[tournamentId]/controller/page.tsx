@@ -372,36 +372,30 @@ export default function MasterController({
     return [
       {
         question: `Who won the toss in today's match between ${matchData.team1?.name} and ${matchData.team2?.name}?`,
-        options: [
-          matchData.team1?.name,
-          matchData.team2?.name,
-          "It was a tie",
-          "Match Abandoned",
-        ],
+        options: [matchData.team1?.name, matchData.team2?.name],
       },
       {
         question: `Which team is currently leading the tournament points table?`,
-        options: [
-          matchData.team1?.name,
-          matchData.team2?.name,
-          "Mumbai Indians",
-          "Chennai Super Kings",
-        ],
+        options: [matchData.team1?.name, matchData.team2?.name],
+      },
+      {
+        question: `Who will win the current battle between ${matchData.team1?.name} and ${matchData.team2?.name}?`,
+        options: [matchData.team1?.name, matchData.team2?.name],
       },
     ];
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-6 font-sans pb-24">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-6 font-sans pb-24 transition-colors duration-300">
       <div className="max-w-6xl mx-auto space-y-6">
-        <header className="bg-white border border-gray-200 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
+        <header className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center shadow-sm gap-4 transition-colors">
           <div className="flex items-center gap-3">
-            <Radio className="text-emerald-500 animate-pulse" size={28} />
+            <Radio className="text-[var(--accent)] animate-pulse" size={28} />
             <div>
-              <h1 className="text-gray-900 font-black uppercase tracking-tighter text-2xl leading-none">
+              <h1 className="text-[var(--foreground)] font-black uppercase tracking-tighter text-2xl leading-none">
                 Studio V2 Control
               </h1>
-              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">
+              <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">
                 Broadcast Director
               </p>
             </div>
@@ -409,7 +403,7 @@ export default function MasterController({
           <select
             value={config.activeMatchId || ""}
             onChange={(e) => publishConfig({ activeMatchId: e.target.value })}
-            className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-3 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold uppercase tracking-wider text-sm w-full md:w-auto cursor-pointer">
+            className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-6 py-3 text-[var(--foreground)] outline-none focus:border-[var(--accent)] transition-colors font-bold uppercase tracking-wider text-sm w-full md:w-auto cursor-pointer">
             <option value="">-- Select Active Feed --</option>
             {matches.map((m) => (
               <option key={m.id} value={m.id}>
@@ -420,13 +414,14 @@ export default function MasterController({
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-4 shadow-sm flex flex-col">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-2">
-              <Tv size={16} className="text-gray-400" /> In-Game Displays
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
+            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+              <Tv size={16} className="text-[var(--text-muted)]" /> In-Game
+              Displays
             </h3>
             <button
               onClick={() => toggleView("SCOREBUG")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("SCOREBUG") ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("SCOREBUG") ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
               Main Score Ticker{" "}
               {config.activeViews?.includes("SCOREBUG") ? (
                 <Check size={18} />
@@ -436,7 +431,7 @@ export default function MasterController({
             </button>
             <button
               onClick={() => toggleView("MINI_SCOREBUG")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("MINI_SCOREBUG") ? "bg-cyan-600 border-cyan-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("MINI_SCOREBUG") ? "bg-cyan-600 border-cyan-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
               Mini Corner Bug{" "}
               {config.activeViews?.includes("MINI_SCOREBUG") ? (
                 <Check size={18} />
@@ -446,7 +441,7 @@ export default function MasterController({
             </button>
             <button
               onClick={() => toggleView("PARTNERSHIP")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("PARTNERSHIP") ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("PARTNERSHIP") ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
               Current Partnership{" "}
               {config.activeViews?.includes("PARTNERSHIP") ? (
                 <Check size={18} />
@@ -458,45 +453,46 @@ export default function MasterController({
               onClick={() =>
                 publishConfig({ showAppLogo: !config.showAppLogo })
               }
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all mt-auto ${config.showAppLogo ? "bg-gray-800 border-gray-800 text-white" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}>
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all mt-auto ${config.showAppLogo ? "bg-[var(--foreground)] border-[var(--border-1)] text-[var(--background)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
               Watermark Logo{" "}
               {config.showAppLogo ? (
-                <RotateCw size={16} className="text-emerald-400" />
+                <RotateCw size={16} className="text-[var(--accent)]" />
               ) : (
                 <EyeOff size={16} />
               )}
             </button>
           </div>
 
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-4 shadow-sm flex flex-col">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-2">
-              <Zap size={16} className="text-gray-400" /> Rapid Triggers
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
+            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+              <Zap size={16} className="text-[var(--text-muted)]" /> Rapid
+              Triggers
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => triggerRapidEvent("FOUR")}
-                className="bg-emerald-50 border border-emerald-200 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-700 font-black text-sm active:scale-95 transition-all shadow-sm">
+                className="bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-500 font-black text-sm active:scale-95 transition-all shadow-sm">
                 4 RUNS
               </button>
               <button
                 onClick={() => triggerRapidEvent("SIX")}
-                className="bg-amber-50 border border-amber-200 hover:bg-amber-400 hover:text-white hover:border-amber-400 py-6 rounded-xl text-amber-700 font-black text-sm active:scale-95 transition-all shadow-sm">
+                className="bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 hover:text-white hover:border-amber-500 py-6 rounded-xl text-amber-500 font-black text-sm active:scale-95 transition-all shadow-sm">
                 6 RUNS
               </button>
             </div>
             <button
               onClick={() => triggerRapidEvent("WICKET")}
-              className="w-full bg-rose-50 border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-700 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm">
+              className="w-full bg-rose-500/10 border border-rose-500/20 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-500 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm">
               WICKET
             </button>
             {!!triggerNote && (
-              <p className="text-[11px] font-bold text-gray-500 mt-1">
+              <p className="text-[11px] font-bold text-[var(--text-muted)] mt-1">
                 {triggerNote}
               </p>
             )}
 
-            <div className="pt-4 mt-auto border-t border-gray-100">
-              <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
+            <div className="pt-4 mt-auto border-t border-[var(--border-1)]">
+              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2 flex items-center gap-1">
                 <MessageSquare size={12} /> Custom Bottom Ticker
               </label>
               <div className="flex gap-2">
@@ -505,21 +501,21 @@ export default function MasterController({
                   placeholder="Type breaking news here..."
                   defaultValue={config.tickerText || ""}
                   onBlur={(e) => publishConfig({ tickerText: e.target.value })}
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="flex-1 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors placeholder-[var(--text-muted)]"
                 />
                 <button
                   onClick={() => toggleView("TICKER")}
-                  className={`px-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border ${config.activeViews?.includes("TICKER") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"}`}>
+                  className={`px-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border ${config.activeViews?.includes("TICKER") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
                   {config.activeViews?.includes("TICKER") ? "Hide" : "Show"}
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-4 shadow-sm">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-2">
-              <MonitorPlay size={16} className="text-gray-400" /> Full-Screen
-              Overlays
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+              <MonitorPlay size={16} className="text-[var(--text-muted)]" />{" "}
+              Full-Screen Overlays
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -537,13 +533,13 @@ export default function MasterController({
                 <button
                   key={overlay.id}
                   onClick={() => toggleFullscreenView(overlay.id)}
-                  className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}>
+                  className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
                   <overlay.icon
                     size={18}
                     className={
                       config.activeViews?.includes(overlay.id)
                         ? "text-white"
-                        : "text-gray-400"
+                        : "text-[var(--text-muted)]"
                     }
                   />{" "}
                   {overlay.label}
@@ -552,17 +548,17 @@ export default function MasterController({
             </div>
             <button
               onClick={() => toggleFullscreenView("MATCH_SUMMARY")}
-              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-gray-50 border-gray-200 text-amber-600 hover:bg-gray-100"}`}>
+              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-amber-500 hover:text-amber-600"}`}>
               <Trophy size={18} /> Match Summary
             </button>
           </div>
 
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-4 shadow-sm">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-2">
-              <LayoutTemplate size={16} className="text-gray-400" /> Broadcast
-              Themes
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+              <LayoutTemplate size={16} className="text-[var(--text-muted)]" />{" "}
+              Broadcast Themes
             </h3>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-[var(--text-muted)]">
               App themes are free in navbar. Tournament broadcast themes include
               premium presets (payments can be integrated later).
             </p>
@@ -573,18 +569,19 @@ export default function MasterController({
                   onClick={() => selectBroadcastTheme(theme.id)}
                   className={`w-full py-3 px-4 rounded-xl border text-left transition-all ${
                     config.broadcastThemeId === theme.id
-                      ? "border-emerald-500 bg-emerald-50"
-                      : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                      ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                      : "border-[var(--border-1)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)]"
                   }`}>
                   <div className="flex items-center justify-between">
-                    <span className="font-black uppercase tracking-wider text-xs text-gray-700">
+                    <span
+                      className={`font-black uppercase tracking-wider text-xs ${config.broadcastThemeId === theme.id ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}>
                       {theme.label}
                     </span>
                     <span
                       className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${
                         theme.premium
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-emerald-100 text-emerald-700"
+                          ? "bg-amber-500/20 text-amber-500"
+                          : "bg-emerald-500/20 text-emerald-500"
                       }`}>
                       {theme.premium ? "Premium" : "Free"}
                     </span>
@@ -593,20 +590,23 @@ export default function MasterController({
               ))}
             </div>
             {!!themeNote && (
-              <p className="text-[11px] font-bold text-gray-500">{themeNote}</p>
+              <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                {themeNote}
+              </p>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm flex flex-col justify-between transition-colors">
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2">
-                  <Users size={16} className="text-gray-400" /> Player Spotlight
+                <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2">
+                  <Users size={16} className="text-[var(--text-muted)]" />{" "}
+                  Player Spotlight
                 </h3>
 
-                <label className="flex items-center gap-2 cursor-pointer bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
+                <label className="flex items-center gap-2 cursor-pointer bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
                   <input
                     type="checkbox"
                     checked={config.autoSpotlight !== false}
@@ -615,14 +615,14 @@ export default function MasterController({
                     }
                     className="w-3 h-3 accent-blue-600 cursor-pointer"
                   />
-                  <span className="text-[10px] font-bold uppercase text-blue-700 tracking-wider">
+                  <span className="text-[10px] font-bold uppercase text-blue-500 tracking-wider">
                     Auto-Show (10s)
                   </span>
                 </label>
               </div>
 
               <div className="mb-5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
                   Live Crease Controls
                 </label>
                 <div className="flex gap-2">
@@ -635,7 +635,7 @@ export default function MasterController({
                       });
                       toggleView("PLAYER_SPOTLIGHT");
                     }}
-                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
+                    className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-500 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
                     🏏{" "}
                     {teamASquad
                       .concat(teamBSquad)
@@ -655,7 +655,7 @@ export default function MasterController({
                       });
                       toggleView("PLAYER_SPOTLIGHT");
                     }}
-                    className="flex-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
+                    className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
                     🥎{" "}
                     {teamASquad
                       .concat(teamBSquad)
@@ -669,7 +669,7 @@ export default function MasterController({
                 </div>
               </div>
 
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
                 Manual Selection
               </label>
               <select
@@ -677,10 +677,10 @@ export default function MasterController({
                 onChange={(e) =>
                   publishConfig({ spotlightPlayerId: e.target.value })
                 }
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-bold uppercase tracking-wider text-sm mb-4 cursor-pointer">
+                className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3 text-[var(--foreground)] outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-bold uppercase tracking-wider text-sm mb-4 cursor-pointer transition-colors">
                 <option value="">-- Choose a Player --</option>
                 {teamASquad.length > 0 && (
-                  <optgroup label="Team A">
+                  <optgroup label="Team A" className="bg-[var(--surface-1)]">
                     {teamASquad.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.full_name}
@@ -689,7 +689,7 @@ export default function MasterController({
                   </optgroup>
                 )}
                 {teamBSquad.length > 0 && (
-                  <optgroup label="Team B">
+                  <optgroup label="Team B" className="bg-[var(--surface-1)]">
                     {teamBSquad.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.full_name}
@@ -703,7 +703,7 @@ export default function MasterController({
             <button
               onClick={() => toggleView("PLAYER_SPOTLIGHT")}
               disabled={!config.spotlightPlayerId}
-              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 border transition-all ${!config.spotlightPlayerId ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("PLAYER_SPOTLIGHT") ? "bg-cyan-500 border-cyan-500 text-white shadow-md" : "bg-white border-gray-300 text-cyan-600 hover:bg-gray-50"}`}>
+              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 border transition-all ${!config.spotlightPlayerId ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("PLAYER_SPOTLIGHT") ? "bg-cyan-500 border-cyan-500 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-cyan-500 hover:bg-[var(--surface-2)]"}`}>
               <Users size={18} />{" "}
               {config.activeViews?.includes("PLAYER_SPOTLIGHT")
                 ? "Hide Profile"
@@ -711,15 +711,15 @@ export default function MasterController({
             </button>
           </div>
 
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-[0.2em] flex items-center gap-2 mb-6">
-              <ImageIcon size={16} className="text-gray-400" /> Sponsor
-              Integration
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm transition-colors">
+            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-6">
+              <ImageIcon size={16} className="text-[var(--text-muted)]" />{" "}
+              Sponsor Integration
             </h3>
             <div className="grid grid-cols-2 gap-6 h-full">
               {/* 🔥 Safe Array Setup for Banners 🔥 */}
               <div className="flex flex-col gap-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
                   Fullscreen Banners
                 </label>
 
@@ -731,11 +731,22 @@ export default function MasterController({
                     multiple: false,
                     cropping: true,
                     showSkipCropButton: false,
-                    croppingAspectRatio: 1,
+                    // 🔥 Changed from 1 (Square) to 16/9 (Widescreen TV format)
+                    croppingAspectRatio: 16 / 9,
                     showCompletedButton: true,
                   }}
                   onSuccess={(result: any) => {
-                    const url = result.info.secure_url;
+                    let url = result.info.secure_url;
+
+                    // 🔥 THE FIX: Tell Cloudinary to actively apply the crop!
+                    // If the user used the crop tool, inject the crop command into the URL
+                    if (
+                      result.info.coordinates &&
+                      result.info.coordinates.custom
+                    ) {
+                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                    }
+
                     // ✅ Reads from ref to prevent overwriting
                     const currentBanners =
                       configRef.current.sponsorBanners || [];
@@ -744,7 +755,7 @@ export default function MasterController({
                   {({ open }) => (
                     <button
                       onClick={() => open()}
-                      className="border-2 border-dashed border-gray-300 rounded-xl h-24 w-full flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-amber-500 transition-colors cursor-pointer bg-gray-50/50">
+                      className="border-2 border-dashed border-[var(--border-1)] rounded-xl h-24 w-full flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-amber-500 transition-colors cursor-pointer bg-[var(--surface-2)]/50">
                       <UploadCloud size={24} className="mb-1" />
                       <span className="text-[9px] font-black uppercase tracking-widest">
                         Upload Banner(s)
@@ -753,12 +764,12 @@ export default function MasterController({
                   )}
                 </CldUploadWidget>
 
-                <div className="flex gap-2 overflow-x-auto py-1">
+                <div className="flex gap-2 overflow-x-auto py-1 custom-scrollbar">
                   {(config.sponsorBanners || []).map(
                     (url: string, idx: number) => (
                       <div
                         key={idx}
-                        className="relative w-12 h-8 shrink-0 rounded border border-gray-200 group">
+                        className="relative w-12 h-8 shrink-0 rounded border border-[var(--border-1)] group">
                         <img
                           src={url}
                           className="w-full h-full object-cover rounded"
@@ -780,7 +791,7 @@ export default function MasterController({
                     !(config.sponsorBanners?.length > 0) &&
                     !config.activeViews?.includes("SPONSOR_BANNER")
                   }
-                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!(config.sponsorBanners?.length > 0) && !config.activeViews?.includes("SPONSOR_BANNER") ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BANNER") ? "bg-amber-500 border-amber-500 text-white shadow-md" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}>
+                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!(config.sponsorBanners?.length > 0) && !config.activeViews?.includes("SPONSOR_BANNER") ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BANNER") ? "bg-amber-500 border-amber-500 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
                   {config.activeViews?.includes("SPONSOR_BANNER")
                     ? "Hide Banners"
                     : "Play Banner Ad(s)"}
@@ -789,7 +800,7 @@ export default function MasterController({
 
               {/* Bug Setup */}
               <div className="flex flex-col gap-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
                   Small Corner Bug
                 </label>
                 <CldUploadWidget
@@ -804,12 +815,19 @@ export default function MasterController({
                     showCompletedButton: true,
                   }}
                   onSuccess={(result: any) => {
-                    publishConfig({ sponsorBugUrl: result.info.secure_url });
+                    let url = result.info.secure_url;
+                    if (
+                      result.info.coordinates &&
+                      result.info.coordinates.custom
+                    ) {
+                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                    }
+                    publishConfig({ sponsorBugUrl: url });
                   }}>
                   {({ open }) => (
                     <div
                       onClick={() => open()}
-                      className="border-2 border-dashed border-gray-300 rounded-xl h-24 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-pink-500 transition-colors cursor-pointer group relative overflow-hidden bg-gray-50/50">
+                      className="border-2 border-dashed border-[var(--border-1)] rounded-xl h-24 flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-pink-500 transition-colors cursor-pointer group relative overflow-hidden bg-[var(--surface-2)]/50">
                       {config.sponsorBugUrl ? (
                         <img
                           src={config.sponsorBugUrl}
@@ -831,7 +849,7 @@ export default function MasterController({
                     !config.sponsorBugUrl &&
                     !config.activeViews?.includes("SPONSOR_BUG")
                   }
-                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!config.sponsorBugUrl && !config.activeViews?.includes("SPONSOR_BUG") ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BUG") ? "bg-pink-600 border-pink-600 text-white shadow-md" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"}`}>
+                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!config.sponsorBugUrl && !config.activeViews?.includes("SPONSOR_BUG") ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BUG") ? "bg-pink-600 border-pink-600 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
                   {config.activeViews?.includes("SPONSOR_BUG")
                     ? "Hide Bug"
                     : "Show Bug"}
@@ -841,22 +859,22 @@ export default function MasterController({
           </div>
 
           {/* 1. YOUTUBE SUBSCRIBE BANNER CONTROL */}
-          <div className="p-4 border rounded-xl bg-white mb-4 shadow-sm">
-            <h3 className="font-bold mb-3 flex items-center gap-2 text-red-600">
+          <div className="p-4 border border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] mb-4 shadow-sm transition-colors">
+            <h3 className="font-bold mb-3 flex items-center gap-2 text-red-500">
               <Play size={18} /> YouTube Engagement
             </h3>
             <div className="flex gap-4 items-end">
               <div className="flex-1">
-                <label className="block text-xs font-bold text-gray-500 mb-1">
+                <label className="block text-xs font-bold text-[var(--text-muted)] mb-1">
                   Channel Name
                 </label>
                 <input
                   type="text"
-                  value={config.youtubeChannelName || "@cricsynclive"}
+                  value={config.youtubeChannelName || ""}
                   onChange={(e) =>
                     publishConfig({ youtubeChannelName: e.target.value })
                   }
-                  className="w-full border border-gray-200 rounded p-2 text-sm bg-gray-50 focus:bg-white focus:ring-1 focus:ring-red-500 outline-none transition-all"
+                  className="w-full border border-[var(--border-1)] rounded p-2 text-sm bg-[var(--surface-2)] text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all placeholder-[var(--text-muted)]"
                 />
               </div>
               <button
@@ -865,7 +883,7 @@ export default function MasterController({
                     showSubscribeBanner: !config.showSubscribeBanner,
                   })
                 }
-                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
+                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
                 {config.showSubscribeBanner
                   ? "Hide Subscribe Banner"
                   : "Show Subscribe Banner"}
@@ -874,14 +892,13 @@ export default function MasterController({
           </div>
 
           {/* 2. LIVE QUIZ GENERATOR CONTROL */}
-          <div className="p-4 border rounded-xl bg-white shadow-sm">
-            <h3 className="font-bold mb-3 text-red-600 flex items-center gap-2">
+          <div className="p-4 border border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] shadow-sm transition-colors">
+            <h3 className="font-bold mb-3 text-red-500 flex items-center gap-2">
               Live Quiz Config
             </h3>
-
             {/* Dynamic Question Selector */}
             <select
-              className="w-full border rounded p-2 text-sm mb-3 bg-gray-50 outline-none focus:ring-1 focus:ring-red-500 transition-all"
+              className="w-full border border-[var(--border-1)] rounded p-2 text-sm mb-3 bg-[var(--surface-2)] text-[var(--foreground)] outline-none focus:border-[var(--accent)] transition-all cursor-pointer"
               onChange={(e) => {
                 if (e.target.value !== "") {
                   const q = JSON.parse(e.target.value);
@@ -901,7 +918,6 @@ export default function MasterController({
                 </option>
               ))}
             </select>
-
             <input
               type="text"
               placeholder="Or type a custom question..."
@@ -911,10 +927,11 @@ export default function MasterController({
                   quizData: { ...config.quizData, question: e.target.value },
                 })
               }
-              className="w-full border border-gray-200 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-red-500 outline-none transition-all rounded p-2 text-sm mb-2"
+              className="w-full text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-lg mb-2 placeholder-[var(--text-muted)] truncate"
             />
+
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {[0, 1, 2, 3].map((i) => (
+              {[0, 1].map((i) => (
                 <input
                   key={i}
                   type="text"
@@ -929,14 +946,13 @@ export default function MasterController({
                       quizData: { ...config.quizData, options: newOpts },
                     });
                   }}
-                  className="border border-gray-200 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-red-500 outline-none transition-all rounded p-2 text-sm"
+                  className="border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-sm placeholder-[var(--text-muted)]"
                 />
               ))}
             </div>
-
             {/* Simulate Youtube Results */}
-            <div className="border-t pt-3 mt-3">
-              <label className="block text-xs font-bold text-gray-500 mb-2">
+            <div className="border-t border-[var(--border-1)] pt-3 mt-3">
+              <label className="block text-xs font-bold text-[var(--text-muted)] mb-2">
                 Simulate YouTube Chat Results
               </label>
               <div className="flex gap-2">
@@ -949,7 +965,7 @@ export default function MasterController({
                       },
                     })
                   }
-                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors">
+                  className="flex-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 py-1 rounded text-xs font-bold hover:bg-amber-500 hover:text-amber-950 transition-colors">
                   A Wins
                 </button>
                 <button
@@ -961,7 +977,7 @@ export default function MasterController({
                       },
                     })
                   }
-                  className="flex-1 bg-amber-100 text-amber-700 py-1 rounded text-xs font-bold hover:bg-amber-200 transition-colors">
+                  className="flex-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 py-1 rounded text-xs font-bold hover:bg-amber-500 hover:text-amber-950 transition-colors">
                   B Wins
                 </button>
                 <button
@@ -970,7 +986,7 @@ export default function MasterController({
                       quizData: { ...config.quizData, results: null },
                     })
                   }
-                  className="flex-1 bg-gray-200 text-gray-700 py-1 rounded text-xs font-bold hover:bg-gray-300 transition-colors">
+                  className="flex-1 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] py-1 rounded text-xs font-bold transition-colors">
                   Clear Results
                 </button>
               </div>
@@ -987,7 +1003,7 @@ export default function MasterController({
                 showSubscribeBanner: false,
               })
             }
-            className="w-full py-5 bg-red-50 text-red-600 font-black border border-red-200 rounded-2xl hover:bg-red-600 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm">
+            className="w-full py-5 bg-red-500/10 text-red-500 font-black border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm">
             🚨 Kill All Graphics 🚨
           </button>
         </div>

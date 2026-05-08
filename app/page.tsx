@@ -21,7 +21,7 @@ export default function Home() {
               <span className="accent-text drop-shadow-md">Live</span>
             </h1>
             <p className="text-base md:text-xl font-black uppercase tracking-[0.3em] mt-6 text-slate-600 transition-colors duration-300">
-              The Industry-Standard Tournament OS
+              Run Cricket Like a Pro — From Toss to Trophy
             </p>
           </div>
         </section>
@@ -38,12 +38,12 @@ export default function Home() {
                 </span>
               </div>
               <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 transition-colors">
-                Total <span className="text-blue-500">Control</span>
+                Tournament <span className="text-blue-500">Command Center</span>
               </h2>
               <p className="text-sm md:text-base font-medium text-slate-600 transition-colors leading-relaxed">
-                Organise tournaments seamlessly. From expert umpire management
-                to assigning dedicated offline scorers, online scorers, and
-                on-demand commentators.
+                Take full control from a single dashboard. Assign umpires,
+                manage scorers (online/offline), and onboard commentators
+                effortlessly.
               </p>
             </div>
 
@@ -56,12 +56,11 @@ export default function Home() {
                 </span>
               </div>
               <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 transition-colors">
-                Real-Time <span className="text-teal-500">Precision</span>
+                Ball-by-Ball, <span className="text-teal-500">Zero Delay</span>
               </h2>
               <p className="text-sm md:text-base font-medium text-slate-600 transition-colors leading-relaxed">
-                Lightning-fast, ball-by-ball digital scoresheets engineered for
-                professional match management. Track every delivery with
-                industry-standard accuracy.
+                A lightning-fast scoring engine built for accuracy. Every
+                delivery is tracked, synced, and updated in real time.
               </p>
             </div>
 
@@ -74,12 +73,11 @@ export default function Home() {
                 </span>
               </div>
               <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 transition-colors">
-                Live <span className="text-amber-500">Auctions</span>
+                Auctions <span className="text-amber-500">Simplified</span>
               </h2>
               <p className="text-sm md:text-base font-medium text-slate-600 transition-colors leading-relaxed">
-                Host IPL-style mega auctions with zero compromises. Manage
-                extensive player registrations, verify team wallets, and execute
-                live bidding wars.
+                Host high-energy player auctions with live bidding, wallet
+                tracking, and seamless player management.
               </p>
             </div>
 
@@ -92,12 +90,12 @@ export default function Home() {
                 </span>
               </div>
               <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 transition-colors">
-                Broadcast <span className="text-red-500">Overlays</span>
+                Stream Like a <br />
+                <span className="text-red-500">TV Network</span>
               </h2>
               <p className="text-sm md:text-base font-medium text-slate-600 transition-colors leading-relaxed">
-                Bring TV-network quality to grassroots streams. Seamless Live
-                YouTube streaming integration featuring professional
-                broadcast-ready OBS overlays.
+                Deliver professional match broadcasts with OBS-ready overlays
+                and smooth YouTube live integration.
               </p>
             </div>
 
@@ -110,12 +108,12 @@ export default function Home() {
                 </span>
               </div>
               <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 transition-colors">
-                Smart <span className="text-fuchsia-500">Brackets</span>
+                Smart Fixtures <br/>{" "}
+                <span className="text-fuchsia-500">& Standings</span>
               </h2>
               <p className="text-sm md:text-base font-medium text-slate-600 transition-colors leading-relaxed">
-                Intelligent tournament trees and dynamic round-robin standings.
-                Automatically advance winners and keep your teams perfectly
-                synced.
+                Smart brackets, dynamic fixtures, and auto-updated standings—no
+                manual work, no errors.
               </p>
             </div>
 
@@ -128,12 +126,12 @@ export default function Home() {
                 </span>
               </div>
               <h2 className="text-3xl font-black uppercase italic mb-4 text-slate-900 transition-colors">
-                Digital <span className="text-purple-500">Identity</span>
+                Digital <br/>{" "}
+                <span className="text-purple-500">Player Profile</span>
               </h2>
               <p className="text-sm md:text-base font-medium text-slate-600 transition-colors leading-relaxed">
-                Track career milestones globally! Every run and wicket is
-                automatically tallied across all tournaments, providing a
-                shareable digital resume.
+                Track every run, wicket, and milestone across tournaments.
+                Players get a shareable digital career profile.
               </p>
             </div>
           </div>
@@ -143,8 +141,7 @@ export default function Home() {
         <section className="py-14 flex items-center justify-center px-4">
           <Link
             href="/explore"
-            className="group flex items-center gap-3 bg-[var(--foreground)] text-[var(--background)] px-8 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all active:scale-95 hover:opacity-90"
-          >
+            className="group flex items-center gap-3 bg-[var(--foreground)] text-[var(--background)] px-8 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all active:scale-95 hover:opacity-90">
             <Search
               size={18}
               className="text-[var(--background)] transition-opacity"

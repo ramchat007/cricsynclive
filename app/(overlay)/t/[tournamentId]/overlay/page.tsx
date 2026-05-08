@@ -145,25 +145,21 @@ export default function BroadcastOverlay({
 
   // --- NEW: THE 10-SECOND AUTO-DISMISS TIMER FOR TOSS ---
   useEffect(() => {
-    // Safety check: Only auto-trigger the toss if NO balls have been bowled yet!
     if (
       matchData?.toss_winner_id &&
       matchData?.toss_decision &&
       !hasTriggeredToss.current &&
       deliveries.length === 0
     ) {
-      hasTriggeredToss.current = true; // Lock it so it doesn't fire again
-      setAutoTossActive(true); // Turn on the Toss screen
+      hasTriggeredToss.current = true;
+      setAutoTossActive(true);
 
-      // Turn it off after 10 seconds
       const timer = setTimeout(() => {
         setAutoTossActive(false);
       }, 10000);
 
       return () => clearTimeout(timer);
-    }
-    // If balls have already been bowled (e.g., page refresh mid-match), lock the toss trigger silently
-    else if (deliveries.length > 0) {
+    } else if (deliveries.length > 0) {
       hasTriggeredToss.current = true;
     }
   }, [matchData?.toss_winner_id, matchData?.toss_decision, deliveries.length]);
@@ -182,6 +178,24 @@ export default function BroadcastOverlay({
     }
   }, [matchData?.status]);
 
+  // 🚀 MOVED ABOVE EARLY RETURN: SPONSOR BANNER AUTO-ROTATION ENGINE 🚀
+  useEffect(() => {
+    const isBannerActive = config?.activeViews?.includes("SPONSOR_BANNER");
+    if (isBannerActive && config?.sponsorBanners?.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentBannerIdx(
+          (prev) => (prev + 1) % config.sponsorBanners.length,
+        );
+      }, 3000); // Rotates every 6 seconds
+      return () => clearInterval(interval);
+    } else {
+      setCurrentBannerIdx(0);
+    }
+  }, [config?.activeViews, config?.sponsorBanners]);
+
+  // ----------------------------------------------------
+  // EARLY RETURN MUST BE BELOW ALL HOOKS
+  // ----------------------------------------------------
   if (!config || !config.activeMatchId) return null;
 
   const activeViews = config.activeViews || [];
@@ -201,16 +215,6 @@ export default function BroadcastOverlay({
     ].includes(v),
   );
 
-  // ✅ AUTO-TRIGGER LOGIC CASCADE
-  // Priority: 1. Manual User Selection -> 2. Auto Match Summary -> 3. Auto Toss Report
-  // if (!activeFullscreen) {
-  //   if (autoSummaryActive) {
-  //     activeFullscreen = "MATCH_SUMMARY";
-  //   } else if (autoTossActive) {
-  //     activeFullscreen = "TOSS_REPORT";
-  //   }
-  // }
-
   // --- STACKING MATH ---
   const isTickerOn = activeViews.includes("TICKER");
   const isScorebugOn = activeViews.includes("SCOREBUG");
@@ -220,11 +224,12 @@ export default function BroadcastOverlay({
   else if (isScorebugOn) partnershipTranslate = "-translate-y-[120px]";
   else if (isTickerOn) partnershipTranslate = "-translate-y-10";
 
-  // --- MINI SCOREBUG MATH ---
+  // --- MINI SCOREBUG MATH & DYNAMIC TEAM COLORS ---
   let isT1Batting = true;
   let liveScore = 0;
   let liveWickets = 0;
   let liveOvers = "0.0";
+  let battingTeamColor = "#fbbf24"; // Default fallback
 
   if (matchData) {
     const choseBat = String(matchData.toss_decision || "")
@@ -235,6 +240,11 @@ export default function BroadcastOverlay({
 
     const currentInnings = Number(matchData.current_innings) || 1;
     isT1Batting = currentInnings === 1 ? t1BattedFirst : !t1BattedFirst;
+
+    // 🔥 Grab the specific color of the batting team!
+    battingTeamColor = isT1Batting
+      ? matchData.team1?.primary_color || "#fbbf24"
+      : matchData.team2?.primary_color || "#fbbf24";
 
     // Calculate score exactly like the Main Ticker does!
     const currentInningsBalls = deliveries.filter(
@@ -279,8 +289,7 @@ export default function BroadcastOverlay({
         <div className="absolute top-8 right-8 z-[100] animate-fade-in flex flex-col items-center">
           <div
             className="relative bg-cyan-100 rounded-full p-2.5 border-[3px] border-white ring-2 ring-black/20 flex items-center justify-center shadow-lg"
-            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}
-          >
+            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}>
             <img
               src="/cricsync-light-logo.png"
               className="h-14 w-auto"
@@ -289,27 +298,27 @@ export default function BroadcastOverlay({
           </div>
           <div className="relative z-10 -mt-3 bg-slate-950 border-2 border-slate-700 px-3 py-0.5 rounded-full flex items-center gap-1.5 shadow-xl">
             <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]" />
-            <span className="text-[9px] font-black text-white uppercase tracking-[0.4em]">
+            <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.4em]">
               LIVE
             </span>
           </div>
         </div>
       )}
 
-      {/* 🔥 NEW: YOUTUBE SUBSCRIBE BANNER 🔥 */}
+      {/* 🔥 MASSIVE YOUTUBE SUBSCRIBE BANNER 🔥 */}
       {config.showSubscribeBanner && (
         <div className="absolute bottom-40 right-12 z-[400] animate-in slide-in-from-right-10 fade-in duration-500">
-          <div className="bg-slate-950/95 backdrop-blur-xl border-l-4 border-red-600 rounded-full pr-8 pl-4 py-3 flex items-center gap-5 shadow-2xl border-y border-r border-white/10">
-            <div className="bg-red-600 rounded-full w-12 h-12 flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.6)]">
+          <div className="bg-slate-950/95 backdrop-blur-xl border-l-8 border-red-600 rounded-full pr-12 pl-6 py-6 flex items-center gap-8 shadow-2xl border-y border-r border-white/10">
+            <div className="bg-red-600 rounded-full w-20 h-20 flex items-center justify-center animate-pulse shadow-[0_0_25px_rgba(220,38,38,0.8)]">
               {/* YouTube Play Triangle */}
-              <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1" />
+              <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[22px] border-l-white border-b-[12px] border-b-transparent ml-2" />
             </div>
             <div>
-              <p className="text-white font-black text-2xl uppercase tracking-tight leading-none mb-1">
-                Subscribe
+              <p className="text-white font-black text-3xl uppercase tracking-tight leading-none mb-2">
+                Subscribe and Call
               </p>
-              <p className="text-red-400 font-bold text-sm tracking-widest">
-                {config.youtubeChannelName || "@cricsynclive"}
+              <p className="text-red-400 font-bold text-2xl tracking-widest">
+                {config.youtubeChannelName || ""}
               </p>
             </div>
           </div>
@@ -329,14 +338,18 @@ export default function BroadcastOverlay({
           </div>
         )}
 
-      {/* 3. MINI SCOREBUG */}
+      {/* 3. DYNAMIC MINI SCOREBUG */}
       {activeViews.includes("MINI_SCOREBUG") &&
         !isScorebugOn &&
         !activeFullscreen && (
           <div className="absolute top-8 left-8 z-[90] animate-fade-in">
-            <div className="bg-slate-950/95 backdrop-blur-md border-l-4 border-amber-400 rounded-r-2xl pr-6 pl-4 py-3 shadow-2xl flex items-center gap-5 border border-white/10">
+            <div
+              className="bg-slate-950/95 backdrop-blur-md border-l-[6px] rounded-r-2xl pr-6 pl-4 py-3 shadow-2xl flex items-center gap-5 border border-white/10 transition-colors duration-500"
+              style={{ borderLeftColor: battingTeamColor }}>
               <div className="flex flex-col border-r border-white/20 pr-5">
-                <span className="text-[10px] text-amber-400 font-black uppercase tracking-widest">
+                <span
+                  className="text-[10px] font-black uppercase tracking-widest transition-colors duration-500"
+                  style={{ color: battingTeamColor }}>
                   LIVE SCORE
                 </span>
                 <div className="flex items-center gap-3">
@@ -363,8 +376,7 @@ export default function BroadcastOverlay({
       {/* 4. PARTNERSHIP BANNER */}
       {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
         <div
-          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
-        >
+          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}>
           <Partnership
             matchData={matchData}
             deliveries={deliveries}
@@ -391,8 +403,7 @@ export default function BroadcastOverlay({
       {/* 6. MAIN SCORE TICKER */}
       {isScorebugOn && matchData && !activeFullscreen && (
         <div
-          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
-        >
+          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}>
           <ScoreTicker overlayData={config} liveMatch={matchData} />
         </div>
       )}
@@ -404,8 +415,7 @@ export default function BroadcastOverlay({
           style={{
             backgroundColor: broadcastTheme.tokens.warning,
             borderTop: `3px solid ${broadcastTheme.tokens.accent}`,
-          }}
-        >
+          }}>
           <div className="ticker-text px-4">
             {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
             &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}{" "}
@@ -420,13 +430,14 @@ export default function BroadcastOverlay({
       {activeFullscreen && (
         <div
           className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
-          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}
-        >
-          {activeFullscreen === "SPONSOR_BANNER" ? (
+          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}>
+          {activeFullscreen === "SPONSOR_BANNER" &&
+          config.sponsorBanners?.length > 0 ? (
             <img
               key={config.sponsorBanners[currentBannerIdx]}
               src={config.sponsorBanners[currentBannerIdx]}
-              className="w-full h-full object-contain animate-fade-in"
+              className="w-full h-full object-contain animate-fade-in drop-shadow-2xl"
+              alt="Sponsor Ad"
             />
           ) : (
             <FullscreenPlates
