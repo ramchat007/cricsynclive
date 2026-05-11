@@ -20,7 +20,6 @@ import {
   Minus,
   Video,
   Moon,
-  Sun,
   X,
 } from "lucide-react";
 
@@ -74,7 +73,7 @@ export default function GenericBroadcaster() {
 
   const [zoomCap, setZoomCap] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [digitalZoom, setDigitalZoom] = useState(1); // <-- ADD THIS LINE
+  const [digitalZoom, setDigitalZoom] = useState(1);
   const [exposureCap, setExposureCap] = useState<any>(null);
   const [exposureLevel, setExposureLevel] = useState(0);
 
@@ -316,11 +315,10 @@ export default function GenericBroadcaster() {
     }
   };
 
-  // --- RESTORED: CONTINUOUS TRIPOD ZOOM LOGIC ---
   const startSmoothZoom = (direction: number) => {
     if (!activeStreamRef.current || !zoomCap) return;
     const track = activeStreamRef.current.getVideoTracks()[0];
-    const stepSpeed = (zoomCap.max - zoomCap.min) * 0.015; // Smooth incremental steps
+    const stepSpeed = (zoomCap.max - zoomCap.min) * 0.015;
 
     if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
 
@@ -350,11 +348,6 @@ export default function GenericBroadcaster() {
   const handleZoomChange = async (newZoom: number) => {
     setZoomLevel(newZoom);
     await applyVideoConstraint({ zoom: newZoom });
-  };
-
-  const handleExposureChange = async (val: number) => {
-    setExposureLevel(val);
-    await applyVideoConstraint({ exposureCompensation: val });
   };
 
   const toggleTorch = async () => {
@@ -639,20 +632,21 @@ export default function GenericBroadcaster() {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-black overflow-hidden font-sans">
+    <div className="relative w-screen h-[100dvh] bg-black overflow-hidden font-sans">
       {/* OLED SLEEP OVERLAY */}
       {isOledSleep && (
         <div className="absolute inset-0 z-[60] bg-black flex flex-col items-center justify-center">
-          <Moon size={48} className="text-gray-800 mb-4" />
+          <Moon size={48} className="text-gray-800 mb-6" />
           <p className="text-gray-600 font-bold tracking-widest uppercase text-sm">
-            OLED Sleep Mode Active
+            OLED Sleep Mode
           </p>
-          <p className="text-gray-700 text-xs mt-2">
-            Streaming is continuing in the background.
+          <p className="text-gray-700 text-xs mt-2 text-center px-6">
+            Streaming is continuing. Screen is off to save battery and prevent
+            burn-in.
           </p>
           <button
             onClick={() => setIsOledSleep(false)}
-            className="mt-8 px-6 py-3 border border-gray-800 text-gray-400 rounded-xl hover:bg-gray-900 transition-colors uppercase text-xs font-black"
+            className="mt-10 px-8 py-4 border-2 border-gray-800 text-gray-400 rounded-2xl hover:bg-gray-900 transition-colors uppercase text-sm font-black"
           >
             Wake Screen
           </button>
@@ -660,8 +654,8 @@ export default function GenericBroadcaster() {
       )}
 
       {error && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 text-white px-4 py-2 rounded-xl flex items-center gap-2 backdrop-blur-md text-sm font-bold shadow-2xl">
-          <AlertCircle size={16} /> {error}
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 backdrop-blur-md text-xs sm:text-sm font-bold shadow-2xl w-[90%] sm:w-auto border border-red-500">
+          <AlertCircle size={20} className="shrink-0" /> {error}
         </div>
       )}
 
@@ -674,32 +668,32 @@ export default function GenericBroadcaster() {
       />
 
       {/* TOP CONTROLS */}
-      <div className="absolute top-0 left-0 w-full p-4 sm:p-6 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-start z-40">
+      <div className="absolute top-0 left-0 w-full p-4 sm:p-6 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex justify-between items-start z-42 pb-16">
         <div>
           {isStreaming && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"></span>
                 </span>
-                <span className="text-white font-black tracking-widest uppercase text-xs">
+                <span className="text-white font-black tracking-widest uppercase text-xs drop-shadow-md">
                   Live Broadcast
                 </span>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-full w-max flex items-center gap-1">
+              <div className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full w-max flex items-center gap-1 shadow-sm">
                 {selectedRes.label} @ {selectedFps.label}
               </div>
             </div>
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:gap-3">
           <button
             onClick={() => setShowSettings(true)}
-            className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/10"
+            className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95"
           >
-            <Settings2 size={20} />
+            <Settings2 size={18} />
           </button>
           <button
             onClick={() => {
@@ -707,41 +701,43 @@ export default function GenericBroadcaster() {
                 document.documentElement.requestFullscreen().catch(() => {});
               else document.exitFullscreen().catch(() => {});
             }}
-            className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/10"
+            className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95"
           >
-            {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
         </div>
       </div>
 
       {/* CENTER CONNECTION HUB (Only visible when not streaming) */}
+      {/* 🚀 LIGHT DEFAULT THEME applied here so text is visible in sunlight/dark mode inversions */}
       {!isStreaming && !isOledSleep && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 p-4">
-          <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-8 w-full max-w-md shadow-2xl flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6">
-              <Camera size={32} className="text-blue-400" />
+        <div className="absolute inset-0 flex items-center justify-center z-30 p-4 sm:p-6 overflow-y-auto landscape:items-start bg-black/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-sm sm:max-w-md landscape:max-w-xl shadow-2xl flex flex-col items-center text-center my-auto">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-blue-100">
+              <Camera size={32} className="text-blue-600" />
             </div>
 
-            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">
+            <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
               Camera Hub
             </h2>
-            <p className="text-gray-400 text-sm mb-6">
-              Connect this device to OBS or control it remotely.
+            <p className="text-slate-500 text-xs sm:text-sm mb-6 leading-relaxed px-2">
+              Connect this device to OBS using the receiver link, or mount it
+              and use the remote.
             </p>
 
-            <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6 shadow-inner">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   Device ID
                 </span>
                 <button
                   onClick={regenerateId}
-                  className="text-blue-400 flex items-center gap-1 text-[10px] font-bold uppercase hover:text-blue-300"
+                  className="text-blue-600 flex items-center gap-1 text-[10px] font-bold uppercase hover:bg-blue-100 bg-blue-50 px-2 py-1 rounded-md transition-colors"
                 >
                   <RefreshCw size={12} /> Regenerate
                 </button>
               </div>
-              <p className="font-mono text-xl font-black text-white tracking-widest">
+              <p className="font-mono text-2xl font-black text-slate-900 tracking-widest py-2">
                 {deviceId}
               </p>
             </div>
@@ -749,90 +745,93 @@ export default function GenericBroadcaster() {
             <div className="flex flex-col sm:flex-row gap-3 w-full mb-8">
               <button
                 onClick={() => copyLinkUrl("obs")}
-                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/10 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 py-4 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95"
               >
                 {copiedObs ? (
-                  <Check size={16} className="text-emerald-400" />
+                  <Check size={18} className="text-emerald-600" />
                 ) : (
-                  <Copy size={16} className="text-gray-300" />
+                  <Copy size={18} className="text-slate-500" />
                 )}
-                <span className="text-xs font-black uppercase text-white tracking-widest">
-                  {copiedObs ? "Copied" : "OBS Link"}
+                <span className="text-xs font-black uppercase text-slate-800 tracking-widest">
+                  {copiedObs ? "Copied OBS Link" : "Copy OBS Link"}
                 </span>
               </button>
               <button
                 onClick={() => copyLinkUrl("remote")}
-                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/10 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 py-4 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95"
               >
                 {copiedRemote ? (
-                  <Check size={16} className="text-emerald-400" />
+                  <Check size={18} className="text-emerald-600" />
                 ) : (
-                  <Copy size={16} className="text-gray-300" />
+                  <Copy size={18} className="text-slate-500" />
                 )}
-                <span className="text-xs font-black uppercase text-white tracking-widest">
-                  {copiedRemote ? "Copied" : "Remote Link"}
+                <span className="text-xs font-black uppercase text-slate-800 tracking-widest">
+                  {copiedRemote ? "Copied Remote Link" : "Copy Remote Link"}
                 </span>
               </button>
             </div>
 
             <button
               onClick={handleStartStream}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-[0_0_40px_rgba(59,130,246,0.4)]"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg active:scale-95"
             >
-              <Play size={20} fill="currentColor" /> Go Live
+              <Play size={20} fill="currentColor" /> Start Camera
             </button>
           </div>
         </div>
       )}
 
-      {/* RIGHT SIDE CONTINUOUS ZOOM CONTROLS (Tripod Ready) */}
+      {/* RIGHT SIDE CONTINUOUS ZOOM CONTROLS (Tripod Ready - Landscape Adaptive) */}
       {isStreaming && zoomCap && !isOledSleep && (
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 h-[320px] bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-4 px-2 flex flex-col items-center justify-between z-40">
-          {/* Continuous Zoom IN */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 h-[260px] sm:h-[320px] landscape:left-6 landscape:right-auto landscape:h-[200px] bg-black/60 backdrop-blur-xl border border-white/20 rounded-[2rem] py-3 px-2 flex flex-col items-center justify-between z-40 shadow-2xl">
           <button
             onPointerDown={() => startSmoothZoom(1)}
             onPointerUp={stopSmoothZoom}
             onPointerLeave={stopSmoothZoom}
-            className="text-white p-3 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
+            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
             aria-label="Zoom In"
           >
-            <Plus size={20} />
+            <Plus size={18} />
           </button>
 
-          <input
-            type="range"
-            min={zoomCap ? zoomCap.min : 1}
-            max={zoomCap ? zoomCap.max : 3}
-            step={zoomCap ? zoomCap.step : 0.1}
-            value={zoomCap ? zoomLevel : digitalZoom}
-            onChange={(e) => handleZoomChange(Number(e.target.value))}
-            className="w-1.5 h-36 appearance-none bg-white/20 rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full cursor-ns-resize"
-            style={{ writingMode: "vertical-lr" }}
-          />
+          <div className="flex-1 flex items-center justify-center w-full relative min-h-[140px] sm:min-h-[180px] landscape:min-h-[100px]">
+            <input
+              type="range"
+              min={zoomCap ? zoomCap.min : 1}
+              max={zoomCap ? zoomCap.max : 3}
+              step={zoomCap ? zoomCap.step : 0.1}
+              value={zoomCap ? zoomLevel : digitalZoom}
+              onChange={(e) => handleZoomChange(Number(e.target.value))}
+              className="absolute w-[140px] sm:w-[180px] landscape:w-[100px] h-1.5 appearance-none bg-white/20 rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
+              style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
+            />
+          </div>
 
-          {/* Continuous Zoom OUT */}
           <button
             onPointerDown={() => startSmoothZoom(-1)}
             onPointerUp={stopSmoothZoom}
             onPointerLeave={stopSmoothZoom}
-            className="text-white p-3 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
+            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
             aria-label="Zoom Out"
           >
-            <Minus size={20} />
+            <Minus size={18} />
           </button>
         </div>
       )}
 
-      {/* BOTTOM CONTROLS (Only visible when streaming) */}
+      {/* BOTTOM CONTROLS (Only visible when streaming - Landscape Adaptive) */}
       {isStreaming && !isOledSleep && (
-        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 to-transparent flex flex-col gap-4 z-40">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex gap-3">
+        <div
+          className="absolute bottom-0 left-0 w-full p-6 sm:p-8 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex flex-col gap-4 z-40 pt-16 
+                        landscape:top-0 landscape:bottom-0 landscape:right-0 landscape:left-auto landscape:w-28 landscape:bg-none landscape:bg-gradient-to-l landscape:pt-6 landscape:pb-6"
+        >
+          <div className="flex items-center justify-between gap-4 max-w-md mx-auto w-full landscape:flex-col landscape:justify-center landscape:h-full">
+            <div className="flex gap-4 landscape:flex-col">
               <button
                 onClick={() => setIsOledSleep(true)}
-                className="w-14 h-14 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-gray-300 transition-colors hover:text-white"
+                className="w-14 h-14 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-slate-300 transition-colors hover:text-white hover:bg-white/10 shadow-lg active:scale-95"
               >
-                <Moon size={24} />
+                <Moon size={22} />
               </button>
               <button
                 onClick={() => {
@@ -843,31 +842,31 @@ export default function GenericBroadcaster() {
                       .getAudioTracks()
                       .forEach((t) => (t.enabled = !newState));
                 }}
-                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors ${
+                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${
                   isMuted
                     ? "bg-red-500/20 border-red-500/50 text-red-400"
-                    : "bg-black/50 border-white/10 text-gray-300 hover:text-white"
+                    : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"
                 }`}
               >
-                {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
+                {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
               </button>
               {torchSupported && (
                 <button
                   onClick={toggleTorch}
-                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors ${
+                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${
                     torchOn
                       ? "bg-amber-500/20 border-amber-500/50 text-amber-400"
-                      : "bg-black/50 border-white/10 text-gray-300 hover:text-white"
+                      : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  {torchOn ? <Flashlight size={24} /> : <ZapOff size={24} />}
+                  {torchOn ? <Flashlight size={22} /> : <ZapOff size={22} />}
                 </button>
               )}
             </div>
 
             <button
               onClick={handleStopStream}
-              className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_20px_rgba(239,68,68,0.5)]"
+              className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-90 shrink-0 landscape:mt-8"
             >
               <Square size={20} fill="currentColor" />
             </button>
@@ -875,26 +874,26 @@ export default function GenericBroadcaster() {
         </div>
       )}
 
-      {/* SETTINGS MODAL (Resolution / FPS / Camera Swap) */}
+      {/* SETTINGS MODAL (Mobile Optimized - LIGHT DEFAULT THEME) */}
       {showSettings && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in duration-200">
-          <div className="w-full sm:w-[400px] bg-slate-900 border border-white/10 sm:rounded-[2.5rem] rounded-t-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-white font-black uppercase tracking-widest text-lg flex items-center gap-2">
-                <Video size={20} className="text-emerald-400" /> Camera Settings
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full sm:w-[450px] bg-white border border-slate-200 rounded-t-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-8 sticky top-0 bg-white py-2 z-10">
+              <h2 className="text-slate-900 font-black uppercase tracking-widest text-base sm:text-lg flex items-center gap-2">
+                <Video size={20} className="text-blue-600" /> Settings
               </h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-slate-400 hover:text-white bg-white/5 p-2 rounded-full"
+                className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-2.5 rounded-full transition-colors"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Lens Selection */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Select Lens
                 </label>
                 <select
@@ -908,7 +907,7 @@ export default function GenericBroadcaster() {
                         selectedFps,
                       );
                   }}
-                  className="w-full bg-slate-800 border border-white/10 text-white rounded-xl py-4 px-4 text-sm font-bold outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-4 px-4 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors"
                 >
                   {cameras.map((c) => (
                     <option key={c.deviceId} value={c.deviceId}>
@@ -920,21 +919,21 @@ export default function GenericBroadcaster() {
 
               {/* Resolution Selector */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">
-                  Video Resolution
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
+                  Video Quality (Resolution)
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {RESOLUTIONS.map((res) => (
                     <button
                       key={res.label}
                       onClick={() => handleQualityChange(res, selectedFps)}
-                      className={`py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
                         selectedRes.label === res.label
-                          ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
-                          : "bg-slate-800 border-transparent text-slate-300 hover:bg-slate-700"
+                          ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
-                      {res.label.split(" ")[0]}
+                      {res.label}
                     </button>
                   ))}
                 </div>
@@ -942,35 +941,42 @@ export default function GenericBroadcaster() {
 
               {/* Frame Rate Selector */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">
-                  Frame Rate
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
+                  Frame Rate (FPS)
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   {FRAMERATES.map((fps) => (
                     <button
                       key={fps.label}
                       onClick={() => handleQualityChange(selectedRes, fps)}
-                      className={`py-3 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
+                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
                         selectedFps.label === fps.label
-                          ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
-                          : "bg-slate-800 border-transparent text-slate-300 hover:bg-slate-700"
+                          ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
                       {fps.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-3 text-center">
-                  Note: 4K @ 60FPS requires high-end hardware.
-                </p>
+                <div className="mt-4 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 shadow-inner">
+                  <AlertCircle
+                    size={16}
+                    className="text-amber-500 mt-0.5 shrink-0"
+                  />
+                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest leading-relaxed">
+                    Note: 4K (UHD) @ 60FPS requires high-end hardware. Thermal
+                    throttling may occur on older phones.
+                  </p>
+                </div>
               </div>
             </div>
 
             <button
               onClick={() => setShowSettings(false)}
-              className="w-full mt-8 bg-white text-black font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-lg active:scale-95 transition-transform"
+              className="w-full mt-8 bg-blue-600 text-white font-black uppercase tracking-widest text-sm py-5 rounded-2xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
             >
-              Done
+              Apply Settings
             </button>
           </div>
         </div>

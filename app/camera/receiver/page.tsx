@@ -1,15 +1,21 @@
 "use client";
-import { useEffect, useRef, useState, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Video, AlertCircle, RefreshCw } from "lucide-react";
 
-// 1. We moved your existing logic into this "Content" component
 function ReceiverContent() {
   const searchParams = useSearchParams();
   const camId = searchParams.get("cam");
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [status, setStatus] = useState("Waiting for Camera...");
+  const [status, setStatus] = useState("Initializing Receiver...");
+  const [isConnected, setIsConnected] = useState(false);
+
+  // We use this to ensure we don't process the exact same WebRTC offer twice (prevent infinite loops)
+  const lastOfferRef = useRef<string | null>(null);
+  // Store the active connection so we can aggressively tear it down on disconnects
+  const pcRef = useRef<RTCPeerConnection | null>(null);
 
   useEffect(() => {
     if (!camId) {
@@ -17,129 +23,196 @@ function ReceiverContent() {
       return;
     }
 
-    let pc: RTCPeerConnection | null = null;
-    let waitChannel: any = null;
+    setStatus("Waiting for Camera to go Live...");
 
-    const initReceiver = async () => {
+    const cleanupConnection = () => {
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setIsConnected(false);
+    };
+
+    const processOffer = async (offer: any) => {
       try {
-        pc = new RTCPeerConnection({
+        cleanupConnection(); // Always start fresh for a new offer
+        setStatus("Connecting to Camera...");
+
+        const pc = new RTCPeerConnection({
           iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
         });
+        pcRef.current = pc;
 
         pc.ontrack = (event) => {
           if (videoRef.current) {
             videoRef.current.srcObject = event.streams[0];
             setStatus("");
+            setIsConnected(true);
           }
         };
 
         pc.onconnectionstatechange = () => {
           if (
-            pc?.connectionState === "disconnected" ||
-            pc?.connectionState === "failed"
+            pc.connectionState === "disconnected" ||
+            pc.connectionState === "failed"
           ) {
-            setStatus("Connection lost. Reconnecting...");
+            setStatus("Connection lost. Waiting for camera to reconnect...");
+            setIsConnected(false);
+            // We do NOT cleanup here. We wait for the broadcaster to hit "Start Camera"
+            // again, which will push a new offer and trigger the auto-reconnect logic.
+          } else if (pc.connectionState === "connected") {
+            setStatus("");
+            setIsConnected(true);
           }
         };
 
-        const { data, error } = await supabase
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        // Wait for ICE candidates to gather completely before sending answer back
+        await new Promise<void>((resolve) => {
+          if (pc.iceGatheringState === "complete") resolve();
+          else {
+            const checkState = () => {
+              if (pc.iceGatheringState === "complete") {
+                pc.removeEventListener("icegatheringstatechange", checkState);
+                resolve();
+              }
+            };
+            pc.addEventListener("icegatheringstatechange", checkState);
+            setTimeout(resolve, 3000); // 3-second safety timeout
+          }
+        });
+
+        // Send answer back to the Broadcaster device
+        await supabase
           .from("webrtc_signals")
-          .select("offer")
-          .eq("match_id", camId)
-          .single();
-
-        if (error || !data?.offer) {
-          setStatus("Waiting for Camera to go Live...");
-          waitChannel = supabase
-            .channel(`wait_offer_${camId}`)
-            .on(
-              "postgres_changes",
-              {
-                event: "*",
-                schema: "public",
-                table: "webrtc_signals",
-                filter: `match_id=eq.${camId}`,
-              },
-              async (payload) => {
-                const newRow = payload.new as any;
-                if (newRow.offer && pc?.signalingState === "stable") {
-                  await processOffer(pc!, newRow.offer);
-                  supabase.removeChannel(waitChannel);
-                }
-              },
-            )
-            .subscribe();
-          return;
-        }
-
-        await processOffer(pc, (data as any).offer);
+          .update({ answer: JSON.parse(JSON.stringify(pc.localDescription)) })
+          .eq("match_id", camId);
       } catch (err: any) {
         setStatus("Error: " + err.message);
+        cleanupConnection();
       }
     };
 
-    const processOffer = async (peer: RTCPeerConnection, offer: any) => {
-      setStatus("Connecting to Camera...");
-      await peer.setRemoteDescription(new RTCSessionDescription(offer));
-
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
-
-      await new Promise<void>((resolve) => {
-        if (peer.iceGatheringState === "complete") resolve();
-        else {
-          const checkState = () => {
-            if (peer.iceGatheringState === "complete") {
-              peer.removeEventListener("icegatheringstatechange", checkState);
-              resolve();
-            }
-          };
-          peer.addEventListener("icegatheringstatechange", checkState);
-          setTimeout(resolve, 3000);
+    // 1. Initial Check: Is the camera already live when we open OBS?
+    supabase
+      .from("webrtc_signals")
+      .select("offer")
+      .eq("match_id", camId)
+      .single()
+      .then(({ data }) => {
+        if (data?.offer) {
+          lastOfferRef.current = JSON.stringify(data.offer);
+          processOffer(data.offer);
         }
       });
 
-      await supabase
-        .from("webrtc_signals")
-        .update({ answer: JSON.parse(JSON.stringify(peer.localDescription)) })
-        .eq("match_id", camId);
-    };
+    // 2. Continuous Reconnection Engine (Listens for network drops/restarts)
+    const monitorChannel = supabase
+      .channel(`obs_monitor_${camId}_${Date.now()}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "webrtc_signals",
+          filter: `match_id=eq.${camId}`,
+        },
+        async (payload) => {
+          if (payload.eventType === "DELETE") {
+            // Broadcaster explicitly stopped the stream
+            cleanupConnection();
+            lastOfferRef.current = null;
+            setStatus("Camera stopped. Waiting for broadcast...");
+          } else if (
+            payload.eventType === "INSERT" ||
+            payload.eventType === "UPDATE"
+          ) {
+            const newRow = payload.new as any;
 
-    initReceiver();
+            // If the Broadcaster generates a BRAND NEW offer, instantly auto-reconnect!
+            if (newRow.offer) {
+              const offerStr = JSON.stringify(newRow.offer);
+              if (lastOfferRef.current !== offerStr) {
+                console.log("New WebRTC Offer detected! Auto-reconnecting...");
+                lastOfferRef.current = offerStr;
+                await processOffer(newRow.offer);
+              }
+            }
+          }
+        },
+      )
+      .subscribe();
 
     return () => {
-      pc?.close();
-      if (waitChannel) supabase.removeChannel(waitChannel);
+      cleanupConnection();
+      supabase.removeChannel(monitorChannel);
     };
   }, [camId]);
 
   return (
     <>
-      {status && (
-        <div className="absolute top-4 left-4 z-50 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl font-bold uppercase tracking-widest text-xs border border-white/10 animate-pulse">
-          {status}
+      {status && !isConnected && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md z-50">
+          <div className="bg-slate-900/80 border border-slate-700 p-8 rounded-3xl flex flex-col items-center shadow-2xl text-center">
+            {status.includes("Waiting") || status.includes("Reconnecting") ? (
+              <RefreshCw
+                size={48}
+                className="text-blue-500 animate-spin mb-6"
+              />
+            ) : status.includes("Error") || status.includes("lost") ? (
+              <AlertCircle size={48} className="text-red-500 mb-6" />
+            ) : (
+              <Video
+                size={48}
+                className="text-emerald-500 mb-6 animate-pulse"
+              />
+            )}
+
+            <h2 className="text-white font-black uppercase tracking-widest text-xl mb-2">
+              Broadcast Link Active
+            </h2>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
+              {status}
+            </p>
+            <p className="text-slate-600 font-mono text-[10px] mt-6">
+              ID: {camId}
+            </p>
+          </div>
         </div>
       )}
+
+      {/* This is the actual video element OBS captures. 
+        It sits behind the status screen and fills the canvas.
+      */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className="w-full h-full object-cover"
+        className={`w-full h-full object-cover transition-opacity duration-700 ${isConnected ? "opacity-100" : "opacity-0"}`}
       />
     </>
   );
 }
 
-// 2. This is the main page export. It wraps the logic in a Suspense boundary!
+// 2. Wrap it in a Suspense boundary for Next.js App Router rules
 export default function CameraReceiverPage() {
   return (
-    <div className="w-screen h-screen bg-transparent overflow-hidden relative flex items-center justify-center">
-      <style>{`body { background: transparent !important; margin: 0; overflow: hidden; }`}</style>
+    <div className="w-screen h-screen bg-transparent overflow-hidden relative flex items-center justify-center font-sans">
+      <style>{`
+        body { background: transparent !important; margin: 0; overflow: hidden; }
+        ::-webkit-scrollbar { display: none; }
+      `}</style>
       <Suspense
         fallback={
-          <div className="text-white bg-black/50 p-4 rounded">
-            Loading Receiver...
+          <div className="text-white bg-black/80 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl border border-white/10">
+            Loading Receiver Engine...
           </div>
         }
       >
