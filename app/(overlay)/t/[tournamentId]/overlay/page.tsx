@@ -289,7 +289,8 @@ export default function BroadcastOverlay({
         <div className="absolute top-8 right-8 z-[100] animate-fade-in flex flex-col items-center">
           <div
             className="relative bg-cyan-100 rounded-full p-2.5 border-[3px] border-white ring-2 ring-black/20 flex items-center justify-center shadow-lg"
-            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}>
+            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}
+          >
             <img
               src="/cricsync-light-logo.png"
               className="h-14 w-auto"
@@ -315,7 +316,7 @@ export default function BroadcastOverlay({
             </div>
             <div>
               <p className="text-white font-black text-3xl uppercase tracking-tight leading-none mb-2">
-                Subscribe and Call
+                Subscribe
               </p>
               <p className="text-red-400 font-bold text-2xl tracking-widest">
                 {config.youtubeChannelName || ""}
@@ -345,11 +346,13 @@ export default function BroadcastOverlay({
           <div className="absolute top-8 left-8 z-[90] animate-fade-in">
             <div
               className="bg-slate-950/95 backdrop-blur-md border-l-[6px] rounded-r-2xl pr-6 pl-4 py-3 shadow-2xl flex items-center gap-5 border border-white/10 transition-colors duration-500"
-              style={{ borderLeftColor: battingTeamColor }}>
+              style={{ borderLeftColor: battingTeamColor }}
+            >
               <div className="flex flex-col border-r border-white/20 pr-5">
                 <span
                   className="text-[10px] font-black uppercase tracking-widest transition-colors duration-500"
-                  style={{ color: battingTeamColor }}>
+                  style={{ color: battingTeamColor }}
+                >
                   LIVE SCORE
                 </span>
                 <div className="flex items-center gap-3">
@@ -376,7 +379,8 @@ export default function BroadcastOverlay({
       {/* 4. PARTNERSHIP BANNER */}
       {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
         <div
-          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}>
+          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
+        >
           <Partnership
             matchData={matchData}
             deliveries={deliveries}
@@ -403,7 +407,8 @@ export default function BroadcastOverlay({
       {/* 6. MAIN SCORE TICKER */}
       {isScorebugOn && matchData && !activeFullscreen && (
         <div
-          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}>
+          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
+        >
           <ScoreTicker overlayData={config} liveMatch={matchData} />
         </div>
       )}
@@ -415,7 +420,8 @@ export default function BroadcastOverlay({
           style={{
             backgroundColor: broadcastTheme.tokens.warning,
             borderTop: `3px solid ${broadcastTheme.tokens.accent}`,
-          }}>
+          }}
+        >
           <div className="ticker-text px-4">
             {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
             &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}{" "}
@@ -430,7 +436,8 @@ export default function BroadcastOverlay({
       {activeFullscreen && (
         <div
           className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
-          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}>
+          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}
+        >
           {activeFullscreen === "SPONSOR_BANNER" &&
           config.sponsorBanners?.length > 0 ? (
             <img
