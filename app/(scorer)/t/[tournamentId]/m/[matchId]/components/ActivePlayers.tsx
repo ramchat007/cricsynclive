@@ -14,6 +14,7 @@ export default function ActivePlayers({
   bowlerWickets,
   setShowEditPlayersModal, // NEW PROP
   currentOverDeliveries,
+  isAuthorized,
 }: any) {
   // Helper to style the timeline balls
   const renderBall = (d: any, index: number) => {
@@ -64,8 +65,7 @@ export default function ActivePlayers({
     return (
       <div
         key={d.id || index}
-        className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-black uppercase tracking-tighter shrink-0 transition-colors ${bgClass}`}
-      >
+        className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-black uppercase tracking-tighter shrink-0 transition-colors ${bgClass}`}>
         {label}
       </div>
     );
@@ -77,18 +77,20 @@ export default function ActivePlayers({
       <div className="bg-[var(--surface-1)] p-3 rounded-[2rem] border border-[var(--border-1)] shadow-sm relative">
         <div className="flex justify-between items-center mb-4">
           <div className="flex gap-2">
-            <button
-              onClick={manualSwapStrike}
-              className="text-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded font-bold uppercase hover:bg-[var(--accent)] hover:text-[var(--background)] transition-colors"
-            >
-              🔄 Swap
-            </button>
-            <button
-              onClick={() => setShowEditPlayersModal(true)}
-              className="text-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded font-bold uppercase hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors"
-            >
-              ✏️ Edit
-            </button>
+            {isAuthorized && (
+              <>
+                <button
+                  onClick={manualSwapStrike}
+                  className="text-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded font-bold uppercase hover:bg-[var(--accent)] hover:text-[var(--background)] transition-colors">
+                  🔄 Swap
+                </button>
+                <button
+                  onClick={() => setShowEditPlayersModal(true)}
+                  className="text-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded font-bold uppercase hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors">
+                  ✏️ Edit
+                </button>
+              </>
+            )}
           </div>
           <div className="flex gap-4 text-[10px] font-black text-[var(--text-muted)]">
             <span className="w-8 text-right">R</span>
@@ -135,8 +137,7 @@ export default function ActivePlayers({
           </p>
           <button
             onClick={() => setShowEditPlayersModal(true)}
-            className="text-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded font-bold uppercase hover:bg-[var(--accent)] hover:text-[var(--background)] transition-colors"
-          >
+            className="text-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded font-bold uppercase hover:bg-[var(--accent)] hover:text-[var(--background)] transition-colors">
             ✏️ Edit
           </button>
         </div>

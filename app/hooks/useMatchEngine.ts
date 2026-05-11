@@ -118,7 +118,7 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       team2Players,
     );
     const validDeliveries = stats?.validDeliveries || 0;
-    
+
     const eTypeLower = (extrasType || "").toLowerCase();
     const isThisBallValid =
       (eTypeLower !== "wide" &&
@@ -153,6 +153,7 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
           : null,
     };
 
+    // 1. Insert the Delivery
     const { data, error } = await supabase
       .from("deliveries")
       .insert(newDelivery)
@@ -160,28 +161,76 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       .single();
 
     if (!error && data) {
-      setDeliveries((prev) => [...prev, data]);
+      // 2. Optimistically update local deliveries state
+      const updatedDeliveries = [...deliveries, data];
+      setDeliveries(updatedDeliveries);
 
-      // 🔥 1. Calculate Physical Runs Ran (Isolating the 1-run penalty for Wides/NB)
+      // 🔥 3. SYNC LIVE SCORES TO THE MATCHES TABLE 🔥
+      // We run deriveMatchStats again with the newly updated deliveries array to get the fresh totals
+      const updatedStats = deriveMatchStats(
+        match,
+        updatedDeliveries,
+        team1Players,
+        team2Players,
+      );
+
+      // Safety Check: Ensure stats were actually generated before trying to use them
+      if (updatedStats) {
+        // Determine which team's column we need to update based on the current innings
+        const scorePayload: any = {};
+        if (match.current_innings === 1) {
+          scorePayload.team1_score = updatedStats.currentScore;
+          scorePayload.team1_wickets = updatedStats.currentWickets;
+          scorePayload.team1_overs = updatedStats.currentOvers;
+        } else {
+          scorePayload.team2_score = updatedStats.currentScore;
+          scorePayload.team2_wickets = updatedStats.currentWickets;
+          scorePayload.team2_overs = updatedStats.currentOvers;
+        }
+
+        console.log("Attempting to sync payload to Supabase:", scorePayload);
+
+        // Fire a silent background update to the matches table
+        supabase
+          .from("matches")
+          .update(scorePayload)
+          .eq("id", matchId)
+          .then(({ error: matchUpdateError }) => {
+            if (matchUpdateError)
+              console.error(
+                "Failed to sync live scores to match table:",
+                matchUpdateError,
+              );
+          });
+      }
+      // ----------------------------------------------------
+
+      // 🔥 4. Calculate Physical Runs Ran (Isolating the 1-run penalty for Wides/NB)
       let physicalRunsRan = runsOffBat;
-      if (eTypeLower === "wide" || eTypeLower === "wd" || eTypeLower === "no-ball" || eTypeLower === "nb") {
-        physicalRunsRan = runsOffBat > 0 ? runsOffBat : Math.max(0, extrasRuns - 1);
+      if (
+        eTypeLower === "wide" ||
+        eTypeLower === "wd" ||
+        eTypeLower === "no-ball" ||
+        eTypeLower === "nb"
+      ) {
+        physicalRunsRan =
+          runsOffBat > 0 ? runsOffBat : Math.max(0, extrasRuns - 1);
       } else if (eTypeLower) {
         physicalRunsRan = extrasRuns;
       }
 
       let swapStrike = physicalRunsRan % 2 !== 0;
 
-      // 🔥 2. Wicket Logic overrides
+      // 🔥 5. Wicket Logic overrides
       if (isWicket && wicketConfig) {
         // Run outs might have completed runs, keep the swapStrike logic.
         // For catches/bowled/etc, new batsman takes strike under ICC rules.
         if (wicketConfig.wicketType !== "run-out") {
-          swapStrike = false; 
+          swapStrike = false;
         }
       }
 
-      // 🔥 3. End of Over overrides
+      // 🔥 6. End of Over overrides
       if (isThisBallValid && (validDeliveries + 1) % 6 === 0) {
         swapStrike = !swapStrike;
       }
@@ -312,12 +361,18 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
         0,
       );
       const wickets = delivs.filter((d: any) => d.is_wicket).length;
-      const balls = delivs.filter(
-        (d: any) => {
-          const type = (d.extras_type || "").toLowerCase();
-          return (type !== "wide" && type !== "wd" && type !== "no-ball" && type !== "nb" && type !== "penalty" && type !== "dead-ball") || d.force_legal_ball;
-        }
-      ).length;
+      const balls = delivs.filter((d: any) => {
+        const type = (d.extras_type || "").toLowerCase();
+        return (
+          (type !== "wide" &&
+            type !== "wd" &&
+            type !== "no-ball" &&
+            type !== "nb" &&
+            type !== "penalty" &&
+            type !== "dead-ball") ||
+          d.force_legal_ball
+        );
+      }).length;
       return { runs, wickets, balls };
     };
 
@@ -427,8 +482,41 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
 
     if (allPlayers) {
       // 3. Update the state squads based on the FRESH match data
-      setTeam1Players(allPlayers.filter(p => p.team_id === currentMatch.team1_id));
-      setTeam2Players(allPlayers.filter(p => p.team_id === currentMatch.team2_id));
+      setTeam1Players(
+        allPlayers.filter((p) => p.team_id === currentMatch.team1_id),
+      );
+      setTeam2Players(
+        allPlayers.filter((p) => p.team_id === currentMatch.team2_id),
+      );
+    }
+  };
+
+  const updateMatchAwards = async (
+    playerOfMatchId: string,
+    bestBatsmanId: string,
+    bestBowlerId: string,
+  ) => {
+    if (!matchId) return;
+
+    const payload = {
+      player_of_match_id: playerOfMatchId || null,
+      best_batsman_id: bestBatsmanId || null,
+      best_bowler_id: bestBowlerId || null,
+    };
+
+    const { error } = await supabase
+      .from("matches")
+      .update(payload)
+      .eq("id", matchId);
+
+    if (error) {
+      alert("Failed to update awards: " + error.message);
+    } else {
+      // Optimistically update the local state so the UI refreshes instantly
+      setMatch((prev: any) => ({
+        ...prev,
+        ...payload,
+      }));
     }
   };
 
@@ -452,6 +540,7 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
     finishMatch,
     saveMatchSettings,
     updateLivePlayers,
-    refreshPlayers
+    refreshPlayers,
+    updateMatchAwards,
   };
 }

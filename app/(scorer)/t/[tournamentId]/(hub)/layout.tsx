@@ -235,7 +235,7 @@ export default function TournamentLayout({
           {/* Sidebar Footer Area */}
           <div className="mt-auto pt-6 space-y-6">
             {/* Upgrade Plan Card */}
-            <div className="bg-gradient-to-br from-indigo-600 to-cyan-500 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden group">
+            {/* <div className="bg-gradient-to-br from-indigo-600 to-cyan-500 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform">
                 <Sparkles size={40} />
               </div>
@@ -248,7 +248,7 @@ export default function TournamentLayout({
               <button className="w-full py-2 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all">
                 Upgrade Now
               </button>
-            </div>
+            </div> */}
 
             <div className="space-y-1">
               {isAdmin && (

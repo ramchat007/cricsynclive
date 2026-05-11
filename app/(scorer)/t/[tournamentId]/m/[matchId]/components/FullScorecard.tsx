@@ -23,6 +23,45 @@ export default function FullScorecard({
     (d: any) => d.innings === selectedInnings,
   );
 
+  // --- 🧠 INNINGS TOTALS MATH ---
+  // Calculate total runs, wickets, and overs dynamically for the *currently selected tab*
+  const tabRuns = inningsDelivs.reduce(
+    (sum: number, d: any) =>
+      sum + (Number(d.runs_off_bat) || 0) + (Number(d.extras_runs) || 0),
+    0,
+  );
+  const tabWickets = inningsDelivs.filter(
+    (d: any) => d.is_wicket && d.wicket_type !== "retired-hurt",
+  ).length;
+  const tabLegalBalls = inningsDelivs.filter(
+    (d: any) =>
+      !["wide", "wd", "no-ball", "nb"].includes(d.extras_type?.toLowerCase()),
+  ).length;
+  const tabOvers = `${Math.floor(tabLegalBalls / 6)}.${tabLegalBalls % 6}`;
+
+  // Calculate Extras for this specific tab
+  let tabExtras = { w: 0, nb: 0, b: 0, lb: 0, p: 0, total: 0 };
+  inningsDelivs.forEach((d: any) => {
+    const type = d.extras_type?.toLowerCase();
+    const runs = Number(d.extras_runs || 0);
+    if (type === "wide" || type === "wd") {
+      tabExtras.w += runs;
+      tabExtras.total += runs;
+    } else if (type === "no-ball" || type === "nb") {
+      tabExtras.nb += runs;
+      tabExtras.total += runs;
+    } else if (type === "bye" || type === "b") {
+      tabExtras.b += runs;
+      tabExtras.total += runs;
+    } else if (type === "leg-bye" || type === "lb") {
+      tabExtras.lb += runs;
+      tabExtras.total += runs;
+    } else if (type === "penalty" || type === "p") {
+      tabExtras.p += runs;
+      tabExtras.total += runs;
+    }
+  });
+
   // --- TEAM IDENTIFICATION LOGIC ---
   // Figure out who actually batted first using either the delivery data (most accurate) or toss data
   const t1Short = match?.team1?.short_name || match?.team1?.name || "Team 1";
@@ -127,7 +166,7 @@ export default function FullScorecard({
           0,
         );
         const balls = playerBalls.filter(
-          (d: any) => d.extras_type !== "wide",
+          (d: any) => d.extras_type !== "wide" && d.extras_type !== "wd",
         ).length;
         const fours = playerBalls.filter(
           (d: any) => d.runs_off_bat === 4,
@@ -179,7 +218,9 @@ export default function FullScorecard({
         const totalBalls = playerDelivs.filter(
           (d: any) =>
             (d.extras_type !== "wide" &&
+              d.extras_type !== "wd" &&
               d.extras_type !== "no-ball" &&
+              d.extras_type !== "nb" &&
               d.extras_type !== "penalty" &&
               d.extras_type !== "dead-ball") ||
             d.force_legal_ball,
@@ -188,16 +229,23 @@ export default function FullScorecard({
           .filter(
             (d: any) =>
               d.extras_type !== "bye" &&
+              d.extras_type !== "b" &&
               d.extras_type !== "leg-bye" &&
+              d.extras_type !== "lb" &&
               d.extras_type !== "penalty",
           )
           .reduce(
             (sum: number, d: any) =>
-              sum + (d.runs_off_bat || 0) + (d.extras_runs || 0),
+              sum +
+              (Number(d.runs_off_bat) || 0) +
+              (Number(d.extras_runs) || 0),
             0,
           );
         const wickets = playerDelivs.filter(
-          (d: any) => d.is_wicket && d.wicket_type !== "run-out",
+          (d: any) =>
+            d.is_wicket &&
+            d.wicket_type !== "run-out" &&
+            d.wicket_type !== "retired-hurt",
         ).length;
         const econ =
           totalBalls > 0 ? (runs / (totalBalls / 6) || 0).toFixed(2) : "0.00";
@@ -252,8 +300,7 @@ export default function FullScorecard({
         {/* VS Banner with Batting Team Highlight */}
         <div className="flex items-center justify-center gap-3 text-sm sm:text-lg font-black uppercase tracking-tight">
           <span
-            className={`transition-colors ${isTeam1Batting ? "text-[var(--accent)] drop-shadow-sm" : "text-[var(--text-muted)]"}`}
-          >
+            className={`transition-colors ${isTeam1Batting ? "text-[var(--accent)] drop-shadow-sm" : "text-[var(--text-muted)]"}`}>
             {t1Full}{" "}
             {isTeam1Batting && (
               <span className="text-[var(--accent)] ml-1">🏏</span>
@@ -265,8 +312,7 @@ export default function FullScorecard({
           </span>
 
           <span
-            className={`transition-colors ${!isTeam1Batting ? "text-[var(--accent)] drop-shadow-sm" : "text-[var(--text-muted)]"}`}
-          >
+            className={`transition-colors ${!isTeam1Batting ? "text-[var(--accent)] drop-shadow-sm" : "text-[var(--text-muted)]"}`}>
             {!isTeam1Batting && (
               <span className="text-[var(--accent)] mr-1">🏏</span>
             )}{" "}
@@ -284,8 +330,7 @@ export default function FullScorecard({
               selectedInnings === 1
                 ? "bg-[var(--surface-1)] shadow text-[var(--accent)] border border-[var(--border-1)]"
                 : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
+            }`}>
             {inn1TeamName}{" "}
             <span className="opacity-50 text-[10px]">(1st Inn)</span>
           </button>
@@ -295,13 +340,39 @@ export default function FullScorecard({
               selectedInnings === 2
                 ? "bg-[var(--surface-1)] shadow text-[var(--accent)] border border-[var(--border-1)]"
                 : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
+            }`}>
             {inn2TeamName}{" "}
             <span className="opacity-50 text-[10px]">(2nd Inn)</span>
           </button>
         </div>
       )}
+
+      {/* 🚀 NEW: INNINGS TOTALS BANNER */}
+      <div className="bg-gradient-to-br from-[var(--surface-2)] to-[var(--surface-1)] p-5 sm:p-6 rounded-[1.5rem] border border-[var(--border-1)] flex justify-between items-center shadow-inner">
+        <div>
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
+            {selectedInnings === 1 ? inn1TeamName : inn2TeamName} Total
+          </p>
+          <h2 className="text-4xl sm:text-5xl font-black text-[var(--foreground)] leading-none tracking-tighter">
+            {tabRuns}
+            <span className="text-2xl sm:text-3xl text-[var(--text-muted)]">
+              /{tabWickets}
+            </span>
+          </h2>
+        </div>
+        <div className="text-right">
+          <div className="text-sm font-bold text-[var(--foreground)] bg-[var(--surface-1)] border border-[var(--border-1)] px-3 py-1.5 rounded-lg mb-2 inline-block">
+            Overs: <span className="font-black">{tabOvers}</span>
+          </div>
+          <p className="text-[10px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
+            Extras: {tabExtras.total}{" "}
+            <span className="opacity-60">
+              (W {tabExtras.w}, NB {tabExtras.nb}, B {tabExtras.b}, LB{" "}
+              {tabExtras.lb})
+            </span>
+          </p>
+        </div>
+      </div>
 
       {/* 2. BATTING SCORECARD */}
       <div>
@@ -325,8 +396,7 @@ export default function FullScorecard({
                 {batsmen.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-[var(--border-1)] transition-colors"
-                  >
+                    className="border-t border-[var(--border-1)] transition-colors">
                     <td className="p-3 sm:p-4">
                       <div className="flex items-center gap-1 sm:gap-2">
                         <p className="text-[var(--foreground)] truncate max-w-[120px] sm:max-w-xs">
@@ -399,8 +469,7 @@ export default function FullScorecard({
                 {bowlers.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-[var(--border-1)] transition-colors"
-                  >
+                    className="border-t border-[var(--border-1)] transition-colors">
                     <td className="p-3 sm:p-4 text-[var(--foreground)] flex items-center gap-2 truncate max-w-[120px] sm:max-w-xs">
                       {p.full_name}
                       {isCurrentInnings && p.id === match.live_bowler_id && (

@@ -5,6 +5,7 @@ export default function RecentBalls({
   currentOvers,
   setEditingBall,
   deleteLastBall,
+  isAuthorized,
 }: any) {
   return (
     <div className="bg-[var(--surface-1)] p-6 rounded-[2rem] border border-[var(--border-1)] shadow-sm transition-colors duration-300">
@@ -19,7 +20,7 @@ export default function RecentBalls({
           .map((d, i) => (
             <div key={d.id} className="relative group">
               <button
-                onClick={() => setEditingBall(d)}
+                // onClick={() => setEditingBall(d)}
                 className={`w-10 h-10 rounded-full font-black text-xs border-2 transition-all hover:scale-110 
                 ${
                   d.is_wicket
@@ -29,8 +30,7 @@ export default function RecentBalls({
                       : d.extras_type
                         ? "bg-orange-500/10 border-orange-500/20 text-orange-500"
                         : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--border-1)]"
-                }`}
-              >
+                }`}>
                 {d.is_wicket
                   ? "W"
                   : d.extras_type
@@ -39,14 +39,13 @@ export default function RecentBalls({
               </button>
 
               {/* DELETE LATEST BALL BUTTON */}
-              {i === 0 && (
+              {i === 0 && isAuthorized && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteLastBall(d.id);
                   }}
-                  className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center border-2 border-[var(--surface-1)] shadow-lg hover:scale-110 transition-transform"
-                >
+                  className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center border-2 border-[var(--surface-1)] shadow-lg hover:scale-110 transition-transform">
                   ✕
                 </button>
               )}

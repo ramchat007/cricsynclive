@@ -9,7 +9,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { fetchTournamentAnalysis } from "../../../../../../utils/gemini"; // Adjust path as needed!
+import { fetchTournamentAnalysis } from "../../../../../../utils/gemini";
+import { generateTournamentStandings } from "../../../../../../utils/cricketMath";
 
 export default function Predictor({ match, stats }: any) {
   // --- STATES ---
@@ -20,9 +21,21 @@ export default function Predictor({ match, stats }: any) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const hasAnalyzed = useRef(false);
 
+  const isMatchCompleted = match?.status === "completed";
+
   // --- 🧠 WIN PROBABILITY ALGORITHM ---
   const winProb = useMemo(() => {
     if (!match || !stats) return { batting: 50, bowling: 50 };
+
+    // Hardcode to 100/0 if match is finished (even though we hide the UI, AI still needs it)
+    if (isMatchCompleted) {
+      const battingTeamWon = stats.currentScore >= stats.targetScore;
+      return {
+        batting: battingTeamWon ? 100 : 0,
+        bowling: battingTeamWon ? 0 : 100,
+      };
+    }
+
     let t1Prob = 50;
     let t2Prob = 50;
 
@@ -42,7 +55,7 @@ export default function Predictor({ match, stats }: any) {
       t2Prob = 100 - t1Prob;
     }
     return { batting: Math.round(t1Prob), bowling: Math.round(t2Prob) };
-  }, [match?.current_innings, stats]);
+  }, [match?.current_innings, stats, isMatchCompleted]);
 
   // --- 📡 FETCH STANDINGS & TRIGGER AI ---
   useEffect(() => {
@@ -51,40 +64,59 @@ export default function Predictor({ match, stats }: any) {
     const fetchRealStandings = async () => {
       try {
         setIsLoadingStandings(true);
-        const { data, error } = await supabase
+
+        // 1. Fetch raw teams
+        const { data: teams, error: teamsError } = await supabase
           .from("teams")
           .select("*")
           .eq("tournament_id", match.tournament_id);
 
-        if (error) throw error;
+        if (teamsError) throw teamsError;
 
-        if (data) {
-          const sortedTeams = data.sort((a, b) => {
-            const ptsA = Number(a.points) || 0;
-            const ptsB = Number(b.points) || 0;
-            if (ptsB !== ptsA) return ptsB - ptsA;
-            return (parseFloat(b.nrr) || 0) - (parseFloat(a.nrr) || 0);
-          });
-          setStandings(sortedTeams);
+        // 2. Fetch completed matches
+        const { data: matches, error: matchesError } = await supabase
+          .from("matches")
+          .select("*")
+          .eq("tournament_id", match.tournament_id)
+          .eq("status", "completed");
+
+        if (matchesError) throw matchesError;
+
+        // 3. Pass both to your custom math engine!
+        if (teams && matches) {
+          const calculatedStandings = generateTournamentStandings(
+            teams,
+            matches,
+          );
+          setStandings(calculatedStandings);
 
           // 🤖 TRIGGER GEMINI ONCE STANDINGS LOAD
           if (!hasAnalyzed.current) {
             hasAnalyzed.current = true;
             setIsAnalyzing(true);
-            const aiText = await fetchTournamentAnalysis(
-              match,
-              sortedTeams,
-              winProb,
-            );
-            setProAnalysis(
-              aiText ||
+
+            try {
+              const aiText = await fetchTournamentAnalysis(
+                match,
+                calculatedStandings,
+                winProb,
+              );
+              setProAnalysis(
+                aiText ||
+                  "Tournament implications are heating up as these two sides battle it out for critical points.",
+              );
+            } catch (aiError) {
+              console.error("🚨 AI Generation Failed:", aiError);
+              setProAnalysis(
                 "Tournament implications are heating up as these two sides battle it out for critical points.",
-            );
+              );
+            }
+
             setIsAnalyzing(false);
           }
         }
       } catch (err) {
-        console.error("Failed to fetch standings:", err);
+        console.error("🚨 Standings Pipeline Failed:", err);
       } finally {
         setIsLoadingStandings(false);
       }
@@ -110,100 +142,101 @@ export default function Predictor({ match, stats }: any) {
     <div className="flex flex-col gap-6 w-full animate-in fade-in pb-10 transition-colors duration-300">
       {/* TOP ROW: WIN PREDICTOR & STANDINGS */}
       <div className="flex flex-col xl:flex-row gap-6 w-full">
-        {/* LEFT COLUMN: WIN PREDICTOR (Added min-w-0 fix) */}
-        <div className="flex-1 min-w-0 space-y-6">
-          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
-            Live Win Probability
-          </h3>
+        {/* LEFT COLUMN: WIN PREDICTOR (Hidden if match is completed) */}
+        {!isMatchCompleted && (
+          <div className="flex-1 min-w-0 space-y-6">
+            <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
+              Live Win Probability
+            </h3>
 
-          <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 transition-colors">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center">
-                <TrendingUp size={20} />
+            <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 transition-colors">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center">
+                  <TrendingUp size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-[var(--foreground)] uppercase tracking-wider">
+                    {match.current_innings === 1
+                      ? "1st Innings Projection"
+                      : "Run Chase Analysis"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-black text-[var(--foreground)] uppercase tracking-wider">
-                  {match.current_innings === 1
-                    ? "1st Innings Projection"
-                    : "Run Chase Analysis"}
-                </p>
-              </div>
-            </div>
 
-            <div className="relative h-6 w-full bg-[var(--surface-2)] rounded-full overflow-hidden mb-6 flex shadow-inner border border-[var(--border-1)]">
-              <div
-                className="h-full bg-[var(--accent)] transition-all duration-1000 ease-out flex items-center px-3"
-                style={{ width: `${winProb.batting}%` }}
-              >
-                {winProb.batting > 15 && (
-                  <span className="text-[10px] font-black text-[var(--background)]">
-                    {winProb.batting}%
+              <div className="relative h-6 w-full bg-[var(--surface-2)] rounded-full overflow-hidden mb-6 flex shadow-inner border border-[var(--border-1)]">
+                <div
+                  className="h-full bg-[var(--accent)] transition-all duration-1000 ease-out flex items-center px-3"
+                  style={{ width: `${winProb.batting}%` }}>
+                  {winProb.batting > 15 && (
+                    <span className="text-[10px] font-black text-[var(--background)]">
+                      {winProb.batting}%
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="h-full bg-rose-500 transition-all duration-1000 ease-out flex justify-end items-center px-3"
+                  style={{ width: `${winProb.bowling}%` }}>
+                  {winProb.bowling > 15 && (
+                    <span className="text-[10px] font-black text-white">
+                      {winProb.bowling}%
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <div className="w-3 h-3 rounded-full bg-[var(--accent)] shrink-0"></div>
+                  <span className="truncate max-w-[100px] sm:max-w-none">
+                    {stats.battingTeam?.name || "Batting"}
                   </span>
-                )}
-              </div>
-              <div
-                className="h-full bg-rose-500 transition-all duration-1000 ease-out flex justify-end items-center px-3"
-                style={{ width: `${winProb.bowling}%` }}
-              >
-                {winProb.bowling > 15 && (
-                  <span className="text-[10px] font-black text-white">
-                    {winProb.bowling}%
+                  <span className="text-xl ml-2">{winProb.batting}%</span>
+                </div>
+                <div className="flex items-center gap-2 text-rose-500">
+                  <span className="text-xl mr-2">{winProb.bowling}%</span>
+                  <span className="truncate max-w-[100px] sm:max-w-none">
+                    {stats.bowlingTeam?.name || "Bowling"}
                   </span>
-                )}
+                  <div className="w-3 h-3 rounded-full bg-rose-500 shrink-0"></div>
+                </div>
               </div>
-            </div>
 
-            <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
-              <div className="flex items-center gap-2 text-[var(--accent)]">
-                <div className="w-3 h-3 rounded-full bg-[var(--accent)] shrink-0"></div>
-                <span className="truncate max-w-[100px] sm:max-w-none">
-                  {stats.battingTeam?.name || "Batting"}
-                </span>
-                <span className="text-xl ml-2">{winProb.batting}%</span>
-              </div>
-              <div className="flex items-center gap-2 text-rose-500">
-                <span className="text-xl mr-2">{winProb.bowling}%</span>
-                <span className="truncate max-w-[100px] sm:max-w-none">
-                  {stats.bowlingTeam?.name || "Bowling"}
-                </span>
-                <div className="w-3 h-3 rounded-full bg-rose-500 shrink-0"></div>
-              </div>
-            </div>
+              <hr className="border-[var(--border-1)] my-6" />
 
-            <hr className="border-[var(--border-1)] my-6" />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                  Current RR
-                </p>
-                <p className="text-2xl font-black text-[var(--foreground)] flex items-center gap-2">
-                  {stats.runRate}{" "}
-                  <Activity size={16} className="text-[var(--text-muted)]" />
-                </p>
-              </div>
-              <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                  Required RR
-                </p>
-                <p className="text-2xl font-black text-amber-500 flex items-center gap-2">
-                  {match.current_innings === 2 ? stats.rrr : "N/A"}{" "}
-                  <BarChart2
-                    size={16}
-                    className={
-                      match.current_innings === 2
-                        ? "text-amber-500/50"
-                        : "text-[var(--text-muted)]"
-                    }
-                  />
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    Current RR
+                  </p>
+                  <p className="text-2xl font-black text-[var(--foreground)] flex items-center gap-2">
+                    {stats.runRate}{" "}
+                    <Activity size={16} className="text-[var(--text-muted)]" />
+                  </p>
+                </div>
+                <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    Required RR
+                  </p>
+                  <p className="text-2xl font-black text-amber-500 flex items-center gap-2">
+                    {match.current_innings === 2 ? stats.rrr : "N/A"}{" "}
+                    <BarChart2
+                      size={16}
+                      className={
+                        match.current_innings === 2
+                          ? "text-amber-500/50"
+                          : "text-[var(--text-muted)]"
+                      }
+                    />
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* RIGHT COLUMN: REAL POINTS TABLE (Added min-w-0 fix) */}
-        <div className="flex-[1.2] min-w-0 space-y-6">
+        {/* RIGHT COLUMN: REAL POINTS TABLE (Takes full width if match is completed) */}
+        <div
+          className={`flex-[1.2] min-w-0 space-y-6 ${isMatchCompleted ? "w-full" : ""}`}>
           <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
             Tournament Standings
           </h3>
@@ -257,21 +290,25 @@ export default function Predictor({ match, stats }: any) {
                   </thead>
                   <tbody className="text-xs sm:text-sm font-bold">
                     {standings.map((row: any, idx: number) => {
+                      // Only show the "LIVE" pulse if the match isn't completed yet
                       const isPlayingMatch =
+                        (row.id === match.team1_id ||
+                          row.id === match.team2_id) &&
+                        !isMatchCompleted;
+                      const isCurrentMatchTeam =
                         row.id === match.team1_id || row.id === match.team2_id;
+
                       return (
                         <tr
                           key={row.id || idx}
-                          className={`border-b border-[var(--border-1)] transition-colors ${isPlayingMatch ? "bg-[var(--accent)]/10" : "hover:bg-[var(--surface-2)]"}`}
-                        >
+                          className={`border-b border-[var(--border-1)] transition-colors ${isCurrentMatchTeam ? "bg-[var(--accent)]/10" : "hover:bg-[var(--surface-2)]"}`}>
                           <td className="p-3 sm:p-4 text-center text-[var(--text-muted)] font-black">
                             {idx + 1}
                           </td>
                           <td className="p-3 sm:p-4">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`text-[var(--foreground)] font-black ${isPlayingMatch ? "text-[var(--accent)]" : ""}`}
-                              >
+                                className={`text-[var(--foreground)] font-black ${isCurrentMatchTeam ? "text-[var(--accent)]" : ""}`}>
                                 {row.short_name || row.name}
                               </span>
                               {isPlayingMatch && (
@@ -312,7 +349,7 @@ export default function Predictor({ match, stats }: any) {
       {/* BOTTOM ROW: PRO MATCH ANALYSIS */}
       <div className="w-full mt-2">
         <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2 mb-3">
-          Tournament Impact
+          {isMatchCompleted ? "Post-Match Analysis" : "Tournament Impact"}
         </h3>
         <div className="w-full bg-gradient-to-br from-indigo-900 via-indigo-950 to-indigo-900 rounded-[2rem] p-6 sm:p-8 shadow-xl relative overflow-hidden border border-indigo-500/30">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full pointer-events-none"></div>
