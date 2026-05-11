@@ -149,7 +149,7 @@ export default function YouTubeViewersOverlay({
       />
 
       <div className="w-screen h-screen relative bg-transparent pointer-events-none font-sans">
-        <div className="absolute top-10 right-10 z-[100] flex flex-col items-end">
+        <div className="absolute top-10 left-10 z-[100] flex flex-col items-end">
           {!activeVideoId ? (
             <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-amber-500/50 rounded-lg px-4 py-2 shadow-lg backdrop-blur-sm animate-pulse">
               <AlertCircle className="text-amber-500" size={18} />
