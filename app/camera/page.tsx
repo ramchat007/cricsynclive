@@ -44,6 +44,12 @@ export default function GenericBroadcaster() {
   const zoomIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastCommandTimeRef = useRef(0);
 
+  // NEW: Audio Analysis Refs
+  const audioContextRef = useRef<any>(null);
+  const animationFrameRef = useRef<any>(null);
+  const peakAudioRef = useRef(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+
   const sigChannelRef = useRef<any>(null);
   const dbChannelRef = useRef<any>(null);
   const currentConnectionIdRef = useRef<string | null>(null);
@@ -52,6 +58,7 @@ export default function GenericBroadcaster() {
   const [deviceId, setDeviceId] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState(false);
 
+  // Muted by default for professional cold-starts
   const [isMuted, setIsMuted] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOledSleep, setIsOledSleep] = useState(false);
@@ -77,6 +84,11 @@ export default function GenericBroadcaster() {
   const [exposureLevel, setExposureLevel] = useState(0);
 
   const [origin, setOrigin] = useState("");
+  const [actualVideoStats, setActualVideoStats] = useState({
+    width: 0,
+    height: 0,
+    fps: 0,
+  });
 
   const requestWakeLock = async () => {
     try {
@@ -239,9 +251,11 @@ export default function GenericBroadcaster() {
               bitrate: cachedStats.bitrate,
               latency: cachedStats.latency,
               resolution: selectedRes.label,
+              peakAudio: peakAudioRef.current, // SEND AUDIO PEAK TO REMOTE
             },
           })
           .catch(() => {});
+        peakAudioRef.current = 0; // Reset peak after sending
       }
     }, 3000);
 
@@ -275,11 +289,23 @@ export default function GenericBroadcaster() {
     let zCap = null,
       eCap = null,
       tCap = false;
+
+    // --- NEW: Grab the REAL resolution and framerate ---
+    const settings = videoTrack.getSettings() as Record<string, any>;
+    const actualWidth = settings.width || 0;
+    const actualHeight = settings.height || 0;
+    const actualFps = settings.frameRate || 0;
+
+    console.log(
+      `REAL HARDWARE OUTPUT: ${actualWidth}x${actualHeight} @ ${actualFps}fps`,
+    );
+    // ---------------------------------------------------
+
     if (typeof videoTrack.getCapabilities === "function") {
       const caps = videoTrack.getCapabilities() as Record<string, any>;
-      const settings = videoTrack.getSettings() as Record<string, any>;
       tCap = !!caps.torch;
       setTorchSupported(tCap);
+
       if (caps.zoom) {
         zCap = {
           min: caps.zoom.min,
@@ -289,6 +315,7 @@ export default function GenericBroadcaster() {
         setZoomCap(zCap);
         setZoomLevel(settings.zoom || caps.zoom.min || 1);
       } else setZoomCap(null);
+
       if (caps.exposureCompensation) {
         eCap = {
           min: caps.exposureCompensation.min,
@@ -299,7 +326,9 @@ export default function GenericBroadcaster() {
         setExposureLevel(settings.exposureCompensation || 0);
       } else setExposureCap(null);
     }
-    return { zCap, eCap, tCap };
+
+    // Return the actual video stats so we can use them
+    return { zCap, eCap, tCap, actualWidth, actualHeight, actualFps };
   };
 
   const applyVideoConstraint = async (constraint: Record<string, any>) => {
@@ -312,22 +341,18 @@ export default function GenericBroadcaster() {
     }
   };
 
-  // NEW: Instant step zoom for quick taps
   const stepInstantZoom = async (direction: number) => {
     if (!activeStreamRef.current || !zoomCap) return;
     const track = activeStreamRef.current.getVideoTracks()[0];
-    const stepSize = zoomCap.step ? zoomCap.step * 2 : 0.2; // Jump slightly faster on tap
-
+    const stepSize = zoomCap.step ? zoomCap.step * 2 : 0.2;
     setZoomLevel((prevZoom) => {
       let newZoom = prevZoom + stepSize * direction;
       if (newZoom >= zoomCap.max) newZoom = zoomCap.max;
       if (newZoom <= zoomCap.min) newZoom = zoomCap.min;
-
-      if (track.applyConstraints) {
+      if (track.applyConstraints)
         track
           .applyConstraints({ advanced: [{ zoom: newZoom }] } as any)
           .catch(() => {});
-      }
       return newZoom;
     });
   };
@@ -336,20 +361,16 @@ export default function GenericBroadcaster() {
     if (!activeStreamRef.current || !zoomCap) return;
     const track = activeStreamRef.current.getVideoTracks()[0];
     const stepSpeed = (zoomCap.max - zoomCap.min) * 0.015;
-
     if (zoomIntervalRef.current) clearInterval(zoomIntervalRef.current);
-
     zoomIntervalRef.current = setInterval(() => {
       setZoomLevel((prevZoom) => {
         let newZoom = prevZoom + stepSpeed * direction;
         if (newZoom >= zoomCap.max) newZoom = zoomCap.max;
         if (newZoom <= zoomCap.min) newZoom = zoomCap.min;
-
-        if (track.applyConstraints) {
+        if (track.applyConstraints)
           track
             .applyConstraints({ advanced: [{ zoom: newZoom }] } as any)
             .catch(() => {});
-        }
         return newZoom;
       });
     }, 40);
@@ -381,7 +402,6 @@ export default function GenericBroadcaster() {
     if (!isStreaming || !peerConnectionRef.current) return;
     try {
       setSelectedCamera(newDeviceId);
-
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: newDeviceId },
@@ -394,7 +414,13 @@ export default function GenericBroadcaster() {
 
       newStream.getAudioTracks().forEach((track) => (track.enabled = !isMuted));
       const videoTrack = newStream.getVideoTracks()[0];
-      const { zCap, eCap, tCap } = mapHardwareCapabilities(videoTrack);
+      const { zCap, tCap, eCap, actualWidth, actualHeight, actualFps } =
+        mapHardwareCapabilities(videoTrack);
+      setActualVideoStats({
+        width: actualWidth,
+        height: actualHeight,
+        fps: actualFps,
+      });
       setTorchOn(false);
 
       const senders = peerConnectionRef.current.getSenders();
@@ -429,16 +455,14 @@ export default function GenericBroadcaster() {
         });
       }
     } catch (err) {
-      setError(`Failed to apply ${res.label} resolution to this camera.`);
+      setError(`Failed to apply ${res.label} resolution.`);
     }
   };
 
   const handleQualityChange = async (res: any, fps: any) => {
     setSelectedRes(res);
     setSelectedFps(fps);
-    if (isStreaming) {
-      await switchLiveCamera(selectedCamera, res, fps);
-    }
+    if (isStreaming) await switchLiveCamera(selectedCamera, res, fps);
   };
 
   const handleStartStream = async () => {
@@ -482,6 +506,33 @@ export default function GenericBroadcaster() {
       const { zCap, tCap, eCap } = mapHardwareCapabilities(videoTrack);
       activeStreamRef.current = stream;
       setLocalStream(stream);
+
+      // --- NEW: INITIALIZE AUDIO ANALYZER ---
+      try {
+        const audioCtx = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )();
+        audioContextRef.current = audioCtx;
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        const updateLevel = () => {
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+          setAudioLevel(avg);
+          if (avg > peakAudioRef.current) peakAudioRef.current = avg; // Track peak for Remote Telemetry
+          animationFrameRef.current = requestAnimationFrame(updateLevel);
+        };
+        updateLevel();
+      } catch (e) {
+        console.log("Audio analyzer failed", e);
+      }
+      // ----------------------------------------
 
       const pc = new RTCPeerConnection(ICE_SERVERS);
       peerConnectionRef.current = pc;
@@ -626,6 +677,17 @@ export default function GenericBroadcaster() {
     setIsFullscreen(false);
     setTorchOn(false);
 
+    // --- NEW: CLEANUP AUDIO ANALYZER ---
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    setAudioLevel(0);
+    peakAudioRef.current = 0;
+    // -----------------------------------
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -638,7 +700,6 @@ export default function GenericBroadcaster() {
 
     if (sigChannelRef.current) supabase.removeChannel(sigChannelRef.current);
     if (dbChannelRef.current) supabase.removeChannel(dbChannelRef.current);
-
     if (currentConnectionIdRef.current) {
       await supabase
         .from("webrtc_signals")
@@ -650,16 +711,11 @@ export default function GenericBroadcaster() {
 
   return (
     <div className="relative w-screen h-[100dvh] bg-black overflow-hidden font-sans">
-      {/* OLED SLEEP OVERLAY */}
       {isOledSleep && (
         <div className="absolute inset-0 z-[60] bg-black flex flex-col items-center justify-center">
           <Moon size={48} className="text-gray-800 mb-6" />
           <p className="text-gray-600 font-bold tracking-widest uppercase text-sm">
             OLED Sleep Mode
-          </p>
-          <p className="text-gray-700 text-xs mt-2 text-center px-6">
-            Streaming is continuing. Screen is off to save battery and prevent
-            burn-in.
           </p>
           <button
             onClick={() => setIsOledSleep(false)}
@@ -670,7 +726,7 @@ export default function GenericBroadcaster() {
       )}
 
       {error && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center text-center sm:text-left gap-2 backdrop-blur-md text-xs sm:text-sm font-bold shadow-2xl w-[90%] sm:w-auto border border-red-500">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center gap-2 backdrop-blur-md text-xs sm:text-sm font-bold shadow-2xl w-[90%] sm:w-auto border border-red-500">
           <AlertCircle size={20} className="shrink-0" /> {error}
         </div>
       )}
@@ -683,7 +739,7 @@ export default function GenericBroadcaster() {
         className="w-full h-full object-cover"
       />
 
-      {/* TOP CONTROLS */}
+      {/* TOP CONTROLS & NEW VOLUME METER */}
       <div className="absolute top-0 left-0 w-full p-4 sm:p-6 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex justify-between items-start z-42 pb-16">
         <div>
           {isStreaming && (
@@ -699,6 +755,28 @@ export default function GenericBroadcaster() {
               </div>
               <div className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full w-max flex items-center gap-1 shadow-sm">
                 {selectedRes.label} @ {selectedFps.label}
+              </div>
+
+              {/* NEW LIVE AUDIO VISUALIZER BAR */}
+              <div className="mt-2 w-full min-w-[120px] max-w-[160px]">
+                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-white/70 mb-1">
+                  <span>Mic Level</span>
+                  {isMuted ? (
+                    <span className="text-red-400">MUTED</span>
+                  ) : (
+                    <span>{Math.round((audioLevel / 150) * 100)}%</span>
+                  )}
+                </div>
+                <div className="w-full bg-black/60 h-1.5 rounded-full overflow-hidden backdrop-blur-md border border-white/20">
+                  <div
+                    className={`h-full transition-all duration-75 ${isMuted ? "bg-red-500" : audioLevel > 120 ? "bg-amber-400" : "bg-emerald-500"}`}
+                    style={{
+                      width: isMuted
+                        ? "0%"
+                        : `${Math.min(100, (audioLevel / 150) * 100)}%`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -722,14 +800,12 @@ export default function GenericBroadcaster() {
         </div>
       </div>
 
-      {/* CENTER CONNECTION HUB */}
       {!isStreaming && !isOledSleep && (
         <div className="absolute inset-0 flex items-center justify-center z-30 p-4 sm:p-6 overflow-y-auto landscape:items-start bg-black/40 backdrop-blur-sm">
           <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-sm sm:max-w-md landscape:max-w-xl shadow-2xl flex flex-col items-center text-center my-auto">
             <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-blue-100">
               <Camera size={32} className="text-blue-600" />
             </div>
-
             <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
               Camera Hub
             </h2>
@@ -780,7 +856,6 @@ export default function GenericBroadcaster() {
                 </span>
               </button>
             </div>
-
             <button
               onClick={handleStartStream}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg active:scale-95">
@@ -790,7 +865,6 @@ export default function GenericBroadcaster() {
         </div>
       )}
 
-      {/* RIGHT SIDE CONTINUOUS ZOOM CONTROLS (Updated Landscape CSS + Instant Click) */}
       {isStreaming && zoomCap && !isOledSleep && (
         <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 h-[260px] sm:h-[320px] landscape:left-6 landscape:right-auto landscape:h-[60vh] bg-black/60 backdrop-blur-xl border border-white/20 rounded-[2rem] py-3 px-2 flex flex-col items-center justify-between z-40 shadow-2xl">
           <button
@@ -798,11 +872,9 @@ export default function GenericBroadcaster() {
             onPointerDown={() => startSmoothZoom(1)}
             onPointerUp={stopSmoothZoom}
             onPointerLeave={stopSmoothZoom}
-            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
-            aria-label="Zoom In">
+            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none">
             <Plus size={18} />
           </button>
-
           <div className="flex-1 flex items-center justify-center w-full relative min-h-[140px] sm:min-h-[180px] landscape:min-h-[40vh]">
             <input
               type="range"
@@ -815,24 +887,19 @@ export default function GenericBroadcaster() {
               style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
             />
           </div>
-
           <button
             onClick={() => stepInstantZoom(-1)}
             onPointerDown={() => startSmoothZoom(-1)}
             onPointerUp={stopSmoothZoom}
             onPointerLeave={stopSmoothZoom}
-            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
-            aria-label="Zoom Out">
+            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none">
             <Minus size={18} />
           </button>
         </div>
       )}
 
-      {/* BOTTOM CONTROLS (Updated Audio Toggle Broadcast) */}
       {isStreaming && !isOledSleep && (
-        <div
-          className="absolute bottom-0 left-0 w-full p-6 sm:p-8 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex flex-col gap-4 z-40 pt-16 
-                      landscape:top-0 landscape:bottom-0 landscape:right-0 landscape:left-auto landscape:w-28 landscape:bg-none landscape:bg-gradient-to-l landscape:pt-6 landscape:pb-6">
+        <div className="absolute bottom-0 left-0 w-full p-6 sm:p-8 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex flex-col gap-4 z-40 pt-16 landscape:top-0 landscape:bottom-0 landscape:right-0 landscape:left-auto landscape:w-28 landscape:bg-none landscape:bg-gradient-to-l landscape:pt-6 landscape:pb-6">
           <div className="flex items-center justify-between gap-4 max-w-md mx-auto w-full landscape:flex-col landscape:justify-center landscape:h-full">
             <div className="flex gap-4 landscape:flex-col">
               <button
@@ -844,14 +911,11 @@ export default function GenericBroadcaster() {
                 onClick={() => {
                   const newState = !isMuted;
                   setIsMuted(newState);
-                  if (activeStreamRef.current) {
+                  if (activeStreamRef.current)
                     activeStreamRef.current
                       .getAudioTracks()
                       .forEach((t) => (t.enabled = !newState));
-                  }
-
-                  // Force broadcast the new mute state to Receiver and Remote
-                  if (sigChannelRef.current) {
+                  if (sigChannelRef.current)
                     sigChannelRef.current
                       .send({
                         type: "broadcast",
@@ -870,28 +934,18 @@ export default function GenericBroadcaster() {
                         },
                       })
                       .catch(() => {});
-                  }
                 }}
-                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${
-                  isMuted
-                    ? "bg-red-500/20 border-red-500/50 text-red-400"
-                    : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"
-                }`}>
+                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${isMuted ? "bg-red-500/20 border-red-500/50 text-red-400" : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"}`}>
                 {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
               </button>
               {torchSupported && (
                 <button
                   onClick={toggleTorch}
-                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${
-                    torchOn
-                      ? "bg-amber-500/20 border-amber-500/50 text-amber-400"
-                      : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"
-                  }`}>
+                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${torchOn ? "bg-amber-500/20 border-amber-500/50 text-amber-400" : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"}`}>
                   {torchOn ? <Flashlight size={22} /> : <ZapOff size={22} />}
                 </button>
               )}
             </div>
-
             <button
               onClick={handleStopStream}
               className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-90 shrink-0 landscape:mt-8">
@@ -901,7 +955,6 @@ export default function GenericBroadcaster() {
         </div>
       )}
 
-      {/* SETTINGS MODAL */}
       {showSettings && (
         <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
           <div className="w-full sm:w-[450px] bg-white border border-slate-200 rounded-t-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -915,9 +968,7 @@ export default function GenericBroadcaster() {
                 <X size={18} />
               </button>
             </div>
-
             <div className="space-y-8">
-              {/* Lens Selection */}
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Select Lens
@@ -941,8 +992,6 @@ export default function GenericBroadcaster() {
                   ))}
                 </select>
               </div>
-
-              {/* Resolution Selector */}
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Video Quality (Resolution)
@@ -952,18 +1001,12 @@ export default function GenericBroadcaster() {
                     <button
                       key={res.label}
                       onClick={() => handleQualityChange(res, selectedFps)}
-                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
-                        selectedRes.label === res.label
-                          ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
-                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                      }`}>
+                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${selectedRes.label === res.label ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
                       {res.label}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Frame Rate Selector */}
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Frame Rate (FPS)
@@ -973,28 +1016,13 @@ export default function GenericBroadcaster() {
                     <button
                       key={fps.label}
                       onClick={() => handleQualityChange(selectedRes, fps)}
-                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
-                        selectedFps.label === fps.label
-                          ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm"
-                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                      }`}>
+                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${selectedFps.label === fps.label ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
                       {fps.label}
                     </button>
                   ))}
                 </div>
-                <div className="mt-4 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 shadow-inner">
-                  <AlertCircle
-                    size={16}
-                    className="text-amber-500 mt-0.5 shrink-0"
-                  />
-                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest leading-relaxed">
-                    Note: 4K (UHD) @ 60FPS requires high-end hardware. Thermal
-                    throttling may occur on older phones.
-                  </p>
-                </div>
               </div>
             </div>
-
             <button
               onClick={() => setShowSettings(false)}
               className="w-full mt-8 bg-blue-600 text-white font-black uppercase tracking-widest text-sm py-5 rounded-2xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all">

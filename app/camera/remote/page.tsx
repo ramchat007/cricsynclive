@@ -103,14 +103,13 @@ function RemoteContent() {
       .on(
         "postgres_changes",
         {
-          event: "*", // Listen to ALL events (Insert, Update, Delete)
+          event: "*", // Listen to ALL events
           schema: "public",
           table: "webrtc_signals",
           filter: `match_id=eq.${connectionId}`,
         },
         (payload) => {
           if (payload.eventType === "DELETE") {
-            // Camera dropped or stopped
             setIsLive(false);
             setCamCapabilities(null);
             setDeviceHealth(null);
@@ -118,11 +117,9 @@ function RemoteContent() {
             payload.eventType === "INSERT" ||
             payload.eventType === "UPDATE"
           ) {
-            // Camera is back online!
             const newRow = payload.new as any;
             if (newRow.status === "live" && newRow.offer) {
               setIsLive(true);
-              // Ask the camera to send its current zoom/torch state to update our UI
               if (signalingChannelRef.current) {
                 signalingChannelRef.current.send({
                   type: "broadcast",
@@ -166,17 +163,14 @@ function RemoteContent() {
   };
   const handleZoomRelease = () => sendCommand("zoom", remoteZoom);
 
-  // CRITICAL FIX: Added Instant Zoom for quick screen taps
   const stepInstantZoom = (direction: number) => {
     const min = camCapabilities?.zoom?.min || 1;
     const max = camCapabilities?.zoom?.max || 10;
     const stepSize = camCapabilities?.zoom?.step
       ? camCapabilities?.zoom?.step * 2
       : 0.2;
-
     let currentZ = Number(remoteZoomRef.current) || 1;
     let newZoom = Math.min(Math.max(currentZ + stepSize * direction, min), max);
-
     setRemoteZoom(newZoom);
     sendCommand("zoom", newZoom);
     lastZoomTime.current = Date.now();
@@ -320,6 +314,10 @@ function RemoteContent() {
     }
   }
 
+  // --- NEW: Audio Detection Logic for UI ---
+  // A peak audio over 5 means someone is actively talking or crowd noise is present.
+  const isSoundDetected = deviceHealth && deviceHealth.peakAudio > 5;
+
   return (
     <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 shadow-2xl my-auto mx-auto relative z-10">
       <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
@@ -392,7 +390,6 @@ function RemoteContent() {
               </span>
             </div>
           </div>
-
           <div
             className={`${networkBg} border ${networkBorder} rounded-xl p-4 mb-8 flex items-start gap-3 shadow-sm transition-colors`}>
             <Info size={18} className={`mt-0.5 shrink-0 ${networkColor}`} />
@@ -415,11 +412,24 @@ function RemoteContent() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <div className="md:col-span-4 space-y-4 flex flex-col">
+          {/* --- NEW: AUDIO TELEMETRY BUTTON --- */}
           <button
             onClick={toggleRemoteMute}
-            className={`p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteMuted ? "bg-red-50 text-red-600 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
-            {remoteMuted ? <MicOff size={24} /> : <Mic size={24} />}{" "}
-            {remoteMuted ? "Muted" : "Mic Active"}
+            className={`p-4 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteMuted ? "bg-red-50 text-red-600 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
+            {remoteMuted ? (
+              <MicOff size={24} className="mb-1" />
+            ) : (
+              <Mic size={24} className="mb-1" />
+            )}
+            <div className="flex flex-col items-center">
+              <span>{remoteMuted ? "Muted" : "Mic Open"}</span>
+              {!remoteMuted && deviceHealth && (
+                <span
+                  className={`text-[9px] mt-1.5 font-black tracking-widest px-2 py-0.5 rounded ${isSoundDetected ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"}`}>
+                  {isSoundDetected ? "Sound Detected" : "Silence"}
+                </span>
+              )}
+            </div>
           </button>
 
           <button
@@ -458,10 +468,8 @@ function RemoteContent() {
                 Tight
               </button>
             </div>
-
             <div className="flex items-center gap-6 mt-auto">
               <div className="flex flex-col gap-1 shrink-0 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
-                {/* CRITICAL FIX: Replaced messy touch events with pointer + onClick */}
                 <button
                   onClick={() => stepInstantZoom(1)}
                   onPointerDown={() => startSmoothZoom(1)}
@@ -479,7 +487,6 @@ function RemoteContent() {
                   <Minus size={28} strokeWidth={3} />
                 </button>
               </div>
-
               <div className="flex-1 flex flex-col gap-5">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
@@ -542,10 +549,8 @@ function RemoteContent() {
   );
 }
 
-// 2. Wrap it in Suspense!
 export default function GenericRemoteControl() {
   return (
-    // 🚀 FIXED: Added colorScheme explicitly to 'light' to prevent OS-level text color inversions
     <div
       className="fixed inset-0 z-[9999] bg-slate-100 flex items-center justify-center p-4 font-sans overflow-y-auto custom-scrollbar"
       style={{ colorScheme: "light" }}>
