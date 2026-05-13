@@ -166,6 +166,22 @@ function RemoteContent() {
   };
   const handleZoomRelease = () => sendCommand("zoom", remoteZoom);
 
+  // CRITICAL FIX: Added Instant Zoom for quick screen taps
+  const stepInstantZoom = (direction: number) => {
+    const min = camCapabilities?.zoom?.min || 1;
+    const max = camCapabilities?.zoom?.max || 10;
+    const stepSize = camCapabilities?.zoom?.step
+      ? camCapabilities?.zoom?.step * 2
+      : 0.2;
+
+    let currentZ = Number(remoteZoomRef.current) || 1;
+    let newZoom = Math.min(Math.max(currentZ + stepSize * direction, min), max);
+
+    setRemoteZoom(newZoom);
+    sendCommand("zoom", newZoom);
+    lastZoomTime.current = Date.now();
+  };
+
   const startSmoothZoom = (direction: number) => {
     const min = camCapabilities?.zoom?.min || 1;
     const max = camCapabilities?.zoom?.max || 10;
@@ -229,8 +245,7 @@ function RemoteContent() {
     return (
       <div
         className="fixed inset-0 z-[9999] bg-slate-50 flex flex-col items-center justify-center text-slate-900"
-        style={{ colorScheme: "light" }}
-      >
+        style={{ colorScheme: "light" }}>
         <style>{`nav, header, footer { display: none !important; }`}</style>
         <AlertCircle size={56} className="text-red-500 mb-4" />
         <h1 className="text-2xl font-black uppercase tracking-widest text-red-600">
@@ -247,8 +262,7 @@ function RemoteContent() {
     return (
       <div
         className="fixed inset-0 z-[9999] bg-slate-50 flex flex-col items-center justify-center text-slate-900"
-        style={{ colorScheme: "light" }}
-      >
+        style={{ colorScheme: "light" }}>
         <style>{`nav, header, footer { display: none !important; }`}</style>
         <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
           <AlertCircle size={40} className="text-amber-500 animate-pulse" />
@@ -380,13 +394,11 @@ function RemoteContent() {
           </div>
 
           <div
-            className={`${networkBg} border ${networkBorder} rounded-xl p-4 mb-8 flex items-start gap-3 shadow-sm transition-colors`}
-          >
+            className={`${networkBg} border ${networkBorder} rounded-xl p-4 mb-8 flex items-start gap-3 shadow-sm transition-colors`}>
             <Info size={18} className={`mt-0.5 shrink-0 ${networkColor}`} />
             <div>
               <p
-                className={`text-xs font-black tracking-widest uppercase mb-1 ${networkColor}`}
-              >
+                className={`text-xs font-black tracking-widest uppercase mb-1 ${networkColor}`}>
                 {networkStatus}
               </p>
               <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
@@ -405,16 +417,14 @@ function RemoteContent() {
         <div className="md:col-span-4 space-y-4 flex flex-col">
           <button
             onClick={toggleRemoteMute}
-            className={`p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteMuted ? "bg-red-50 text-red-600 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
-          >
+            className={`p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteMuted ? "bg-red-50 text-red-600 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
             {remoteMuted ? <MicOff size={24} /> : <Mic size={24} />}{" "}
             {remoteMuted ? "Muted" : "Mic Active"}
           </button>
 
           <button
             onClick={toggleOledSleep}
-            className={`p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteOled ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
-          >
+            className={`p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteOled ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
             {remoteOled ? <Moon size={24} /> : <Sun size={24} />}{" "}
             {remoteOled ? "Screen Off" : "Screen On"}
           </button>
@@ -422,8 +432,7 @@ function RemoteContent() {
           {camCapabilities?.torch !== undefined && (
             <button
               onClick={toggleRemoteTorch}
-              className={`w-full flex-1 p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteTorch ? "bg-amber-50 text-amber-600 border-amber-300" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
-            >
+              className={`w-full flex-1 p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteTorch ? "bg-amber-50 text-amber-600 border-amber-300" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
               {remoteTorch ? <Flashlight size={24} /> : <ZapOff size={24} />}{" "}
               {remoteTorch ? "Torch ON" : "Torch OFF"}
             </button>
@@ -435,56 +444,38 @@ function RemoteContent() {
             <div className="flex justify-between gap-3 mb-8">
               <button
                 onClick={() => snapZoom(rawMin)}
-                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all"
-              >
+                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all">
                 Wide
               </button>
               <button
                 onClick={() => snapZoom(rawMin + (rawMax - rawMin) * 0.3)}
-                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all"
-              >
+                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all">
                 Pitch
               </button>
               <button
                 onClick={() => snapZoom(rawMax)}
-                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-xs py-4 rounded-xl shadow-sm active:scale-95 uppercase tracking-widest transition-all"
-              >
+                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-xs py-4 rounded-xl shadow-sm active:scale-95 uppercase tracking-widest transition-all">
                 Tight
               </button>
             </div>
 
             <div className="flex items-center gap-6 mt-auto">
               <div className="flex flex-col gap-1 shrink-0 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
+                {/* CRITICAL FIX: Replaced messy touch events with pointer + onClick */}
                 <button
-                  onMouseDown={() => startSmoothZoom(1)}
-                  onMouseUp={stopSmoothZoom}
-                  onMouseLeave={stopSmoothZoom}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    startSmoothZoom(1);
-                  }}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    stopSmoothZoom();
-                  }}
-                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-t-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm"
-                >
+                  onClick={() => stepInstantZoom(1)}
+                  onPointerDown={() => startSmoothZoom(1)}
+                  onPointerUp={stopSmoothZoom}
+                  onPointerLeave={stopSmoothZoom}
+                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-t-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm">
                   <Plus size={28} strokeWidth={3} />
                 </button>
                 <button
-                  onMouseDown={() => startSmoothZoom(-1)}
-                  onMouseUp={stopSmoothZoom}
-                  onMouseLeave={stopSmoothZoom}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    startSmoothZoom(-1);
-                  }}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    stopSmoothZoom();
-                  }}
-                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-b-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm"
-                >
+                  onClick={() => stepInstantZoom(-1)}
+                  onPointerDown={() => startSmoothZoom(-1)}
+                  onPointerUp={stopSmoothZoom}
+                  onPointerLeave={stopSmoothZoom}
+                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-b-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm">
                   <Minus size={28} strokeWidth={3} />
                 </button>
               </div>
@@ -544,8 +535,7 @@ function RemoteContent() {
 
       <button
         onClick={handleKillStream}
-        className="w-full mt-8 py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
-      >
+        className="w-full mt-8 py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm">
         <Power size={20} /> Emergency Kill Stream
       </button>
     </div>
@@ -558,8 +548,7 @@ export default function GenericRemoteControl() {
     // 🚀 FIXED: Added colorScheme explicitly to 'light' to prevent OS-level text color inversions
     <div
       className="fixed inset-0 z-[9999] bg-slate-100 flex items-center justify-center p-4 font-sans overflow-y-auto custom-scrollbar"
-      style={{ colorScheme: "light" }}
-    >
+      style={{ colorScheme: "light" }}>
       <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; }`}</style>
       <Suspense
         fallback={
@@ -567,8 +556,7 @@ export default function GenericRemoteControl() {
             <RefreshCw className="animate-spin text-blue-500" size={20} />{" "}
             Loading Remote...
           </div>
-        }
-      >
+        }>
         <RemoteContent />
       </Suspense>
     </div>

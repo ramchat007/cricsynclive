@@ -187,14 +187,15 @@ function ReceiverContent() {
         </div>
       )}
 
-      {/* This is the actual video element OBS captures. 
-        It sits behind the status screen and fills the canvas.
+      {/* 
+        CRITICAL FIX: Removed "muted". 
+        OBS will respect the "muted" tag and kill audio before it reaches the mixer.
+        Without it, OBS can capture the raw WebRTC audio stream perfectly!
       */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        muted
         className={`w-full h-full object-cover transition-opacity duration-700 ${isConnected ? "opacity-100" : "opacity-0"}`}
       />
     </>
