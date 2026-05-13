@@ -125,21 +125,19 @@ function ReceiverContent() {
         },
         async (payload) => {
           if (payload.eventType === "DELETE") {
-            // Broadcaster explicitly stopped the stream
             cleanupConnection();
-            lastOfferRef.current = null;
-            setStatus("Camera stopped. Waiting for broadcast...");
           } else if (
             payload.eventType === "INSERT" ||
             payload.eventType === "UPDATE"
           ) {
             const newRow = payload.new as any;
 
-            // If the Broadcaster generates a BRAND NEW offer, instantly auto-reconnect!
-            if (newRow.offer) {
+            // ONLY process if there is an offer AND the answer is null (the reset signal)
+            if (newRow.offer && !newRow.answer) {
               const offerStr = JSON.stringify(newRow.offer);
+
+              // Prevent processing the exact same offer multiple times
               if (lastOfferRef.current !== offerStr) {
-                console.log("New WebRTC Offer detected! Auto-reconnecting...");
                 lastOfferRef.current = offerStr;
                 await processOffer(newRow.offer);
               }
@@ -215,8 +213,7 @@ export default function CameraReceiverPage() {
           <div className="text-white bg-black/80 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl border border-white/10">
             Loading Receiver Engine...
           </div>
-        }
-      >
+        }>
         <ReceiverContent />
       </Suspense>
     </div>

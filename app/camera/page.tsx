@@ -570,6 +570,7 @@ export default function GenericBroadcaster() {
       await supabase.from("webrtc_signals").upsert({
         match_id: connectionId,
         offer: JSON.parse(JSON.stringify(pc.localDescription)),
+        answer: null,
         status: "live",
       });
 
