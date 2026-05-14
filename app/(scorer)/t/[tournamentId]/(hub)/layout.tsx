@@ -16,17 +16,13 @@ import {
   X,
   Trash2,
   Video,
-  MonitorPlay,
   ShieldAlert,
   Brackets,
   Flag,
   Gavel,
   Menu,
-  ChevronRight,
   LogOut,
-  Sparkles,
   Activity,
-  LayoutDashboard,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 
@@ -124,8 +120,7 @@ export default function TournamentLayout({
   };
 
   const finalizeTournament = async () => {
-    const confirmFinalize = window.confirm("Mark tournament as completed?");
-    if (confirmFinalize) {
+    if (window.confirm("Mark tournament as completed?")) {
       const { error } = await supabase
         .from("tournaments")
         .update({ status: "completed" })
@@ -150,7 +145,7 @@ export default function TournamentLayout({
 
   if (!tournament)
     return (
-      <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center font-black text-[var(--text-muted)]">
+      <div className="h-[calc(100vh-65px)] w-full flex flex-col items-center justify-center font-black text-[var(--text-muted)]">
         <Activity
           className="animate-spin text-[var(--accent)] mb-4"
           size={40}
@@ -191,18 +186,17 @@ export default function TournamentLayout({
   }
 
   return (
-    // UI FIX 1: h-screen forces the entire window to be exactly 100vh.
-    <div className="h-screen w-full bg-[var(--background)] flex overflow-hidden">
-      {/* --- ASIDE NAVIGATION (LEFT) --- */}
-      {/* UI FIX 2: lg:static lg:h-full locks it to the left side and prevents it from scrolling away */}
+    // 1. The Main Container: Fill the remaining space below the 65px Navbar
+    <div className="h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden">
+      {/* 2. The Sidebar: Stays pinned to the left, fills 100% of this container's height */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-72 bg-[var(--surface-1)] border-r border-[var(--border-1)] transform transition-transform duration-300 ease-in-out lg:static lg:h-full lg:translate-x-0
+          fixed inset-y-0 top-[65px] left-0 z-50 w-72 bg-[var(--surface-1)] border-r border-[var(--border-1)] transform transition-transform duration-300 ease-in-out 
+          lg:static lg:h-full lg:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="h-[calc(100%-65px)] lg:h-full flex flex-col p-6 mt-[65px] lg:mt-0">
-          {/* Nav Links (This section scrolls if there are too many links) */}
+        <div className="h-full flex flex-col p-6">
           <nav className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pb-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-4 px-3">
               Tournament Menu
@@ -215,14 +209,7 @@ export default function TournamentLayout({
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all
-                    ${
-                      isActive
-                        ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20"
-                        : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                    }
-                  `}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${isActive ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20" : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"}`}
                 >
                   <Icon
                     size={18}
@@ -234,7 +221,6 @@ export default function TournamentLayout({
             })}
           </nav>
 
-          {/* Sidebar Footer Area (UI FIX 3: shrink-0 keeps it permanently pinned to the bottom of the screen) */}
           <div className="shrink-0 mt-auto pt-4 border-t border-[var(--border-1)] space-y-1">
             {isAdmin && (
               <button
@@ -257,11 +243,10 @@ export default function TournamentLayout({
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT (RIGHT) --- */}
-      {/* UI FIX 4: flex-1 h-full overflow-y-auto makes only the right side scroll, leaving the sidebar pinned */}
+      {/* 3. The Main Content Area: Fills the rest of the width, scrolls independently */}
       <main className="flex-1 h-full flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
-        {/* Mobile Header Toggle */}
-        <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0">
+        {/* Mobile Header Toggle (Only visible on small screens) */}
+        <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0 sticky top-0 z-40">
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-[var(--foreground)]"
@@ -274,7 +259,7 @@ export default function TournamentLayout({
           <div className="w-8 h-8"></div>
         </header>
 
-        {/* 1. HERO BANNER AREA */}
+        {/* HERO BANNER AREA */}
         <div
           className="relative w-full min-h-[18rem] md:min-h-[22rem] flex flex-col justify-end p-6 md:p-12 transition-all shrink-0 bg-slate-900"
           style={{
@@ -313,7 +298,6 @@ export default function TournamentLayout({
             </div>
 
             <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-right-4 duration-500">
-              {/* FIXED: Using tournament?.is_auction_enabled to check DB state */}
               {tournament?.is_auction_enabled && (
                 <Link
                   href={`/t/${tournamentId}/auction`}
@@ -322,7 +306,6 @@ export default function TournamentLayout({
                   <Gavel size={14} /> Auction
                 </Link>
               )}
-
               <a
                 href={`${window.location.origin}/register/${tournamentId}/`}
                 className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2 text-[var(--foreground)]"
@@ -352,7 +335,7 @@ export default function TournamentLayout({
           </div>
         </div>
 
-        {/* 2. PAGE CONTENT */}
+        {/* PAGE CONTENT */}
         <div className="p-6 md:p-12 max-w-7xl w-full mx-auto animate-in fade-in duration-700">
           {children}
         </div>
@@ -585,25 +568,5 @@ export default function TournamentLayout({
         </div>
       )}
     </div>
-  );
-}
-
-// Small helper for header
-function User({ size }: { size: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="lucide lucide-user"
-    >
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
   );
 }
