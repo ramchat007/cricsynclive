@@ -201,7 +201,7 @@ export default function TournamentLayout({
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="h-full flex flex-col p-6 mt-[65px] lg:mt-0">
+        <div className="h-[calc(100%-65px)] lg:h-full flex flex-col p-6 mt-[65px] lg:mt-0">
           {/* Nav Links (This section scrolls if there are too many links) */}
           <nav className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pb-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-4 px-3">
