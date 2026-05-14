@@ -103,7 +103,11 @@ export default function UnifiedLiveMatchPage({
   const [quickAddRole, setQuickAddRole] = useState<"batter" | "bowler">(
     "batter",
   );
+
+  // 🔍 --- SEARCH & SHARE STATES --- 🔍
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
+  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
 
   const [completedRuns, setCompletedRuns] = useState(0);
@@ -399,10 +403,48 @@ export default function UnifiedLiveMatchPage({
     };
   }, [tournamentId]);
 
-  const handleQuickAddPlayer = async () => {
-    if (!newPlayerName.trim() || !engine.match || !stats) return;
+  // 🔍 --- LIVE GLOBAL SEARCH AUTOCOMPLETE --- 🔍
+  useEffect(() => {
+    const searchGlobalPlayers = async () => {
+      if (!newPlayerName.trim() || newPlayerName.length < 2) {
+        setGlobalSearchResults([]);
+        return;
+      }
+      setIsSearchingGlobal(true);
 
-    const normalizedName = newPlayerName.trim();
+      const { data } = await supabase
+        .from("players")
+        .select("full_name, id")
+        .ilike("full_name", `%${newPlayerName.trim()}%`)
+        .limit(6);
+
+      if (data) {
+        // Remove duplicate names so the dropdown looks clean
+        const uniquePlayers = data.filter(
+          (v, i, a) => a.findIndex((t) => t.full_name === v.full_name) === i,
+        );
+        setGlobalSearchResults(uniquePlayers);
+      }
+      setIsSearchingGlobal(false);
+    };
+
+    // Debounce the search so it doesn't spam your database
+    const debounceTimer = setTimeout(searchGlobalPlayers, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [newPlayerName]);
+
+  // 🏏 --- BULLETPROOF QUICK ADD LOGIC --- 🏏
+  const handleQuickAddPlayer = async (
+    nameOverride?: string | React.MouseEvent,
+  ) => {
+    // If called via the dropdown list, it passes a string. If called via the main button, it passes an Event.
+    const isOverride = typeof nameOverride === "string";
+    const nameToSearch = isOverride ? nameOverride : newPlayerName;
+
+    if (!nameToSearch || !nameToSearch.trim() || !engine.match || !stats)
+      return;
+
+    const normalizedName = nameToSearch.trim();
     const targetTeamId =
       quickAddRole === "batter" ? stats.battingTeam?.id : stats.bowlingTeam?.id;
 
@@ -411,66 +453,22 @@ export default function UnifiedLiveMatchPage({
       return;
     }
 
-    // Helper to dynamically assign the player ID depending on where we are
-    const assignPlayerToContext = (playerId: string) => {
-      const isPreMatchSetup = !engine.match?.live_striker_id && !isCompleted;
-      if (isPreMatchSetup) {
-        if (quickAddRole === "batter") {
-          if (!setupStriker) setSetupStriker(playerId);
-          else if (!setupNonStriker) setSetupNonStriker(playerId);
-        } else {
-          setSetupBowler(playerId);
-        }
-      } else {
-        if (quickAddRole === "batter") {
-          setNewBatsmanId(playerId);
-        } else {
-          setSelectedNewBowlerId(playerId);
-        }
-      }
-    };
-
-    // 1. GLOBAL SEARCH: Check if this player exists anywhere in the platform
-    const { data: globalMatch } = await supabase
+    // 1. Check if the player is ALREADY on this exact team
+    const { data: teamMatch } = await supabase
       .from("players")
-      .select("*")
-      .ilike("full_name", normalizedName)
-      .limit(1);
-
-    const existingGlobalPlayer = globalMatch?.[0];
+      .select("id")
+      .eq("full_name", normalizedName)
+      .eq("team_id", targetTeamId)
+      .maybeSingle();
 
     let finalPlayerId = "";
 
-    if (existingGlobalPlayer) {
-      // Check if they are already in THIS tournament
-      const { data: localMatch } = await supabase
-        .from("players")
-        .select("id")
-        .eq("full_name", existingGlobalPlayer.full_name)
-        .eq("tournament_id", tournamentId)
-        .maybeSingle();
-
-      if (localMatch) {
-        finalPlayerId = localMatch.id;
-      } else {
-        // Clone global player into this tournament
-        const { data: newP, error } = await supabase
-          .from("players")
-          .insert({
-            full_name: existingGlobalPlayer.full_name,
-            team_id: targetTeamId,
-            tournament_id: tournamentId,
-            role: quickAddRole,
-            status: "active",
-          })
-          .select()
-          .single();
-        if (error)
-          return alert("Failed to add global player: " + error.message);
-        finalPlayerId = newP.id;
-      }
+    if (teamMatch) {
+      // Player is already on the team. Just select them!
+      finalPlayerId = teamMatch.id;
     } else {
-      // 2. CREATE NEW: Standard insert
+      // 2. Insert directly into THIS team.
+      // (This fixes the bug where players were hidden because they belonged to a different team_id)
       const { data: newP, error } = await supabase
         .from("players")
         .insert({
@@ -482,18 +480,33 @@ export default function UnifiedLiveMatchPage({
         })
         .select()
         .single();
-      if (error) return alert("Error: " + error.message);
+
+      if (error) {
+        alert("Error adding player: " + error.message);
+        return;
+      }
       finalPlayerId = newP.id;
     }
 
-    // 3. REFRESH ENGINE & SYNC UI
+    // 3. REFRESH ENGINE SO THEY APPEAR IN THE ARRAY
     await engine.refreshPlayers();
-    await engine.fetchMatchData();
 
-    // 4. AUTO-ASSIGN
-    assignPlayerToContext(finalPlayerId);
+    // 4. AUTO-ASSIGN TO DROPDOWNS
+    const isPreMatch = !engine.match?.live_striker_id && !isCompleted;
+    if (isPreMatch) {
+      if (quickAddRole === "batter") {
+        if (!setupStriker) setSetupStriker(finalPlayerId);
+        else if (!setupNonStriker) setSetupNonStriker(finalPlayerId);
+      } else {
+        setSetupBowler(finalPlayerId);
+      }
+    } else {
+      if (quickAddRole === "batter") setNewBatsmanId(finalPlayerId);
+      else setSelectedNewBowlerId(finalPlayerId);
+    }
 
     setNewPlayerName("");
+    setGlobalSearchResults([]);
     setShowQuickAddPlayer(false);
   };
 
@@ -870,6 +883,83 @@ export default function UnifiedLiveMatchPage({
               Play Ball
             </button>
           </div>
+
+          {/* 🔍 QUICK ADD MODAL WITH LIVE SEARCH (INJECTED FOR PRE-MATCH ACCESSIBILITY) 🔍 */}
+          {showQuickAddPlayer && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95">
+                <h2 className="text-xl font-black uppercase tracking-tight mb-2 flex items-center gap-2">
+                  <Search className="text-[var(--accent)]" size={20} /> Quick
+                  Add Player
+                </h2>
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-6">
+                  Search Global Database
+                </p>
+
+                <div className="relative mb-6">
+                  <input
+                    autoFocus
+                    value={newPlayerName}
+                    onChange={(e) => setNewPlayerName(e.target.value)}
+                    placeholder="Type a name (e.g. Virat...)"
+                    className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-2xl p-4 text-lg font-bold outline-none focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
+                  />
+
+                  {/* LIVE SEARCH RESULTS DROPDOWN */}
+                  {newPlayerName.length >= 2 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-xl overflow-hidden z-50">
+                      {isSearchingGlobal ? (
+                        <div className="p-4 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest">
+                          Searching...
+                        </div>
+                      ) : globalSearchResults.length > 0 ? (
+                        <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                          {globalSearchResults.map((p, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleQuickAddPlayer(p.full_name)}
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
+                            >
+                              <span className="font-bold text-[var(--foreground)] text-left">
+                                {p.full_name}
+                              </span>
+                              <span className="bg-[var(--accent)] text-[var(--background)] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm whitespace-nowrap">
+                                + Select
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-[var(--text-muted)] text-xs font-bold">
+                          No exact match. Click below to create as new player!
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <button
+                    onClick={() => {
+                      setShowQuickAddPlayer(false);
+                      setNewPlayerName("");
+                      setGlobalSearchResults([]);
+                    }}
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleQuickAddPlayer()}
+                    disabled={!newPlayerName.trim()}
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg"
+                  >
+                    Create New
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1878,7 +1968,7 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowSettingsModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors"
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg"
                   >
                     Cancel
                   </button>
@@ -1984,38 +2074,77 @@ export default function UnifiedLiveMatchPage({
             </div>
           )}
 
+          {/* 🔍 QUICK ADD MODAL WITH LIVE SEARCH (NOW PLACED AT THE VERY BOTTOM OF THE ADMIN BLOCK) 🔍 */}
           {showQuickAddPlayer && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[120] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
               <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-2 flex items-center gap-2">
                   <Search className="text-[var(--accent)]" size={20} /> Quick
                   Add Player
                 </h2>
                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-6">
-                  Searching global database...
+                  Search Global Database
                 </p>
 
-                <input
-                  autoFocus
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  placeholder="Full Name (e.g. MS Dhoni)"
-                  className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-2xl p-4 text-lg font-bold outline-none mb-6 focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
-                />
+                <div className="relative mb-6">
+                  <input
+                    autoFocus
+                    value={newPlayerName}
+                    onChange={(e) => setNewPlayerName(e.target.value)}
+                    placeholder="Type a name (e.g. Virat...)"
+                    className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-2xl p-4 text-lg font-bold outline-none focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
+                  />
 
-                <div className="flex gap-4">
+                  {/* LIVE SEARCH RESULTS DROPDOWN */}
+                  {newPlayerName.length >= 2 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-xl overflow-hidden z-50">
+                      {isSearchingGlobal ? (
+                        <div className="p-4 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest">
+                          Searching...
+                        </div>
+                      ) : globalSearchResults.length > 0 ? (
+                        <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                          {globalSearchResults.map((p, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleQuickAddPlayer(p.full_name)}
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
+                            >
+                              <span className="font-bold text-[var(--foreground)] text-left">
+                                {p.full_name}
+                              </span>
+                              <span className="bg-[var(--accent)] text-[var(--background)] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm whitespace-nowrap">
+                                + Select
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-[var(--text-muted)] text-xs font-bold">
+                          No exact match. Click below to create as new player!
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4 mt-8">
                   <button
-                    onClick={() => setShowQuickAddPlayer(false)}
+                    onClick={() => {
+                      setShowQuickAddPlayer(false);
+                      setNewPlayerName("");
+                      setGlobalSearchResults([]);
+                    }}
                     className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleQuickAddPlayer}
+                    onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
                     className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg"
                   >
-                    Add to Match
+                    Create New
                   </button>
                 </div>
               </div>
