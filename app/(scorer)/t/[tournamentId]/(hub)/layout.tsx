@@ -191,17 +191,19 @@ export default function TournamentLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex overflow-hidden">
+    // UI FIX 1: h-screen forces the entire window to be exactly 100vh.
+    <div className="h-screen w-full bg-[var(--background)] flex overflow-hidden">
       {/* --- ASIDE NAVIGATION (LEFT) --- */}
+      {/* UI FIX 2: lg:static lg:h-full locks it to the left side and prevents it from scrolling away */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-49 w-72 bg-[var(--surface-1)] border-r border-[var(--border-1)] transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+          fixed inset-y-0 left-0 z-50 w-72 bg-[var(--surface-1)] border-r border-[var(--border-1)] transform transition-transform duration-300 ease-in-out lg:static lg:h-full lg:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         <div className="h-full flex flex-col p-6 mt-[65px] lg:mt-0">
-          {/* Nav Links */}
-          <nav className="flex-1 space-y-1 overflow-y-auto hide-scrollbar">
+          {/* Nav Links (This section scrolls if there are too many links) */}
+          <nav className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pb-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-4 px-3">
               Tournament Menu
             </p>
@@ -232,49 +234,32 @@ export default function TournamentLayout({
             })}
           </nav>
 
-          {/* Sidebar Footer Area */}
-          <div className="mt-auto pt-6 space-y-6">
-            {/* Upgrade Plan Card */}
-            {/* <div className="bg-gradient-to-br from-indigo-600 to-cyan-500 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform">
-                <Sparkles size={40} />
-              </div>
-              <h4 className="font-black text-sm uppercase tracking-tight mb-1">
-                Upgrade Plan
-              </h4>
-              <p className="text-[10px] font-medium opacity-80 leading-relaxed mb-4">
-                Unlock premium features and custom overlays.
-              </p>
-              <button className="w-full py-2 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all">
-                Upgrade Now
-              </button>
-            </div> */}
-
-            <div className="space-y-1">
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    setShowSettings(true);
-                    setIsSidebarOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-[var(--text-muted)] font-bold text-sm hover:text-[var(--foreground)] transition-colors"
-                >
-                  <Settings size={18} /> Settings
-                </button>
-              )}
-              <Link
-                href="/"
-                className="w-full flex items-center gap-3 px-4 py-3 text-red-500 font-bold text-sm hover:bg-red-500/5 transition-all rounded-xl"
+          {/* Sidebar Footer Area (UI FIX 3: shrink-0 keeps it permanently pinned to the bottom of the screen) */}
+          <div className="shrink-0 mt-auto pt-4 border-t border-[var(--border-1)] space-y-1">
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setShowSettings(true);
+                  setIsSidebarOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[var(--text-muted)] font-bold text-sm hover:text-[var(--foreground)] transition-colors"
               >
-                <LogOut size={18} /> Exit Console
-              </Link>
-            </div>
+                <Settings size={18} /> Settings
+              </button>
+            )}
+            <Link
+              href="/"
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 font-bold text-sm hover:bg-red-500/5 transition-all rounded-xl"
+            >
+              <LogOut size={18} /> Exit Console
+            </Link>
           </div>
         </div>
       </aside>
 
       {/* --- MAIN CONTENT (RIGHT) --- */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
+      {/* UI FIX 4: flex-1 h-full overflow-y-auto makes only the right side scroll, leaving the sidebar pinned */}
+      <main className="flex-1 h-full flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
         {/* Mobile Header Toggle */}
         <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0">
           <button
@@ -286,12 +271,12 @@ export default function TournamentLayout({
           <span className="font-black uppercase italic tracking-tighter text-sm">
             Tournament Console
           </span>
-          <div className="w-8 h-8 "></div>
+          <div className="w-8 h-8"></div>
         </header>
 
         {/* 1. HERO BANNER AREA */}
         <div
-          className="relative w-full min-h-[18rem] md:min-h-[22rem] flex flex-col justify-end p-6 md:p-12 transition-all bg-slate-900"
+          className="relative w-full min-h-[18rem] md:min-h-[22rem] flex flex-col justify-end p-6 md:p-12 transition-all shrink-0 bg-slate-900"
           style={{
             backgroundImage: tournament?.banner_url
               ? `url(${tournament.banner_url})`
@@ -328,12 +313,16 @@ export default function TournamentLayout({
             </div>
 
             <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-right-4 duration-500">
-              <Link
-                href={`/t/${tournamentId}/auction`}
-                className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2"
-              >
-                <Gavel size={14} /> Auction
-              </Link>
+              {/* FIXED: Using tournament?.is_auction_enabled to check DB state */}
+              {tournament?.is_auction_enabled && (
+                <Link
+                  href={`/t/${tournamentId}/auction`}
+                  className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2"
+                >
+                  <Gavel size={14} /> Auction
+                </Link>
+              )}
+
               <a
                 href={`${window.location.origin}/register/${tournamentId}/`}
                 className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2 text-[var(--foreground)]"
@@ -377,7 +366,7 @@ export default function TournamentLayout({
         />
       )}
 
-      {/* TOURNAMENT SETTINGS MODAL (RESTORED) */}
+      {/* TOURNAMENT SETTINGS MODAL */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
           <div className="bg-[var(--surface-1)] w-full sm:rounded-[2.5rem] rounded-t-[2.5rem] max-w-xl border border-[var(--border-1)] flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-8">
@@ -462,7 +451,7 @@ export default function TournamentLayout({
                 </div>
               </div>
 
-              {/* Rules Section (RESTORED COLORS) */}
+              {/* Rules Section */}
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
                   Tournament Rules
@@ -556,7 +545,7 @@ export default function TournamentLayout({
                 </div>
               </div>
 
-              {/* Danger Zone (RESTORED) */}
+              {/* Danger Zone */}
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-red-500/20 pb-2">
                   Danger Zone
