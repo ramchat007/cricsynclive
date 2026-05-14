@@ -6,6 +6,7 @@ import PlayerSpotlight from "./components/PlayerSpotlight";
 import FullscreenPlates from "./components/FullscreenPlates";
 import Partnership from "./components/Partnership";
 import { getBroadcastTheme } from "@/lib/themes";
+import FeatureGate from "@/app/components/FeatureGate";
 
 export default function BroadcastOverlay({
   params,
@@ -274,8 +275,14 @@ export default function BroadcastOverlay({
     : matchData?.team2?.short_name;
 
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-transparent pointer-events-none z-[9999]">
-      <style>{`
+    <FeatureGate
+      tournamentId={tournamentId}
+      requiredTier="broadcast"
+      featureKey="youtube_sync_enabled"
+      featureName="Live YouTube Viewer Sync"
+    >
+      <div className="fixed inset-0 w-screen h-screen bg-transparent pointer-events-none z-[9999]">
+        <style>{`
         html, body { background: transparent !important; margin: 0; padding: 0; overflow: hidden; }
         @keyframes spin3D_Coin { 0% { transform: rotateY(0deg); } 10% { transform: rotateY(360deg); } 100% { transform: rotateY(360deg); } }
         @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -284,182 +291,183 @@ export default function BroadcastOverlay({
         @keyframes ticker-scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
       `}</style>
 
-      {/* 1. WATERMARK */}
-      {config.showAppLogo && !activeFullscreen && (
-        <div className="absolute top-8 right-8 z-[100] animate-fade-in flex flex-col items-center">
-          <div
-            className="relative bg-cyan-100 rounded-full p-2.5 border-[3px] border-white ring-2 ring-black/20 flex items-center justify-center shadow-lg"
-            style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}
-          >
-            <img
-              src="/cricsync-light-logo.png"
-              className="h-14 w-auto"
-              alt="Logo"
-            />
-          </div>
-          <div className="relative z-10 -mt-3 bg-slate-950 border-2 border-slate-700 px-3 py-0.5 rounded-full flex items-center gap-1.5 shadow-xl">
-            <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]" />
-            <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.4em]">
-              LIVE
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* 🔥 MASSIVE YOUTUBE SUBSCRIBE BANNER 🔥 */}
-      {config.showSubscribeBanner && (
-        <div className="absolute bottom-40 right-12 z-[400] animate-in slide-in-from-right-10 fade-in duration-500">
-          <div className="bg-slate-950/95 backdrop-blur-xl border-l-8 border-red-600 rounded-full pr-12 pl-6 py-6 flex items-center gap-8 shadow-2xl border-y border-r border-white/10">
-            <div className="bg-red-600 rounded-full w-20 h-20 flex items-center justify-center animate-pulse shadow-[0_0_25px_rgba(220,38,38,0.8)]">
-              {/* YouTube Play Triangle */}
-              <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[22px] border-l-white border-b-[12px] border-b-transparent ml-2" />
+        {/* 1. WATERMARK */}
+        {config.showAppLogo && !activeFullscreen && (
+          <div className="absolute top-8 right-8 z-[100] animate-fade-in flex flex-col items-center">
+            <div
+              className="relative bg-cyan-100 rounded-full p-2.5 border-[3px] border-white ring-2 ring-black/20 flex items-center justify-center shadow-lg"
+              style={{ animation: "spin3D_Coin 10s ease-in-out infinite" }}
+            >
+              <img
+                src="/cricsync-light-logo.png"
+                className="h-14 w-auto"
+                alt="Logo"
+              />
             </div>
-            <div>
-              <p className="text-white font-black text-3xl uppercase tracking-tight leading-none mb-2">
-                Subscribe
-              </p>
-              <p className="text-red-400 font-bold text-2xl tracking-widest">
-                {config.youtubeChannelName || ""}
-              </p>
+            <div className="relative z-10 -mt-3 bg-slate-950 border-2 border-slate-700 px-3 py-0.5 rounded-full flex items-center gap-1.5 shadow-xl">
+              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]" />
+              <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.4em]">
+                LIVE
+              </span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2. SPONSOR BUG */}
-      {activeViews.includes("SPONSOR_BUG") &&
-        config.sponsorBugUrl &&
-        !activeFullscreen && (
-          <div className="absolute top-8 left-8 z-[100] animate-fade-in">
-            <img
-              src={config.sponsorBugUrl}
-              className="h-24 w-auto object-contain drop-shadow-2xl"
-              alt="Sponsor"
-            />
           </div>
         )}
 
-      {/* 3. DYNAMIC MINI SCOREBUG */}
-      {activeViews.includes("MINI_SCOREBUG") &&
-        !isScorebugOn &&
-        !activeFullscreen && (
-          <div className="absolute top-8 left-8 z-[90] animate-fade-in">
-            <div
-              className="bg-slate-950/95 backdrop-blur-md border-l-[6px] rounded-r-2xl pr-6 pl-4 py-3 shadow-2xl flex items-center gap-5 border border-white/10 transition-colors duration-500"
-              style={{ borderLeftColor: battingTeamColor }}
-            >
-              <div className="flex flex-col border-r border-white/20 pr-5">
-                <span
-                  className="text-[10px] font-black uppercase tracking-widest transition-colors duration-500"
-                  style={{ color: battingTeamColor }}
-                >
-                  LIVE SCORE
-                </span>
-                <div className="flex items-center gap-3">
-                  <span className="text-white font-black text-2xl">
-                    {miniBatName}
+        {/* 🔥 MASSIVE YOUTUBE SUBSCRIBE BANNER 🔥 */}
+        {config.showSubscribeBanner && (
+          <div className="absolute bottom-40 right-12 z-[400] animate-in slide-in-from-right-10 fade-in duration-500">
+            <div className="bg-slate-950/95 backdrop-blur-xl border-l-8 border-red-600 rounded-full pr-12 pl-6 py-6 flex items-center gap-8 shadow-2xl border-y border-r border-white/10">
+              <div className="bg-red-600 rounded-full w-20 h-20 flex items-center justify-center animate-pulse shadow-[0_0_25px_rgba(220,38,38,0.8)]">
+                {/* YouTube Play Triangle */}
+                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[22px] border-l-white border-b-[12px] border-b-transparent ml-2" />
+              </div>
+              <div>
+                <p className="text-white font-black text-3xl uppercase tracking-tight leading-none mb-2">
+                  Subscribe
+                </p>
+                <p className="text-red-400 font-bold text-2xl tracking-widest">
+                  {config.youtubeChannelName || ""}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. SPONSOR BUG */}
+        {activeViews.includes("SPONSOR_BUG") &&
+          config.sponsorBugUrl &&
+          !activeFullscreen && (
+            <div className="absolute top-8 left-8 z-[100] animate-fade-in">
+              <img
+                src={config.sponsorBugUrl}
+                className="h-24 w-auto object-contain drop-shadow-2xl"
+                alt="Sponsor"
+              />
+            </div>
+          )}
+
+        {/* 3. DYNAMIC MINI SCOREBUG */}
+        {activeViews.includes("MINI_SCOREBUG") &&
+          !isScorebugOn &&
+          !activeFullscreen && (
+            <div className="absolute top-8 left-8 z-[90] animate-fade-in">
+              <div
+                className="bg-slate-950/95 backdrop-blur-md border-l-[6px] rounded-r-2xl pr-6 pl-4 py-3 shadow-2xl flex items-center gap-5 border border-white/10 transition-colors duration-500"
+                style={{ borderLeftColor: battingTeamColor }}
+              >
+                <div className="flex flex-col border-r border-white/20 pr-5">
+                  <span
+                    className="text-[10px] font-black uppercase tracking-widest transition-colors duration-500"
+                    style={{ color: battingTeamColor }}
+                  >
+                    LIVE SCORE
                   </span>
-                  <span className="text-white font-black text-3xl tabular-nums">
-                    {liveScore}/{liveWickets}
+                  <div className="flex items-center gap-3">
+                    <span className="text-white font-black text-2xl">
+                      {miniBatName}
+                    </span>
+                    <span className="text-white font-black text-3xl tabular-nums">
+                      {liveScore}/{liveWickets}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-white/50 font-black uppercase tracking-widest">
+                    OVERS
+                  </span>
+                  <span className="text-white font-bold text-xl tabular-nums">
+                    {liveOvers}
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-white/50 font-black uppercase tracking-widest">
-                  OVERS
-                </span>
-                <span className="text-white font-bold text-xl tabular-nums">
-                  {liveOvers}
-                </span>
-              </div>
             </div>
-          </div>
-        )}
+          )}
 
-      {/* 4. PARTNERSHIP BANNER */}
-      {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
-        <div
-          className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
-        >
-          <Partnership
-            matchData={matchData}
-            deliveries={deliveries}
-            team1Squad={team1Squad}
-            team2Squad={team2Squad}
-            themeId={config.broadcastThemeId}
-          />
-        </div>
-      )}
-
-      {/* 5. PLAYER SPOTLIGHT */}
-      {activeViews.includes("PLAYER_SPOTLIGHT") &&
-        config.spotlightPlayerId &&
-        matchData &&
-        !activeFullscreen && (
-          <div className="absolute bottom-40 left-12 z-[60]">
-            <PlayerSpotlight
-              playerId={config.spotlightPlayerId}
-              matchId={matchData.id}
-            />
-          </div>
-        )}
-
-      {/* 6. MAIN SCORE TICKER */}
-      {isScorebugOn && matchData && !activeFullscreen && (
-        <div
-          className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
-        >
-          <ScoreTicker overlayData={config} liveMatch={matchData} />
-        </div>
-      )}
-
-      {/* 7. SCROLLING TICKER */}
-      {isTickerOn && config.tickerText && !activeFullscreen && (
-        <div
-          className="absolute bottom-0 left-0 w-full h-10 text-black font-black uppercase tracking-[0.2em] text-xl flex items-center z-[250] overflow-hidden shadow-[0_-10px_30px_rgba(0,0,0,0.4)]"
-          style={{
-            backgroundColor: broadcastTheme.tokens.warning,
-            borderTop: `3px solid ${broadcastTheme.tokens.accent}`,
-          }}
-        >
-          <div className="ticker-text px-4">
-            {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
-            &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}{" "}
-            &nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;{" "}
-            {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
-            &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}
-          </div>
-        </div>
-      )}
-
-      {/* 8. FULLSCREEN LAYERS */}
-      {activeFullscreen && (
-        <div
-          className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
-          style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}
-        >
-          {activeFullscreen === "SPONSOR_BANNER" &&
-          config.sponsorBanners?.length > 0 ? (
-            <img
-              key={config.sponsorBanners[currentBannerIdx]}
-              src={config.sponsorBanners[currentBannerIdx]}
-              className="w-full h-full object-contain animate-fade-in drop-shadow-2xl"
-              alt="Sponsor Ad"
-            />
-          ) : (
-            <FullscreenPlates
-              type={activeFullscreen}
+        {/* 4. PARTNERSHIP BANNER */}
+        {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
+          <div
+            className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
+          >
+            <Partnership
               matchData={matchData}
-              tournamentId={tournamentId}
               deliveries={deliveries}
               team1Squad={team1Squad}
               team2Squad={team2Squad}
               themeId={config.broadcastThemeId}
-              config={config}
             />
+          </div>
+        )}
+
+        {/* 5. PLAYER SPOTLIGHT */}
+        {activeViews.includes("PLAYER_SPOTLIGHT") &&
+          config.spotlightPlayerId &&
+          matchData &&
+          !activeFullscreen && (
+            <div className="absolute bottom-40 left-12 z-[60]">
+              <PlayerSpotlight
+                playerId={config.spotlightPlayerId}
+                matchId={matchData.id}
+              />
+            </div>
           )}
-        </div>
-      )}
-    </div>
+
+        {/* 6. MAIN SCORE TICKER */}
+        {isScorebugOn && matchData && !activeFullscreen && (
+          <div
+            className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
+          >
+            <ScoreTicker overlayData={config} liveMatch={matchData} />
+          </div>
+        )}
+
+        {/* 7. SCROLLING TICKER */}
+        {isTickerOn && config.tickerText && !activeFullscreen && (
+          <div
+            className="absolute bottom-0 left-0 w-full h-10 text-black font-black uppercase tracking-[0.2em] text-xl flex items-center z-[250] overflow-hidden shadow-[0_-10px_30px_rgba(0,0,0,0.4)]"
+            style={{
+              backgroundColor: broadcastTheme.tokens.warning,
+              borderTop: `3px solid ${broadcastTheme.tokens.accent}`,
+            }}
+          >
+            <div className="ticker-text px-4">
+              {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
+              &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}{" "}
+              &nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;{" "}
+              {config.tickerText} &nbsp;&nbsp;&nbsp;&nbsp; •
+              &nbsp;&nbsp;&nbsp;&nbsp; {config.tickerText}
+            </div>
+          </div>
+        )}
+
+        {/* 8. FULLSCREEN LAYERS */}
+        {activeFullscreen && (
+          <div
+            className="absolute inset-0 w-full h-full z-[300] backdrop-blur-md animate-fade-in"
+            style={{ backgroundColor: `${broadcastTheme.tokens.panelBg}` }}
+          >
+            {activeFullscreen === "SPONSOR_BANNER" &&
+            config.sponsorBanners?.length > 0 ? (
+              <img
+                key={config.sponsorBanners[currentBannerIdx]}
+                src={config.sponsorBanners[currentBannerIdx]}
+                className="w-full h-full object-contain animate-fade-in drop-shadow-2xl"
+                alt="Sponsor Ad"
+              />
+            ) : (
+              <FullscreenPlates
+                type={activeFullscreen}
+                matchData={matchData}
+                tournamentId={tournamentId}
+                deliveries={deliveries}
+                team1Squad={team1Squad}
+                team2Squad={team2Squad}
+                themeId={config.broadcastThemeId}
+                config={config}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </FeatureGate>
   );
 }

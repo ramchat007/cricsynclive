@@ -11,6 +11,7 @@ import {
   Clock,
   Trophy,
 } from "lucide-react";
+import FeatureGate from "@/app/components/FeatureGate";
 
 export default function BracketsViewPage({
   params,
@@ -196,121 +197,128 @@ export default function BracketsViewPage({
 
   // --- RENDER THE BRACKET TREE ---
   return (
-    <div className="animate-in fade-in transition-colors duration-300">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border-1)] pb-4 mb-6 gap-4">
-        <h2 className="text-2xl font-black uppercase text-[var(--foreground)]">
-          Tournament Bracket
-        </h2>
-        {isAdmin && (
-          <Link
-            href={`/t/${tournamentId}/brackets/builder`}
-            className="flex items-center gap-2 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-md transition-all active:scale-95 shrink-0"
-          >
-            <Shield size={16} /> Edit Blueprint
-          </Link>
-        )}
-      </div>
+    <FeatureGate
+      tournamentId={tournamentId}
+      requiredTier="pro"
+      featureKey="brackets_enabled" // Maps to global Pro toggle for now
+      featureName="Advanced Knockout Brackets"
+    >
+      <div className="animate-in fade-in transition-colors duration-300">
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border-1)] pb-4 mb-6 gap-4">
+          <h2 className="text-2xl font-black uppercase text-[var(--foreground)]">
+            Tournament Bracket
+          </h2>
+          {isAdmin && (
+            <Link
+              href={`/t/${tournamentId}/brackets/builder`}
+              className="flex items-center gap-2 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-md transition-all active:scale-95 shrink-0"
+            >
+              <Shield size={16} /> Edit Blueprint
+            </Link>
+          )}
+        </div>
 
-      <div className="flex overflow-x-auto overflow-y-hidden p-6 gap-6 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] shadow-sm custom-scrollbar min-h-[60vh] transition-colors">
-        {bracketData.rounds?.map((round: any) => (
-          <div
-            key={round.id}
-            className="w-[320px] flex flex-col shrink-0 h-full"
-          >
-            <h3 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)] border-b border-[var(--border-1)] pb-2 mb-4">
-              {round.name}
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
-              {bracketData.matches
-                ?.filter((m: any) => m.roundId === round.id)
-                .map((matchNode: any) => {
-                  const liveMatch = liveMatchesMap.get(matchNode.id);
-                  const isCompleted = liveMatch?.status === "completed";
-                  const isLive = liveMatch?.status === "live";
-                  const team1Winner =
-                    isCompleted &&
-                    liveMatch?.match_winner_id &&
-                    liveMatch.match_winner_id === liveMatch.team1_id;
-                  const team2Winner =
-                    isCompleted &&
-                    liveMatch?.match_winner_id &&
-                    liveMatch.match_winner_id === liveMatch.team2_id;
+        <div className="flex overflow-x-auto overflow-y-hidden p-6 gap-6 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] shadow-sm custom-scrollbar min-h-[60vh] transition-colors">
+          {bracketData.rounds?.map((round: any) => (
+            <div
+              key={round.id}
+              className="w-[320px] flex flex-col shrink-0 h-full"
+            >
+              <h3 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)] border-b border-[var(--border-1)] pb-2 mb-4">
+                {round.name}
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
+                {bracketData.matches
+                  ?.filter((m: any) => m.roundId === round.id)
+                  .map((matchNode: any) => {
+                    const liveMatch = liveMatchesMap.get(matchNode.id);
+                    const isCompleted = liveMatch?.status === "completed";
+                    const isLive = liveMatch?.status === "live";
+                    const team1Winner =
+                      isCompleted &&
+                      liveMatch?.match_winner_id &&
+                      liveMatch.match_winner_id === liveMatch.team1_id;
+                    const team2Winner =
+                      isCompleted &&
+                      liveMatch?.match_winner_id &&
+                      liveMatch.match_winner_id === liveMatch.team2_id;
 
-                  // Format Time
-                  const matchTime = liveMatch?.match_time
-                    ? liveMatch.match_time.substring(0, 5)
-                    : "TBD";
+                    // Format Time
+                    const matchTime = liveMatch?.match_time
+                      ? liveMatch.match_time.substring(0, 5)
+                      : "TBD";
 
-                  return (
-                    <div
-                      key={matchNode.id}
-                      className={`relative p-1 rounded-2xl border shadow-sm transition-all ${
-                        isLive
-                          ? "bg-red-500/10 border-red-500/30"
-                          : "bg-[var(--surface-1)] border-[var(--border-1)]"
-                      }`}
-                    >
-                      {/* Live Badge */}
-                      {isLive && (
-                        <div className="absolute -top-2.5 right-4 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                          Live Now
+                    return (
+                      <div
+                        key={matchNode.id}
+                        className={`relative p-1 rounded-2xl border shadow-sm transition-all ${
+                          isLive
+                            ? "bg-red-500/10 border-red-500/30"
+                            : "bg-[var(--surface-1)] border-[var(--border-1)]"
+                        }`}
+                      >
+                        {/* Live Badge */}
+                        {isLive && (
+                          <div className="absolute -top-2.5 right-4 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                            Live Now
+                          </div>
+                        )}
+
+                        <div className="p-3">
+                          <div className="flex justify-between items-center border-b border-[var(--border-1)] pb-2 mb-3">
+                            <span className="bg-[var(--surface-2)] text-[var(--text-muted)] text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest transition-colors">
+                              {matchNode.id}
+                            </span>
+                            <span className="text-xs font-bold text-[var(--text-muted)] truncate w-36 text-right transition-colors">
+                              {matchNode.title}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            {renderTeamRow(
+                              matchNode.id,
+                              1,
+                              matchNode.slotA,
+                              team1Winner,
+                            )}
+                            {renderTeamRow(
+                              matchNode.id,
+                              2,
+                              matchNode.slotB,
+                              team2Winner,
+                            )}
+                          </div>
                         </div>
-                      )}
 
-                      <div className="p-3">
-                        <div className="flex justify-between items-center border-b border-[var(--border-1)] pb-2 mb-3">
-                          <span className="bg-[var(--surface-2)] text-[var(--text-muted)] text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest transition-colors">
-                            {matchNode.id}
-                          </span>
-                          <span className="text-xs font-bold text-[var(--text-muted)] truncate w-36 text-right transition-colors">
-                            {matchNode.title}
-                          </span>
-                        </div>
-
-                        <div className="space-y-1">
-                          {renderTeamRow(
-                            matchNode.id,
-                            1,
-                            matchNode.slotA,
-                            team1Winner,
-                          )}
-                          {renderTeamRow(
-                            matchNode.id,
-                            2,
-                            matchNode.slotB,
-                            team2Winner,
-                          )}
+                        {/* Footer: Venue & Time */}
+                        <div className="bg-[var(--surface-2)] rounded-b-[1.2rem] p-3 border-t border-[var(--border-1)] flex items-center justify-between text-[10px] font-bold text-[var(--text-muted)] transition-colors">
+                          <div className="flex items-center gap-1.5 truncate max-w-[150px]">
+                            <MapPin
+                              size={12}
+                              className="shrink-0 text-[var(--accent)]"
+                            />
+                            <span className="truncate">
+                              {liveMatch?.venue ||
+                                matchNode.settings?.venue ||
+                                "TBD"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Clock
+                              size={12}
+                              className="text-[var(--text-muted)]"
+                            />
+                            <span>{matchTime}</span>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Footer: Venue & Time */}
-                      <div className="bg-[var(--surface-2)] rounded-b-[1.2rem] p-3 border-t border-[var(--border-1)] flex items-center justify-between text-[10px] font-bold text-[var(--text-muted)] transition-colors">
-                        <div className="flex items-center gap-1.5 truncate max-w-[150px]">
-                          <MapPin
-                            size={12}
-                            className="shrink-0 text-[var(--accent)]"
-                          />
-                          <span className="truncate">
-                            {liveMatch?.venue ||
-                              matchNode.settings?.venue ||
-                              "TBD"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <Clock
-                            size={12}
-                            className="text-[var(--text-muted)]"
-                          />
-                          <span>{matchTime}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </FeatureGate>
   );
 }

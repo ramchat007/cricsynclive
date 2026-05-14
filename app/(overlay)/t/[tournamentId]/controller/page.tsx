@@ -25,6 +25,7 @@ import {
   Play,
 } from "lucide-react";
 import { BROADCAST_THEMES } from "@/lib/themes";
+import FeatureGate from "@/app/components/FeatureGate";
 
 export default function MasterController({
   params,
@@ -386,628 +387,684 @@ export default function MasterController({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-6 font-sans pb-24 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <header className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center shadow-sm gap-4 transition-colors">
-          <div className="flex items-center gap-3">
-            <Radio className="text-[var(--accent)] animate-pulse" size={28} />
-            <div>
-              <h1 className="text-[var(--foreground)] font-black uppercase tracking-tighter text-2xl leading-none">
-                Studio V2 Control
-              </h1>
-              <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">
-                Broadcast Director
-              </p>
-            </div>
-          </div>
-          <select
-            value={config.activeMatchId || ""}
-            onChange={(e) => publishConfig({ activeMatchId: e.target.value })}
-            className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-6 py-3 text-[var(--foreground)] outline-none focus:border-[var(--accent)] transition-colors font-bold uppercase tracking-wider text-sm w-full md:w-auto cursor-pointer">
-            <option value="">-- Select Active Feed --</option>
-            {matches.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.team1?.short_name} vs {m.team2?.short_name}
-              </option>
-            ))}
-          </select>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
-            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
-              <Tv size={16} className="text-[var(--text-muted)]" /> In-Game
-              Displays
-            </h3>
-            <button
-              onClick={() => toggleView("SCOREBUG")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("SCOREBUG") ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-              Main Score Ticker{" "}
-              {config.activeViews?.includes("SCOREBUG") ? (
-                <Check size={18} />
-              ) : (
-                <EyeOff size={18} />
-              )}
-            </button>
-            <button
-              onClick={() => toggleView("MINI_SCOREBUG")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("MINI_SCOREBUG") ? "bg-cyan-600 border-cyan-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-              Mini Corner Bug{" "}
-              {config.activeViews?.includes("MINI_SCOREBUG") ? (
-                <Check size={18} />
-              ) : (
-                <EyeOff size={18} />
-              )}
-            </button>
-            <button
-              onClick={() => toggleView("PARTNERSHIP")}
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("PARTNERSHIP") ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-              Current Partnership{" "}
-              {config.activeViews?.includes("PARTNERSHIP") ? (
-                <Check size={18} />
-              ) : (
-                <EyeOff size={18} />
-              )}
-            </button>
-            <button
-              onClick={() =>
-                publishConfig({ showAppLogo: !config.showAppLogo })
-              }
-              className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all mt-auto ${config.showAppLogo ? "bg-[var(--foreground)] border-[var(--border-1)] text-[var(--background)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-              Watermark Logo{" "}
-              {config.showAppLogo ? (
-                <RotateCw size={16} className="text-[var(--accent)]" />
-              ) : (
-                <EyeOff size={16} />
-              )}
-            </button>
-          </div>
-
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
-            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
-              <Zap size={16} className="text-[var(--text-muted)]" /> Rapid
-              Triggers
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => triggerRapidEvent("FOUR")}
-                className="bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-500 font-black text-sm active:scale-95 transition-all shadow-sm">
-                4 RUNS
-              </button>
-              <button
-                onClick={() => triggerRapidEvent("SIX")}
-                className="bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 hover:text-white hover:border-amber-500 py-6 rounded-xl text-amber-500 font-black text-sm active:scale-95 transition-all shadow-sm">
-                6 RUNS
-              </button>
-            </div>
-            <button
-              onClick={() => triggerRapidEvent("WICKET")}
-              className="w-full bg-rose-500/10 border border-rose-500/20 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-500 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm">
-              WICKET
-            </button>
-            {!!triggerNote && (
-              <p className="text-[11px] font-bold text-[var(--text-muted)] mt-1">
-                {triggerNote}
-              </p>
-            )}
-
-            <div className="pt-4 mt-auto border-t border-[var(--border-1)]">
-              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2 flex items-center gap-1">
-                <MessageSquare size={12} /> Custom Bottom Ticker
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Type breaking news here..."
-                  defaultValue={config.tickerText || ""}
-                  onBlur={(e) => publishConfig({ tickerText: e.target.value })}
-                  className="flex-1 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors placeholder-[var(--text-muted)]"
-                />
-                <button
-                  onClick={() => toggleView("TICKER")}
-                  className={`px-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border ${config.activeViews?.includes("TICKER") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-                  {config.activeViews?.includes("TICKER") ? "Hide" : "Show"}
-                </button>
+    <FeatureGate
+      tournamentId={tournamentId}
+      requiredTier="broadcast"
+      featureKey="obs_overlays_enabled"
+      featureName="Master Overlay Controller"
+    >
+      <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-6 font-sans pb-24 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <header className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center shadow-sm gap-4 transition-colors">
+            <div className="flex items-center gap-3">
+              <Radio className="text-[var(--accent)] animate-pulse" size={28} />
+              <div>
+                <h1 className="text-[var(--foreground)] font-black uppercase tracking-tighter text-2xl leading-none">
+                  Studio V2 Control
+                </h1>
+                <p className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mt-1">
+                  Broadcast Director
+                </p>
               </div>
             </div>
-          </div>
-
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
-            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
-              <MonitorPlay size={16} className="text-[var(--text-muted)]" />{" "}
-              Full-Screen Overlays
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { id: "TOSS_REPORT", label: "Toss", icon: PieChart },
-                { id: "PLAYING_XI", label: "Lineups", icon: Users },
-                { id: "INNINGS_BREAK", label: "Target", icon: Target },
-                { id: "OVER_SUMMARY", label: "Summary", icon: LayoutTemplate },
-                {
-                  id: "POINTS_TABLE",
-                  label: "Standings",
-                  icon: ClipboardList,
-                },
-                { id: "LIVE_QUIZ", label: "Live Quiz", icon: MessageCircle },
-              ].map((overlay) => (
-                <button
-                  key={overlay.id}
-                  onClick={() => toggleFullscreenView(overlay.id)}
-                  className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-                  <overlay.icon
-                    size={18}
-                    className={
-                      config.activeViews?.includes(overlay.id)
-                        ? "text-white"
-                        : "text-[var(--text-muted)]"
-                    }
-                  />{" "}
-                  {overlay.label}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => toggleFullscreenView("MATCH_SUMMARY")}
-              className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-amber-500 hover:text-amber-600"}`}>
-              <Trophy size={18} /> Match Summary
-            </button>
-          </div>
-
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
-            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
-              <LayoutTemplate size={16} className="text-[var(--text-muted)]" />{" "}
-              Broadcast Themes
-            </h3>
-            <p className="text-[11px] text-[var(--text-muted)]">
-              App themes are free in navbar. Tournament broadcast themes include
-              premium presets (payments can be integrated later).
-            </p>
-            <div className="grid grid-cols-1 gap-2">
-              {BROADCAST_THEMES.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={() => selectBroadcastTheme(theme.id)}
-                  className={`w-full py-3 px-4 rounded-xl border text-left transition-all ${
-                    config.broadcastThemeId === theme.id
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10"
-                      : "border-[var(--border-1)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)]"
-                  }`}>
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`font-black uppercase tracking-wider text-xs ${config.broadcastThemeId === theme.id ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}>
-                      {theme.label}
-                    </span>
-                    <span
-                      className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${
-                        theme.premium
-                          ? "bg-amber-500/20 text-amber-500"
-                          : "bg-emerald-500/20 text-emerald-500"
-                      }`}>
-                      {theme.premium ? "Premium" : "Free"}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-            {!!themeNote && (
-              <p className="text-[11px] font-bold text-[var(--text-muted)]">
-                {themeNote}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm flex flex-col justify-between transition-colors">
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2">
-                  <Users size={16} className="text-[var(--text-muted)]" />{" "}
-                  Player Spotlight
-                </h3>
-
-                <label className="flex items-center gap-2 cursor-pointer bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
-                  <input
-                    type="checkbox"
-                    checked={config.autoSpotlight !== false}
-                    onChange={(e) =>
-                      publishConfig({ autoSpotlight: e.target.checked })
-                    }
-                    className="w-3 h-3 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-[10px] font-bold uppercase text-blue-500 tracking-wider">
-                    Auto-Show (10s)
-                  </span>
-                </label>
-              </div>
-
-              <div className="mb-5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
-                  Live Crease Controls
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      publishConfig({
-                        spotlightPlayerId: matches.find(
-                          (m) => m.id === config.activeMatchId,
-                        )?.live_striker_id,
-                      });
-                      toggleView("PLAYER_SPOTLIGHT");
-                    }}
-                    className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-500 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
-                    🏏{" "}
-                    {teamASquad
-                      .concat(teamBSquad)
-                      .find(
-                        (p) =>
-                          p.id ===
-                          matches.find((m) => m.id === config.activeMatchId)
-                            ?.live_striker_id,
-                      )?.full_name || "Striker"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      publishConfig({
-                        spotlightPlayerId: matches.find(
-                          (m) => m.id === config.activeMatchId,
-                        )?.live_bowler_id,
-                      });
-                      toggleView("PLAYER_SPOTLIGHT");
-                    }}
-                    className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors">
-                    🥎{" "}
-                    {teamASquad
-                      .concat(teamBSquad)
-                      .find(
-                        (p) =>
-                          p.id ===
-                          matches.find((m) => m.id === config.activeMatchId)
-                            ?.live_bowler_id,
-                      )?.full_name || "Bowler"}
-                  </button>
-                </div>
-              </div>
-
-              <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
-                Manual Selection
-              </label>
-              <select
-                value={config.spotlightPlayerId || ""}
-                onChange={(e) =>
-                  publishConfig({ spotlightPlayerId: e.target.value })
-                }
-                className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3 text-[var(--foreground)] outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-bold uppercase tracking-wider text-sm mb-4 cursor-pointer transition-colors">
-                <option value="">-- Choose a Player --</option>
-                {teamASquad.length > 0 && (
-                  <optgroup label="Team A" className="bg-[var(--surface-1)]">
-                    {teamASquad.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {teamBSquad.length > 0 && (
-                  <optgroup label="Team B" className="bg-[var(--surface-1)]">
-                    {teamBSquad.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-            </div>
-
-            <button
-              onClick={() => toggleView("PLAYER_SPOTLIGHT")}
-              disabled={!config.spotlightPlayerId}
-              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 border transition-all ${!config.spotlightPlayerId ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("PLAYER_SPOTLIGHT") ? "bg-cyan-500 border-cyan-500 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-cyan-500 hover:bg-[var(--surface-2)]"}`}>
-              <Users size={18} />{" "}
-              {config.activeViews?.includes("PLAYER_SPOTLIGHT")
-                ? "Hide Profile"
-                : "Show Selected Profile"}
-            </button>
-          </div>
-
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm transition-colors">
-            <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-6">
-              <ImageIcon size={16} className="text-[var(--text-muted)]" />{" "}
-              Sponsor Integration
-            </h3>
-            <div className="grid grid-cols-2 gap-6 h-full">
-              {/* 🔥 Safe Array Setup for Banners 🔥 */}
-              <div className="flex flex-col gap-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
-                  Fullscreen Banners
-                </label>
-
-                <CldUploadWidget
-                  uploadPreset={String(
-                    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-                  )}
-                  options={{
-                    multiple: false,
-                    cropping: true,
-                    showSkipCropButton: false,
-                    // 🔥 Changed from 1 (Square) to 16/9 (Widescreen TV format)
-                    croppingAspectRatio: 16 / 9,
-                    showCompletedButton: true,
-                  }}
-                  onSuccess={(result: any) => {
-                    let url = result.info.secure_url;
-
-                    // 🔥 THE FIX: Tell Cloudinary to actively apply the crop!
-                    // If the user used the crop tool, inject the crop command into the URL
-                    if (
-                      result.info.coordinates &&
-                      result.info.coordinates.custom
-                    ) {
-                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
-                    }
-
-                    // ✅ Reads from ref to prevent overwriting
-                    const currentBanners =
-                      configRef.current.sponsorBanners || [];
-                    publishConfig({ sponsorBanners: [...currentBanners, url] });
-                  }}>
-                  {({ open }) => (
-                    <button
-                      onClick={() => open()}
-                      className="border-2 border-dashed border-[var(--border-1)] rounded-xl h-24 w-full flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-amber-500 transition-colors cursor-pointer bg-[var(--surface-2)]/50">
-                      <UploadCloud size={24} className="mb-1" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">
-                        Upload Banner(s)
-                      </span>
-                    </button>
-                  )}
-                </CldUploadWidget>
-
-                <div className="flex gap-2 overflow-x-auto py-1 custom-scrollbar">
-                  {(config.sponsorBanners || []).map(
-                    (url: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="relative w-12 h-8 shrink-0 rounded border border-[var(--border-1)] group">
-                        <img
-                          src={url}
-                          className="w-full h-full object-cover rounded"
-                          alt="Banner Thumb"
-                        />
-                        <button
-                          onClick={() => removeBanner(idx)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
-                          <X size={10} />
-                        </button>
-                      </div>
-                    ),
-                  )}
-                </div>
-
-                <button
-                  onClick={() => toggleFullscreenView("SPONSOR_BANNER")}
-                  disabled={
-                    !(config.sponsorBanners?.length > 0) &&
-                    !config.activeViews?.includes("SPONSOR_BANNER")
-                  }
-                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!(config.sponsorBanners?.length > 0) && !config.activeViews?.includes("SPONSOR_BANNER") ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BANNER") ? "bg-amber-500 border-amber-500 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-                  {config.activeViews?.includes("SPONSOR_BANNER")
-                    ? "Hide Banners"
-                    : "Play Banner Ad(s)"}
-                </button>
-              </div>
-
-              {/* Bug Setup */}
-              <div className="flex flex-col gap-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
-                  Small Corner Bug
-                </label>
-                <CldUploadWidget
-                  uploadPreset={String(
-                    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-                  )}
-                  options={{
-                    multiple: false,
-                    cropping: true,
-                    showSkipCropButton: false,
-                    croppingAspectRatio: 1,
-                    showCompletedButton: true,
-                  }}
-                  onSuccess={(result: any) => {
-                    let url = result.info.secure_url;
-                    if (
-                      result.info.coordinates &&
-                      result.info.coordinates.custom
-                    ) {
-                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
-                    }
-                    publishConfig({ sponsorBugUrl: url });
-                  }}>
-                  {({ open }) => (
-                    <div
-                      onClick={() => open()}
-                      className="border-2 border-dashed border-[var(--border-1)] rounded-xl h-24 flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-pink-500 transition-colors cursor-pointer group relative overflow-hidden bg-[var(--surface-2)]/50">
-                      {config.sponsorBugUrl ? (
-                        <img
-                          src={config.sponsorBugUrl}
-                          className="absolute inset-0 w-full h-full object-contain p-2 opacity-60 group-hover:opacity-20 transition-opacity"
-                          alt="Bug"
-                        />
-                      ) : null}
-                      <ImageIcon size={24} className="mb-1 relative z-10" />
-                      <span className="text-[9px] font-black uppercase tracking-widest relative z-10">
-                        Upload Logo Bug
-                      </span>
-                    </div>
-                  )}
-                </CldUploadWidget>
-
-                <button
-                  onClick={() => toggleView("SPONSOR_BUG")}
-                  disabled={
-                    !config.sponsorBugUrl &&
-                    !config.activeViews?.includes("SPONSOR_BUG")
-                  }
-                  className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!config.sponsorBugUrl && !config.activeViews?.includes("SPONSOR_BUG") ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BUG") ? "bg-pink-600 border-pink-600 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-                  {config.activeViews?.includes("SPONSOR_BUG")
-                    ? "Hide Bug"
-                    : "Show Bug"}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 1. YOUTUBE SUBSCRIBE BANNER CONTROL */}
-          <div className="p-4 border border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] mb-4 shadow-sm transition-colors">
-            <h3 className="font-bold mb-3 flex items-center gap-2 text-red-500">
-              <Play size={18} /> YouTube Engagement
-            </h3>
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-bold text-[var(--text-muted)] mb-1">
-                  Channel Name
-                </label>
-                <input
-                  type="text"
-                  value={config.youtubeChannelName || ""}
-                  onChange={(e) =>
-                    publishConfig({ youtubeChannelName: e.target.value })
-                  }
-                  className="w-full border border-[var(--border-1)] rounded p-2 text-sm bg-[var(--surface-2)] text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all placeholder-[var(--text-muted)]"
-                />
-              </div>
-              <button
-                onClick={() =>
-                  publishConfig({
-                    showSubscribeBanner: !config.showSubscribeBanner,
-                  })
-                }
-                className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
-                {config.showSubscribeBanner
-                  ? "Hide Subscribe Banner"
-                  : "Show Subscribe Banner"}
-              </button>
-            </div>
-          </div>
-
-          {/* 2. LIVE QUIZ GENERATOR CONTROL */}
-          <div className="p-4 border border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] shadow-sm transition-colors">
-            <h3 className="font-bold mb-3 text-red-500 flex items-center gap-2">
-              Live Quiz Config
-            </h3>
-            {/* Dynamic Question Selector */}
             <select
-              className="w-full border border-[var(--border-1)] rounded p-2 text-sm mb-3 bg-[var(--surface-2)] text-[var(--foreground)] outline-none focus:border-[var(--accent)] transition-all cursor-pointer"
-              onChange={(e) => {
-                if (e.target.value !== "") {
-                  const q = JSON.parse(e.target.value);
-                  publishConfig({
-                    quizData: {
-                      question: q.question,
-                      options: q.options,
-                      results: null,
-                    },
-                  });
-                }
-              }}>
-              <option value="">-- Select Auto-Generated Question --</option>
-              {generateDynamicQuestions().map((q, idx) => (
-                <option key={idx} value={JSON.stringify(q)}>
-                  {q.question}
+              value={config.activeMatchId || ""}
+              onChange={(e) => publishConfig({ activeMatchId: e.target.value })}
+              className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-6 py-3 text-[var(--foreground)] outline-none focus:border-[var(--accent)] transition-colors font-bold uppercase tracking-wider text-sm w-full md:w-auto cursor-pointer"
+            >
+              <option value="">-- Select Active Feed --</option>
+              {matches.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.team1?.short_name} vs {m.team2?.short_name}
                 </option>
               ))}
             </select>
-            <input
-              type="text"
-              placeholder="Or type a custom question..."
-              value={config.quizData?.question || ""}
-              onChange={(e) =>
-                publishConfig({
-                  quizData: { ...config.quizData, question: e.target.value },
-                })
-              }
-              className="w-full text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-lg mb-2 placeholder-[var(--text-muted)] truncate"
-            />
+          </header>
 
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {[0, 1].map((i) => (
-                <input
-                  key={i}
-                  type="text"
-                  placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                  value={config.quizData?.options?.[i] || ""}
-                  onChange={(e) => {
-                    const newOpts = [
-                      ...(config.quizData?.options || ["", "", "", ""]),
-                    ];
-                    newOpts[i] = e.target.value;
-                    publishConfig({
-                      quizData: { ...config.quizData, options: newOpts },
-                    });
-                  }}
-                  className="border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-sm placeholder-[var(--text-muted)]"
-                />
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
+              <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+                <Tv size={16} className="text-[var(--text-muted)]" /> In-Game
+                Displays
+              </h3>
+              <button
+                onClick={() => toggleView("SCOREBUG")}
+                className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("SCOREBUG") ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
+                Main Score Ticker{" "}
+                {config.activeViews?.includes("SCOREBUG") ? (
+                  <Check size={18} />
+                ) : (
+                  <EyeOff size={18} />
+                )}
+              </button>
+              <button
+                onClick={() => toggleView("MINI_SCOREBUG")}
+                className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("MINI_SCOREBUG") ? "bg-cyan-600 border-cyan-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
+                Mini Corner Bug{" "}
+                {config.activeViews?.includes("MINI_SCOREBUG") ? (
+                  <Check size={18} />
+                ) : (
+                  <EyeOff size={18} />
+                )}
+              </button>
+              <button
+                onClick={() => toggleView("PARTNERSHIP")}
+                className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all ${config.activeViews?.includes("PARTNERSHIP") ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
+                Current Partnership{" "}
+                {config.activeViews?.includes("PARTNERSHIP") ? (
+                  <Check size={18} />
+                ) : (
+                  <EyeOff size={18} />
+                )}
+              </button>
+              <button
+                onClick={() =>
+                  publishConfig({ showAppLogo: !config.showAppLogo })
+                }
+                className={`w-full py-4 rounded-xl font-black text-xs uppercase flex items-center justify-between px-5 border transition-all mt-auto ${config.showAppLogo ? "bg-[var(--foreground)] border-[var(--border-1)] text-[var(--background)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
+                Watermark Logo{" "}
+                {config.showAppLogo ? (
+                  <RotateCw size={16} className="text-[var(--accent)]" />
+                ) : (
+                  <EyeOff size={16} />
+                )}
+              </button>
             </div>
-            {/* Simulate Youtube Results */}
-            <div className="border-t border-[var(--border-1)] pt-3 mt-3">
-              <label className="block text-xs font-bold text-[var(--text-muted)] mb-2">
-                Simulate YouTube Chat Results
-              </label>
-              <div className="flex gap-2">
+
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
+              <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+                <Zap size={16} className="text-[var(--text-muted)]" /> Rapid
+                Triggers
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() =>
-                    publishConfig({
-                      quizData: {
-                        ...config.quizData,
-                        results: { 0: 65, 1: 15, 2: 10, 3: 10 },
-                      },
-                    })
-                  }
-                  className="flex-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 py-1 rounded text-xs font-bold hover:bg-amber-500 hover:text-amber-950 transition-colors">
-                  A Wins
+                  onClick={() => triggerRapidEvent("FOUR")}
+                  className="bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 py-6 rounded-xl text-emerald-500 font-black text-sm active:scale-95 transition-all shadow-sm"
+                >
+                  4 RUNS
                 </button>
                 <button
-                  onClick={() =>
-                    publishConfig({
-                      quizData: {
-                        ...config.quizData,
-                        results: { 0: 10, 1: 75, 2: 5, 3: 10 },
-                      },
-                    })
-                  }
-                  className="flex-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 py-1 rounded text-xs font-bold hover:bg-amber-500 hover:text-amber-950 transition-colors">
-                  B Wins
+                  onClick={() => triggerRapidEvent("SIX")}
+                  className="bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500 hover:text-white hover:border-amber-500 py-6 rounded-xl text-amber-500 font-black text-sm active:scale-95 transition-all shadow-sm"
+                >
+                  6 RUNS
                 </button>
+              </div>
+              <button
+                onClick={() => triggerRapidEvent("WICKET")}
+                className="w-full bg-rose-500/10 border border-rose-500/20 hover:bg-rose-600 hover:text-white hover:border-rose-600 py-6 rounded-xl text-rose-500 font-black text-lg tracking-widest active:scale-95 transition-all shadow-sm"
+              >
+                WICKET
+              </button>
+              {!!triggerNote && (
+                <p className="text-[11px] font-bold text-[var(--text-muted)] mt-1">
+                  {triggerNote}
+                </p>
+              )}
+
+              <div className="pt-4 mt-auto border-t border-[var(--border-1)]">
+                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2 flex items-center gap-1">
+                  <MessageSquare size={12} /> Custom Bottom Ticker
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Type breaking news here..."
+                    defaultValue={config.tickerText || ""}
+                    onBlur={(e) =>
+                      publishConfig({ tickerText: e.target.value })
+                    }
+                    className="flex-1 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors placeholder-[var(--text-muted)]"
+                  />
+                  <button
+                    onClick={() => toggleView("TICKER")}
+                    className={`px-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border ${config.activeViews?.includes("TICKER") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+                  >
+                    {config.activeViews?.includes("TICKER") ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+              <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+                <MonitorPlay size={16} className="text-[var(--text-muted)]" />{" "}
+                Full-Screen Overlays
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: "TOSS_REPORT", label: "Toss", icon: PieChart },
+                  { id: "PLAYING_XI", label: "Lineups", icon: Users },
+                  { id: "INNINGS_BREAK", label: "Target", icon: Target },
+                  {
+                    id: "OVER_SUMMARY",
+                    label: "Summary",
+                    icon: LayoutTemplate,
+                  },
+                  {
+                    id: "POINTS_TABLE",
+                    label: "Standings",
+                    icon: ClipboardList,
+                  },
+                  { id: "LIVE_QUIZ", label: "Live Quiz", icon: MessageCircle },
+                ].map((overlay) => (
+                  <button
+                    key={overlay.id}
+                    onClick={() => toggleFullscreenView(overlay.id)}
+                    className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+                  >
+                    <overlay.icon
+                      size={18}
+                      className={
+                        config.activeViews?.includes(overlay.id)
+                          ? "text-white"
+                          : "text-[var(--text-muted)]"
+                      }
+                    />{" "}
+                    {overlay.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => toggleFullscreenView("MATCH_SUMMARY")}
+                className={`w-full mt-2 py-5 rounded-xl font-black text-sm tracking-widest uppercase flex items-center justify-center gap-2 border transition-all ${config.activeViews?.includes("MATCH_SUMMARY") ? "bg-amber-400 border-amber-400 text-slate-900 shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-amber-500 hover:text-amber-600"}`}
+              >
+                <Trophy size={18} /> Match Summary
+              </button>
+            </div>
+
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+              <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
+                <LayoutTemplate
+                  size={16}
+                  className="text-[var(--text-muted)]"
+                />{" "}
+                Broadcast Themes
+              </h3>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                App themes are free in navbar. Tournament broadcast themes
+                include premium presets (payments can be integrated later).
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {BROADCAST_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => selectBroadcastTheme(theme.id)}
+                    className={`w-full py-3 px-4 rounded-xl border text-left transition-all ${
+                      config.broadcastThemeId === theme.id
+                        ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                        : "border-[var(--border-1)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`font-black uppercase tracking-wider text-xs ${config.broadcastThemeId === theme.id ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}
+                      >
+                        {theme.label}
+                      </span>
+                      <span
+                        className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${
+                          theme.premium
+                            ? "bg-amber-500/20 text-amber-500"
+                            : "bg-emerald-500/20 text-emerald-500"
+                        }`}
+                      >
+                        {theme.premium ? "Premium" : "Free"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {!!themeNote && (
+                <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                  {themeNote}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm flex flex-col justify-between transition-colors">
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2">
+                    <Users size={16} className="text-[var(--text-muted)]" />{" "}
+                    Player Spotlight
+                  </h3>
+
+                  <label className="flex items-center gap-2 cursor-pointer bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={config.autoSpotlight !== false}
+                      onChange={(e) =>
+                        publishConfig({ autoSpotlight: e.target.checked })
+                      }
+                      className="w-3 h-3 accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-[10px] font-bold uppercase text-blue-500 tracking-wider">
+                      Auto-Show (10s)
+                    </span>
+                  </label>
+                </div>
+
+                <div className="mb-5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
+                    Live Crease Controls
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        publishConfig({
+                          spotlightPlayerId: matches.find(
+                            (m) => m.id === config.activeMatchId,
+                          )?.live_striker_id,
+                        });
+                        toggleView("PLAYER_SPOTLIGHT");
+                      }}
+                      className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-500 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                    >
+                      🏏{" "}
+                      {teamASquad
+                        .concat(teamBSquad)
+                        .find(
+                          (p) =>
+                            p.id ===
+                            matches.find((m) => m.id === config.activeMatchId)
+                              ?.live_striker_id,
+                        )?.full_name || "Striker"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        publishConfig({
+                          spotlightPlayerId: matches.find(
+                            (m) => m.id === config.activeMatchId,
+                          )?.live_bowler_id,
+                        });
+                        toggleView("PLAYER_SPOTLIGHT");
+                      }}
+                      className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                    >
+                      🥎{" "}
+                      {teamASquad
+                        .concat(teamBSquad)
+                        .find(
+                          (p) =>
+                            p.id ===
+                            matches.find((m) => m.id === config.activeMatchId)
+                              ?.live_bowler_id,
+                        )?.full_name || "Bowler"}
+                    </button>
+                  </div>
+                </div>
+
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
+                  Manual Selection
+                </label>
+                <select
+                  value={config.spotlightPlayerId || ""}
+                  onChange={(e) =>
+                    publishConfig({ spotlightPlayerId: e.target.value })
+                  }
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3 text-[var(--foreground)] outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-bold uppercase tracking-wider text-sm mb-4 cursor-pointer transition-colors"
+                >
+                  <option value="">-- Choose a Player --</option>
+                  {teamASquad.length > 0 && (
+                    <optgroup label="Team A" className="bg-[var(--surface-1)]">
+                      {teamASquad.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.full_name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {teamBSquad.length > 0 && (
+                    <optgroup label="Team B" className="bg-[var(--surface-1)]">
+                      {teamBSquad.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.full_name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+
+              <button
+                onClick={() => toggleView("PLAYER_SPOTLIGHT")}
+                disabled={!config.spotlightPlayerId}
+                className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 border transition-all ${!config.spotlightPlayerId ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("PLAYER_SPOTLIGHT") ? "bg-cyan-500 border-cyan-500 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-cyan-500 hover:bg-[var(--surface-2)]"}`}
+              >
+                <Users size={18} />{" "}
+                {config.activeViews?.includes("PLAYER_SPOTLIGHT")
+                  ? "Hide Profile"
+                  : "Show Selected Profile"}
+              </button>
+            </div>
+
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm transition-colors">
+              <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-6">
+                <ImageIcon size={16} className="text-[var(--text-muted)]" />{" "}
+                Sponsor Integration
+              </h3>
+              <div className="grid grid-cols-2 gap-6 h-full">
+                {/* 🔥 Safe Array Setup for Banners 🔥 */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
+                    Fullscreen Banners
+                  </label>
+
+                  <CldUploadWidget
+                    uploadPreset={String(
+                      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+                    )}
+                    options={{
+                      multiple: false,
+                      cropping: true,
+                      showSkipCropButton: false,
+                      // 🔥 Changed from 1 (Square) to 16/9 (Widescreen TV format)
+                      croppingAspectRatio: 16 / 9,
+                      showCompletedButton: true,
+                    }}
+                    onSuccess={(result: any) => {
+                      let url = result.info.secure_url;
+
+                      // 🔥 THE FIX: Tell Cloudinary to actively apply the crop!
+                      // If the user used the crop tool, inject the crop command into the URL
+                      if (
+                        result.info.coordinates &&
+                        result.info.coordinates.custom
+                      ) {
+                        url = url.replace(
+                          "/upload/",
+                          "/upload/c_crop,g_custom/",
+                        );
+                      }
+
+                      // ✅ Reads from ref to prevent overwriting
+                      const currentBanners =
+                        configRef.current.sponsorBanners || [];
+                      publishConfig({
+                        sponsorBanners: [...currentBanners, url],
+                      });
+                    }}
+                  >
+                    {({ open }) => (
+                      <button
+                        onClick={() => open()}
+                        className="border-2 border-dashed border-[var(--border-1)] rounded-xl h-24 w-full flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-amber-500 transition-colors cursor-pointer bg-[var(--surface-2)]/50"
+                      >
+                        <UploadCloud size={24} className="mb-1" />
+                        <span className="text-[9px] font-black uppercase tracking-widest">
+                          Upload Banner(s)
+                        </span>
+                      </button>
+                    )}
+                  </CldUploadWidget>
+
+                  <div className="flex gap-2 overflow-x-auto py-1 custom-scrollbar">
+                    {(config.sponsorBanners || []).map(
+                      (url: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="relative w-12 h-8 shrink-0 rounded border border-[var(--border-1)] group"
+                        >
+                          <img
+                            src={url}
+                            className="w-full h-full object-cover rounded"
+                            alt="Banner Thumb"
+                          />
+                          <button
+                            onClick={() => removeBanner(idx)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ),
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => toggleFullscreenView("SPONSOR_BANNER")}
+                    disabled={
+                      !(config.sponsorBanners?.length > 0) &&
+                      !config.activeViews?.includes("SPONSOR_BANNER")
+                    }
+                    className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!(config.sponsorBanners?.length > 0) && !config.activeViews?.includes("SPONSOR_BANNER") ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BANNER") ? "bg-amber-500 border-amber-500 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+                  >
+                    {config.activeViews?.includes("SPONSOR_BANNER")
+                      ? "Hide Banners"
+                      : "Play Banner Ad(s)"}
+                  </button>
+                </div>
+
+                {/* Bug Setup */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
+                    Small Corner Bug
+                  </label>
+                  <CldUploadWidget
+                    uploadPreset={String(
+                      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+                    )}
+                    options={{
+                      multiple: false,
+                      cropping: true,
+                      showSkipCropButton: false,
+                      croppingAspectRatio: 1,
+                      showCompletedButton: true,
+                    }}
+                    onSuccess={(result: any) => {
+                      let url = result.info.secure_url;
+                      if (
+                        result.info.coordinates &&
+                        result.info.coordinates.custom
+                      ) {
+                        url = url.replace(
+                          "/upload/",
+                          "/upload/c_crop,g_custom/",
+                        );
+                      }
+                      publishConfig({ sponsorBugUrl: url });
+                    }}
+                  >
+                    {({ open }) => (
+                      <div
+                        onClick={() => open()}
+                        className="border-2 border-dashed border-[var(--border-1)] rounded-xl h-24 flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-pink-500 transition-colors cursor-pointer group relative overflow-hidden bg-[var(--surface-2)]/50"
+                      >
+                        {config.sponsorBugUrl ? (
+                          <img
+                            src={config.sponsorBugUrl}
+                            className="absolute inset-0 w-full h-full object-contain p-2 opacity-60 group-hover:opacity-20 transition-opacity"
+                            alt="Bug"
+                          />
+                        ) : null}
+                        <ImageIcon size={24} className="mb-1 relative z-10" />
+                        <span className="text-[9px] font-black uppercase tracking-widest relative z-10">
+                          Upload Logo Bug
+                        </span>
+                      </div>
+                    )}
+                  </CldUploadWidget>
+
+                  <button
+                    onClick={() => toggleView("SPONSOR_BUG")}
+                    disabled={
+                      !config.sponsorBugUrl &&
+                      !config.activeViews?.includes("SPONSOR_BUG")
+                    }
+                    className={`mt-auto py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${!config.sponsorBugUrl && !config.activeViews?.includes("SPONSOR_BUG") ? "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] cursor-not-allowed" : config.activeViews?.includes("SPONSOR_BUG") ? "bg-pink-600 border-pink-600 text-white shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+                  >
+                    {config.activeViews?.includes("SPONSOR_BUG")
+                      ? "Hide Bug"
+                      : "Show Bug"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 1. YOUTUBE SUBSCRIBE BANNER CONTROL */}
+            <div className="p-4 border border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] mb-4 shadow-sm transition-colors">
+              <h3 className="font-bold mb-3 flex items-center gap-2 text-red-500">
+                <Play size={18} /> YouTube Engagement
+              </h3>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-[var(--text-muted)] mb-1">
+                    Channel Name
+                  </label>
+                  <input
+                    type="text"
+                    value={config.youtubeChannelName || ""}
+                    onChange={(e) =>
+                      publishConfig({ youtubeChannelName: e.target.value })
+                    }
+                    className="w-full border border-[var(--border-1)] rounded p-2 text-sm bg-[var(--surface-2)] text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all placeholder-[var(--text-muted)]"
+                  />
+                </div>
                 <button
                   onClick={() =>
                     publishConfig({
-                      quizData: { ...config.quizData, results: null },
+                      showSubscribeBanner: !config.showSubscribeBanner,
                     })
                   }
-                  className="flex-1 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] py-1 rounded text-xs font-bold transition-colors">
-                  Clear Results
+                  className={`px-6 py-2 rounded font-bold text-sm transition-all ${config.showSubscribeBanner ? "bg-red-600 text-white" : "bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+                >
+                  {config.showSubscribeBanner
+                    ? "Hide Subscribe Banner"
+                    : "Show Subscribe Banner"}
                 </button>
               </div>
             </div>
+
+            {/* 2. LIVE QUIZ GENERATOR CONTROL */}
+            <div className="p-4 border border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] shadow-sm transition-colors">
+              <h3 className="font-bold mb-3 text-red-500 flex items-center gap-2">
+                Live Quiz Config
+              </h3>
+              {/* Dynamic Question Selector */}
+              <select
+                className="w-full border border-[var(--border-1)] rounded p-2 text-sm mb-3 bg-[var(--surface-2)] text-[var(--foreground)] outline-none focus:border-[var(--accent)] transition-all cursor-pointer"
+                onChange={(e) => {
+                  if (e.target.value !== "") {
+                    const q = JSON.parse(e.target.value);
+                    publishConfig({
+                      quizData: {
+                        question: q.question,
+                        options: q.options,
+                        results: null,
+                      },
+                    });
+                  }
+                }}
+              >
+                <option value="">-- Select Auto-Generated Question --</option>
+                {generateDynamicQuestions().map((q, idx) => (
+                  <option key={idx} value={JSON.stringify(q)}>
+                    {q.question}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Or type a custom question..."
+                value={config.quizData?.question || ""}
+                onChange={(e) =>
+                  publishConfig({
+                    quizData: { ...config.quizData, question: e.target.value },
+                  })
+                }
+                className="w-full text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-lg mb-2 placeholder-[var(--text-muted)] truncate"
+              />
+
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {[0, 1].map((i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                    value={config.quizData?.options?.[i] || ""}
+                    onChange={(e) => {
+                      const newOpts = [
+                        ...(config.quizData?.options || ["", "", "", ""]),
+                      ];
+                      newOpts[i] = e.target.value;
+                      publishConfig({
+                        quizData: { ...config.quizData, options: newOpts },
+                      });
+                    }}
+                    className="border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-sm placeholder-[var(--text-muted)]"
+                  />
+                ))}
+              </div>
+              {/* Simulate Youtube Results */}
+              <div className="border-t border-[var(--border-1)] pt-3 mt-3">
+                <label className="block text-xs font-bold text-[var(--text-muted)] mb-2">
+                  Simulate YouTube Chat Results
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      publishConfig({
+                        quizData: {
+                          ...config.quizData,
+                          results: { 0: 65, 1: 15, 2: 10, 3: 10 },
+                        },
+                      })
+                    }
+                    className="flex-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 py-1 rounded text-xs font-bold hover:bg-amber-500 hover:text-amber-950 transition-colors"
+                  >
+                    A Wins
+                  </button>
+                  <button
+                    onClick={() =>
+                      publishConfig({
+                        quizData: {
+                          ...config.quizData,
+                          results: { 0: 10, 1: 75, 2: 5, 3: 10 },
+                        },
+                      })
+                    }
+                    className="flex-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 py-1 rounded text-xs font-bold hover:bg-amber-500 hover:text-amber-950 transition-colors"
+                  >
+                    B Wins
+                  </button>
+                  <button
+                    onClick={() =>
+                      publishConfig({
+                        quizData: { ...config.quizData, results: null },
+                      })
+                    }
+                    className="flex-1 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] py-1 rounded text-xs font-bold transition-colors"
+                  >
+                    Clear Results
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6">
+            <button
+              onClick={() =>
+                publishConfig({
+                  activeViews: [],
+                  event: null,
+                  showSubscribeBanner: false,
+                })
+              }
+              className="w-full py-5 bg-red-500/10 text-red-500 font-black border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm"
+            >
+              🚨 Kill All Graphics 🚨
+            </button>
           </div>
         </div>
-
-        <div className="pt-6">
-          <button
-            onClick={() =>
-              publishConfig({
-                activeViews: [],
-                event: null,
-                showSubscribeBanner: false,
-              })
-            }
-            className="w-full py-5 bg-red-500/10 text-red-500 font-black border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm">
-            🚨 Kill All Graphics 🚨
-          </button>
-        </div>
       </div>
-    </div>
+    </FeatureGate>
   );
 }

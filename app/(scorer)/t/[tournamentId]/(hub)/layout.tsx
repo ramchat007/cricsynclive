@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Lock,
   Users,
   CalendarDays,
   Shirt,
@@ -156,39 +157,70 @@ export default function TournamentLayout({
       </div>
     );
 
+  // --- GLOBAL TIER CALCULATIONS ---
+  const currentTier = tournament?.subscription_tier || "free";
+  const isProOrHigher = currentTier === "pro" || currentTier === "broadcast";
+  const isBroadcastTier = currentTier === "broadcast";
+
   const navItems = [
-    { name: "Teams & Squads", href: `/t/${tournamentId}/teams`, icon: Users },
-    { name: "Matches", href: `/t/${tournamentId}/matches`, icon: CalendarDays },
+    {
+      name: "Teams & Squads",
+      href: `/t/${tournamentId}/teams`,
+      icon: Users,
+      requiredTier: "free",
+    },
+    {
+      name: "Matches",
+      href: `/t/${tournamentId}/matches`,
+      icon: CalendarDays,
+      requiredTier: "free",
+    },
     {
       name: "Brackets & Fixtures",
       href: `/t/${tournamentId}/brackets`,
       icon: Brackets,
+      requiredTier: "pro",
     },
-    { name: "Player Roster", href: `/t/${tournamentId}/players`, icon: Shirt },
+    {
+      name: "Player Roster",
+      href: `/t/${tournamentId}/players`,
+      icon: Shirt,
+      requiredTier: "free",
+    },
     {
       name: "Points Table",
       href: `/t/${tournamentId}/standings`,
       icon: ListOrdered,
+      requiredTier: "free",
     },
     {
       name: "Leaderboards",
       href: `/t/${tournamentId}/leaderboards`,
       icon: Medal,
+      requiredTier: "free",
     },
   ];
 
   if (isAdmin) {
-    navItems.push({
-      name: "Admin & Scorers",
-      href: `/t/${tournamentId}/admin`,
-      icon: ShieldAlert,
-    });
+    navItems.push(
+      {
+        name: "Admin & Scorers",
+        href: `/t/${tournamentId}/admin`,
+        icon: ShieldAlert,
+        requiredTier: "free",
+      },
+      {
+        name: "Plan Details",
+        href: `/t/${tournamentId}/billing`,
+        icon: Settings,
+        requiredTier: "free",
+      },
+    );
   }
 
   return (
-    // 1. The Main Container: Fill the remaining space below the 65px Navbar
     <div className="h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden">
-      {/* 2. The Sidebar: Stays pinned to the left, fills 100% of this container's height */}
+      {/* SIDEBAR */}
       <aside
         className={`
           fixed inset-y-0 top-[65px] left-0 z-50 w-72 bg-[var(--surface-1)] border-r border-[var(--border-1)] transform transition-transform duration-300 ease-in-out 
@@ -204,18 +236,49 @@ export default function TournamentLayout({
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
+
+              // Determine if locked using the global currentTier
+              const isLocked =
+                (item.requiredTier === "pro" && currentTier === "free") ||
+                (item.requiredTier === "broadcast" &&
+                  currentTier !== "broadcast");
+
+              const lockColorClass =
+                item.requiredTier === "pro"
+                  ? "text-emerald-500"
+                  : "text-purple-500";
+              const hoverBorderClass =
+                item.requiredTier === "pro"
+                  ? "hover:border-emerald-500/30"
+                  : "hover:border-purple-500/30";
+
               return (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={isLocked ? `/t/${tournamentId}/billing` : item.href}
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${isActive ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20" : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"}`}
+                  className={`
+                    flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all
+                    ${isActive && !isLocked ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20" : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"}
+                    ${isLocked ? `opacity-80 border border-transparent ${hoverBorderClass}` : ""}
+                  `}
                 >
-                  <Icon
-                    size={18}
-                    className={isActive ? "text-white" : "opacity-70"}
-                  />
-                  {item.name}
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      size={18}
+                      className={
+                        isActive && !isLocked
+                          ? "text-white"
+                          : isLocked
+                            ? lockColorClass
+                            : "opacity-70"
+                      }
+                    />
+                    <span className={isLocked ? lockColorClass : ""}>
+                      {item.name}
+                    </span>
+                  </div>
+                  {isLocked && <Lock size={14} className={lockColorClass} />}
                 </Link>
               );
             })}
@@ -243,9 +306,8 @@ export default function TournamentLayout({
         </div>
       </aside>
 
-      {/* 3. The Main Content Area: Fills the rest of the width, scrolls independently */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 h-full flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
-        {/* Mobile Header Toggle (Only visible on small screens) */}
         <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0 sticky top-0 z-40">
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -259,7 +321,6 @@ export default function TournamentLayout({
           <div className="w-8 h-8"></div>
         </header>
 
-        {/* HERO BANNER AREA */}
         <div
           className="relative w-full min-h-[18rem] md:min-h-[22rem] flex flex-col justify-end p-6 md:p-12 transition-all shrink-0 bg-slate-900"
           style={{
@@ -335,13 +396,11 @@ export default function TournamentLayout({
           </div>
         </div>
 
-        {/* PAGE CONTENT */}
         <div className="p-6 md:p-12 max-w-7xl w-full mx-auto animate-in fade-in duration-700">
           {children}
         </div>
       </main>
 
-      {/* MOBILE OVERLAY */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
@@ -439,27 +498,37 @@ export default function TournamentLayout({
                 <h3 className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
                   Tournament Rules
                 </h3>
-                <div className="flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5">
+
+                {/* 🔒 PRO FEATURE LOCK: AUCTIONS */}
+                <div
+                  className={`flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 transition-all ${!isProOrHigher ? "opacity-70" : ""}`}
+                >
                   <div>
-                    <h4 className="text-sm font-bold text-[var(--foreground)]">
-                      Franchise Auction
+                    <h4
+                      className={`text-sm font-bold flex items-center gap-2 ${!isProOrHigher ? "text-emerald-500" : "text-[var(--foreground)]"}`}
+                    >
+                      Franchise Auction {!isProOrHigher && <Lock size={14} />}
                     </h4>
                     <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase mt-1">
-                      Track bidding & team budgets.
+                      {!isProOrHigher
+                        ? "Requires Pro Tier to Unlock"
+                        : "Track bidding & team budgets."}
                     </p>
                   </div>
                   <input
                     type="checkbox"
                     checked={editForm.is_auction_enabled}
+                    disabled={!isProOrHigher}
                     onChange={(e) =>
                       setEditForm({
                         ...editForm,
                         is_auction_enabled: e.target.checked,
                       })
                     }
-                    className="w-6 h-6 accent-[var(--accent)] cursor-pointer"
+                    className="w-6 h-6 accent-[var(--accent)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
+
                 <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
                   <div>
                     <h4 className="text-sm font-bold text-amber-600">
@@ -483,11 +552,33 @@ export default function TournamentLayout({
                 </div>
               </div>
 
-              {/* Broadcast Studio */}
-              <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
-                  Broadcast Studio
+              {/* 🔒 BROADCAST FEATURE LOCK: STUDIO */}
+              <div
+                className={`space-y-4 transition-all ${!isBroadcastTier ? "opacity-70" : ""}`}
+              >
+                <h3
+                  className={`text-[10px] font-black uppercase tracking-widest border-b border-[var(--border-1)] pb-2 flex items-center justify-between`}
+                >
+                  <span
+                    className={
+                      !isBroadcastTier
+                        ? "text-purple-500 flex items-center gap-2"
+                        : "text-[var(--accent)]"
+                    }
+                  >
+                    Broadcast Studio {!isBroadcastTier && <Lock size={12} />}
+                  </span>
+                  {!isBroadcastTier && (
+                    <Link
+                      href={`/t/${tournamentId}/billing`}
+                      onClick={() => setShowSettings(false)}
+                      className="text-purple-500 hover:text-purple-400"
+                    >
+                      Upgrade
+                    </Link>
+                  )}
                 </h3>
+
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
@@ -495,19 +586,26 @@ export default function TournamentLayout({
                     </label>
                     <input
                       value={editForm.live_stream_url}
+                      disabled={!isBroadcastTier}
                       onChange={(e) =>
                         setEditForm({
                           ...editForm,
                           live_stream_url: e.target.value,
                         })
                       }
-                      placeholder="https://youtube.com/live/..."
-                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-sm font-bold text-[var(--foreground)] outline-none focus:border-red-500 transition-all"
+                      placeholder={
+                        !isBroadcastTier
+                          ? "Locked - Upgrade to Broadcast Tier"
+                          : "https://youtube.com/live/..."
+                      }
+                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-sm font-bold text-[var(--foreground)] outline-none focus:border-red-500 transition-all disabled:cursor-not-allowed disabled:text-[var(--text-muted)]"
                     />
                   </div>
                   <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-bold text-[var(--foreground)]">
+                      <p
+                        className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}
+                      >
                         OBS Overlay Link
                       </p>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-1">
@@ -515,12 +613,13 @@ export default function TournamentLayout({
                       </p>
                     </div>
                     <button
+                      disabled={!isBroadcastTier}
                       onClick={() =>
                         copyLink(
                           `${window.location.origin}/t/${tournamentId}/overlay`,
                         )
                       }
-                      className="p-3 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl hover:text-[var(--accent)] transition-colors"
+                      className="p-3 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl hover:text-[var(--accent)] transition-colors disabled:cursor-not-allowed disabled:hover:text-inherit"
                     >
                       <Copy size={18} />
                     </button>
