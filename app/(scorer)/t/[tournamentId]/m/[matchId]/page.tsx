@@ -169,36 +169,40 @@ export default function UnifiedLiveMatchPage({
   // 🔗 --- SHARE SCORECARD LOGIC --- 🔗
   const handleShareMatch = async () => {
     setIsSharing(true);
-
+    const url = window.location.href;
     const shareData = {
-      title: `Live Cricket: ${engine.match?.team1_name} vs ${engine.match?.team2_name}`,
-      text: `Watch live scoring on CricSync! Current Score: ${stats?.currentScore}/${stats?.currentWickets}`,
-      url: window.location.href,
+      title: `Live Match: ${engine.match?.team1_name} vs ${engine.match?.team2_name}`,
+      text: `Check out the live scores on CricSync!`,
+      url: url,
     };
 
     try {
-      // 1. Check if native sharing is available AND the data is valid for sharing
-      if (
-        navigator.share &&
-        navigator.canShare &&
-        navigator.canShare(shareData)
-      ) {
+      // 1. Try Native OS Share (WhatsApp, Instagram, Messages, etc.)
+      if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       }
-      // 2. Fallback to Clipboard if native sharing fails or is unsupported
-      else {
-        await navigator.clipboard.writeText(window.location.href);
+      // 2. If Native Share isn't supported, force Clipboard Copy
+      else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
         alert("Link copied to clipboard!");
       }
+      // 3. Last ditch effort if APIs are blocked
+      else {
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        alert("Link copied!");
+      }
     } catch (err: any) {
-      // AbortError happens if the user closes the share sheet
+      // Ignore AbortError (this happens when the user clicks "Cancel" on the share sheet)
       if (err.name !== "AbortError") {
-        console.error("Error sharing:", err);
-        // Optional: fallback to clipboard if share fails
-        await navigator.clipboard.writeText(window.location.href);
+        console.error("Share failed:", err);
       }
     } finally {
-      setTimeout(() => setIsSharing(false), 2000);
+      setIsSharing(false);
     }
   };
 

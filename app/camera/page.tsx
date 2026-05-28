@@ -783,7 +783,7 @@ export default function GenericBroadcaster() {
           )}
         </div>
 
-        <div className="flex gap-2 sm:gap-3">
+        <div className="flex gap-2 sm:gap-3 mr-15">
           <button
             onClick={() => setShowSettings(true)}
             className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95">

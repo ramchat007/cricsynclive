@@ -102,43 +102,104 @@ export default function GlobalStatsPage() {
         ([id, name]) => ({ id, name }),
       );
       setTournamentsList(availableTournaments);
-
       setPlayers(mergedData);
-
-      const sortedByRuns = [...mergedData].sort(
-        (a, b) => (b.total_runs || 0) - (a.total_runs || 0),
-      );
-      const sortedByWickets = [...mergedData].sort(
-        (a, b) => (b.total_wickets || 0) - (a.total_wickets || 0),
-      );
-
-      if (sortedByRuns.length > 0) setTopBatter(sortedByRuns[0]);
-      if (sortedByWickets.length > 0) setTopBowler(sortedByWickets[0]);
     }
     setIsLoading(false);
   };
 
+// ------------------------------------------------------------------
+  // THE ULTIMATE SORT & FILTER ENGINE
+  // ------------------------------------------------------------------
   useEffect(() => {
-    let result = players;
+    // Create a fresh copy of the array to avoid mutating state directly
+    let result = [...players];
 
-    if (searchQuery)
+    // 1. APPLY FILTERS
+    if (searchQuery) {
       result = result.filter((p) =>
-        p.full_name.toLowerCase().includes(searchQuery.toLowerCase()),
+        p.full_name?.toLowerCase().includes(searchQuery.toLowerCase()),
       );
-    if (roleFilter !== "All")
+    }
+    if (roleFilter !== "All") {
       result = result.filter((p) => p.player_role === roleFilter);
-    if (tournamentFilter !== "All")
+    }
+    if (tournamentFilter !== "All") {
       result = result.filter((p) =>
-        p.playedTournaments.includes(tournamentFilter),
+        p.playedTournaments?.includes(tournamentFilter),
       );
+    }
 
+    // 2. APPLY BULLETPROOF SORTING
     result.sort((a, b) => {
-      const valA = a[sortBy] || 0;
-      const valB = b[sortBy] || 0;
-      return valB - valA;
+      // Force convert the selected column into a strict number (fallback to 0)
+      const valA = Number(a[sortBy]) || 0;
+      const valB = Number(b[sortBy]) || 0;
+
+      // Primary Sort: Highest number goes to the top
+      if (valB !== valA) {
+        return valB - valA; 
+      }
+
+      // ---------------------------------------------
+      // TIE-BREAKERS (If the primary stats are identical)
+      // ---------------------------------------------
+      if (sortBy === "total_runs") {
+        // Tie-breaker 1: Highest Strike Rate wins
+        const srA = Number(a.career_strike_rate) || 0;
+        const srB = Number(b.career_strike_rate) || 0;
+        if (srB !== srA) return srB - srA;
+      } 
+      
+      if (sortBy === "total_wickets") {
+        // Tie-breaker 1: Lowest Economy wins (Treat 0 or missing as 999 to penalize non-bowlers)
+        const econA = Number(a.career_economy) || 999;
+        const econB = Number(b.career_economy) || 999;
+        if (econA !== econB) return econA - econB; // A - B because LOWER is better here
+      }
+
+      // Final Tie-Breaker: Sort alphabetically by name so the list doesn't jump around
+      const nameA = a.full_name || "";
+      const nameB = b.full_name || "";
+      return nameA.localeCompare(nameB);
     });
 
+    // Save the perfectly sorted list to the table
     setFilteredPlayers([...result]);
+
+    // ---------------------------------------------
+    // 3. CALCULATE THE PODIUM (ORANGE & PURPLE CAPS)
+    // ---------------------------------------------
+    if (result.length > 0) {
+      // Orange Cap: Most Runs -> Tie-breaker: Highest Strike Rate
+      const batters = [...result].sort((a, b) => {
+        const runsA = Number(a.total_runs) || 0;
+        const runsB = Number(b.total_runs) || 0;
+        if (runsB !== runsA) return runsB - runsA;
+        
+        const srA = Number(a.career_strike_rate) || 0;
+        const srB = Number(b.career_strike_rate) || 0;
+        return srB - srA;
+      });
+
+      // Purple Cap: Most Wickets -> Tie-breaker: Lowest Economy
+      const bowlers = [...result].sort((a, b) => {
+        const wicA = Number(a.total_wickets) || 0;
+        const wicB = Number(b.total_wickets) || 0;
+        if (wicB !== wicA) return wicB - wicA;
+
+        const econA = Number(a.career_economy) || 999;
+        const econB = Number(b.career_economy) || 999;
+        return econA - econB; // Lower economy is better
+      });
+
+      // Only award caps if the top player actually has > 0 runs/wickets
+      setTopBatter(Number(batters[0].total_runs) > 0 ? batters[0] : null);
+      setTopBowler(Number(bowlers[0].total_wickets) > 0 ? bowlers[0] : null);
+
+    } else {
+      setTopBatter(null);
+      setTopBowler(null);
+    }
   }, [searchQuery, roleFilter, tournamentFilter, sortBy, players]);
 
   const openPlayerProfile = async (player: any) => {
@@ -168,7 +229,6 @@ export default function GlobalStatsPage() {
           .limit(10);
 
         if (matches && !error) {
-          // THE FIX: Filter out duplicate match IDs instantly using a Map!
           const uniqueMatches = Array.from(
             new Map(matches.map((m) => [m.id, m])).values(),
           );
@@ -208,9 +268,9 @@ export default function GlobalStatsPage() {
           </div>
         </div>
 
-        {/* PODIUM: TOP PERFORMERS (Mobile optimized layout) */}
-        {!searchQuery && roleFilter === "All" && tournamentFilter === "All" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        {/* THE FIX: PODIUM IS NOW ALWAYS VISIBLE IF A TOP PERFORMER EXISTS */}
+        {(topBatter || topBowler) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-4">
             {topBatter && (
               <div
                 onClick={() => openPlayerProfile(topBatter)}
@@ -378,7 +438,7 @@ export default function GlobalStatsPage() {
                 ) : (
                   filteredPlayers.map((player, index) => (
                     <tr
-                      key={player.full_name}
+                      key={player.player_id || player.full_name || index}
                       onClick={() => openPlayerProfile(player)}
                       className="hover:bg-slate-50 transition-colors cursor-pointer group"
                     >
