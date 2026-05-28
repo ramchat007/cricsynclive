@@ -85,8 +85,8 @@ export default function UnifiedLiveMatchPage({
 
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [moreActionType, setMoreActionType] = useState<
-    "penalty" | "bye" | "leg-bye" | "dead-ball" | "custom"
-  >("penalty");
+    "penalty-add" | "penalty-minus" | "bye" | "leg-bye" | "dead-ball" | "custom"
+  >("penalty-add");
   const [customRuns, setCustomRuns] = useState(5);
 
   const [activeTab, setActiveTab] = useState<
@@ -168,22 +168,38 @@ export default function UnifiedLiveMatchPage({
 
   // 🔗 --- SHARE SCORECARD LOGIC --- 🔗
   const handleShareMatch = async () => {
-    const url = window.location.href;
     setIsSharing(true);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Live Cricket: ${engine.match?.team1_name} vs ${engine.match?.team2_name}`,
-          text: `Watch live scoring on CricSync! Current Score: ${stats?.currentScore}/${stats?.currentWickets}`,
-          url: url,
-        });
-      } catch (err) {
-        console.log("Share cancelled");
+
+    const shareData = {
+      title: `Live Cricket: ${engine.match?.team1_name} vs ${engine.match?.team2_name}`,
+      text: `Watch live scoring on CricSync! Current Score: ${stats?.currentScore}/${stats?.currentWickets}`,
+      url: window.location.href,
+    };
+
+    try {
+      // 1. Check if native sharing is available AND the data is valid for sharing
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare(shareData)
+      ) {
+        await navigator.share(shareData);
       }
-    } else {
-      navigator.clipboard.writeText(url);
+      // 2. Fallback to Clipboard if native sharing fails or is unsupported
+      else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      }
+    } catch (err: any) {
+      // AbortError happens if the user closes the share sheet
+      if (err.name !== "AbortError") {
+        console.error("Error sharing:", err);
+        // Optional: fallback to clipboard if share fails
+        await navigator.clipboard.writeText(window.location.href);
+      }
+    } finally {
+      setTimeout(() => setIsSharing(false), 2000);
     }
-    setTimeout(() => setIsSharing(false), 2000);
   };
 
   // 🏏 --- PREDEFINED SLANGS DICTIONARY --- 🏏
@@ -601,13 +617,32 @@ export default function UnifiedLiveMatchPage({
     setCompletedRuns(0);
   };
 
+  // 🚨 FIXED: Bulletproof logic to handle Custom Actions WITHOUT false strike rotations
   const submitMoreAction = async () => {
+    // Preserve the original batsmen layout so we can undo unwanted automatic rotations
+    const originalStriker = engine.match!.live_striker_id;
+    const originalNonStriker = engine.match!.live_non_striker_id;
+    const currentBowler = engine.match!.live_bowler_id;
+
     let res;
-    if (moreActionType === "dead-ball")
+    if (moreActionType === "dead-ball") {
       res = await engine.recordDelivery(0, "dead-ball", 0);
-    else if (moreActionType === "penalty")
-      res = await engine.recordDelivery(0, "penalty", customRuns);
-    else res = await engine.recordDelivery(customRuns, null, 0);
+    } else if (moreActionType === "penalty-add") {
+      res = await engine.recordDelivery(0, "penalty", Math.abs(customRuns));
+    } else if (moreActionType === "penalty-minus") {
+      res = await engine.recordDelivery(0, "penalty", -Math.abs(customRuns));
+    } else {
+      res = await engine.recordDelivery(customRuns, null, 0);
+    }
+
+    // Force the strikers to stay strictly exactly where they are if it's a penalty or dead ball
+    if (moreActionType.includes("penalty") || moreActionType === "dead-ball") {
+      await engine.updateLivePlayers(
+        originalStriker,
+        originalNonStriker,
+        currentBowler,
+      );
+    }
 
     if (res?.isOverComplete) setTimeout(() => setShowBowlerModal(true), 500);
     setShowMoreModal(false);
@@ -2002,17 +2037,18 @@ export default function UnifiedLiveMatchPage({
                     <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 block">
                       Action Type
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {[
                         { id: "custom", label: "Custom Runs" },
-                        { id: "penalty", label: "Penalty Runs" },
                         { id: "dead-ball", label: "Dead Ball" },
+                        { id: "penalty-add", label: "Penalty (+)" },
+                        { id: "penalty-minus", label: "Penalty (-)" },
                       ].map((type) => (
                         <button
                           key={type.id}
                           onClick={() => {
                             setMoreActionType(type.id as any);
-                            setCustomRuns(type.id === "penalty" ? 5 : 5);
+                            setCustomRuns(type.id.includes("penalty") ? 5 : 5);
                           }}
                           className={`py-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === type.id ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)]"}`}
                         >

@@ -202,6 +202,7 @@ export default function BroadcastOverlay({
   const activeViews = config.activeViews || [];
   const broadcastTheme = getBroadcastTheme(config.broadcastThemeId);
 
+  // 🚨 FIXED: Added WIN_PREDICTOR to the activeFullscreen checker 🚨
   let activeFullscreen = activeViews.find((v: string) =>
     [
       "TOSS_REPORT",
@@ -213,6 +214,7 @@ export default function BroadcastOverlay({
       "MATCH_SUMMARY",
       "POINTS_TABLE",
       "LIVE_QUIZ",
+      "WIN_PREDICTOR",
     ].includes(v),
   );
 
@@ -263,7 +265,13 @@ export default function BroadcastOverlay({
     const totalValidBalls = currentInningsBalls.filter((d) => {
       const type = (d.extras_type || "").toLowerCase();
       return (
-        type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball"
+        type !== "wd" &&
+        type !== "wide" &&
+        type !== "nb" &&
+        type !== "no-ball" &&
+        type !== "penalty" &&
+        type !== "p" &&
+        type !== "dead-ball"
       );
     }).length;
 

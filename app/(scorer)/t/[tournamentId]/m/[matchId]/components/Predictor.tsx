@@ -163,25 +163,42 @@ export default function Predictor({ match, stats }: any) {
                 </div>
               </div>
 
-              <div className="relative h-6 w-full bg-[var(--surface-2)] rounded-full overflow-hidden mb-6 flex shadow-inner border border-[var(--border-1)]">
+              {/* Probability Progress Bar */}
+              <div className="relative h-8 w-full bg-slate-900 rounded-full overflow-hidden mb-6 flex shadow-inner border border-white/10">
+                {/* Team 1 Bar: Dynamic Colors based on Prob */}
                 <div
-                  className="h-full bg-[var(--accent)] transition-all duration-1000 ease-out flex items-center px-3"
-                  style={{ width: `${winProb.batting}%` }}>
+                  className="h-full transition-all duration-1000 ease-out flex items-center px-4"
+                  style={{
+                    width: `${winProb.batting}%`,
+                    backgroundColor:
+                      winProb.batting >= 50 ? "#22c55e" : "#ef4444",
+                  }}
+                >
                   {winProb.batting > 15 && (
-                    <span className="text-[10px] font-black text-[var(--background)]">
+                    <span className="text-xs font-black text-white drop-shadow-md">
                       {winProb.batting}%
                     </span>
                   )}
                 </div>
+
+                {/* Team 2 Bar: Dynamic Colors based on Prob */}
                 <div
-                  className="h-full bg-rose-500 transition-all duration-1000 ease-out flex justify-end items-center px-3"
-                  style={{ width: `${winProb.bowling}%` }}>
+                  className="h-full transition-all duration-1000 ease-out flex justify-end items-center px-4"
+                  style={{
+                    width: `${winProb.bowling}%`,
+                    backgroundColor:
+                      winProb.bowling > winProb.batting ? "#22c55e" : "#ef4444",
+                  }}
+                >
                   {winProb.bowling > 15 && (
-                    <span className="text-[10px] font-black text-white">
+                    <span className="text-xs font-black text-white drop-shadow-md">
                       {winProb.bowling}%
                     </span>
                   )}
                 </div>
+
+                {/* 50% Marker */}
+                <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-white/20 z-20 -translate-x-1/2" />
               </div>
 
               <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
@@ -236,7 +253,8 @@ export default function Predictor({ match, stats }: any) {
 
         {/* RIGHT COLUMN: REAL POINTS TABLE (Takes full width if match is completed) */}
         <div
-          className={`flex-[1.2] min-w-0 space-y-6 ${isMatchCompleted ? "w-full" : ""}`}>
+          className={`flex-[1.2] min-w-0 space-y-6 ${isMatchCompleted ? "w-full" : ""}`}
+        >
           <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
             Tournament Standings
           </h3>
@@ -301,14 +319,16 @@ export default function Predictor({ match, stats }: any) {
                       return (
                         <tr
                           key={row.id || idx}
-                          className={`border-b border-[var(--border-1)] transition-colors ${isCurrentMatchTeam ? "bg-[var(--accent)]/10" : "hover:bg-[var(--surface-2)]"}`}>
+                          className={`border-b border-[var(--border-1)] transition-colors ${isCurrentMatchTeam ? "bg-[var(--accent)]/10" : "hover:bg-[var(--surface-2)]"}`}
+                        >
                           <td className="p-3 sm:p-4 text-center text-[var(--text-muted)] font-black">
                             {idx + 1}
                           </td>
                           <td className="p-3 sm:p-4">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`text-[var(--foreground)] font-black ${isCurrentMatchTeam ? "text-[var(--accent)]" : ""}`}>
+                                className={`text-[var(--foreground)] font-black ${isCurrentMatchTeam ? "text-[var(--accent)]" : ""}`}
+                              >
                                 {row.short_name || row.name}
                               </span>
                               {isPlayingMatch && (

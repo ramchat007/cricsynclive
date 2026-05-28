@@ -275,11 +275,20 @@ export default function ScoreTicker({
     0,
   );
   const wickets = currentInningsBalls.filter((d) => d.is_wicket).length;
+
+  // 🚨 FIXED: Total Match Overs (Exclude penalties and dead balls) 🚨
   const totalBalls = currentInningsBalls.filter((d) => {
+    if (d.force_legal_ball) return true;
     const type = (d.extras_type || "").toLowerCase();
-    return (
-      type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball"
-    );
+    return ![
+      "wd",
+      "wide",
+      "nb",
+      "no-ball",
+      "penalty",
+      "p",
+      "dead-ball",
+    ].includes(type);
   }).length;
   const displayOvers = `${Math.floor(totalBalls / 6)}.${totalBalls % 6}`;
 
@@ -343,7 +352,8 @@ export default function ScoreTicker({
       runs: d.reduce((s, b) => s + (Number(b.runs_off_bat) || 0), 0),
       balls: d.filter((b) => {
         const type = (b.extras_type || "").toLowerCase();
-        return type !== "wd" && type !== "wide";
+        // 🚨 FIXED: Exclude Wide, Penalty, Dead Ball from Batter Balls 🚨
+        return !["wd", "wide", "penalty", "p", "dead-ball"].includes(type);
       }).length,
     };
   };
@@ -360,8 +370,12 @@ export default function ScoreTicker({
     for (const b of d) {
       currentOver.push(b);
       const type = (b.extras_type || "").toLowerCase();
+      // 🚨 FIXED: Exclude Wide, NB, Penalty, Dead Ball from Bowler Balls 🚨
       const isLegal =
-        type !== "wd" && type !== "wide" && type !== "nb" && type !== "no-ball";
+        b.force_legal_ball ||
+        !["wd", "wide", "nb", "no-ball", "penalty", "p", "dead-ball"].includes(
+          type,
+        );
 
       if (isLegal) {
         currentValid++;
@@ -387,11 +401,14 @@ export default function ScoreTicker({
     const ballsInCurrentOver = totalValid % 6;
 
     return {
-      runs: d.reduce(
-        (s, b) =>
-          s + (Number(b.runs_off_bat) || 0) + (Number(b.extras_runs) || 0),
-        0,
-      ),
+      runs: d.reduce((s, b) => {
+        // 🚨 FIXED: Exclude Bye, Leg Bye, Penalty from Bowler Runs 🚨
+        const t = (b.extras_type || "").toLowerCase();
+        if (["bye", "b", "leg-bye", "lb", "penalty", "p"].includes(t)) {
+          return s + (Number(b.runs_off_bat) || 0);
+        }
+        return s + (Number(b.runs_off_bat) || 0) + (Number(b.extras_runs) || 0);
+      }, 0),
       wickets: d.filter((b) => b.is_wicket).length,
       overs: `${completedOvers}.${ballsInCurrentOver}`,
       timeline: timelineToDisplay,
@@ -564,7 +581,8 @@ export default function ScoreTicker({
             eventTrigger
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
-          }`}>
+          }`}
+        >
           {eventTrigger && (
             <>
               {/* Sleek Angled Background */}
@@ -577,7 +595,8 @@ export default function ScoreTicker({
                       : eventTrigger === "SIX"
                         ? `linear-gradient(90deg, ${selectedTheme.tokens.warning} 0%, #b45309 100%)`
                         : `linear-gradient(90deg, ${selectedTheme.tokens.success} 0%, #047857 100%)`,
-                }}>
+                }}
+              >
                 {/* Subtle sweeping light effect */}
                 <div className="absolute top-0 bottom-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-lightSweep" />
               </div>
@@ -587,7 +606,8 @@ export default function ScoreTicker({
                 className="text-[64px] md:text-[80px] font-black italic uppercase z-10 animate-textTracking drop-shadow-2xl text-white"
                 style={{
                   textShadow: "0 10px 30px rgba(0,0,0,0.6)",
-                }}>
+                }}
+              >
                 {eventTrigger === "WICKET"
                   ? "WICKET!"
                   : eventTrigger === "SIX"
@@ -613,10 +633,12 @@ export default function ScoreTicker({
             style={{
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
-            }}>
+            }}
+          >
             <span
               className="shrink-0"
-              style={{ color: selectedTheme.tokens.warning }}>
+              style={{ color: selectedTheme.tokens.warning }}
+            >
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -626,7 +648,8 @@ export default function ScoreTicker({
             <span className="text-white/40 shrink-0">|</span>
             <span
               className="drop-shadow-md min-w-0"
-              style={{ color: selectedTheme.tokens.accent }}>
+              style={{ color: selectedTheme.tokens.accent }}
+            >
               {calculatedTarget
                 ? `${battingName} ${equationStr}`
                 : tossWinnerName
@@ -647,7 +670,8 @@ export default function ScoreTicker({
           className="w-full h-full flex relative overflow-hidden border-t-[3px] border-white/20 shadow-2xl"
           style={{
             background: `linear-gradient(90deg, ${battingColor} 0%, ${battingColor} 18%, rgba(10, 10, 15, 0.98) 40%, rgba(10, 10, 15, 0.98) 60%, ${bowlingColor} 82%, ${bowlingColor} 100%)`,
-          }}>
+          }}
+        >
           <div
             className="absolute inset-y-0 left-0 w-[45%] pointer-events-none mix-blend-screen"
             style={{
@@ -684,7 +708,8 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}>
+                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
+                >
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -808,7 +833,7 @@ export default function ScoreTicker({
 
               <div className="flex items-center justify-start gap-2 gap-y-1 flex-wrap overflow-hidden w-full py-1">
                 {bStats.timeline.map((b: any, i: number) => {
-                  let bText =
+                  let bText: string | number =
                     Number(b.runs_off_bat) === 0 && !b.extras_runs
                       ? "•"
                       : b.runs_off_bat;
@@ -820,7 +845,19 @@ export default function ScoreTicker({
                     bCls =
                       "bg-rose-600 border-rose-400 text-white shadow-[0_0_10px_#ef4444]";
                   } else if (b.extras_type) {
-                    bText = getExtraLabel(b);
+                    const extType = b.extras_type.toLowerCase();
+
+                    // 🚨 INJECTED LOGIC FOR PENALTIES AND DEAD BALLS 🚨
+                    if (extType === "penalty" || extType === "p") {
+                      const pRuns = Number(b.extras_runs) || 0;
+                      bText = `${pRuns > 0 ? "+" : ""}${pRuns}P`;
+                    } else if (extType === "dead-ball") {
+                      bText = "DB";
+                    } else {
+                      // Fallback to your existing label generator for WD, NB, etc.
+                      bText = getExtraLabel(b);
+                    }
+
                     bCls = "bg-indigo-600 border-indigo-400 text-white";
                     bShape = "h-9 min-w-[46px] px-2 rounded-xl text-[12px]";
                   } else if (Number(b.runs_off_bat) === 4) {
@@ -836,10 +873,10 @@ export default function ScoreTicker({
                       key={b.id || i}
                       className={`${bShape} border-2 shrink-0 flex items-center justify-center font-black ${bCls} uppercase opacity-0 leading-none`}
                       style={{
-                        /* ✅ FIX 3: Swapped popIn for shootIn */
                         animation: `shootIn 0.35s ease-out forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}>
+                      }}
+                    >
                       {bText}
                     </div>
                   );

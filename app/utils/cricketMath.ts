@@ -1,3 +1,5 @@
+"use client";
+
 export function deriveMatchStats(
   match: any,
   deliveries: any[],
@@ -107,20 +109,26 @@ export function deriveMatchStats(
     : false;
   const isInningsOver = isAllOut || isOversComplete || isTargetReached;
 
-  // PLAYER LIVE STATS
+  // 🚨 FIXED: PLAYER LIVE STATS (Exclude wide, penalty, dead-ball from balls faced)
   const strikerRuns = currentInningsDeliveries
     .filter((d) => d.striker_id === match.live_striker_id)
     .reduce((sum, d) => sum + (d.runs_off_bat || 0), 0);
-  const strikerBalls = currentInningsDeliveries.filter(
-    (d) => d.striker_id === match.live_striker_id && d.extras_type !== "wide",
-  ).length;
+    
+  const strikerBalls = currentInningsDeliveries.filter((d) => {
+    if (d.striker_id !== match.live_striker_id) return false;
+    const type = d.extras_type?.toLowerCase() || "";
+    return !["wide", "wd", "penalty", "p", "dead-ball"].includes(type);
+  }).length;
+
   const nonStrikerRuns = currentInningsDeliveries
     .filter((d) => d.striker_id === match.live_non_striker_id)
     .reduce((sum, d) => sum + (d.runs_off_bat || 0), 0);
-  const nonStrikerBalls = currentInningsDeliveries.filter(
-    (d) =>
-      d.striker_id === match.live_non_striker_id && d.extras_type !== "wide",
-  ).length;
+    
+  const nonStrikerBalls = currentInningsDeliveries.filter((d) => {
+    if (d.striker_id !== match.live_non_striker_id) return false;
+    const type = d.extras_type?.toLowerCase() || "";
+    return !["wide", "wd", "penalty", "p", "dead-ball"].includes(type);
+  }).length;
 
   const bowlerDelivs = currentInningsDeliveries.filter(
     (d) => d.bowler_id === match.live_bowler_id,
@@ -183,7 +191,6 @@ export function deriveMatchStats(
   };
 }
 
-// Add this to the bottom of utils/cricketMath.ts
 export function getPlayerMatchStats(playerId: string, deliveries: any[]) {
   // 1. Batting Stats
   const batDelivs = deliveries.filter((d: any) => d.striker_id === playerId);
@@ -326,7 +333,13 @@ export function generateTournamentLeaderboards(
     // 1. Batting Aggregation
     const batDelivs = deliveries.filter((d) => d.striker_id === player.id);
     const runs = batDelivs.reduce((sum, d) => sum + (d.runs_off_bat || 0), 0);
-    const balls = batDelivs.filter((d) => d.extras_type !== "wide").length;
+    
+    // 🚨 FIXED: Exclude wide, penalty, dead-ball from tournament batting stats
+    const balls = batDelivs.filter((d) => {
+      const type = d.extras_type?.toLowerCase() || "";
+      return !["wide", "wd", "penalty", "p", "dead-ball"].includes(type);
+    }).length;
+
     const fours = batDelivs.filter((d) => d.runs_off_bat === 4).length;
     const sixes = batDelivs.filter((d) => d.runs_off_bat === 6).length;
     const sr = balls > 0 ? ((runs / balls) * 100).toFixed(1) : "0.0";

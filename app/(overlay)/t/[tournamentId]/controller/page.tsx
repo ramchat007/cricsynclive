@@ -23,6 +23,7 @@ import {
   ClipboardList,
   MessageCircle,
   Play,
+  Activity,
 } from "lucide-react";
 import { BROADCAST_THEMES } from "@/lib/themes";
 import FeatureGate from "@/app/components/FeatureGate";
@@ -327,6 +328,7 @@ export default function MasterController({
       "MATCH_SUMMARY",
       "POINTS_TABLE",
       "LIVE_QUIZ",
+      "WIN_PREDICTOR", // ✅ Added to fullscreen mutual exclusion list
     ];
     let views = [...(config.activeViews || [])];
     if (views.includes(view)) views = views.filter((v) => v !== view);
@@ -551,6 +553,7 @@ export default function MasterController({
                     icon: ClipboardList,
                   },
                   { id: "LIVE_QUIZ", label: "Live Quiz", icon: MessageCircle },
+                  { id: "WIN_PREDICTOR", label: "Predictor", icon: Activity }, // ✅ ADDED PREDICTOR
                 ].map((overlay) => (
                   <button
                     key={overlay.id}
@@ -979,7 +982,7 @@ export default function MasterController({
                     quizData: { ...config.quizData, question: e.target.value },
                   })
                 }
-                className="w-full text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-lg mb-2 placeholder-[var(--text-muted)] truncate"
+                className="w-full text-[var(--foreground)] focus:border-[var(--accent)] outline-none transition-all rounded p-2 text-lg mb-2 placeholder-[var(--text-muted)] truncate bg-[var(--surface-2)] border border-[var(--border-1)]"
               />
 
               <div className="grid grid-cols-2 gap-2 mb-3">

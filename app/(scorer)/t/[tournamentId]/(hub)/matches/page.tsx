@@ -68,8 +68,31 @@ export default function MatchesPage({
   const [wizardIncludeThirdPlace, setWizardIncludeThirdPlace] = useState(false);
   const [wizardTeamsCount, setWizardTeamsCount] = useState(8);
 
+  // --- REAL-TIME AUTO SYNC ---
   useEffect(() => {
     checkAdminAndFetch();
+
+    // Listen for any updates (like undo, wickets, runs) to the matches table
+    const matchSyncSub = supabase
+      .channel(`live_matches_${tournamentId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "matches",
+          filter: `tournament_id=eq.${tournamentId}`,
+        },
+        () => {
+          // When the scoring engine updates the DB, silently refresh the UI list
+          checkAdminAndFetch();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(matchSyncSub);
+    };
   }, [tournamentId]);
 
   const checkAdminAndFetch = async () => {
@@ -492,17 +515,20 @@ export default function MatchesPage({
         <div className="flex bg-[var(--surface-2)] border border-[var(--border-1)] p-1 rounded-xl overflow-x-auto custom-scrollbar">
           <button
             onClick={() => setMatchView("scheduled")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "scheduled" ? "bg-[var(--surface-1)] text-[var(--foreground)] shadow-sm border border-[var(--border-1)]" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "scheduled" ? "bg-[var(--surface-1)] text-[var(--foreground)] shadow-sm border border-[var(--border-1)]" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+          >
             <CalendarClock size={14} /> Upcoming
           </button>
           <button
             onClick={() => setMatchView("live")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "live" ? "bg-red-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "live" ? "bg-red-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+          >
             <PlayCircle size={14} /> Live
           </button>
           <button
             onClick={() => setMatchView("completed")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "completed" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "completed" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+          >
             <CheckCircle2 size={14} /> Completed
           </button>
         </div>
@@ -510,7 +536,8 @@ export default function MatchesPage({
         {isAdmin && (
           <button
             onClick={() => setShowScheduler(!showScheduler)}
-            className="flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 text-xs font-bold px-5 py-3 rounded-xl transition-all shadow-md shrink-0">
+            className="flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 text-xs font-bold px-5 py-3 rounded-xl transition-all shadow-md shrink-0"
+          >
             {showScheduler ? (
               <>
                 <X size={16} /> Close Configurator
@@ -531,12 +558,14 @@ export default function MatchesPage({
             <div className="flex bg-[var(--surface-1)] p-1 rounded-xl border border-[var(--border-1)] shadow-sm">
               <button
                 onClick={() => setScheduleMode("single")}
-                className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${scheduleMode === "single" ? "bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
+                className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${scheduleMode === "single" ? "bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
                 Single Match
               </button>
               <button
                 onClick={() => setScheduleMode("auto")}
-                className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${scheduleMode === "auto" ? "bg-[var(--foreground)] text-[var(--background)] shadow-md" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}>
+                className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${scheduleMode === "auto" ? "bg-[var(--foreground)] text-[var(--background)] shadow-md" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
                 <Wand2 size={14} /> Auto Engine
               </button>
             </div>
@@ -545,7 +574,8 @@ export default function MatchesPage({
               <button
                 onClick={handleResetSchedule}
                 disabled={isSubmitting}
-                className="text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors">
+                className="text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors"
+              >
                 🗑 Reset Upcoming
               </button>
             </div>
@@ -559,7 +589,8 @@ export default function MatchesPage({
                 <select
                   value={teamAId}
                   onChange={(e) => setTeamAId(e.target.value)}
-                  className={inputClass}>
+                  className={inputClass}
+                >
                   <option value="">Select Team</option>
                   {teams.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -573,7 +604,8 @@ export default function MatchesPage({
                 <select
                   value={teamBId}
                   onChange={(e) => setTeamBId(e.target.value)}
-                  className={inputClass}>
+                  className={inputClass}
+                >
                   <option value="">Select Team</option>
                   {teams.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -636,7 +668,8 @@ export default function MatchesPage({
               <button
                 onClick={handleCreateSingleMatch}
                 disabled={isSubmitting}
-                className="w-full bg-[var(--accent)] hover:opacity-90 text-[var(--background)] font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg mt-5 md:mt-0">
+                className="w-full bg-[var(--accent)] hover:opacity-90 text-[var(--background)] font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg mt-5 md:mt-0"
+              >
                 Save Match
               </button>
             </div>
@@ -729,17 +762,20 @@ export default function MatchesPage({
                 <div className="flex gap-2 mb-6 bg-[var(--surface-2)] p-1 rounded-xl border border-[var(--border-1)]">
                   <button
                     onClick={() => setWizardMode("round_robin")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "round_robin" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}>
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "round_robin" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
+                  >
                     Round Robin + KO
                   </button>
                   <button
                     onClick={() => setWizardMode("groups_knockout")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "groups_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}>
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "groups_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
+                  >
                     Groups + KO
                   </button>
                   <button
                     onClick={() => setWizardMode("pure_knockout")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "pure_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}>
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "pure_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
+                  >
                     Pure Knockout
                   </button>
                 </div>
@@ -753,7 +789,8 @@ export default function MatchesPage({
                         onChange={(e) =>
                           setWizardRoundRobinAdvancing(parseInt(e.target.value))
                         }
-                        className={inputClass}>
+                        className={inputClass}
+                      >
                         <option value={2}>Top 2 (Direct to Final)</option>
                         <option value={4}>Top 4 (Semi-Finals)</option>
                         <option value={8}>Top 8 (Quarter-Finals)</option>
@@ -783,7 +820,8 @@ export default function MatchesPage({
                         onChange={(e) =>
                           setWizardAdvancing(parseInt(e.target.value))
                         }
-                        className={inputClass}>
+                        className={inputClass}
+                      >
                         <option value={1}>Top 1</option>
                         <option value={2}>Top 2</option>
                         <option value={3}>Top 3</option>
@@ -802,7 +840,8 @@ export default function MatchesPage({
                       />
                       <label
                         htmlFor="interleave"
-                        className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                        className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]"
+                      >
                         Interleave Matches
                       </label>
                     </div>
@@ -838,7 +877,8 @@ export default function MatchesPage({
                   />
                   <label
                     htmlFor="thirdPlace"
-                    className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)]">
+                    className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)]"
+                  >
                     Generate 3rd Place Playoff Match
                   </label>
                 </div>
@@ -859,7 +899,8 @@ export default function MatchesPage({
                             : teams.map((t) => t.id),
                         )
                       }
-                      className="text-[10px] font-bold text-[var(--accent)] uppercase hover:underline">
+                      className="text-[10px] font-bold text-[var(--accent)] uppercase hover:underline"
+                    >
                       {selectedTeamIds.length === teams.length
                         ? "Deselect All"
                         : "Select All"}
@@ -878,9 +919,11 @@ export default function MatchesPage({
                                 : [...prev, team.id],
                             )
                           }
-                          className={`p-3 rounded-xl border text-xs font-bold text-left flex items-center gap-3 transition-all ${isSelected ? "bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-3)]"}`}>
+                          className={`p-3 rounded-xl border text-xs font-bold text-left flex items-center gap-3 transition-all ${isSelected ? "bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-3)]"}`}
+                        >
                           <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border-1)]"}`}>
+                            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border-1)]"}`}
+                          >
                             {isSelected && (
                               <span className="text-[var(--background)] text-[10px]">
                                 ✓
@@ -898,7 +941,8 @@ export default function MatchesPage({
               <button
                 onClick={handleGenerateWizard}
                 disabled={isSubmitting}
-                className="w-full bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] font-black text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg disabled:opacity-50">
+                className="w-full bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] font-black text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg disabled:opacity-50"
+              >
                 {isSubmitting
                   ? "Generating Schedule..."
                   : "Run Generator Engine"}
@@ -929,13 +973,15 @@ export default function MatchesPage({
           filteredMatches.map((match) => (
             <div
               key={match.id}
-              className="bg-[var(--surface-1)] rounded-[2rem] p-1 flex flex-col md:flex-row items-center border border-[var(--border-1)] relative group transition-all hover:border-[var(--accent)]/50 hover:shadow-lg">
+              className="bg-[var(--surface-1)] rounded-[2rem] p-1 flex flex-col md:flex-row items-center border border-[var(--border-1)] relative group transition-all hover:border-[var(--accent)]/50 hover:shadow-lg"
+            >
               {/* THE MOBILE-READY DELETE BUTTON FIX */}
               {isAdmin && (
                 <div className="absolute top-4 right-4 md:-top-3 md:-right-3 flex md:hidden group-hover:flex gap-1 z-20">
                   <button
                     onClick={() => deleteMatch(match.id)}
-                    className="bg-red-500/10 text-red-500 p-2 md:p-2.5 rounded-xl shadow-sm border border-red-500/20 hover:bg-red-500 hover:text-[var(--background)] transition-colors">
+                    className="bg-red-500/10 text-red-500 p-2 md:p-2.5 rounded-xl shadow-sm border border-red-500/20 hover:bg-red-500 hover:text-[var(--background)] transition-colors"
+                  >
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -984,7 +1030,8 @@ export default function MatchesPage({
                         backgroundImage: match.team1?.logo_url
                           ? `url(${match.team1?.logo_url})`
                           : "none",
-                      }}>
+                      }}
+                    >
                       {!match.team1?.logo_url && "TBD"}
                     </div>
                     <div className="flex flex-col overflow-hidden">
@@ -1038,7 +1085,8 @@ export default function MatchesPage({
                         backgroundImage: match.team2?.logo_url
                           ? `url(${match.team2?.logo_url})`
                           : "none",
-                      }}>
+                      }}
+                    >
                       {!match.team2?.logo_url && "TBD"}
                     </div>
                   </div>
@@ -1050,7 +1098,8 @@ export default function MatchesPage({
                 {isAdmin ? (
                   <Link
                     href={`/t/${tournamentId}/m/${match.id}`}
-                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm">
+                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm"
+                  >
                     {match.status === "scheduled"
                       ? "Start Match"
                       : match.status === "live"
@@ -1060,7 +1109,8 @@ export default function MatchesPage({
                 ) : (
                   <Link
                     href={`/t/${tournamentId}/m/${match.id}`}
-                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm">
+                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm"
+                  >
                     View Scorecard
                   </Link>
                 )}
