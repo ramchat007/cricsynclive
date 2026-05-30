@@ -537,16 +537,30 @@ export default function UnifiedLiveMatchPage({
 
   const submitExtra = async () => {
     if (!pendingExtraType) return;
-    let totalExtraRuns = extraAdditionalRuns;
-    if (pendingExtraType === "wide" || pendingExtraType === "no-ball")
-      totalExtraRuns += 1;
+
+    let runsOffBat = 0;
+    let extraRuns = extraAdditionalRuns;
+
+    // CRITICAL FIX: Route the runs to the correct columns
+    if (pendingExtraType === "no-ball") {
+      runsOffBat = extraAdditionalRuns; // The runs off the bat go to the striker
+      extraRuns = 1; // The 1 penalty run goes to extras
+    } else if (pendingExtraType === "wide") {
+      runsOffBat = 0; // Wides cannot be hit with the bat
+      extraRuns = extraAdditionalRuns + 1; // Penalty + any byes run
+    } else {
+      // Byes / Leg Byes
+      runsOffBat = 0;
+      extraRuns = extraAdditionalRuns;
+    }
 
     const res = await engine.recordDelivery(
-      0,
+      runsOffBat,
       pendingExtraType,
-      totalExtraRuns,
+      extraRuns,
       false,
     );
+
     if (res?.isOverComplete) setTimeout(() => setShowBowlerModal(true), 500);
 
     setShowExtrasModal(false);
@@ -555,7 +569,17 @@ export default function UnifiedLiveMatchPage({
   };
 
   const submitWicket = async () => {
-    if (!newBatsmanId) return alert("Select new batsman");
+    // 1. Detect if this is the last available wicket
+    const availableBatsmen = stats?.battingSquad.filter(
+      (p) =>
+        p.id !== engine.match!.live_striker_id &&
+        p.id !== engine.match!.live_non_striker_id &&
+        !stats.dismissedPlayerIds.includes(p.id),
+    );
+    const isLastWicket = availableBatsmen?.length === 0;
+
+    // 2. Bypass new batsman validation if it's the last wicket
+    if (!isLastWicket && !newBatsmanId) return alert("Select new batsman");
     if ((wicketType === "caught" || wicketType === "run-out") && !fielderId)
       return alert("Select the fielder");
 
@@ -579,37 +603,51 @@ export default function UnifiedLiveMatchPage({
     );
 
     if (res?.success && engine.match) {
-      let nextStriker =
-        playerOutId === engine.match.live_striker_id
-          ? newBatsmanId
-          : engine.match.live_striker_id;
-      let nextNonStriker =
-        playerOutId === engine.match.live_non_striker_id
-          ? newBatsmanId
-          : engine.match.live_non_striker_id;
+      if (isLastWicket) {
+        // THE FIX: If All Out, remove the dismissed player from the pitch by setting them to null
+        const nextStriker =
+          playerOutId === engine.match.live_striker_id
+            ? null
+            : engine.match.live_striker_id;
+        const nextNonStriker =
+          playerOutId === engine.match.live_non_striker_id
+            ? null
+            : engine.match.live_non_striker_id;
+        await engine.updateLivePlayers(
+          nextStriker,
+          nextNonStriker,
+          engine.match.live_bowler_id,
+        );
+      } else {
+        // Normal logic for swapping in the new batsman
+        let nextStriker =
+          playerOutId === engine.match.live_striker_id
+            ? newBatsmanId
+            : engine.match.live_striker_id;
+        let nextNonStriker =
+          playerOutId === engine.match.live_non_striker_id
+            ? newBatsmanId
+            : engine.match.live_non_striker_id;
 
-      let swapStrike = false;
-      if (wicketType === "run-out" && (eRuns + runsOffBat) % 2 !== 0) {
-        swapStrike = true;
+        let swapStrike = false;
+        if (wicketType === "run-out" && (eRuns + runsOffBat) % 2 !== 0)
+          swapStrike = true;
+        if (res.isOverComplete) swapStrike = !swapStrike;
+
+        if (swapStrike) {
+          const temp = nextStriker;
+          nextStriker = nextNonStriker;
+          nextNonStriker = temp;
+        }
+
+        await engine.updateLivePlayers(
+          nextStriker,
+          nextNonStriker,
+          engine.match.live_bowler_id,
+        );
+        if (res?.isOverComplete)
+          setTimeout(() => setShowBowlerModal(true), 500);
       }
-
-      if (res.isOverComplete) {
-        swapStrike = !swapStrike;
-      }
-
-      if (swapStrike) {
-        const temp = nextStriker;
-        nextStriker = nextNonStriker;
-        nextNonStriker = temp;
-      }
-
-      await engine.updateLivePlayers(
-        nextStriker,
-        nextNonStriker,
-        engine.match.live_bowler_id,
-      );
-
-      if (res?.isOverComplete) setTimeout(() => setShowBowlerModal(true), 500);
     }
 
     setShowWicketModal(false);
@@ -764,13 +802,13 @@ export default function UnifiedLiveMatchPage({
                   onClick={() => setTossWinnerId(engine.match!.team1_id)}
                   className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
                 >
-                  {engine.match!.team1_name}
+                  {engine.match.team1?.name}
                 </button>
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team2_id)}
                   className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
                 >
-                  {engine.match!.team2_name}
+                  {engine.match.team2?.name}
                 </button>
               </div>
             </div>
@@ -1148,7 +1186,7 @@ export default function UnifiedLiveMatchPage({
 
               {/* Responsive Keypad wrapper (Fixed bottom sheet on mobile, static on desktop) */}
               <div
-                className={`order-1 lg:order-1 fixed bottom-0 left-0 right-0 z-[100] bg-[var(--surface-1)]/95 backdrop-blur-xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 transition-transform duration-300 ease-in-out ${
+                className={`order-1 lg:order-1 fixed bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/95 backdrop-blur-xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 transition-transform duration-300 ease-in-out ${
                   isScoringPanelOpen
                     ? "translate-y-0"
                     : "translate-y-[calc(100%-60px)] lg:translate-y-0"
@@ -1566,47 +1604,63 @@ export default function UnifiedLiveMatchPage({
                       </div>
                     </div>
                   )}
-                  <div>
-                    <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
-                      Incoming Batsman
-                    </label>
-                    <select
-                      value={newBatsmanId}
-                      onChange={(e) => setNewBatsmanId(e.target.value)}
-                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                    >
-                      <option className="bg-[var(--surface-1)]" value="">
-                        Select New Batsman...
-                      </option>
-                      {stats.battingSquad
-                        .filter(
-                          (p) =>
-                            p.id !== engine.match!.live_striker_id &&
-                            p.id !== engine.match!.live_non_striker_id &&
-                            !stats.dismissedPlayerIds.includes(p.id),
-                        )
-                        .map((p) => (
-                          <option
-                            className="bg-[var(--surface-1)]"
-                            key={p.id}
-                            value={p.id}
-                          >
-                            {p.full_name}
-                          </option>
-                        ))}
-                    </select>
-                    <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
-                      <button
-                        onClick={() => {
-                          setQuickAddRole("batter");
-                          setShowQuickAddPlayer(true);
-                        }}
-                        className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                      >
-                        + Add Extra Player to Squad
-                      </button>
+                  {stats.battingSquad.filter(
+                    (p) =>
+                      p.id !== engine.match!.live_striker_id &&
+                      p.id !== engine.match!.live_non_striker_id &&
+                      !stats.dismissedPlayerIds.includes(p.id),
+                  ).length === 0 ? (
+                    <div className="mt-6 bg-red-500/10 p-5 rounded-2xl border border-red-500/30 text-center animate-in zoom-in-95">
+                      <p className="text-red-500 font-black uppercase tracking-widest text-lg">
+                        ⚠️ All Out!
+                      </p>
+                      <p className="text-[var(--text-muted)] text-xs font-bold mt-1">
+                        This is the final wicket. No batsmen remaining.
+                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
+                        Incoming Batsman
+                      </label>
+                      <select
+                        value={newBatsmanId}
+                        onChange={(e) => setNewBatsmanId(e.target.value)}
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                      >
+                        <option className="bg-[var(--surface-1)]" value="">
+                          Select New Batsman...
+                        </option>
+                        {stats.battingSquad
+                          .filter(
+                            (p) =>
+                              p.id !== engine.match!.live_striker_id &&
+                              p.id !== engine.match!.live_non_striker_id &&
+                              !stats.dismissedPlayerIds.includes(p.id),
+                          )
+                          .map((p) => (
+                            <option
+                              className="bg-[var(--surface-1)]"
+                              key={p.id}
+                              value={p.id}
+                            >
+                              {p.full_name}
+                            </option>
+                          ))}
+                      </select>
+                      <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
+                        <button
+                          onClick={() => {
+                            setQuickAddRole("batter");
+                            setShowQuickAddPlayer(true);
+                          }}
+                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
+                        >
+                          + Add Extra Player to Squad
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <hr className="border-[var(--border-1)]" />
                   <div className="bg-orange-500/10 p-5 rounded-2xl border border-orange-500/30">
                     <div className="flex items-center gap-3 mb-2">
@@ -1614,7 +1668,14 @@ export default function UnifiedLiveMatchPage({
                         type="checkbox"
                         id="wicketExtra"
                         checked={wicketHasExtra}
-                        onChange={(e) => setWicketHasExtra(e.target.checked)}
+                        onChange={(e) => {
+                          setWicketHasExtra(e.target.checked);
+                          if (e.target.checked) {
+                            setForceLegalBall(true);
+                          } else {
+                            setForceLegalBall(false);
+                          }
+                        }}
                         className="w-5 h-5 accent-orange-500 rounded"
                       />
                       <label
@@ -1688,10 +1749,27 @@ export default function UnifiedLiveMatchPage({
                     </button>
                     <button
                       onClick={submitWicket}
-                      disabled={!newBatsmanId || engine.isSubmittingBall}
+                      disabled={
+                        engine.isSubmittingBall ||
+                        // Only disable if it is NOT the last wicket AND no batsman is selected
+                        (stats.battingSquad.filter(
+                          (p) =>
+                            p.id !== engine.match!.live_striker_id &&
+                            p.id !== engine.match!.live_non_striker_id &&
+                            !stats.dismissedPlayerIds.includes(p.id),
+                        ).length > 0 &&
+                          !newBatsmanId)
+                      }
                       className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20"
                     >
-                      Confirm OUT
+                      {stats.battingSquad.filter(
+                        (p) =>
+                          p.id !== engine.match!.live_striker_id &&
+                          p.id !== engine.match!.live_non_striker_id &&
+                          !stats.dismissedPlayerIds.includes(p.id),
+                      ).length === 0
+                        ? "Confirm All Out"
+                        : "Confirm OUT"}
                     </button>
                   </div>
                 </div>
@@ -2052,7 +2130,7 @@ export default function UnifiedLiveMatchPage({
                           key={type.id}
                           onClick={() => {
                             setMoreActionType(type.id as any);
-                            setCustomRuns(type.id.includes("penalty") ? 5 : 5);
+                            setCustomRuns(type.id.includes("penalty") ? 1 : 1);
                           }}
                           className={`py-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === type.id ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)]"}`}
                         >

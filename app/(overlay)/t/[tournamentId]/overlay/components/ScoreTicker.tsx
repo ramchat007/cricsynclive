@@ -623,13 +623,13 @@ export default function ScoreTicker({
         {/* TOP TABS */}
         <div className="absolute -top-[32px] left-0 w-full flex justify-between items-end px-24 z-10">
           <div className="w-[220px] text-center">
-            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[14px] font-black uppercase text-white pb-1">
+            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[15px] font-black uppercase text-white pb-1">
               {battingName}
             </span>
           </div>
 
           <div
-            className="flex items-center gap-2 border-t border-l border-r rounded-t-xl px-16 py-1 shadow-lg text-[12px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]"
+            className="flex items-center gap-2 border-t border-l border-r rounded-t-xl px-16 py-1 shadow-lg text-[15px] font-black uppercase text-white pb-1 min-w-0 max-w-[780px]"
             style={{
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
@@ -651,7 +651,7 @@ export default function ScoreTicker({
               style={{ color: selectedTheme.tokens.accent }}
             >
               {calculatedTarget
-                ? `${battingName} ${equationStr}`
+                ? `${battingName} - ${equationStr}`
                 : tossWinnerName
                   ? `${tossWinnerName} won toss, elected to ${activeMatch.toss_decision || "bat"}`
                   : "Live Action"}
@@ -659,7 +659,7 @@ export default function ScoreTicker({
           </div>
 
           <div className="w-[220px] text-center">
-            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[14px] font-black uppercase text-white pb-1">
+            <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[15px] font-black uppercase text-white pb-1">
               {bowlingName}
             </span>
           </div>
@@ -724,7 +724,7 @@ export default function ScoreTicker({
                 </span>
               </div>
 
-              <div className="text-[12px] text-amber-400 font-bold uppercase mt-1 drop-shadow-sm px-8">
+              <div className="text-[15px] text-amber-400 font-bold mt-1 drop-shadow-sm px-8">
                 {scoreContextText}
               </div>
             </div>
@@ -766,7 +766,7 @@ export default function ScoreTicker({
                 <>
                   <div className="flex w-full justify-between items-center px-6 mb-2">
                     <div className="text-center">
-                      <div className="text-[10px] font-black text-white/40 uppercase mb-1">
+                      <div className="text-[15px] font-black text-white/40 uppercase mb-1">
                         Target
                       </div>
                       <div className="text-lg font-black text-white">
@@ -775,14 +775,14 @@ export default function ScoreTicker({
                     </div>
                     <div className="h-6 w-px bg-white/20"></div>
                     <div className="text-center">
-                      <div className="text-[10px] font-black text-white/40 uppercase mb-1">
+                      <div className="text-[13px] font-black text-white/40 uppercase mb-1">
                         CRR
                       </div>
                       <div className="text-lg font-black text-white">{crr}</div>
                     </div>
                     <div className="h-6 w-px bg-white/20"></div>
                     <div className="text-center">
-                      <div className="text-[10px] font-black text-amber-500/60 uppercase mb-1">
+                      <div className="text-[15px] font-black text-amber-500/60 uppercase mb-1">
                         RRR
                       </div>
                       <div className="text-lg font-black text-amber-400">
@@ -790,14 +790,14 @@ export default function ScoreTicker({
                       </div>
                     </div>
                   </div>
-                  <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-1 rounded text-amber-400 font-black text-[11px] uppercase drop-shadow-md tracking-wider">
+                  {/* <div className="bg-amber-500/10 border border-amber-500/30 px-5 py-1 rounded text-amber-400 font-black text-[15px] uppercase drop-shadow-md tracking-wider">
                     {equationStr}
-                  </div>
+                  </div> */}
                 </>
               ) : (
                 <div className="flex w-full justify-center gap-12 items-center">
                   <div className="text-center">
-                    <div className="text-xs font-black text-white/40 uppercase mb-1">
+                    <div className="text-[15px] font-black text-white/40 uppercase mb-1">
                       CRR
                     </div>
                     <div className="text-2xl font-black text-white drop-shadow-md">
@@ -806,7 +806,7 @@ export default function ScoreTicker({
                   </div>
                   <div className="h-10 w-px bg-white/20"></div>
                   <div className="text-center">
-                    <div className="text-xs font-black text-cyan-500/60 uppercase mb-1">
+                    <div className="text-[15px] font-black text-cyan-500/60 uppercase mb-1">
                       Projected
                     </div>
                     <div className="text-2xl font-black text-cyan-400 drop-shadow-md">

@@ -16,6 +16,29 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
   useEffect(() => {
     if (!matchId || matchId === "null") return;
     fetchMatchData();
+    const syncChannel = supabase
+      .channel(`live_match_${matchId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deliveries", filter: `match_id=eq.${matchId}` },
+        () => {
+          console.log("Auto-Sync: Delivery detected from database.");
+          fetchMatchData(); 
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "matches", filter: `id=eq.${matchId}` },
+        () => {
+          console.log("Auto-Sync: Match state updated.");
+          fetchMatchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(syncChannel);
+    };
   }, [matchId]);
 
   const fetchMatchData = async () => {
