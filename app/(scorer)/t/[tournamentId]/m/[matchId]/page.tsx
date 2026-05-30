@@ -2312,7 +2312,7 @@ export default function UnifiedLiveMatchPage({
                 >
                   Cancel
                 </button>
-                <button
+                {/* <button
                   onClick={async () => {
                     await engine.updateMatchAwards(
                       momId,
@@ -2324,6 +2324,33 @@ export default function UnifiedLiveMatchPage({
                   className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors"
                 >
                   Save Awards
+                </button> */}
+                <button
+                  onClick={async () => {
+                    // 1. Calculate the exact winner and text margin based on your current stats
+                    const isChasingTeamWin =
+                      stats.currentScore >= stats.targetScore!;
+                    const winnerId = isChasingTeamWin
+                      ? stats.battingTeam?.id
+                      : stats.bowlingTeam?.id;
+                    const resultMargin = isChasingTeamWin
+                      ? `${stats.battingTeam?.name} won by ${stats.battingSquad.length - 1 - stats.currentWickets} wickets`
+                      : `${stats.bowlingTeam?.name} won by ${stats.targetScore! - 1 - stats.currentScore} runs`;
+
+                    // 2. Call your PERFECT finishMatch function instead of updateMatchAwards
+                    await engine.finishMatch(
+                      winnerId,
+                      resultMargin,
+                      momId,
+                      bestBatsmanId,
+                      bestBowlerId,
+                    );
+
+                    setShowPostMatchModal(false);
+                  }}
+                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors"
+                >
+                  Finish Match & Save
                 </button>
               </div>
             </div>
