@@ -24,6 +24,7 @@ import {
   Menu,
   LogOut,
   Activity,
+  ImageIcon,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 
@@ -197,6 +198,12 @@ export default function TournamentLayout({
       name: "Leaderboards",
       href: `/t/${tournamentId}/leaderboards`,
       icon: Medal,
+      requiredTier: "free",
+    },
+    {
+      name: "Media",
+      href: `/t/${tournamentId}/media`,
+      icon: ImageIcon,
       requiredTier: "free",
     },
   ];
