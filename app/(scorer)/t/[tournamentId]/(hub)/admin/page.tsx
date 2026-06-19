@@ -34,6 +34,44 @@ export default function AdminManagementPage({
 
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
+  // --- SEARCH STATES ---
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearchingUser, setIsSearchingUser] = useState(false);
+
+  // --- LIVE SEARCH EFFECT ---
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      // Only search if they've typed at least 3 characters
+      if (inviteEmail.length >= 3) {
+        setIsSearchingUser(true);
+
+        // Search profiles by email or name
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, email, full_name")
+          .ilike("email", `%${inviteEmail}%`) // Partial match search
+          .limit(4);
+
+        if (data && !error) {
+          // Filter out users who are ALREADY members of this tournament
+          const existingEmails = members.map((m) =>
+            m.profiles?.email?.toLowerCase(),
+          );
+          const filteredResults = data.filter(
+            (u) => !existingEmails.includes(u.email?.toLowerCase()),
+          );
+          setSearchResults(filteredResults);
+        }
+        setIsSearchingUser(false);
+      } else {
+        // Clear results if input is too short
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [inviteEmail, members]);
+
   useEffect(() => {
     fetchData();
   }, [tournamentId]);
@@ -46,14 +84,12 @@ export default function AdminManagementPage({
     } = await supabase.auth.getUser();
 
     if (user) {
-      // 1. Check Global Profile First (SUPER ADMIN OVERRIDE)
       const { data: globalProfile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .single();
 
-      // 2. Check Tournament Specific Role
       const { data: myRoleData } = await supabase
         .from("tournament_roles")
         .select("role")
@@ -61,7 +97,6 @@ export default function AdminManagementPage({
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // Give priority to Global Super Admin
       if (globalProfile?.role === "super_admin") {
         setCurrentUserRole("super_admin");
       } else if (myRoleData) {
@@ -100,63 +135,117 @@ export default function AdminManagementPage({
 
     const targetEmail = inviteEmail.trim().toLowerCase();
 
-    // VALIDATION 1: Check if the user is already an active member of this tournament
     const isAlreadyMember = members.some(
       (m) => m.profiles?.email?.toLowerCase() === targetEmail,
     );
 
     if (isAlreadyMember) {
       setMessage({
-        text: "This user is already an active member of this tournament.",
+        text: "User is already in this tournament.",
         type: "error",
       });
       setIsSubmitting(false);
       return;
     }
 
-    // VALIDATION 2: Check if a pending invitation already exists for this email
-    const { data: existingInvite, error: checkError } = await supabase
-      .from("tournament_invitations")
-      .select("token")
-      .eq("tournament_id", tournamentId)
+    const { data: existingUser, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
       .eq("email", targetEmail)
       .maybeSingle();
 
-    if (existingInvite) {
-      // If it exists, don't create a new one. Just show the existing link!
-      setMessage({
-        text: "An invitation already exists for this email. Here is the active link:",
-        type: "success",
-      });
-      setActiveInviteLink(
-        `${window.location.origin}/invite/${existingInvite.token}`,
-      );
-      setIsSubmitting(false);
-      return;
-    }
+    if (existingUser) {
+      const { data: newRole, error: roleError } = await supabase
+        .from("tournament_roles")
+        .insert({
+          tournament_id: tournamentId,
+          user_id: existingUser.id,
+          role: inviteRole,
+        })
+        .select(
+          `
+          id, role, user_id, 
+          profiles (full_name, email)
+        `,
+        )
+        .single();
 
-    // If it passes both validations, generate a fresh invite
-    const { data, error } = await supabase
-      .from("tournament_invitations")
-      .insert({
-        tournament_id: tournamentId,
-        email: targetEmail,
-        role: inviteRole,
-      })
-      .select()
-      .single();
+      if (!roleError && newRole) {
+        setMembers((prev) => [...prev, newRole]);
+        setMessage({
+          text: `${existingUser.full_name || targetEmail} added directly!`,
+          type: "success",
+        });
+        setInviteEmail("");
 
-    if (!error && data) {
-      const link = `${window.location.origin}/invite/${data.token}`;
-      setActiveInviteLink(link);
-      setMessage({ text: "New invitation created!", type: "success" });
-      setInviteEmail("");
+        fetch("/api/send-notification", {
+          method: "POST",
+          body: JSON.stringify({
+            email: targetEmail,
+            role: inviteRole,
+            tournamentId,
+            type: "direct_add",
+          }),
+        });
+      } else {
+        setMessage({ text: "Failed to assign role.", type: "error" });
+      }
     } else {
-      setMessage({
-        text: error?.message || "Error creating invite",
-        type: "error",
-      });
+      const { data: existingInvite } = await supabase
+        .from("tournament_invitations")
+        .select("token")
+        .eq("tournament_id", tournamentId)
+        .eq("email", targetEmail)
+        .maybeSingle();
+
+      if (existingInvite) {
+        setMessage({
+          text: "Invite already exists. Share this link:",
+          type: "success",
+        });
+        setActiveInviteLink(
+          `${window.location.origin}/invite/${existingInvite.token}`,
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("tournament_invitations")
+        .insert({
+          tournament_id: tournamentId,
+          email: targetEmail,
+          role: inviteRole,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const link = `${window.location.origin}/invite/${data.token}`;
+        setActiveInviteLink(link);
+        setMessage({
+          text: "User not found. Invite link created!",
+          type: "success",
+        });
+        setInviteEmail("");
+
+        fetch("/api/send-notification", {
+          method: "POST",
+          body: JSON.stringify({
+            email: targetEmail,
+            role: inviteRole,
+            link,
+            type: "new_invite",
+          }),
+        });
+      } else {
+        setMessage({
+          text: error?.message || "Error creating invite",
+          type: "error",
+        });
+      }
     }
+
     setIsSubmitting(false);
   };
 
@@ -194,16 +283,13 @@ export default function AdminManagementPage({
     currentUserRole || "",
   );
 
-  // --- GROUP THE MEMBERS FOR BETTER DISPLAY ---
   const owners = members.filter((m) => m.role === "owner");
   const admins = members.filter(
     (m) => m.role === "admin" || m.role === "super_admin",
   );
   const scorers = members.filter((m) => m.role === "scorer");
 
-  // Helper function to render a user card
   const renderUserCard = (member: any) => {
-    // Smart name fallback: Full Name -> Email Prefix -> "Unknown User"
     const displayName =
       member.profiles?.full_name ||
       member.profiles?.email?.split("@")[0] ||
@@ -233,6 +319,7 @@ export default function AdminManagementPage({
               <Edit3 size={20} />
             )}
           </div>
+
           <div className="min-w-0">
             <h4 className="font-black text-[var(--foreground)] text-sm sm:text-base capitalize truncate">
               {displayName}
@@ -308,9 +395,16 @@ export default function AdminManagementPage({
                   </p>
 
                   <form onSubmit={handleAddMember} className="space-y-5">
-                    <div>
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
-                        User Email
+                    {/* CORRECT PLACEMENT OF SEARCH DROPDOWN */}
+                    <div className="relative">
+                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex items-center justify-between">
+                        <span>User Email</span>
+                        {isSearchingUser && (
+                          <Activity
+                            size={12}
+                            className="animate-spin text-[var(--accent)]"
+                          />
+                        )}
                       </label>
                       <div className="relative">
                         <Mail
@@ -324,8 +418,41 @@ export default function AdminManagementPage({
                           onChange={(e) => setInviteEmail(e.target.value)}
                           placeholder="scorer@example.com"
                           className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl py-3 pl-11 pr-4 text-sm font-bold outline-none text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 transition-all"
+                          autoComplete="off"
                         />
                       </div>
+
+                      {searchResults.length > 0 && (
+                        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                          <p className="text-[9px] font-black uppercase text-[var(--text-muted)] px-4 py-2 border-b border-[var(--border-1)] bg-[var(--surface-2)]/50">
+                            Existing Users Found
+                          </p>
+                          {searchResults.map((user) => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => {
+                                setInviteEmail(user.email);
+                                setSearchResults([]);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 flex items-center gap-3 transition-colors"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center font-bold text-xs shrink-0">
+                                {user.full_name?.charAt(0).toUpperCase() ||
+                                  user.email?.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-[var(--foreground)] truncate">
+                                  {user.full_name || "Unknown User"}
+                                </p>
+                                <p className="text-xs text-[var(--text-muted)] truncate">
+                                  {user.email}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -343,8 +470,6 @@ export default function AdminManagementPage({
                         >
                           Scorer (Can only score matches)
                         </option>
-
-                        {/* Let anyone who has access to this form invite an Admin */}
                         <option value="admin" className="bg-[var(--surface-1)]">
                           Admin (Can edit settings & invite others)
                         </option>
@@ -416,7 +541,6 @@ export default function AdminManagementPage({
 
           {/* RIGHT: STRUCTURED MEMBERS LIST */}
           <div className="md:col-span-7 space-y-8">
-            {/* OWNER SECTION */}
             {owners.length > 0 && (
               <section>
                 <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -426,7 +550,6 @@ export default function AdminManagementPage({
               </section>
             )}
 
-            {/* ADMINS SECTION */}
             {admins.length > 0 && (
               <section>
                 <h3 className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -436,7 +559,6 @@ export default function AdminManagementPage({
               </section>
             )}
 
-            {/* SCORERS SECTION */}
             {scorers.length > 0 && (
               <section>
                 <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
