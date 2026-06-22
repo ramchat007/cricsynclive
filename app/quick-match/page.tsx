@@ -59,6 +59,7 @@ export default function QuickMatchStarter() {
       const { data: newMatch, error: matchError } = await supabase
         .from("matches")
         .insert({
+          tournament_id: "00000000-0000-0000-0000-000000000000",
           team1_id: team1.id,
           team2_id: team2.id,
           overs_count: overs,
