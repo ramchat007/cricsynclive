@@ -15,6 +15,7 @@ import {
   Share2,
   Check,
   Search,
+  Trash2,
 } from "lucide-react";
 
 // SUB-COMPONENTS
@@ -125,37 +126,41 @@ export default function UnifiedLiveMatchPage({
           setIsAuthorized(false);
           return;
         }
+        if (tournamentId === "QUICK_MATCH") {
+          setIsAuthorized(true); // <--- Force God Mode ON! 
+          return; 
+        }
+        if (tournamentId === "QUICK_MATCH") {
+          // Wait for the match data to load before making a decision
+          if (engine.match) {
+            // Give Admin UI ONLY if the logged-in user created this match
+            setIsAuthorized(session.user.id === engine.match.created_by);
+          }
+          return; 
+        }
 
-        const { data: tData } = await supabase
-          .from("tournaments")
-          .select("owner_id")
-          .eq("id", tournamentId)
-          .single();
-
-        const { data: pData } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
+        const { data: tData } = await supabase.from("tournaments").select("owner_id").eq("id", tournamentId).single();
+        const { data: pData } = await supabase.from("profiles").select("role").eq("id", session.user.id).single();
 
         const isSuperAdmin = pData?.role === "super_admin";
         const isTournamentOwner = tData?.owner_id === session.user.id;
-        const isAssignedScorer =
-          pData?.role === "scorer" || pData?.role === "admin";
+        const isAssignedScorer = pData?.role === "scorer" || pData?.role === "admin";
 
-        if (isSuperAdmin || isTournamentOwner || isAssignedScorer) {
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-        }
+        setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
+
+        // if (isSuperAdmin || isTournamentOwner || isAssignedScorer) {
+        //   setIsAuthorized(true);
+        // } else {
+        //   setIsAuthorized(false);
+        // }
       } catch (error) {
-        console.error("Auth check failed:", error);
+        // console.error("Auth check failed:", error);
         setIsAuthorized(false);
       }
     };
 
     checkAuthorization();
-  }, [tournamentId]);
+  }, [tournamentId, engine.match]);
 
   const stats = deriveMatchStats(
     engine.match,
@@ -203,6 +208,17 @@ export default function UnifiedLiveMatchPage({
       }
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const handleDeleteMatch = async () => {
+    if (window.confirm("Are you sure you want to permanently delete this match?")) {
+      const { error } = await supabase.from("matches").delete().eq("id", matchId);
+      if (!error) {
+        window.location.href = "/"; // Go back to home
+      } else {
+        alert("Failed to delete match: " + error.message);
+      }
     }
   };
 
@@ -399,7 +415,7 @@ export default function UnifiedLiveMatchPage({
   }, [engine.match, stats?.targetScore]);
 
   useEffect(() => {
-    if (!tournamentId) return;
+    if (!tournamentId || tournamentId === "QUICK_MATCH") return;
 
     const playerSyncSub = supabase
       .channel(`player_sync_${tournamentId}`)
@@ -747,10 +763,10 @@ export default function UnifiedLiveMatchPage({
     return (
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 md:p-8 font-sans transition-colors duration-300">
         <Link
-          href={`/t/${tournamentId}/matches`}
+          href={tournamentId === "QUICK_MATCH" ? "/" : `/t/${tournamentId}/matches`}
           className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max"
         >
-          <ArrowLeft size={16} /> Back to Schedule
+          <ArrowLeft size={16} /> {tournamentId === "QUICK_MATCH" ? "Exit Match" : "Back to Schedule"}
         </Link>
         <div className="max-w-2xl mx-auto bg-[var(--surface-1)] rounded-[2rem] p-8 shadow-sm border border-[var(--border-1)] animate-in zoom-in-95">
           <div className="flex flex-col items-center justify-center mb-10 text-center">
@@ -1084,6 +1100,14 @@ export default function UnifiedLiveMatchPage({
         </div>
 
         <div className="flex items-center gap-3">
+          {isAuthorized && tournamentId === "QUICK_MATCH" && (
+            <button
+              onClick={handleDeleteMatch}
+              className="flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          )}
           <button
             onClick={handleShareMatch}
             className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm"

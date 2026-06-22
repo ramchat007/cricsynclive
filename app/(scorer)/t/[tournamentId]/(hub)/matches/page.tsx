@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Trash2,
@@ -26,6 +27,10 @@ export default function MatchesPage({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
+
+  if (tournamentId === "QUICK_MATCH") {
+    redirect("/"); 
+  }
 
   // Core State
   const [matches, setMatches] = useState<any[]>([]);
