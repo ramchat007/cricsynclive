@@ -136,12 +136,22 @@ export default function TournamentLayout({
   };
 
   const deleteTournament = async () => {
-    if (window.confirm("Delete this tournament forever?")) {
+    if (
+      window.confirm(
+        "Are you 100% sure? This will delete all matches, teams, and players in this tournament forever.",
+      )
+    ) {
       const { error } = await supabase
         .from("tournaments")
         .delete()
         .eq("id", tournamentId);
-      if (!error) router.push("/");
+
+      if (error) {
+        alert("Failed to delete: " + error.message);
+        console.error("Supabase Delete Error:", error);
+      } else {
+        router.push("/");
+      }
     }
   };
 
