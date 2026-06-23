@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef, use } from "react";
-import { fetchAICommentary } from "../../../../../utils/gemini";
+// import { fetchAICommentary } from "../../../../../utils/gemini";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -86,7 +86,7 @@ export default function UnifiedLiveMatchPage({
 
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [moreActionType, setMoreActionType] = useState<
-    "penalty-add" | "penalty-minus" | "bye" | "leg-bye" | "dead-ball" | "custom"
+    "penalty-add" | "penalty-minus" | "dead-ball" | "end-innings"
   >("penalty-add");
   const [customRuns, setCustomRuns] = useState(5);
 
@@ -112,7 +112,6 @@ export default function UnifiedLiveMatchPage({
   const [isSharing, setIsSharing] = useState(false);
 
   const [completedRuns, setCompletedRuns] = useState(0);
-  const [isScoringPanelOpen, setIsScoringPanelOpen] = useState(true);
 
   // 🔒 --- AUTHENTICATION CHECKER --- 🔒
   useEffect(() => {
@@ -127,8 +126,8 @@ export default function UnifiedLiveMatchPage({
           return;
         }
         if (tournamentId === "QUICK_MATCH") {
-          setIsAuthorized(true); // <--- Force God Mode ON! 
-          return; 
+          setIsAuthorized(true); // <--- Force God Mode ON!
+          return;
         }
         if (tournamentId === "QUICK_MATCH") {
           // Wait for the match data to load before making a decision
@@ -136,15 +135,24 @@ export default function UnifiedLiveMatchPage({
             // Give Admin UI ONLY if the logged-in user created this match
             setIsAuthorized(session.user.id === engine.match.created_by);
           }
-          return; 
+          return;
         }
 
-        const { data: tData } = await supabase.from("tournaments").select("owner_id").eq("id", tournamentId).single();
-        const { data: pData } = await supabase.from("profiles").select("role").eq("id", session.user.id).single();
+        const { data: tData } = await supabase
+          .from("tournaments")
+          .select("owner_id")
+          .eq("id", tournamentId)
+          .single();
+        const { data: pData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
 
         const isSuperAdmin = pData?.role === "super_admin";
         const isTournamentOwner = tData?.owner_id === session.user.id;
-        const isAssignedScorer = pData?.role === "scorer" || pData?.role === "admin";
+        const isAssignedScorer =
+          pData?.role === "scorer" || pData?.role === "admin";
 
         setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
 
@@ -174,46 +182,86 @@ export default function UnifiedLiveMatchPage({
   // 🔗 --- SHARE SCORECARD LOGIC --- 🔗
   const handleShareMatch = async () => {
     setIsSharing(true);
+    const { team1_name, team2_name } = engine.match || {};
+    const shareText = `🔥 LIVE Cricket on CricSync!\n\n${team1_name} vs ${team2_name}\n\n👉 To view the Live Scoreboard click here!`;
     const url = window.location.href;
+
     const shareData = {
-      title: `Live Match: ${engine.match?.team1_name} vs ${engine.match?.team2_name}`,
-      text: `Check out the live scores on CricSync!`,
+      title: "CricSync Live Score",
+      text: shareText,
       url: url,
     };
 
     try {
-      // 1. Try Native OS Share (WhatsApp, Instagram, Messages, etc.)
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
-      }
-      // 2. If Native Share isn't supported, force Clipboard Copy
-      else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-        alert("Link copied to clipboard!");
-      }
-      // 3. Last ditch effort if APIs are blocked
-      else {
-        const textArea = document.createElement("textarea");
-        textArea.value = url;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        alert("Link copied!");
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${url}`);
+        alert("Match link & details copied!");
       }
     } catch (err: any) {
-      // Ignore AbortError (this happens when the user clicks "Cancel" on the share sheet)
-      if (err.name !== "AbortError") {
-        console.error("Share failed:", err);
-      }
+      if (err.name !== "AbortError") console.error("Share failed:", err);
     } finally {
       setIsSharing(false);
     }
   };
 
+  const [customTarget1stInnings, setCustomTarget1stInnings] =
+    useState<number>(0);
+
+  const handleSmartEndInnings = async () => {
+    if (!window.confirm("Are you sure you want to end this innings?")) return;
+
+    if (engine.match!.current_innings === 1) {
+      // 1. Let the engine officially transition the match to Innings 2
+      await engine.startSecondInnings();
+
+      // 2. Fetch fresh data so the UI reflects the change immediately
+      await engine.fetchMatchData();
+    } else {
+      // If it's the 2nd innings, end the match completely
+      setShowPostMatchModal(true);
+    }
+
+    setShowMoreModal(false);
+  };
+  const handleUndoEndInnings = async () => {
+    if (
+      !window.confirm(
+        "Undo End Innings? This will set the match back to 1st Innings.",
+      )
+    )
+      return;
+
+    try {
+      const { error } = await supabase
+        .from("matches")
+        .update({
+          current_innings: 1, // ONLY update this!
+        })
+        .eq("id", engine.match?.id || matchId);
+
+      if (error) {
+        console.error("Supabase Update Error Details:", error.message);
+        alert(`Failed to Undo: ${error.message}`);
+        return;
+      }
+
+      await engine.fetchMatchData();
+      setShowMoreModal(false);
+      alert("Successfully reverted to 1st Innings!");
+    } catch (err) {
+      console.error("Unexpected Undo Error:", err);
+    }
+  };
   const handleDeleteMatch = async () => {
-    if (window.confirm("Are you sure you want to permanently delete this match?")) {
-      const { error } = await supabase.from("matches").delete().eq("id", matchId);
+    if (
+      window.confirm("Are you sure you want to permanently delete this match?")
+    ) {
+      const { error } = await supabase
+        .from("matches")
+        .delete()
+        .eq("id", matchId);
       if (!error) {
         window.location.href = "/"; // Go back to home
       } else {
@@ -333,19 +381,52 @@ export default function UnifiedLiveMatchPage({
 
         const isMajorEvent =
           latestBall.is_wicket || Number(latestBall.runs_off_bat) >= 4;
-        let finalCommentaryText = "";
 
-        if (isMajorEvent) {
-          const ballContext = {
-            bowler: bowlerName,
-            batter: batterName,
-            runs: latestBall.runs_off_bat,
-            isWicket: latestBall.is_wicket,
-            extras: latestBall.extras_type,
-            matchSituation: `Innings ${engine.match!.current_innings}`,
-          };
-          finalCommentaryText = (await fetchAICommentary(ballContext)) || "";
-        }
+        const getSlangCommentary = (latestBall: any) => {
+          // If dictionary doesn't exist at all, return a basic string
+          if (!COMMENTARY_SLANGS) return "Good delivery.";
+
+          const runs = Number(latestBall.runs_off_bat || 0);
+          const isWicket = latestBall.is_wicket;
+
+          try {
+            if (isWicket && COMMENTARY_SLANGS.wickets?.length > 0) {
+              return COMMENTARY_SLANGS.wickets[
+                Math.floor(Math.random() * COMMENTARY_SLANGS.wickets.length)
+              ];
+            } else if (runs === 6 && COMMENTARY_SLANGS.sixes?.length > 0) {
+              return COMMENTARY_SLANGS.sixes[
+                Math.floor(Math.random() * COMMENTARY_SLANGS.sixes.length)
+              ];
+            } else if (runs === 4 && COMMENTARY_SLANGS.fours?.length > 0) {
+              return COMMENTARY_SLANGS.fours[
+                Math.floor(Math.random() * COMMENTARY_SLANGS.fours.length)
+              ];
+            } else if (COMMENTARY_SLANGS.general?.length > 0) {
+              return COMMENTARY_SLANGS.general[
+                Math.floor(Math.random() * COMMENTARY_SLANGS.general.length)
+              ];
+            }
+          } catch (e) {
+            console.warn("Commentary fallback triggered", e);
+          }
+
+          // Ultimate fallback if nothing matches or arrays are empty
+          return `Ball bowled. ${runs} runs scored.`;
+        };
+        let finalCommentaryText = getSlangCommentary(latestBall);
+
+        // if (isMajorEvent) {
+        //   const ballContext = {
+        //     bowler: bowlerName,
+        //     batter: batterName,
+        //     runs: latestBall.runs_off_bat,
+        //     isWicket: latestBall.is_wicket,
+        //     extras: latestBall.extras_type,
+        //     matchSituation: `Innings ${engine.match!.current_innings}`,
+        //   };
+        //   finalCommentaryText = (await fetchAICommentary(ballContext)) || "";
+        // }
 
         if (!finalCommentaryText) {
           finalCommentaryText = getFallbackCommentary(
@@ -763,10 +844,13 @@ export default function UnifiedLiveMatchPage({
     return (
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 md:p-8 font-sans transition-colors duration-300">
         <Link
-          href={tournamentId === "QUICK_MATCH" ? "/" : `/t/${tournamentId}/matches`}
+          href={
+            tournamentId === "QUICK_MATCH" ? "/" : `/t/${tournamentId}/matches`
+          }
           className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max"
         >
-          <ArrowLeft size={16} /> {tournamentId === "QUICK_MATCH" ? "Exit Match" : "Back to Schedule"}
+          <ArrowLeft size={16} />{" "}
+          {tournamentId === "QUICK_MATCH" ? "Exit Match" : "Back to Schedule"}
         </Link>
         <div className="max-w-2xl mx-auto bg-[var(--surface-1)] rounded-[2rem] p-8 shadow-sm border border-[var(--border-1)] animate-in zoom-in-95">
           <div className="flex flex-col items-center justify-center mb-10 text-center">
@@ -1071,7 +1155,7 @@ export default function UnifiedLiveMatchPage({
     <div
       className={`min-h-screen bg-[var(--background)] text-[var(--foreground)] p-2 md:p-6 font-sans relative overflow-hidden lg:overflow-visible transition-colors duration-300 ${
         /* Only apply heavy bottom padding on Mobile when Keypad is active */
-        isAuthorized && !isCompleted ? "pb-[320px] lg:pb-10" : "pb-10"
+        isAuthorized && !isCompleted ? "pb-[200px] lg:pb-10" : "pb-10"
       }`}
     >
       {/* HEADER & TOP NAVIGATION */}
@@ -1209,143 +1293,105 @@ export default function UnifiedLiveMatchPage({
               </div>
 
               {/* Responsive Keypad wrapper (Fixed bottom sheet on mobile, static on desktop) */}
-              <div
-                className={`order-1 lg:order-1 fixed bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/95 backdrop-blur-xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.1)] lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 transition-transform duration-300 ease-in-out ${
-                  isScoringPanelOpen
-                    ? "translate-y-0"
-                    : "translate-y-[calc(100%-60px)] lg:translate-y-0"
-                }`}
-              >
-                {/* Mobile Bottom-Sheet Drag Handle (Always visible when closed) */}
-                <div
-                  className="w-full h-[60px] flex flex-col items-center justify-center lg:hidden cursor-pointer border-b border-[var(--border-1)] bg-[var(--surface-1)] rounded-t-[2rem]"
-                  onClick={() => setIsScoringPanelOpen(!isScoringPanelOpen)}
-                >
-                  <div className="w-12 h-1.5 bg-[var(--border-1)] rounded-full mb-1"></div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1">
-                    {isScoringPanelOpen ? (
-                      <>
-                        <ChevronDown size={14} /> Swipe down to hide
-                      </>
-                    ) : (
-                      <>
-                        <ChevronUp size={14} /> Swipe up to score
-                      </>
-                    )}
-                  </span>
-                </div>
+              {/* --- FIXED COMPACT KEYPAD DOCK (Mobile) / STATIC (Desktop) --- */}
+              <div className="order-1 lg:order-1 fixed bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/95 backdrop-blur-xl border-t border-[var(--border-1)] shadow-[0_-10px_30px_rgba(0,0,0,0.1)] pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-3 px-3 lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:pb-0">
+                <div className="lg:bg-[var(--surface-1)] lg:p-6 lg:rounded-[2.5rem] lg:border lg:border-[var(--border-1)] lg:shadow-sm">
+                  <h3 className="hidden lg:block text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 ml-1">
+                    Record Next Ball
+                  </h3>
 
-                {/* The actual scrolling content of the keypad */}
-                <div className="px-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] max-h-[85vh] overflow-y-auto custom-scrollbar lg:p-0 lg:max-h-none lg:overflow-visible">
-                  <div className="lg:bg-[var(--surface-1)] lg:p-6 lg:rounded-[2.5rem] lg:border lg:border-[var(--border-1)] lg:shadow-sm mt-3 lg:mt-0">
-                    <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 ml-1">
-                      Record Next Ball
-                    </h3>
-
-                    <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
-                      {[0, 1, 2, 3].map((runs) => (
-                        <button
-                          key={runs}
-                          onClick={() => handleRecordBall(runs)}
-                          disabled={engine.isSubmittingBall}
-                          className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
-                        >
-                          {runs}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-6">
+                  {/* Top Row: 0, 1, 2, 3 */}
+                  <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-1.5 sm:mb-3">
+                    {[0, 1, 2, 3].map((runs) => (
                       <button
-                        onClick={() => handleRecordBall(4)}
+                        key={runs}
+                        onClick={() => handleRecordBall(runs)}
                         disabled={engine.isSubmittingBall}
-                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all active:scale-95"
+                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95"
                       >
-                        4
+                        {runs}
                       </button>
-                      <button
-                        onClick={() => handleRecordBall(6)}
-                        disabled={engine.isSubmittingBall}
-                        className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-2xl sm:text-2xl py-3 rounded-2xl transition-all shadow-lg active:scale-95"
-                      >
-                        6
-                      </button>
-                      <button
-                        onClick={() => setShowMoreModal(true)}
-                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-3 rounded-2xl transition-all active:scale-95"
-                      >
-                        ... More
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Are you sure you want to end this innings manually?",
-                            )
-                          ) {
-                            engine.match!.current_innings === 1
-                              ? engine.startSecondInnings()
-                              : setShowPostMatchModal(true);
-                          }
-                        }}
-                        className="items-center justify-center p-4 bg-orange-500/10 text-orange-600 rounded-2xl border border-orange-500/30 hover:bg-orange-500/20 transition-colors"
-                      >
-                        <Square size={20} className="mb-1 mx-auto" />
-                        <span className="text-[10px] font-black uppercase tracking-widest block text-center mt-1">
-                          End Innings
-                        </span>
-                      </button>
-                    </div>
+                    ))}
+                  </div>
 
-                    <hr className="border-[var(--border-1)] mb-3 sm:mb-6" />
+                  {/* Middle Row: 4, 6, More Actions (Spans 2 columns) */}
+                  <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-2 sm:mb-6">
+                    <button
+                      onClick={() => handleRecordBall(4)}
+                      disabled={engine.isSubmittingBall}
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95"
+                    >
+                      4
+                    </button>
+                    <button
+                      onClick={() => handleRecordBall(6)}
+                      disabled={engine.isSubmittingBall}
+                      className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all shadow-md active:scale-95"
+                    >
+                      6
+                    </button>
 
-                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
-                      <button
-                        onClick={() => {
-                          setPendingExtraType("wide");
-                          setShowExtrasModal(true);
-                        }}
-                        className="bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
-                      >
-                        WD
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPendingExtraType("no-ball");
-                          setShowExtrasModal(true);
-                        }}
-                        className="bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
-                      >
-                        NB
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPendingExtraType("leg-bye");
-                          setShowExtrasModal(true);
-                        }}
-                        className="bg-[var(--surface-2)] hover:bg-[var(--border-1)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
-                      >
-                        LB
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPendingExtraType("bye");
-                          setShowExtrasModal(true);
-                        }}
-                        className="bg-[var(--surface-2)] hover:bg-[var(--border-1)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl active:scale-95 transition-all"
-                      >
-                        B
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPlayerOutId(engine.match!.live_striker_id);
-                          setShowWicketModal(true);
-                        }}
-                        className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-4 sm:py-5 rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all"
-                      >
-                        OUT
-                      </button>
-                    </div>
+                    {/* 🔥 WIDE "MORE ACTIONS" BUTTON 🔥 */}
+                    <button
+                      onClick={() => {
+                        setMoreActionType("penalty-add"); // Default reset
+                        setShowMoreModal(true);
+                      }}
+                      className="col-span-2 bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-2 sm:py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      ⚙️ More Actions
+                    </button>
+                  </div>
+
+                  <hr className="border-[var(--border-1)] hidden sm:block mb-3" />
+
+                  {/* Bottom Row: WD, NB, LB, B, OUT */}
+                  <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
+                    <button
+                      onClick={() => {
+                        setPendingExtraType("wide");
+                        setShowExtrasModal(true);
+                      }}
+                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
+                    >
+                      WD
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPendingExtraType("no-ball");
+                        setShowExtrasModal(true);
+                      }}
+                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
+                    >
+                      NB
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPendingExtraType("leg-bye");
+                        setShowExtrasModal(true);
+                      }}
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
+                    >
+                      LB
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPendingExtraType("bye");
+                        setShowExtrasModal(true);
+                      }}
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
+                    >
+                      B
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPlayerOutId(engine.match!.live_striker_id);
+                        setShowWicketModal(true);
+                      }}
+                      className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl shadow-md active:scale-95 transition-all"
+                    >
+                      OUT
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1381,6 +1427,7 @@ export default function UnifiedLiveMatchPage({
               deliveries={engine.deliveries}
               team1Players={engine.team1Players}
               team2Players={engine.team2Players}
+              currentOverDeliveries={stats.currentOverDeliveries}
             />
 
             {!isCompleted && (
@@ -1415,7 +1462,7 @@ export default function UnifiedLiveMatchPage({
           </div>
 
           {/* 2. TABS & CONTENT */}
-          <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] shadow-sm overflow-hidden mb-6">
+          <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] shadow-sm overflow-hidden">
             <div className="flex overflow-x-auto border-b border-[var(--border-1)] p-2 gap-2 hide-scrollbar">
               {tabs.map((tab) => (
                 <button
@@ -1904,67 +1951,93 @@ export default function UnifiedLiveMatchPage({
             </div>
           )}
 
+          {/* --- EDIT LIVE PLAYERS MODAL --- */}
           {showEditPlayersModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-[var(--foreground)] text-center mb-8">
                   Edit Live Players
                 </h2>
-                <div className="space-y-6 mb-8">
-                  <div>
-                    <label className="text-xs font-black text-[var(--text-muted)] uppercase mb-2 block">
-                      Striker
-                    </label>
-                    <select
-                      value={engine.match!.live_striker_id || ""}
-                      onChange={(e) =>
-                        engine.setMatch({
-                          ...engine.match!,
-                          live_striker_id: e.target.value,
-                        })
-                      }
-                      className="w-full p-4 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--foreground)] rounded-2xl font-bold text-base outline-none focus:border-[var(--accent)]"
-                    >
-                      {stats.battingSquad.map((p) => (
-                        <option
-                          className="bg-[var(--surface-1)]"
-                          key={p.id}
-                          value={p.id}
+
+                <div className="space-y-8 mb-8">
+                  {/* --- BATSMEN SECTION --- */}
+                  <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+                    <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
+                      Current Batsmen
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-2 block">
+                          Striker
+                        </label>
+                        <select
+                          value={engine.match!.live_striker_id || ""}
+                          onChange={(e) =>
+                            engine.setMatch({
+                              ...engine.match!,
+                              live_striker_id: e.target.value,
+                            })
+                          }
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
                         >
-                          {p.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-black text-[var(--text-muted)] uppercase mb-2 block">
-                      Non-Striker
-                    </label>
-                    <select
-                      value={engine.match!.live_non_striker_id || ""}
-                      onChange={(e) =>
-                        engine.setMatch({
-                          ...engine.match!,
-                          live_non_striker_id: e.target.value,
-                        })
-                      }
-                      className="w-full p-4 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--foreground)] rounded-2xl font-bold text-base outline-none focus:border-[var(--accent)]"
-                    >
-                      {stats.battingSquad.map((p) => (
-                        <option
-                          className="bg-[var(--surface-1)]"
-                          key={p.id}
-                          value={p.id}
+                          <option value="">Select...</option>
+                          {stats.battingSquad.map((p) => (
+                            <option
+                              className="bg-[var(--surface-1)]"
+                              key={p.id}
+                              value={p.id}
+                            >
+                              {p.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-2 block">
+                          Non-Striker
+                        </label>
+                        <select
+                          value={engine.match!.live_non_striker_id || ""}
+                          onChange={(e) =>
+                            engine.setMatch({
+                              ...engine.match!,
+                              live_non_striker_id: e.target.value,
+                            })
+                          }
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
                         >
-                          {p.full_name}
-                        </option>
-                      ))}
-                    </select>
+                          <option value="">Select...</option>
+                          {stats.battingSquad.map((p) => (
+                            <option
+                              className="bg-[var(--surface-1)]"
+                              key={p.id}
+                              value={p.id}
+                            >
+                              {p.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* NEW: QUICK ADD BATTER BUTTON */}
+                      <button
+                        onClick={() => {
+                          setQuickAddRole("batter");
+                          setShowQuickAddPlayer(true);
+                        }}
+                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2"
+                      >
+                        <UserPlus size={14} /> Add Extra Batter
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-black text-[var(--text-muted)] uppercase mb-2 block">
-                      Bowler
-                    </label>
+
+                  {/* --- BOWLER SECTION --- */}
+                  <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
+                    <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
+                      Current Bowler
+                    </h3>
                     <select
                       value={engine.match!.live_bowler_id || ""}
                       onChange={(e) =>
@@ -1973,8 +2046,9 @@ export default function UnifiedLiveMatchPage({
                           live_bowler_id: e.target.value,
                         })
                       }
-                      className="w-full p-4 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--foreground)] rounded-2xl font-bold text-base outline-none focus:border-[var(--accent)]"
+                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4"
                     >
+                      <option value="">Select...</option>
                       {stats.bowlingSquad.map((p) => (
                         <option
                           className="bg-[var(--surface-1)]"
@@ -1985,15 +2059,27 @@ export default function UnifiedLiveMatchPage({
                         </option>
                       ))}
                     </select>
+
+                    {/* NEW: QUICK ADD BOWLER BUTTON */}
+                    <button
+                      onClick={() => {
+                        setQuickAddRole("bowler");
+                        setShowQuickAddPlayer(true);
+                      }}
+                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2"
+                    >
+                      <UserPlus size={14} /> Add Extra Bowler
+                    </button>
                   </div>
                 </div>
+
                 <div className="flex gap-4">
                   <button
                     onClick={() => {
                       setShowEditPlayersModal(false);
                       engine.fetchMatchData();
                     }}
-                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-lg transition-colors"
+                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-base transition-colors"
                   >
                     Cancel
                   </button>
@@ -2006,7 +2092,7 @@ export default function UnifiedLiveMatchPage({
                       );
                       setShowEditPlayersModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-lg transition-opacity"
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-base transition-opacity shadow-lg"
                   >
                     Save Changes
                   </button>
@@ -2132,6 +2218,7 @@ export default function UnifiedLiveMatchPage({
             </div>
           )}
 
+          {/* --- MORE ACTIONS MODAL --- */}
           {showMoreModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[80] flex items-center justify-center p-4">
               <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
@@ -2143,30 +2230,65 @@ export default function UnifiedLiveMatchPage({
                     <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 block">
                       Action Type
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { id: "custom", label: "Custom Runs" },
-                        { id: "dead-ball", label: "Dead Ball" },
-                        { id: "penalty-add", label: "Penalty (+)" },
-                        { id: "penalty-minus", label: "Penalty (-)" },
-                      ].map((type) => (
+
+                    {/* 🔥 NEW COMPACT GRID LAYOUT 🔥 */}
+                    <div className="space-y-3">
+                      {/* Row 1: Penalty (+ and -) Side by Side */}
+                      <div className="grid grid-cols-2 gap-3">
                         <button
-                          key={type.id}
                           onClick={() => {
-                            setMoreActionType(type.id as any);
-                            setCustomRuns(type.id.includes("penalty") ? 1 : 1);
+                            setMoreActionType("penalty-add");
+                            setCustomRuns(1);
                           }}
-                          className={`py-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === type.id ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)]" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)]"}`}
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
                         >
-                          {type.label}
+                          Penalty (+)
                         </button>
-                      ))}
+                        <button
+                          onClick={() => {
+                            setMoreActionType("penalty-minus");
+                            setCustomRuns(1);
+                          }}
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
+                          Penalty (-)
+                        </button>
+                      </div>
+
+                      {/* Row 2: Dead Ball & End Innings */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setMoreActionType("dead-ball")}
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
+                          Dead Ball
+                        </button>
+                        <button
+                          onClick={() => setMoreActionType("end-innings")}
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
+                          End Innings ⏹️
+                        </button>
+                        {engine.match?.current_innings === 2 && (
+                          <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
+                            <button
+                              onClick={handleUndoEndInnings}
+                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm"
+                            >
+                              ⚠️ Revert to 1st Innings
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  {moreActionType !== "dead-ball" && (
+
+                  {/* 1. PENALTY RUNS INPUT UI (Only shows when penalty is selected) */}
+                  {(moreActionType === "penalty-add" ||
+                    moreActionType === "penalty-minus") && (
                     <div className="animate-in fade-in slide-in-from-top-2">
                       <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 block text-center">
-                        Number of Runs
+                        Penalty Runs
                       </label>
                       <div className="flex items-center justify-center gap-4">
                         <button
@@ -2196,7 +2318,32 @@ export default function UnifiedLiveMatchPage({
                       </div>
                     </div>
                   )}
+
+                  {/* 2. END INNINGS UI */}
+                  {moreActionType === "end-innings" && (
+                    <div className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-2xl animate-in fade-in slide-in-from-top-2 text-center">
+                      <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest mb-2">
+                        {engine.match!.current_innings === 1
+                          ? "Start 2nd Innings"
+                          : "End Match"}
+                      </h3>
+
+                      {engine.match!.current_innings === 1 ? (
+                        <p className="text-[10px] text-[var(--text-muted)] font-bold">
+                          The target will be automatically calculated based on
+                          the 1st innings score plus any penalty runs.
+                        </p>
+                      ) : (
+                        <p className="text-[10px] sm:text-xs text-[var(--text-muted)] font-bold">
+                          This will finalize the match and take you to the
+                          awards screen.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* MODAL FOOTER BUTTONS */}
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowMoreModal(false)}
@@ -2205,11 +2352,17 @@ export default function UnifiedLiveMatchPage({
                     Cancel
                   </button>
                   <button
-                    onClick={submitMoreAction}
+                    onClick={
+                      moreActionType === "end-innings"
+                        ? handleSmartEndInnings
+                        : submitMoreAction
+                    }
                     disabled={engine.isSubmittingBall}
-                    className="flex-[2] bg-[var(--foreground)] text-[var(--background)] font-black uppercase py-5 rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 text-lg"
+                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-2xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}
                   >
-                    Submit Action
+                    {moreActionType === "end-innings"
+                      ? "Confirm End"
+                      : "Submit Action"}
                   </button>
                 </div>
               </div>

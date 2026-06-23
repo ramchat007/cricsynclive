@@ -22,7 +22,7 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
         "postgres_changes",
         { event: "*", schema: "public", table: "deliveries", filter: `match_id=eq.${matchId}` },
         () => {
-          console.log("Auto-Sync: Delivery detected from database.");
+          // console.log("Auto-Sync: Delivery detected from database.");
           fetchMatchData(); 
         }
       )
@@ -30,7 +30,7 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "matches", filter: `id=eq.${matchId}` },
         () => {
-          console.log("Auto-Sync: Match state updated.");
+          // console.log("Auto-Sync: Match state updated.");
           fetchMatchData();
         }
       )
