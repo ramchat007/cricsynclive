@@ -641,6 +641,31 @@ export default function TournamentLayout({
                       <Copy size={18} />
                     </button>
                   </div>
+                  {tournament?.is_auction_enabled && (
+                    <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 flex justify-between items-center">
+                      <div>
+                        <p
+                          className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}
+                        >
+                          Auction OBS Overlay
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-1">
+                          Browser Source (1920x1080)
+                        </p>
+                      </div>
+                      <button
+                        disabled={!isBroadcastTier}
+                        onClick={() =>
+                          copyLink(
+                            `${window.location.origin}/t/${tournamentId}/overlay/auction`,
+                          )
+                        }
+                        className="p-3 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl hover:text-[var(--accent)] transition-colors disabled:cursor-not-allowed disabled:hover:text-inherit"
+                      >
+                        <Copy size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

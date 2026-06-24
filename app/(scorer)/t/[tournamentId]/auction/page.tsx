@@ -8,7 +8,6 @@ import {
   XCircle,
   Filter,
   Zap,
-  ChevronRight,
   Shuffle,
   AlertCircle,
 } from "lucide-react";
@@ -26,6 +25,11 @@ export default function AuctionConsole({
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // 📋 Roster Summary Modal State
+  const [rosterTab, setRosterTab] = useState<
+    "sold" | "unsold" | "pending" | null
+  >(null);
 
   // Data State
   const [teams, setTeams] = useState<any[]>([]);
@@ -51,11 +55,8 @@ export default function AuctionConsole({
   // ==========================================
   const channelRef = useRef<any>(null);
   const stateRef = useRef({ activePlayer, currentBid, highestBidder });
-
-  // 🚀 NEW: Tracks if we've loaded the backup so we don't accidentally overwrite it
   const isRestored = useRef(false);
 
-  // Keep a ref updated so the Admin can respond to new spectators with fresh data
   useEffect(() => {
     stateRef.current = { activePlayer, currentBid, highestBidder };
   }, [activePlayer, currentBid, highestBidder]);
@@ -63,9 +64,10 @@ export default function AuctionConsole({
   useEffect(() => {
     const channel = supabase.channel(`auction_${tournamentId}`);
     channelRef.current = channel;
-
+    
     channel
-      .on("broadcast", { event: "state_sync" }, ({ payload }) => {
+    .on("broadcast", { event: "state_sync" }, ({ payload }) => {
+        console.log("PAYLOAD RECEIVED IN OVERLAY:", payload);
         if (!isAdmin) {
           setActivePlayer(payload.activePlayer);
           setCurrentBid(payload.currentBid);
@@ -95,7 +97,7 @@ export default function AuctionConsole({
     };
   }, [isAdmin, tournamentId]);
 
-  // 1. 🚀 LOAD ADMIN'S BACKUP FIRST
+  // LOAD ADMIN'S BACKUP FIRST
   useEffect(() => {
     if (isAdmin && !isRestored.current) {
       const savedState = localStorage.getItem(`auction_podium_${tournamentId}`);
@@ -109,13 +111,12 @@ export default function AuctionConsole({
           console.error("Error loading auction state", e);
         }
       }
-      isRestored.current = true; // Mark as successfully restored
+      isRestored.current = true;
     }
   }, [isAdmin, tournamentId]);
 
-  // 2. 🚀 SAVE STATE (Only runs AFTER restore is complete)
+  // SAVE STATE
   useEffect(() => {
-    // We only broadcast and save if `isRestored` is true
     if (isAdmin && isRestored.current) {
       if (channelRef.current) {
         channelRef.current.send({
@@ -135,28 +136,10 @@ export default function AuctionConsole({
           }),
         );
       } else {
-        // Only clear storage if the activePlayer was actually cleared by the admin
         localStorage.removeItem(`auction_podium_${tournamentId}`);
       }
     }
   }, [activePlayer, currentBid, highestBidder, isAdmin, tournamentId]);
-  // ==========================================
-
-  // Load Admin's local backup on mount
-  useEffect(() => {
-    const savedState = localStorage.getItem(`auction_podium_${tournamentId}`);
-    if (savedState && isAdmin) {
-      try {
-        const parsed = JSON.parse(savedState);
-        setActivePlayer(parsed.player);
-        setCurrentBid(parsed.bid);
-        setHighestBidder(parsed.bidder);
-      } catch (e) {
-        console.error("Error loading auction state", e);
-      }
-    }
-  }, [tournamentId, isAdmin]);
-  // ==========================================
 
   useEffect(() => {
     checkAccessAndFetch();
@@ -166,11 +149,13 @@ export default function AuctionConsole({
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
     const { data: tourneyData } = await supabase
       .from("tournaments")
       .select("*")
       .eq("id", tournamentId)
       .single();
+
     if (tourneyData) setConfig(tourneyData);
 
     if (session) {
@@ -179,6 +164,7 @@ export default function AuctionConsole({
         .select("role")
         .eq("id", session.user.id)
         .single();
+
       if (
         tourneyData?.owner_id === session.user.id ||
         profile?.role === "super_admin"
@@ -220,7 +206,7 @@ export default function AuctionConsole({
       channelRef.current.send({ type: "broadcast", event: "global_refresh" });
   };
 
-  // --- LOGIC: Bid Slab Calculation ---
+  // Slab math
   const currentIncrement = useMemo(() => {
     if (!config?.bid_slabs || config.bid_slabs.length === 0)
       return config?.bid_increment || 500;
@@ -230,7 +216,6 @@ export default function AuctionConsole({
     return activeSlab ? activeSlab.inc : config.bid_increment || 1000;
   }, [currentBid, config]);
 
-  // --- LOGIC: Filter Pending Players for the Sidebar & Draw ---
   const pendingPlayers = useMemo(() => {
     let pool = players.filter(
       (p) => p.auction_status === "pending" || !p.auction_status,
@@ -242,7 +227,6 @@ export default function AuctionConsole({
     return pool;
   }, [players, selectedSlotId]);
 
-  // --- FEATURE: RANDOM DRAW & AUTO-UNSOLD ---
   const drawRandomPlayer = async () => {
     if (!isAdmin) return;
 
@@ -271,7 +255,6 @@ export default function AuctionConsole({
     setHighestBidder(null);
   };
 
-  // --- BIDDING ACTIONS ---
   const placeBid = (team: any) => {
     if (!isAdmin || !activePlayer) return;
 
@@ -334,7 +317,6 @@ export default function AuctionConsole({
     setIsProcessing(false);
   };
 
-  // --- FEATURE: BEAUTIFUL CUSTOM DIRECT BUY MODAL ---
   const openDirectBuyModal = (team: any) => {
     setDirectBuyModal({ isOpen: true, team });
     setManualPrice(currentBid);
@@ -370,6 +352,7 @@ export default function AuctionConsole({
         .from("teams")
         .update({ purse_balance: team.purse_balance - finalPrice })
         .eq("id", team.id);
+        
       await supabase.from("auction_bids").insert({
         tournament_id: tournamentId,
         player_id: activePlayer.id,
@@ -377,10 +360,31 @@ export default function AuctionConsole({
         amount: finalPrice,
       });
 
+      if (channelRef.current) {
+        console.log("SENDING DIRECT BUY");
+
+        const result = await channelRef.current.send({
+          type: "broadcast",
+          event: "state_sync",
+          payload: {
+            activePlayer: null,
+            currentBid: finalPrice,
+            highestBidder: team,
+            isDirectBuy: true,
+          },
+        });
+
+        console.log("DIRECT BUY RESULT", result);
+      }
+
+      // 1. Update internal state
       setDirectBuyModal({ isOpen: false, team: null });
       setActivePlayer(null);
       setHighestBidder(null);
+      
+      // 2. Fetch fresh data
       await fetchAuctionData();
+      
       triggerGlobalRefresh();
     }
     setIsProcessing(false);
@@ -400,145 +404,125 @@ export default function AuctionConsole({
       featureKey="auctions_enabled"
       featureName="Player Auctions"
     >
-      <div className="h-[calc(100dvh-65px)] md:h-[calc(100vh-65px)] overflow-hidden bg-[var(--background)] text-[var(--foreground)] font-sans flex flex-col transition-colors duration-300 relative">
-        {/* HEADER */}
-        <div className="bg-[var(--glass-bg)] border-b border-[var(--border-1)] p-4 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur-md z-20 transition-colors shrink-0">
+      <div className="h-[calc(100dvh-65px)] md:h-[calc(100vh-65px)] overflow-hidden bg-[var(--background)] text-[var(--foreground)] font-sans flex flex-col relative select-none">
+        {/* 1. TOP CONTROL BAR */}
+        <div className="bg-[var(--glass-bg)] border-b border-[var(--border-1)] p-4 flex justify-between items-center gap-4 backdrop-blur-md z-20 shrink-0">
           <div className="flex items-center gap-3">
-            <Gavel className="text-[var(--accent)] hidden md:block" size={24} />
-            <h1 className="text-lg md:text-xl font-black uppercase tracking-widest text-[var(--foreground)]">
-              Live Auction Console
+            <Gavel className="text-[var(--accent)] hidden sm:block" size={26} />
+            <h1 className="text-xl md:text-2xl font-black uppercase tracking-widest">
+              Live Auction Arena
             </h1>
             {!isAdmin && (
-              <span className="bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ml-2">
-                Spectator View
+              <span className="bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ml-2">
+                Spectator
               </span>
             )}
           </div>
-          <div className="flex flex-wrap justify-center items-center gap-3 md:gap-6 w-full md:w-auto">
+
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* 📋 ROSTER MODAL TRIGGER */}
+            <button
+              onClick={() => setRosterTab("sold")}
+              className="bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--foreground)] border border-[var(--border-1)] px-4 py-2 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all active:scale-95"
+            >
+              📋 Roster Summary
+            </button>
+
             {isAdmin && config?.allow_direct_buy && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full shrink-0">
+              <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
                 <Zap size={14} className="text-amber-500" />
-                <span className="text-[10px] font-black text-amber-500 uppercase">
-                  Direct Buy Active
+                <span className="text-xs font-black text-amber-500 uppercase">
+                  Direct Buy On
                 </span>
               </div>
             )}
             {isAdmin && (
               <Link
                 href={`/t/${tournamentId}/auction/admin`}
-                className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors shrink-0"
+                className="text-xs md:text-sm font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors"
               >
                 Admin
               </Link>
             )}
             <Link
               href={`/t/${tournamentId}`}
-              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest transition-colors shrink-0"
+              className="text-xs md:text-sm font-bold text-red-400 hover:text-red-300 uppercase tracking-widest transition-colors ml-2"
             >
               Exit
             </Link>
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          {/* LEFT COLUMN: Player Preview Pool */}
-          <div className="w-full md:w-80 bg-[var(--surface-1)] border-b md:border-b-0 md:border-r border-[var(--border-1)] flex flex-col md:h-full max-h-[25vh] md:max-h-none overflow-hidden transition-colors shrink-0">
-            <div className="p-3 md:p-4 border-b border-[var(--border-1)] bg-[var(--surface-2)] shrink-0">
-              <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h2 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                  Upcoming ({pendingPlayers.length})
-                </h2>
-                <Filter size={14} className="text-[var(--text-muted)]" />
-              </div>
-              {isAdmin ? (
-                <select
-                  value={selectedSlotId}
-                  onChange={(e) => setSelectedSlotId(e.target.value)}
-                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] text-xs font-bold p-2 md:p-2.5 rounded-xl outline-none focus:border-[var(--accent)]"
-                >
-                  <option value="all">All Rounds</option>
-                  <option value="unassigned">Unassigned Players</option>
-                  {slots.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="text-xs font-bold text-[var(--text-muted)] py-1 md:py-2">
-                  Filtering managed by Auctioneer
-                </div>
-              )}
+        {/* 2. UPPER TIER: LEFT QUEUE + CENTER PODIUM */}
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden border-b border-[var(--border-1)]">
+          {/* LEFT: UPCOMING POOL */}
+          <div className="w-full md:w-80 lg:w-96 bg-[var(--surface-1)] border-b md:border-b-0 md:border-r border-[var(--border-1)] flex flex-col h-[22vh] md:h-full shrink-0">
+            <div className="p-3 bg-[var(--surface-2)] border-b border-[var(--border-1)] flex items-center justify-between shrink-0">
+              <span className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
+                Up Next ({pendingPlayers.length})
+              </span>
+              <Filter size={14} className="text-[var(--text-muted)]" />
             </div>
-
-            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 custom-scrollbar opacity-70 pointer-events-none">
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-2 custom-scrollbar">
               {pendingPlayers.map((p) => (
                 <div
                   key={p.id}
-                  className={`bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-2 md:p-3 flex items-center gap-3 transition-all ${activePlayer?.id === p.id ? "ring-2 ring-[var(--accent)] opacity-100 shadow-md" : "grayscale"}`}
+                  className={`p-2 rounded-xl border flex items-center gap-2.5 transition-all ${activePlayer?.id === p.id ? "bg-[var(--surface-2)] border-[var(--accent)] ring-1 ring-[var(--accent)] shadow-md" : "bg-[var(--surface-1)] border-[var(--border-1)] opacity-60"}`}
                 >
                   <div
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-[var(--surface-1)] bg-cover bg-center shrink-0 border border-[var(--border-1)] flex items-center justify-center font-black text-xs text-[var(--text-muted)]"
+                    className="w-9 h-9 rounded-lg bg-cover bg-center bg-[var(--surface-2)] shrink-0 border"
                     style={{
                       backgroundImage: p.photo_url
                         ? `url(${p.photo_url})`
                         : "none",
                     }}
                   >
-                    {!p.photo_url && p.full_name?.charAt(0)}
+                    {!p.photo_url && (
+                      <span className="flex items-center justify-center h-full font-black text-xs">
+                        {p.full_name?.charAt(0)}
+                      </span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-xs md:text-sm truncate text-[var(--foreground)]">
+                    <p className="font-black text-xs md:text-sm truncate">
                       {p.full_name}
                     </p>
-                    <p className="text-[8px] md:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                    <p className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest">
                       {p.player_role}
                     </p>
                   </div>
                 </div>
               ))}
-              {pendingPlayers.length === 0 && (
-                <div className="text-center text-[var(--text-muted)] text-xs md:text-sm font-bold pt-4 md:pt-10">
-                  Queue is empty.
-                </div>
-              )}
             </div>
           </div>
 
-          {/* CENTER COLUMN: The Hammer Podium */}
-          <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden md:border-r border-[var(--border-1)] min-h-[40vh] md:min-h-0">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--surface-1),_transparent)] opacity-60 z-0"></div>
-
+          {/* CENTER: THE PODIUM */}
+          {/* 🔥 FIX 2: Added overflow-y-auto so IF a screen is microscopic, the inside scrolls, not the page */}
+          <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-8 relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--surface-1),_transparent)]">
             {!activePlayer ? (
-              <div className="text-center opacity-70 flex flex-col items-center z-10 w-full px-4">
+              <div className="text-center max-w-md my-auto py-4">
                 <Users
-                  size={80}
-                  className="mb-4 md:mb-6 opacity-20 text-[var(--foreground)] md:w-[100px] md:h-[100px]"
+                  size={60}
+                  className="mx-auto mb-3 text-[var(--text-muted)] opacity-30"
                 />
-                <h2 className="text-xl md:text-3xl font-black uppercase tracking-widest text-[var(--foreground)] mb-6 md:mb-8">
-                  Podium Ready
+                <h2 className="text-xl lg:text-3xl font-black uppercase tracking-widest text-[var(--text-muted)] mb-5">
+                  Podium Vacant
                 </h2>
-
-                {isAdmin ? (
+                {isAdmin && (
                   <button
                     onClick={drawRandomPlayer}
                     disabled={pendingPlayers.length === 0 || isProcessing}
-                    className="w-full max-w-sm bg-[var(--accent)] text-[var(--background)] px-6 py-4 md:px-10 md:py-5 rounded-2xl font-black uppercase tracking-widest text-xs md:text-sm flex items-center justify-center gap-3 shadow-2xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                    className="w-full bg-[var(--accent)] text-[var(--background)] py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-xl hover:opacity-90 active:scale-95 transition-all"
                   >
-                    <Shuffle size={16} className="md:w-[20px] md:h-[20px]" />{" "}
                     Draw Next Random Player
                   </button>
-                ) : (
-                  <p className="text-sm md:text-lg font-bold text-[var(--text-muted)]">
-                    Waiting for Auctioneer to draw...
-                  </p>
                 )}
               </div>
             ) : (
-              <div className="w-full max-w-2xl animate-in zoom-in-95 duration-300 z-10 flex flex-col h-full justify-center">
-                <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 shadow-2xl flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-8 mb-6 md:mb-8 relative overflow-hidden transition-colors">
+              <div className="w-full max-w-4xl flex flex-col md:flex-row flex-wrap justify-center gap-4 items-center animate-in zoom-in-95 duration-200">
+                <div className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row items-center md:items-start gap-8 mb-6">
                   <div
-                    className="w-32 h-32 md:w-48 md:h-48 rounded-3xl bg-[var(--surface-2)] bg-cover bg-center shrink-0 ring-4 ring-[var(--surface-1)] shadow-xl flex items-center justify-center font-black text-3xl md:text-5xl text-[var(--text-muted)] border border-[var(--border-1)]"
+                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-cover bg-center shadow-inner border border-[var(--border-1)] shrink-0 bg-[var(--surface-2)] flex items-center justify-center font-black text-4xl text-[var(--text-muted)]"
                     style={{
                       backgroundImage: activePlayer.photo_url
                         ? `url(${activePlayer.photo_url})`
@@ -548,209 +532,225 @@ export default function AuctionConsole({
                     {!activePlayer.photo_url &&
                       activePlayer.full_name?.charAt(0)}
                   </div>
-
-                  <div className="flex-1 text-center sm:text-left w-full">
-                    <span className="bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3 md:mb-4 inline-block">
+                  <div className="flex-1 text-center sm:text-left min-w-0">
+                    <span className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-2">
                       Base: ₹
                       {activePlayer.base_price?.toLocaleString() ||
-                        config?.min_base_price?.toLocaleString()}
+                        config?.min_base_price?.toLocaleString() ||
+                        "1,000"}
                     </span>
-                    <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none mb-2 text-[var(--foreground)] break-words">
+                    <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight truncate mb-1">
                       {activePlayer.full_name}
                     </h2>
-                    <p className="text-[var(--accent)] font-bold uppercase tracking-widest text-xs md:text-sm mb-4 md:mb-6">
+                    <p className="text-[var(--accent)] font-black text-xs sm:text-sm uppercase tracking-widest mb-3">
                       {activePlayer.player_role}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-2 md:gap-4 bg-[var(--surface-2)] sm:bg-transparent p-3 sm:p-0 rounded-xl">
-                      <div>
-                        <p className="text-[9px] md:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                          Batting
-                        </p>
-                        <p className="text-xs md:text-sm font-bold text-[var(--foreground)]">
-                          {activePlayer.batting_hand || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] md:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                          Bowling
-                        </p>
-                        <p className="text-xs md:text-sm font-bold text-[var(--foreground)]">
-                          {activePlayer.bowling_style || "N/A"}
-                        </p>
-                      </div>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3 text-xs font-bold text-[var(--text-muted)]">
+                      <span className="bg-[var(--surface-2)] px-2.5 py-1 rounded-md border">
+                        Bat: {activePlayer.batting_hand || "N/A"}
+                      </span>
+                      <span className="bg-[var(--surface-2)] px-2.5 py-1 rounded-md border">
+                        Bowl: {activePlayer.bowling_style || "N/A"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-center mb-6 md:mb-8 flex-1 flex flex-col justify-center">
-                  <p className="text-xs md:text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 md:mb-2">
-                    Current Bid
+                {/* 📺 TIGHTER BID DISPLAY */}
+                <div className="text-center mb-4">
+                  <p className="text-[10px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">
+                    Current Total Bid
                   </p>
-                  <div className="text-5xl sm:text-6xl md:text-8xl font-black text-[var(--foreground)] tracking-tighter mb-4 tabular-nums drop-shadow-sm">
+                  <div className="text-5xl sm:text-7xl font-black tracking-tight tabular-nums text-[var(--foreground)] leading-none mb-2 drop-shadow">
                     ₹{currentBid.toLocaleString("en-IN")}
                   </div>
                   {highestBidder ? (
-                    <div className="inline-flex items-center gap-2 md:gap-3 bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-6 md:px-8 py-2 md:py-3 rounded-full animate-bounce">
-                      <div
-                        className="w-3 h-3 md:w-4 md:h-4 rounded-full shadow-sm shrink-0"
-                        style={{ backgroundColor: highestBidder.primary_color }}
-                      />
-                      <span className="font-black text-[var(--accent)] uppercase tracking-widest text-sm md:text-lg truncate max-w-[200px]">
-                        {highestBidder.short_name}
-                      </span>
-                    </div>
+                    <span className="bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/30 px-4 py-1 sm:px-6 sm:py-1.5 rounded-full text-xs sm:text-sm font-black uppercase tracking-widest animate-pulse inline-block">
+                      Leading: {highestBidder.short_name}
+                    </span>
                   ) : (
-                    <div className="inline-block bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)] px-6 md:px-8 py-2 md:py-3 rounded-full font-black text-xs md:text-sm uppercase tracking-widest">
-                      Awaiting Opening Bid
-                    </div>
+                    <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest inline-block">
+                      Awaiting First Bid
+                    </span>
                   )}
                 </div>
 
-                {/* ADMIN CONTROLS ONLY */}
+                {/* 🕹️ COMPACT HAMMER BUTTONS */}
                 {isAdmin && (
-                  <div className="grid grid-cols-3 gap-2 md:gap-4 mt-auto">
-                    <button
-                      onClick={drawRandomPlayer}
-                      disabled={isProcessing || !!highestBidder}
-                      className="bg-[var(--surface-2)] hover:bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] font-black py-3 md:py-5 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 transition-colors uppercase tracking-widest text-[9px] md:text-xs active:scale-95 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <Shuffle size={14} className="md:w-4 md:h-4" />{" "}
-                      <span className="hidden sm:inline">Draw</span> Next
-                    </button>
+                  <div className="flex gap-3 w-full max-w-md">
                     <button
                       onClick={() => markUnsold(activePlayer.id)}
                       disabled={isProcessing || !!highestBidder}
-                      className="bg-[var(--surface-2)] hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 border border-[var(--border-1)] text-[var(--text-muted)] font-black py-3 md:py-5 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 transition-colors uppercase tracking-widest text-[9px] md:text-xs active:scale-95 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex-1 bg-[var(--surface-2)] hover:bg-red-500/10 hover:text-red-400 border border-[var(--border-1)] font-black py-3 sm:py-3.5 rounded-xl uppercase tracking-widest text-xs transition-all disabled:opacity-40"
                     >
-                      <XCircle size={14} className="md:w-4 md:h-4" />{" "}
-                      <span className="hidden sm:inline">Pass /</span> Unsold
+                      Pass / Unsold
                     </button>
                     <button
                       onClick={sellPlayer}
                       disabled={!highestBidder || isProcessing}
-                      className="bg-[var(--accent)] text-[var(--background)] disabled:opacity-50 font-black py-3 md:py-5 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 transition-all uppercase tracking-widest text-[9px] md:text-xs shadow-xl hover:opacity-90 active:scale-95"
+                      className="flex-1 bg-[var(--accent)] text-[var(--background)] font-black py-3 sm:py-3.5 rounded-xl uppercase tracking-widest text-xs shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-40"
                     >
-                      <CheckCircle2 size={14} className="md:w-4 md:h-4" /> Sell{" "}
-                      <span className="hidden sm:inline">Player</span>
+                      Drop Hammer
                     </button>
                   </div>
                 )}
               </div>
             )}
           </div>
+        </div>
 
-          {/* RIGHT COLUMN: Franchise Bidding Controls */}
-          <div className="w-full md:w-[400px] bg-[var(--surface-1)] md:border-l border-[var(--border-1)] flex flex-col z-10 transition-colors md:h-full max-h-[40vh] md:max-h-full border-t md:border-t-0 shrink-0">
-            <div className="p-3 md:p-4 border-b border-[var(--border-1)] bg-[var(--surface-2)] shrink-0">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                Franchise Desk
-              </h2>
-            </div>
+        {/* 3. LOWER TIER: HORIZONTAL SCROLL FRANCHISE DECK */}
+        <div className="w-full bg-[var(--surface-1)] p-4 shrink-0 overflow-x-auto custom-scrollbar">
+          <div className="flex justify-between items-center mb-3 max-w-[1920px] mx-auto px-2">
+            <span className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
+              Franchise Desks ({teams.length})
+            </span>
+            <span className="text-xs font-bold text-[var(--text-muted)] hidden md:block">
+              ↔️ Scroll horizontally to view all franchises
+            </span>
+          </div>
 
-            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 custom-scrollbar">
-              {teams.map((team) => {
-                const alreadyBoughtInSlot =
-                  config?.limit_one_per_slot &&
-                  activePlayer?.auction_slot_id &&
-                  team.players?.some(
-                    (p: any) =>
-                      p.auction_slot_id === activePlayer.auction_slot_id,
-                  );
+          <div className="flex gap-4 pb-2 w-max items-stretch">
+            {teams.map((team) => {
+              const totalSpent =
+                team.players?.reduce(
+                  (sum: number, p: any) => sum + (p.sold_price || 0),
+                  0,
+                ) || 0;
+              const totalPurse =
+                team.purse_limit ||
+                team.budget ||
+                team.purse_balance + totalSpent;
+              const remainingPurse = team.purse_balance;
 
-                const isHighestBidder = highestBidder?.id === team.id;
+              // 🧮 EXACT DB COLUMN MAPPING
+              const maxSquad =
+                config?.max_squad_size || config?.squad_limit || 15;
+              const currSquad = team.players?.length || 0;
+              const needed = Math.max(0, maxSquad - currSquad);
+              const minBase = config?.min_base_price || 1000;
+              const reserve = needed > 0 ? (needed - 1) * minBase : 0;
+              const maxBid = Math.max(0, remainingPurse - reserve);
 
-                return (
-                  <div
-                    key={team.id}
-                    className={`bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm transition-opacity ${alreadyBoughtInSlot ? "opacity-40" : ""}`}
-                  >
-                    <div className="flex justify-between items-center mb-3 md:mb-4">
-                      <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <div
-                          className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shrink-0"
-                          style={{
-                            backgroundColor: team.primary_color,
-                            boxShadow: `0 0 10px ${team.primary_color}`,
-                          }}
-                        />
-                        <h3 className="font-black uppercase tracking-tighter text-base md:text-lg leading-none text-[var(--foreground)] truncate">
-                          {team.short_name}
-                        </h3>
-                      </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <p
-                          className={`text-sm md:text-lg font-black ${team.purse_balance < 20000 ? "text-red-500" : "text-emerald-500"}`}
+              const isHighest = highestBidder?.id === team.id;
+              const cannotAfford =
+                maxBid <
+                (isHighest ? currentBid : currentBid + currentIncrement);
+
+              return (
+                <div
+                  key={team.id}
+                  className={`w-[250px] xl:w-[300px] shrink-0 bg-[var(--surface-2)] border rounded-2xl p-4 flex flex-col justify-between shadow-md transition-all ${isHighest ? "border-[var(--accent)] ring-2 ring-[var(--accent)]/50" : "border-[var(--border-1)]"}`}
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-3 border-b border-[var(--border-1)] pb-2.5">
+                      <h3
+                        className="font-black text-sm xl:text-sm uppercase tracking-tight max-w-[180px]"
+                        style={{ color: team.primary_color }}
+                      >
+                        {team.name}
+                      </h3>
+                      <div className="text-right">
+                        <span className="text-[9px] font-black uppercase text-[var(--text-muted)] block">
+                          Max Bid
+                        </span>
+                        <span
+                          className={`text-sm xl:text-base font-black ${cannotAfford && !isHighest ? "text-red-400" : "text-emerald-400"}`}
                         >
-                          ₹{team.purse_balance.toLocaleString("en-IN")}
-                        </p>
+                          ₹{maxBid.toLocaleString("en-IN")}
+                        </span>
                       </div>
                     </div>
 
-                    {/* ADMIN BIDDING PADDLES */}
+                    <div className="space-y-1 text-xs xl:text-sm font-bold mb-4 bg-[var(--surface-1)]/50 p-2.5 rounded-xl border border-[var(--border-1)]">
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Purse:</span>
+                        <span>₹{totalPurse.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Spent:</span>
+                        <span className="text-red-400">
+                          ₹{totalSpent.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-[var(--border-1)] pt-1 font-black">
+                        <span className="text-[var(--text-muted)]">Left:</span>
+                        <span className="text-emerald-400">
+                          ₹{remainingPurse.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center text-[10px] uppercase font-black text-[var(--text-muted)] mb-2.5 px-1">
+                      <span>
+                        {needed > 0
+                          ? `Reserve: ₹${reserve.toLocaleString()}`
+                          : "Goal Met"}
+                      </span>
+                      <span className="bg-[var(--surface-1)] px-2 py-0.5 rounded border">
+                        {currSquad} / {maxSquad}
+                      </span>
+                    </div>
+
                     {isAdmin && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => placeBid(team)}
                           disabled={
                             !activePlayer ||
-                            alreadyBoughtInSlot ||
-                            isHighestBidder ||
-                            isProcessing
+                            isHighest ||
+                            isProcessing ||
+                            cannotAfford
                           }
-                          className={`flex-1 disabled:opacity-50 text-[10px] md:text-xs font-black py-3 md:py-4 rounded-lg md:rounded-xl transition-all border shadow-sm active:scale-95 ${isHighestBidder ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30" : "bg-[var(--surface-1)] hover:bg-[var(--surface-3)] text-[var(--foreground)] border-[var(--border-1)]"}`}
+                          className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all border ${isHighest ? "bg-[var(--accent)] text-[var(--background)] border-[var(--accent)] shadow-lg" : cannotAfford ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-[var(--surface-1)] hover:bg-[var(--surface-3)] border-[var(--border-1)] text-[var(--foreground)] active:scale-95"}`}
                         >
-                          {isHighestBidder
-                            ? "LEADING"
-                            : `BID +₹${currentIncrement.toLocaleString()}`}
+                          {isHighest
+                            ? "Leading"
+                            : cannotAfford
+                              ? "No Funds"
+                              : `Bid +₹${currentIncrement.toLocaleString()}`}
                         </button>
 
-                        {/* Direct Buy is always visible for Admin, clearly labeled as Buy */}
                         {config?.allow_direct_buy && (
                           <button
                             onClick={() => openDirectBuyModal(team)}
-                            disabled={
-                              !activePlayer ||
-                              alreadyBoughtInSlot ||
-                              isProcessing
-                            }
-                            className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-3 md:px-4 py-3 md:py-4 rounded-lg md:rounded-xl hover:bg-amber-500 hover:text-amber-950 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-1 shrink-0"
-                            title="Offline / Direct Assign"
+                            disabled={!activePlayer || isProcessing}
+                            className="bg-amber-500/10 hover:bg-amber-500 hover:text-amber-950 text-amber-400 border border-amber-500/20 p-3 rounded-xl transition-all flex items-center justify-center shrink-0"
+                            title="Direct Buy"
                           >
-                            <Zap size={14} />
-                            <span className="text-[10px] font-black uppercase hidden sm:inline">
-                              Buy
-                            </span>
+                            <Zap size={16} />
                           </button>
                         )}
                       </div>
                     )}
-
-                    {alreadyBoughtInSlot && (
-                      <p className="text-[8px] font-black text-amber-500 uppercase mt-2 text-center tracking-widest">
-                        Set Limit Reached
-                      </p>
-                    )}
                   </div>
-                );
-              })}
-              {teams.length === 0 && (
-                <div className="text-center text-[var(--text-muted)] text-xs md:text-sm font-bold pt-10">
-                  No franchises registered.
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* CUSTOM DIRECT BUY MODAL (Admin Only) */}
+        {/* MODAL 1: LIVE ROSTER DIRECTORY */}
+        {rosterTab && (
+          <RosterSummaryModal
+            isOpen={!!rosterTab}
+            initialTab={rosterTab}
+            onClose={() => setRosterTab(null)}
+            players={players}
+            teams={teams}
+          />
+        )}
+
+        {/* MODAL 2: CUSTOM DIRECT BUY */}
         {isAdmin &&
           directBuyModal.isOpen &&
           directBuyModal.team &&
           activePlayer && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
               <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 overflow-hidden">
-                {/* Header */}
                 <div className="bg-amber-500 p-4 md:p-6 text-amber-950 flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <Zap size={20} />
@@ -768,11 +768,10 @@ export default function AuctionConsole({
                   </button>
                 </div>
 
-                {/* Content */}
                 <div className="p-6 md:p-8">
-                  <div className="flex items-center gap-4 mb-6 md:mb-8 bg-[var(--surface-2)] p-4 rounded-xl md:rounded-2xl border border-[var(--border-1)]">
+                  <div className="flex items-center gap-4 mb-6 md:mb-8 bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border-1)]">
                     <div
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[var(--surface-3)] bg-cover bg-center shrink-0 border border-[var(--border-1)] flex items-center justify-center font-black text-[var(--text-muted)]"
+                      className="w-10 h-10 rounded-xl bg-cover bg-center bg-[var(--surface-3)] border shrink-0 flex items-center justify-center font-black"
                       style={{
                         backgroundImage: activePlayer.photo_url
                           ? `url(${activePlayer.photo_url})`
@@ -783,10 +782,10 @@ export default function AuctionConsole({
                         activePlayer.full_name?.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] md:text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                         Assigning
                       </p>
-                      <p className="font-black text-[var(--foreground)] text-base md:text-lg leading-none mt-1 truncate">
+                      <p className="font-black text-base leading-none mt-1 truncate">
                         {activePlayer.full_name}
                       </p>
                     </div>
@@ -795,7 +794,7 @@ export default function AuctionConsole({
                   <div className="mb-6 md:mb-8">
                     <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex justify-between">
                       <span>Final Sale Price (₹)</span>
-                      <span className="text-[var(--foreground)]">
+                      <span>
                         Max: ₹
                         {directBuyModal.team.purse_balance.toLocaleString()}
                       </span>
@@ -805,12 +804,12 @@ export default function AuctionConsole({
                       autoFocus
                       value={manualPrice}
                       onChange={(e) => setManualPrice(Number(e.target.value))}
-                      className={`w-full bg-[var(--surface-2)] border-2 rounded-xl py-3 px-4 md:py-4 md:px-5 text-xl md:text-2xl font-black outline-none transition-colors ${Number(manualPrice) > directBuyModal.team.purse_balance ? "border-red-500 text-red-500" : "border-[var(--border-1)] text-[var(--foreground)] focus:border-amber-500"}`}
+                      className={`w-full bg-[var(--surface-2)] border-2 rounded-xl py-3 px-4 text-xl font-black outline-none transition-colors ${Number(manualPrice) > directBuyModal.team.purse_balance ? "border-red-500 text-red-500" : "border-[var(--border-1)] text-[var(--foreground)] focus:border-amber-500"}`}
                     />
                     {Number(manualPrice) >
                       directBuyModal.team.purse_balance && (
                       <p className="text-[10px] font-bold text-red-500 mt-2 uppercase tracking-widest flex items-center gap-1">
-                        <AlertCircle size={12} /> Exceeds Available Budget
+                        <AlertCircle size={12} /> Exceeds Budget
                       </p>
                     )}
                   </div>
@@ -823,7 +822,7 @@ export default function AuctionConsole({
                       Number(manualPrice) <= 0 ||
                       Number(manualPrice) > directBuyModal.team.purse_balance
                     }
-                    className="w-full bg-amber-500 text-amber-950 font-black py-3 md:py-4 rounded-xl uppercase tracking-widest text-xs md:text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                    className="w-full bg-amber-500 text-amber-950 font-black py-3 rounded-xl uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all disabled:opacity-50"
                   >
                     {isProcessing
                       ? "Processing..."
@@ -835,5 +834,150 @@ export default function AuctionConsole({
           )}
       </div>
     </FeatureGate>
+  );
+}
+
+// ==========================================
+// 📋 STANDALONE ROSTER DIRECTORY MODAL
+// ==========================================
+function RosterSummaryModal({
+  isOpen,
+  initialTab,
+  onClose,
+  players,
+  teams,
+}: {
+  isOpen: boolean;
+  initialTab: any;
+  onClose: () => void;
+  players: any[];
+  teams: any[];
+}) {
+  const [tab, setTab] = useState<"sold" | "unsold" | "pending">(
+    initialTab || "sold",
+  );
+
+  const filtered = useMemo(() => {
+    if (tab === "sold")
+      return players.filter((p) => p.auction_status === "sold");
+    if (tab === "unsold")
+      return players.filter((p) => p.auction_status === "unsold");
+    return players.filter(
+      (p) => !p.auction_status || p.auction_status === "pending",
+    );
+  }, [players, tab]);
+
+  const teamMap = useMemo(() => {
+    return new Map(teams.map((t) => [t.id, t]));
+  }, [teams]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in select-none">
+      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-in zoom-in-95">
+        <div className="p-6 bg-[var(--surface-2)] border-b border-[var(--border-1)] flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
+          <div>
+            <h2 className="text-xl font-black uppercase tracking-wider text-[var(--foreground)]">
+              Player Roster Directory
+            </h2>
+            <p className="text-xs font-bold text-[var(--text-muted)]">
+              Live snapshot of all auction participants
+            </p>
+          </div>
+
+          <div className="flex bg-[var(--surface-1)] p-1 rounded-xl border border-[var(--border-1)]">
+            {(["sold", "unsold", "pending"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === t ? "bg-[var(--accent)] text-[var(--background)] shadow" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+              >
+                {t} (
+                {
+                  players.filter((p) =>
+                    t === "pending"
+                      ? !p.auction_status || p.auction_status === "pending"
+                      : p.auction_status === t,
+                  ).length
+                }
+                )
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[var(--surface-3)] flex items-center justify-center font-bold hover:bg-red-500/20 hover:text-red-400 absolute top-6 right-6 sm:static"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+          {filtered.map((player) => {
+            const franchise = player.team_id
+              ? teamMap.get(player.team_id)
+              : null;
+
+            return (
+              <div
+                key={player.id}
+                className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-12 h-12 rounded-xl bg-cover bg-center bg-[var(--surface-3)] border shrink-0 flex items-center justify-center font-black"
+                    style={{
+                      backgroundImage: player.photo_url
+                        ? `url(${player.photo_url})`
+                        : "none",
+                    }}
+                  >
+                    {!player.photo_url && player.full_name?.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-black text-base uppercase text-[var(--foreground)]">
+                      {player.full_name}
+                    </h4>
+                    <span className="text-xs font-bold text-[var(--accent)] uppercase tracking-widest">
+                      {player.player_role}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right flex items-center gap-6">
+                  {tab === "sold" && franchise ? (
+                    <div className="text-right">
+                      <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-md text-emerald-950 bg-emerald-400 inline-block mb-1">
+                        Sold: ₹{player.sold_price?.toLocaleString("en-IN")}
+                      </span>
+                      <p className="text-xs font-black uppercase text-[var(--text-muted)]">
+                        {franchise.short_name}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase block">
+                        Base Price
+                      </span>
+                      <span className="text-sm font-black text-[var(--foreground)]">
+                        ₹{player.base_price?.toLocaleString("en-IN") || "1,000"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <div className="text-center py-20 text-[var(--text-muted)] font-black text-lg uppercase tracking-widest">
+              No players found in this list
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

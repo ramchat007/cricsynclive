@@ -24,6 +24,7 @@ export default function TeamsPage({
   // Settings
   const [squadLimit, setSquadLimit] = useState(11);
   const [isAuctionEnabled, setIsAuctionEnabled] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Modals
   const [editingTeam, setEditingTeam] = useState<any>(null);
@@ -206,6 +207,29 @@ export default function TeamsPage({
       alert("Failed to remove player.");
     }
   };
+
+  const deleteTeam = async (teamId: string) => {
+  // 1. Confirm before action (best practice for deletion)
+  if (!window.confirm("Are you sure you want to remove this team?")) return;
+
+  setIsProcessing(true);
+
+  // 2. Perform the delete
+  const { error } = await supabase
+    .from("teams")
+    .delete()
+    .eq("id", teamId);
+
+  // 3. Handle result
+  if (error) {
+    alert("Error removing team: " + error.message);
+  } else {
+    // Refresh the UI after successful deletion
+    checkAdminAndFetch();
+  }
+
+  setIsProcessing(false);
+};
 
   return (
     <div className="animate-in fade-in space-y-6 md:space-y-8">
@@ -592,12 +616,29 @@ export default function TeamsPage({
             </div>
 
             <div className="p-5 sm:p-6 border-t border-[var(--border-1)] bg-[var(--surface-2)] flex gap-3">
+              {/* DELETE BUTTON - DANGER STYLE */}
+              <button
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
+                    deleteTeam(editingTeam.id);
+                     setEditingTeam(null)
+                  }
+                }}
+                className="px-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-xl transition-colors flex items-center justify-center shrink-0"
+                title="Delete Team"
+              >
+                <Trash2 size={18} />
+              </button>
+
+              {/* CANCEL BUTTON */}
               <button
                 onClick={() => setEditingTeam(null)}
                 className="flex-1 py-4 rounded-xl text-[var(--text-muted)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)] border border-[var(--border-1)] font-bold text-xs uppercase tracking-widest transition-colors"
               >
                 Cancel
               </button>
+
+              {/* SAVE BUTTON */}
               <button
                 onClick={updateTeam}
                 className="flex-1 bg-[var(--accent)] text-[var(--background)] font-black py-4 rounded-xl hover:opacity-90 text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"

@@ -181,7 +181,7 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative shrink-0 w-80 md:w-96 bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
+                  className="group relative shrink-0 w-80 md:w-96 bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
                 >
                   {/* Neon Glow inside the Glass Card */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
@@ -291,7 +291,7 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative bg-[var(--foreground)]/[0.02] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
+                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
                 >
                   <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-all duration-500" />
 
@@ -354,7 +354,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-[var(--foreground)]/[0.02] backdrop-blur-md rounded-[2rem] border border-dashed border-[var(--foreground)]/20 opacity-60 text-xs font-bold uppercase tracking-wider">
+            <div className="text-center py-12 bg-[var(--background)]/[0.7] backdrop-blur-md rounded-[2rem] border border-dashed border-[var(--foreground)]/20 opacity-60 text-xs font-bold uppercase tracking-wider">
               No completed matches found yet.
             </div>
           )}
@@ -371,7 +371,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Module 01 */}
-            <div className="group relative bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -z-10 group-hover:bg-blue-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -397,7 +397,7 @@ export default function Home() {
             </div>
 
             {/* Module 02 */}
-            <div className="group relative bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-3xl -z-10 group-hover:bg-teal-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -423,7 +423,7 @@ export default function Home() {
             </div>
 
             {/* Module 03 */}
-            <div className="group relative bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -z-10 group-hover:bg-amber-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -449,7 +449,7 @@ export default function Home() {
             </div>
 
             {/* Module 04 */}
-            <div className="group relative bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-red-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-red-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -z-10 group-hover:bg-red-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -475,7 +475,7 @@ export default function Home() {
             </div>
 
             {/* Module 05 */}
-            <div className="group relative bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/5 rounded-full blur-3xl -z-10 group-hover:bg-fuchsia-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -500,7 +500,7 @@ export default function Home() {
             </div>
 
             {/* Module 06 */}
-            <div className="group relative bg-[var(--foreground)]/[0.03] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -z-10 group-hover:bg-purple-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">

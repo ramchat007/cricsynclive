@@ -18,10 +18,9 @@ export default function AuctionOverlay({
   const { tournamentId } = use(params);
 
   // --- Broadcast Presentation State ---
-  // Instead of just showing exactly what the admin sees, we manage a "Display State"
-  // so we can freeze the screen for 10s after a player is sold.
+  const [teams, setTeams] = useState<any[]>([]);
   const [podiumState, setPodiumState] = useState<
-    "standby" | "active" | "sold" | "unsold"
+    "standby" | "active" | "sold" | "unsold" | "directbuy"
   >("standby");
   const [displayPlayer, setDisplayPlayer] = useState<any | null>(null);
   const [displayBid, setDisplayBid] = useState<number>(0);
@@ -40,6 +39,17 @@ export default function AuctionOverlay({
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchAuctionData = async () => {
+    // Fetch teams with their current purse_balance
+    const { data: tData } = await supabase
+      .from("teams")
+      .select("id, name, purse_balance, primary_color")
+      .eq("tournament_id", tournamentId)
+      .order("created_at");
+      
+    if (tData) setTeams(tData);
+  };
 
   // Fetch all sold players and calculate the top buy for EACH team
   const fetchSoldPlayers = async () => {
@@ -82,54 +92,76 @@ export default function AuctionOverlay({
     }
 
     fetchSoldPlayers();
+    fetchAuctionData();
 
     const channel = supabase.channel(`auction_${tournamentId}`);
 
     channel
       .on("broadcast", { event: "state_sync" }, ({ payload }) => {
-        const { activePlayer, currentBid, highestBidder } = payload;
+        const { activePlayer, currentBid, highestBidder, isDirectBuy } = payload;
 
         // SCENARIO 1: A player is on the podium (Active Bidding)
         if (activePlayer) {
+          console.log("STATE BEFORE PROCESSING:", {
+            podiumState: podiumStateRef.current,
+            activePlayer,
+            currentBid,
+            highestBidder,
+            isDirectBuy,
+          });
           if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+
           podiumStateRef.current = "active";
           setPodiumState("active");
+
           setDisplayPlayer(activePlayer);
           setDisplayBid(currentBid);
           setDisplayBidder(highestBidder);
+
           displayBidderRef.current = highestBidder;
         }
-        // SCENARIO 2: Admin cleared the podium (Sold or Unsold)
+
+        // SCENARIO 2: Admin cleared the podium (Sold / Unsold / Direct Buy)
         else if (!activePlayer && podiumStateRef.current === "active") {
-          if (displayBidderRef.current) {
-            // Player was SOLD
+
+          const isSold = !!displayBidderRef.current;
+          const isDirect = isDirectBuy === true;
+
+          if (isDirect) {
+            console.log("DIRECT BUY DETECTED");
+            podiumStateRef.current = "directbuy";
+            setPodiumState("directbuy");
+          }
+          else if (isSold) {
+            // SOLD
             podiumStateRef.current = "sold";
             setPodiumState("sold");
-
-            // Hold screen for 10 seconds, then standby
-            clearTimerRef.current = setTimeout(() => {
-              podiumStateRef.current = "standby";
-              setPodiumState("standby");
-              setDisplayPlayer(null);
-            }, 10000);
-          } else {
-            // Player was UNSOLD
+          }
+          else {
+            // UNSOLD
             podiumStateRef.current = "unsold";
             setPodiumState("unsold");
-
-            // Hold screen for 5 seconds, then standby
-            clearTimerRef.current = setTimeout(() => {
-              podiumStateRef.current = "standby";
-              setPodiumState("standby");
-              setDisplayPlayer(null);
-            }, 5000);
           }
+
+          clearTimerRef.current = setTimeout(() => {
+            podiumStateRef.current = "standby";
+            setPodiumState("standby");
+
+            setDisplayPlayer(null);
+            setDisplayBid(0);
+            setDisplayBidder(null);
+
+            displayBidderRef.current = null;
+          }, isSold || isDirect ? 10000 : 5000);
         }
+
         setLoading(false);
+        fetchAuctionData();
       })
       .on("broadcast", { event: "global_refresh" }, () => {
         // Admin finalized a sale, refresh the ticker
         fetchSoldPlayers();
+        fetchAuctionData();
       })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -181,6 +213,10 @@ export default function AuctionOverlay({
     cardBorder = "border-emerald-500/50 shadow-[0_0_80px_rgba(16,185,129,0.4)]";
     bannerBg = "bg-emerald-500 text-emerald-950";
     bannerText = "★★★ PLAYER SOLD ★★★";
+  } else if (podiumState === "directbuy") {
+    cardBorder = "border-yellow-500/50 shadow-[0_0_80px_rgba(239,68,68,0.4)]";
+    bannerBg = "bg-yellow-500 text-yellow-950";
+    bannerText = "★★★ PLAYER DIRECT BUY ★★★";
   } else if (podiumState === "unsold") {
     cardBorder = "border-red-500/50 shadow-[0_0_80px_rgba(239,68,68,0.4)]";
     bannerBg = "bg-red-500 text-red-950";
@@ -205,20 +241,35 @@ export default function AuctionOverlay({
           .animate-ticker {
             display: flex;
             width: max-content;
-            animation: scrollTicker 45s linear infinite;
+            animation: scrollTicker 20s linear infinite;
           }
         `}
       </style>
 
       <div className="w-screen h-screen overflow-hidden bg-transparent font-sans text-white relative">
+        <div className="absolute bottom-20 right-8 w-80 bg-black/60 backdrop-blur-xl border-l-4 border-amber-500 p-4 rounded-l-2xl z-40">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Live Purse Status</h3>
+          <div className="space-y-2">
+            {teams.map((team) => (
+              <div key={team.id} className="flex justify-between items-center text-xs border-b border-white/5 pb-1">
+                <span className="font-bold truncate max-w-[120px]">{team.name}</span>
+                <span className={`font-black ${team.purse_balance < 10000 ? "text-red-400" : "text-emerald-400"}`}>
+                  ₹{(team.purse_balance || 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
         {/* =========================================
             LEFT SIDE: FLOATING PLAYER CARD
             ========================================= */}
         <div
-          className={`absolute top-12 left-12 w-[420px] bg-slate-950/90 backdrop-blur-2xl border-[3px] rounded-[2.5rem] flex flex-col z-40 overflow-hidden transition-all duration-700 ${cardBorder}`}>
+          className={`absolute top-12 left-12 w-[420px] bg-slate-950/90 backdrop-blur-2xl border-[3px] rounded-[2.5rem] flex flex-col z-40 overflow-hidden transition-all duration-700 ${cardBorder}`}
+        >
           {/* Status Banner */}
           <div
-            className={`text-center py-4 font-black uppercase tracking-[0.4em] text-sm transition-colors shrink-0 ${bannerBg}`}>
+            className={`text-center py-4 font-black uppercase tracking-[0.4em] text-sm transition-colors shrink-0 ${bannerBg}`}
+          >
             {bannerText}
           </div>
 
@@ -227,12 +278,13 @@ export default function AuctionOverlay({
               {/* Profile Image */}
               <div className="relative shrink-0 mb-6">
                 <div
-                  className={`w-56 h-56 rounded-3xl bg-slate-800 bg-cover bg-center shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center justify-center text-7xl font-black text-slate-500 border-4 ${podiumState === "sold" ? "border-emerald-500" : podiumState === "unsold" ? "border-red-500" : "border-white/10"}`}
+                  className={`w-56 h-56 rounded-3xl bg-slate-800 bg-cover bg-center shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center justify-center text-7xl font-black text-slate-500 border-4 ${podiumState === "sold" ? "border-emerald-500" : podiumState === "directbuy" ? "border-yellow-500" : podiumState === "unsold" ? "border-red-500" : "border-white/10"}`}
                   style={{
                     backgroundImage: displayPlayer.photo_url
                       ? `url(${displayPlayer.photo_url})`
                       : "none",
-                  }}>
+                  }}
+                >
                   {!displayPlayer.photo_url &&
                     displayPlayer.full_name?.charAt(0)}
                 </div>
@@ -243,7 +295,7 @@ export default function AuctionOverlay({
                 )}
               </div>
 
-              <h2 className="text-4xl font-black uppercase tracking-tighter text-center mb-3 drop-shadow-lg leading-tight break-words px-2 w-full text-white">
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-center mb-3 drop-shadow-lg leading-tight break-words px-2 w-full text-white">
                 {displayPlayer.full_name}
               </h2>
 
@@ -253,7 +305,8 @@ export default function AuctionOverlay({
 
               {/* Price Container */}
               <div
-                className={`w-full p-6 rounded-3xl border shadow-inner text-center transition-colors duration-500 ${podiumState === "sold" ? "bg-emerald-500/10 border-emerald-500/30" : podiumState === "unsold" ? "bg-red-500/10 border-red-500/30" : "bg-black/40 border-white/5"}`}>
+                className={`w-full p-6 rounded-3xl border shadow-inner text-center transition-colors duration-500 ${podiumState === "sold" ? "bg-emerald-500/10 border-emerald-500/30" : podiumState === "directbuy" ? "bg-yellow-500/10 border-yellow-500/30" : podiumState === "unsold" ? "bg-red-500/10 border-red-500/30" : "bg-black/40 border-white/5"}`}
+              >
                 {podiumState === "unsold" ? (
                   <div className="py-4">
                     <XCircle size={48} className="text-red-500 mx-auto mb-3" />
@@ -264,10 +317,17 @@ export default function AuctionOverlay({
                 ) : (
                   <>
                     <p className="text-xs font-black uppercase tracking-widest mb-2 text-slate-400">
-                      {podiumState === "sold" ? "Sold For" : "Current Bid"}
+                      {podiumState === "sold" ? "Sold For" : podiumState === "directbuy" ? "Purchased For" : "Current Bid"}
                     </p>
                     <p
-                      className={`text-6xl font-black tracking-tighter drop-shadow-md tabular-nums ${podiumState === "sold" ? "text-emerald-400" : "text-amber-400"}`}>
+                      className={`text-6xl font-black tracking-tighter drop-shadow-md tabular-nums ${
+                        podiumState === "sold" 
+                          ? "text-emerald-400" 
+                          : podiumState === "directbuy" 
+                            ? "text-yellow-400" 
+                            : "text-amber-400"
+                      }`}
+                    >
                       ₹{displayBid.toLocaleString("en-IN")}
                     </p>
 
@@ -279,24 +339,22 @@ export default function AuctionOverlay({
                           className={
                             podiumState === "sold"
                               ? "text-emerald-400"
-                              : "text-amber-400 shrink-0"
+                              : podiumState === "directbuy"
+                                ? "text-yellow-400"
+                                : "text-amber-400 shrink-0"
                           }
                         />
                         <div className="flex flex-col text-left overflow-hidden">
                           <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none mb-1.5">
-                            {podiumState === "sold"
-                              ? "Bought By"
-                              : "Leading Bidder"}
+                            {podiumState === "sold" ? "Bought By" : podiumState === "directbuy" ? "Direct Buy By" : "Leading Bidder"}
                           </span>
                           <div className="flex items-center gap-2">
                             <div
                               className="w-4 h-4 rounded-full shadow-sm shrink-0"
-                              style={{
-                                backgroundColor: displayBidder.primary_color,
-                              }}
+                              style={{ backgroundColor: displayBidder.primary_color }}
                             />
                             <p className="text-xl font-black text-white truncate max-w-[200px] leading-none uppercase">
-                              {displayBidder.short_name || displayBidder.name}
+                              {displayBidder.name}
                             </p>
                           </div>
                         </div>
@@ -371,7 +429,8 @@ export default function AuctionOverlay({
                   return (
                     <div
                       key={`${p.id}-${idx}`}
-                      className="flex items-center mx-6 whitespace-nowrap">
+                      className="flex items-center mx-2 whitespace-nowrap"
+                    >
                       {isTopBuyForTeam && (
                         <span className="flex items-center gap-1 bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest mr-3 border border-amber-500/30">
                           <Sparkles size={10} /> {teamName} Top Buy
@@ -379,7 +438,8 @@ export default function AuctionOverlay({
                       )}
 
                       <span
-                        className={`font-bold text-sm ${isTopBuyForTeam ? "text-amber-400" : "text-white"}`}>
+                        className={`font-bold text-sm ${isTopBuyForTeam ? "text-amber-400" : "text-white"}`}
+                      >
                         {p.full_name}
                       </span>
 
@@ -388,12 +448,13 @@ export default function AuctionOverlay({
                       </span>
 
                       <span
-                        className={`font-black tabular-nums ${isTopBuyForTeam ? "text-amber-400" : "text-emerald-400"}`}>
+                        className={`font-black tabular-nums ${isTopBuyForTeam ? "text-amber-400" : "text-emerald-400"}`}
+                      >
                         ₹{p.sold_price?.toLocaleString("en-IN")}
                       </span>
 
                       {/* Separator */}
-                      <div className="w-1.5 h-1.5 rounded-full bg-white/20 ml-8" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/20 ml-3" />
                     </div>
                   );
                 })}

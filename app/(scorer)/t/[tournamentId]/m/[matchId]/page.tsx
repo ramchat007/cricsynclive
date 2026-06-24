@@ -114,61 +114,60 @@ export default function UnifiedLiveMatchPage({
   const [completedRuns, setCompletedRuns] = useState(0);
 
   // 🔒 --- AUTHENTICATION CHECKER --- 🔒
-  useEffect(() => {
-    const checkAuthorization = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+useEffect(() => {
+  const checkAuthorization = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-        if (!session) {
-          setIsAuthorized(false);
-          return;
-        }
-        if (tournamentId === "QUICK_MATCH") {
-          setIsAuthorized(true); // <--- Force God Mode ON!
-          return;
-        }
-        if (tournamentId === "QUICK_MATCH") {
-          // Wait for the match data to load before making a decision
-          if (engine.match) {
-            // Give Admin UI ONLY if the logged-in user created this match
-            setIsAuthorized(session.user.id === engine.match.created_by);
-          }
-          return;
-        }
-
-        const { data: tData } = await supabase
-          .from("tournaments")
-          .select("owner_id")
-          .eq("id", tournamentId)
-          .single();
-        const { data: pData } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-
-        const isSuperAdmin = pData?.role === "super_admin";
-        const isTournamentOwner = tData?.owner_id === session.user.id;
-        const isAssignedScorer =
-          pData?.role === "scorer" || pData?.role === "admin";
-
-        setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
-
-        // if (isSuperAdmin || isTournamentOwner || isAssignedScorer) {
-        //   setIsAuthorized(true);
-        // } else {
-        //   setIsAuthorized(false);
-        // }
-      } catch (error) {
-        // console.error("Auth check failed:", error);
+      // 1. Unauthenticated users are strictly blocked
+      if (!session) {
         setIsAuthorized(false);
+        return;
       }
-    };
 
-    checkAuthorization();
-  }, [tournamentId, engine.match]);
+      // 2. Handle Quick Match Logic cleanly in one place
+      if (tournamentId === "QUICK_MATCH") {
+        if (!engine.match) {
+          // Keep authorized as false (or a separate loading state) until match metadata is available
+          setIsAuthorized(false); 
+          return;
+        }
+        
+        // Authorize ONLY if the logged-in user is the creator of this quick match
+        const isCreator = session.user.id === engine.match.created_by;
+        setIsAuthorized(isCreator);
+        return;
+      }
+
+      // 3. Regular Tournament Database Verification
+      const { data: tData } = await supabase
+        .from("tournaments")
+        .select("owner_id")
+        .eq("id", tournamentId)
+        .single();
+
+      const { data: pData } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      const isSuperAdmin = pData?.role === "super_admin";
+      const isTournamentOwner = tData?.owner_id === session.user.id;
+      const isAssignedScorer = pData?.role === "scorer" || pData?.role === "admin";
+
+      setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
+
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      setIsAuthorized(false);
+    }
+  };
+
+  checkAuthorization();
+}, [tournamentId, engine.match?.created_by]); // 💡 Optimized dependency to track the exact property safely
 
   const stats = deriveMatchStats(
     engine.match,
