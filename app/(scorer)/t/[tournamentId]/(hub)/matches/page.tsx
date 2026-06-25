@@ -29,7 +29,7 @@ export default function MatchesPage({
   const { tournamentId } = use(params);
 
   if (tournamentId === "QUICK_MATCH") {
-    redirect("/"); 
+    redirect("/");
   }
 
   // Core State
@@ -1026,11 +1026,16 @@ export default function MatchesPage({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mt-4">
-                  {/* TEAM 1 (Stacked Layout) */}
-                  <div className="flex items-center gap-3 w-[42%]">
+                <div className="relative flex items-stretch justify-between mt-4 bg-[var(--surface-2)]/50 border border-[var(--border-1)] rounded-2xl p-3 md:p-5 shadow-sm overflow-hidden">
+                  {/* Optional: Subtle background glow based on LIVE status */}
+                  {match.status === "live" && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-red-500/20 blur-xl rounded-full" />
+                  )}
+
+                  {/* TEAM 1 */}
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 flex-1 text-center md:text-left min-w-0">
                     <div
-                      className="w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-2)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-inner p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px] text-center"
+                      className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px]"
                       style={{
                         backgroundImage: match.team1?.logo_url
                           ? `url(${match.team1?.logo_url})`
@@ -1039,53 +1044,45 @@ export default function MatchesPage({
                     >
                       {!match.team1?.logo_url && "TBD"}
                     </div>
-                    <div className="flex flex-col overflow-hidden">
-                      <span className="font-black text-sm md:text-xl text-[var(--foreground)] truncate">
+
+                    <div className="flex flex-col items-center md:items-start min-w-0 w-full">
+                      <span className="font-black text-sm md:text-xl text-[var(--foreground)] truncate w-full px-1">
                         {match.team1?.short_name || "TBD"}
                       </span>
                       {(match.status === "live" ||
-                        match.status === "completed") &&
-                        renderScore(
-                          match.team1_score,
-                          match.team1_wickets,
-                          match.team1_overs,
-                        )}
+                        match.status === "completed") && (
+                        <div className="mt-1 md:mt-0">
+                          {renderScore(
+                            match.team1_score,
+                            match.team1_wickets,
+                            match.team1_overs,
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* VS / RESULT BANNER (Middle) */}
-                  <div className="flex flex-col items-center justify-center w-[16%] px-1">
+                  {/* VS / RESULT BANNER (Center) */}
+                  <div className="flex flex-col items-center justify-center shrink-0 px-2 md:px-4 z-10 w-[80px] md:w-[120px]">
                     {match.status === "completed" ? (
-                      <div className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-yellow-500 bg-yellow-500/10 px-2 py-1 md:py-1.5 rounded-lg border border-yellow-500/20 text-center w-full leading-tight">
+                      <div className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 px-2 md:px-3 py-1.5 md:py-2 rounded-xl border border-yellow-500/20 text-center w-full leading-tight shadow-sm">
                         {match.result_margin || "Ended"}
                       </div>
                     ) : match.status === "live" ? (
-                      <div className="px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] font-black text-red-500 animate-pulse tracking-widest">
+                      <div className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] md:text-xs font-black text-red-500 animate-pulse tracking-widest shadow-sm">
                         LIVE
                       </div>
                     ) : (
-                      <div className="px-3 py-1 bg-[var(--surface-3)] rounded-full text-[10px] font-black text-[var(--text-muted)] tracking-widest">
+                      <div className="px-3 md:px-4 py-1.5 bg-[var(--surface-3)] border border-[var(--border-1)] rounded-full text-[10px] md:text-xs font-black text-[var(--text-muted)] tracking-widest shadow-inner">
                         VS
                       </div>
                     )}
                   </div>
 
-                  {/* TEAM 2 (Stacked Layout) */}
-                  <div className="flex items-center justify-end gap-3 w-[42%] text-right">
-                    <div className="flex flex-col items-end overflow-hidden">
-                      <span className="font-black text-sm md:text-xl text-[var(--foreground)] truncate">
-                        {match.team2?.short_name || "TBD"}
-                      </span>
-                      {(match.status === "live" ||
-                        match.status === "completed") &&
-                        renderScore(
-                          match.team2_score,
-                          match.team2_wickets,
-                          match.team2_overs,
-                        )}
-                    </div>
+                  {/* TEAM 2 */}
+                  <div className="flex flex-col md:flex-row-reverse items-center md:items-start gap-2 md:gap-4 flex-1 text-center md:text-right min-w-0">
                     <div
-                      className="w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-2)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-inner p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px] text-center"
+                      className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px]"
                       style={{
                         backgroundImage: match.team2?.logo_url
                           ? `url(${match.team2?.logo_url})`
@@ -1093,6 +1090,22 @@ export default function MatchesPage({
                       }}
                     >
                       {!match.team2?.logo_url && "TBD"}
+                    </div>
+
+                    <div className="flex flex-col items-center md:items-end min-w-0 w-full">
+                      <span className="font-black text-sm md:text-xl text-[var(--foreground)] truncate w-full px-1">
+                        {match.team2?.short_name || "TBD"}
+                      </span>
+                      {(match.status === "live" ||
+                        match.status === "completed") && (
+                        <div className="mt-1 md:mt-0">
+                          {renderScore(
+                            match.team2_score,
+                            match.team2_wickets,
+                            match.team2_overs,
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

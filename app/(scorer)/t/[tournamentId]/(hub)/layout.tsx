@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, createContext } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -27,6 +27,11 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
+
+export const TournamentContext = createContext({
+  isAdmin: false,
+  tournament: null as any,
+});
 
 export default function TournamentLayout({
   children,
@@ -414,7 +419,9 @@ export default function TournamentLayout({
         </div>
 
         <div className="p-6 md:p-12 max-w-7xl w-full mx-auto animate-in fade-in duration-700">
+          <TournamentContext.Provider value={{ isAdmin, tournament }}>
           {children}
+          </TournamentContext.Provider>
         </div>
       </main>
 

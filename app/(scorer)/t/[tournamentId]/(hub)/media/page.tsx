@@ -1,8 +1,16 @@
 "use client";
-import React, { useEffect, useState, use } from "react";
+import React, {
+  useEffect,
+  useState,
+  use,
+  useContext,
+  createContext,
+} from "react";
 import { supabase } from "@/lib/supabase";
 import DigitalAssetHub from "../../../../../components/DigitalAssetHub";
-import { Image as ImageIcon, Wand2 } from "lucide-react";
+import { Image as ImageIcon, Wand2, Download, Lock } from "lucide-react";
+
+import { TournamentContext } from "../layout";
 
 export default function UnifiedMediaStudio({
   params,
@@ -10,6 +18,8 @@ export default function UnifiedMediaStudio({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
+
+  const { isAdmin } = useContext(TournamentContext);
 
   // Studio Selection States
   const [graphicType, setGraphicType] = useState<
@@ -71,9 +81,18 @@ export default function UnifiedMediaStudio({
 
   // Route the selected data into the proper Canvas formatting
   const renderCanvasStudio = () => {
+    if (!isAdmin)
+      return (
+        <div className="h-64 flex flex-col text-center items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-3xl p-12 uppercase font-black text-sm tracking-widest mt-8">
+          <span className="max-w-4xl  p-15">
+            Your are not authorized to access this feature. Please contact the
+            tournament admin for access.
+          </span>
+        </div>
+      );
     if (!selectedItem)
       return (
-        <div className="h-64 flex flex-col items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-3xl p-12 uppercase font-black text-sm tracking-widest mt-8">
+        <div className="h-64 flex flex-col text-center items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-3xl p-12 uppercase font-black text-sm tracking-widest mt-8">
           Select a target to launch studio
         </div>
       );
@@ -184,61 +203,62 @@ export default function UnifiedMediaStudio({
           </p>
         </div>
       </div>
-
       {/* Control Panel */}
-      <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-2xl shadow-sm flex flex-col md:flex-row gap-6">
-        {/* Step 1: Pick Type */}
-        <div className="flex-1 space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
-            1. Select Graphic Type
-          </label>
-          <select
-            value={graphicType}
-            onChange={(e) => setGraphicType(e.target.value as any)}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm font-bold uppercase outline-none focus:border-[var(--primary)] text-[var(--foreground)] cursor-pointer"
-          >
-            <option value="">-- Choose Template --</option>
-            <option value="AWARD">🏆 Custom Award</option>
-            <option value="MATCH">🏟️ Match Promo / Result</option>
-            <option value="PLAYER">👤 Player Profile</option>
-            <option value="TEAM">🛡️ Team Poster</option>
-          </select>
-        </div>
+      {isAdmin && (
+        <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-2xl shadow-sm flex flex-col md:flex-row gap-6">
+          {/* Step 1: Pick Type */}
+          <div className="flex-1 space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+              1. Select Graphic Type
+            </label>
+            <select
+              value={graphicType}
+              onChange={(e) => setGraphicType(e.target.value as any)}
+              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm font-bold uppercase outline-none focus:border-[var(--primary)] text-[var(--foreground)] cursor-pointer"
+            >
+              <option value="">-- Choose Template --</option>
+              <option value="AWARD">🏆 Custom Award</option>
+              <option value="MATCH">🏟️ Match Promo / Result</option>
+              <option value="PLAYER">👤 Player Profile</option>
+              <option value="TEAM">🛡️ Team Poster</option>
+            </select>
+          </div>
 
-        {/* Step 2: Pick Target */}
-        <div className="flex-1 space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
-            2. Select Target
-          </label>
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            disabled={!graphicType}
-            className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm font-bold uppercase outline-none focus:border-[var(--primary)] text-[var(--foreground)] cursor-pointer disabled:opacity-50"
-          >
-            <option value="">-- Choose Target --</option>
-            {graphicType === "MATCH" &&
-              matches.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.team1?.short_name} vs {m.team2?.short_name} (
-                  {new Date(m.match_date).toLocaleDateString()})
-                </option>
-              ))}
-            {graphicType === "TEAM" &&
-              teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            {(graphicType === "PLAYER" || graphicType === "AWARD") &&
-              players.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name} ({p.team?.name || "Free Agent"})
-                </option>
-              ))}
-          </select>
+          {/* Step 2: Pick Target */}
+          <div className="flex-1 space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+              2. Select Target
+            </label>
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              disabled={!graphicType}
+              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm font-bold uppercase outline-none focus:border-[var(--primary)] text-[var(--foreground)] cursor-pointer disabled:opacity-50"
+            >
+              <option value="">-- Choose Target --</option>
+              {graphicType === "MATCH" &&
+                matches.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.team1?.short_name} vs {m.team2?.short_name} (
+                    {new Date(m.match_date).toLocaleDateString()})
+                  </option>
+                ))}
+              {graphicType === "TEAM" &&
+                teams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              {(graphicType === "PLAYER" || graphicType === "AWARD") &&
+                players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.team?.name || "Free Agent"})
+                  </option>
+                ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* The Canvas Studio Workspace */}
       <div className="pt-4">{renderCanvasStudio()}</div>

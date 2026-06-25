@@ -205,9 +205,6 @@ useEffect(() => {
     }
   };
 
-  const [customTarget1stInnings, setCustomTarget1stInnings] =
-    useState<number>(0);
-
   const handleSmartEndInnings = async () => {
     if (!window.confirm("Are you sure you want to end this innings?")) return;
 

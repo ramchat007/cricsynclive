@@ -289,7 +289,7 @@ export default function BroadcastOverlay({
       featureKey="youtube_sync_enabled"
       featureName="Live YouTube Viewer Sync"
     >
-      <div className="fixed inset-0 w-screen h-screen bg-transparent pointer-events-none z-[9999]">
+      <div className="fixed inset-0 w-[1920px] h-[1080px] bg-transparent pointer-events-none z-[9999] overflow-hidden origin-top-left">
         <style>{`
         html, body { background: transparent !important; margin: 0; padding: 0; overflow: hidden; }
         @keyframes spin3D_Coin { 0% { transform: rotateY(0deg); } 10% { transform: rotateY(360deg); } 100% { transform: rotateY(360deg); } }
@@ -394,7 +394,7 @@ export default function BroadcastOverlay({
         {/* 4. PARTNERSHIP BANNER */}
         {activeViews.includes("PARTNERSHIP") && !activeFullscreen && (
           <div
-            className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
+            className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-[60] transition-transform duration-500 ${partnershipTranslate}`}
           >
             <Partnership
               matchData={matchData}
@@ -419,12 +419,26 @@ export default function BroadcastOverlay({
             </div>
           )}
 
-        {/* 6. MAIN SCORE TICKER */}
+        {/* 6. MAIN SCORE TICKER
         {isScorebugOn && matchData && !activeFullscreen && (
           <div
             className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
           >
             <ScoreTicker overlayData={config} liveMatch={matchData} />
+          </div>
+        )} */}
+
+        {isScorebugOn && matchData && !activeFullscreen && (
+          <div
+            className={`absolute bottom-0 w-full z-[50] transition-transform duration-500 ${isTickerOn ? "-translate-y-10" : "translate-y-0"}`}
+          >
+            <ScoreTicker
+              overlayData={config}
+              liveMatch={matchData}
+              deliveries={deliveries}
+              team1Squad={team1Squad}
+              team2Squad={team2Squad}
+            />
           </div>
         )}
 
