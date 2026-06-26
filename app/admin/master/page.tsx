@@ -17,6 +17,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { forceUpdateTier } from "@/app/actions/admin";
 
 export default function MasterAdminPage() {
   const [activeTab, setActiveTab] = useState<
@@ -152,6 +153,14 @@ export default function MasterAdminPage() {
     setTournaments((prev) =>
       prev.map((t) => (t.id === id ? { ...t, subscription_tier: tier } : t)),
     );
+
+    // 2. Fire the server-to-server God-Mode mutation
+    const res = await forceUpdateTier(id, tier);
+
+    if (!res.success) {
+      alert("Failed to sync tier: " + res.error);
+      fetchData(); // Revert UI if server rejected it
+    }
   };
 
   const toggleFeature = (key: keyof typeof features) => {
