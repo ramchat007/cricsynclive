@@ -14,12 +14,18 @@ import {
   Tag,
   Plus,
   Trash2,
+  ShieldAlert,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function MasterAdminPage() {
   const [activeTab, setActiveTab] = useState<
     "tournaments" | "settings" | "coupons"
   >("tournaments");
+
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+
+  const router = useRouter();
 
   // States
   const [tournaments, setTournaments] = useState<any[]>([]);
@@ -61,6 +67,29 @@ export default function MasterAdminPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      setHasAccess(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // Verify role in profiles table
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .single();
+
+    if (profile?.role !== "super_admin") {
+      setHasAccess(false);
+      setIsLoading(false);
+      return; // 🛑 Halt all further fetching
+    }
+
+    setHasAccess(true);
 
     // Fetch Tournaments
     const { data: tData } = await supabase
@@ -220,14 +249,40 @@ export default function MasterAdminPage() {
     setTierFeatures({ ...tierFeatures, [tier]: newFeatures });
   };
 
+  // --------------------------------------------------------
+  // UI RENDER LOCKS
+  // --------------------------------------------------------
   if (isLoading)
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-        <div className="animate-pulse text-[var(--accent)] font-black uppercase tracking-widest">
-          Loading...
+        <div className="animate-pulse text-[var(--accent)] font-black uppercase tracking-widest flex items-center gap-3">
+          <Shield className="animate-spin-slow" size={24} /> Authenticating...
         </div>
       </div>
     );
+
+  // 🛑 DENIED SCREEN
+  if (hasAccess === false) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-6">
+        <div className="bg-red-500/10 border border-red-500/30 p-10 rounded-[2.5rem] max-w-lg flex flex-col items-center shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+          <ShieldAlert size={80} className="text-red-500 mb-6 animate-pulse" />
+          <h1 className="text-4xl font-black uppercase text-white tracking-tighter mb-4">
+            Access Denied
+          </h1>
+          <p className="text-red-400 font-bold uppercase tracking-widest text-sm mb-8 leading-relaxed">
+            This sector is strictly restricted to Level-1 Super Administrators. Your attempt has been logged.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-sm py-4 px-8 rounded-xl transition-all"
+          >
+            Return to Safety
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background)] p-4 md:p-8 font-sans text-[var(--foreground)] pb-20 overflow-x-hidden">
