@@ -270,12 +270,11 @@ export default function DashboardHub() {
         </h1>
         <div className="flex items-center gap-3 w-full md:w-auto">
           {/* QUICK MATCH HOOK */}
-          <button
-            onClick={() => setShowQuickMatchModal(true)}
+          <a href="/quick-match"
             className="flex-1 md:flex-none bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
           >
             <Zap size={16} /> Quick Match
-          </button>
+          </a>
 
           <button
             onClick={handleOpenCreateModal}
