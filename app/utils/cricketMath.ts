@@ -113,7 +113,7 @@ export function deriveMatchStats(
   const strikerRuns = currentInningsDeliveries
     .filter((d) => d.striker_id === match.live_striker_id)
     .reduce((sum, d) => sum + (d.runs_off_bat || 0), 0);
-    
+
   const strikerBalls = currentInningsDeliveries.filter((d) => {
     if (d.striker_id !== match.live_striker_id) return false;
     const type = d.extras_type?.toLowerCase() || "";
@@ -123,7 +123,7 @@ export function deriveMatchStats(
   const nonStrikerRuns = currentInningsDeliveries
     .filter((d) => d.striker_id === match.live_non_striker_id)
     .reduce((sum, d) => sum + (d.runs_off_bat || 0), 0);
-    
+
   const nonStrikerBalls = currentInningsDeliveries.filter((d) => {
     if (d.striker_id !== match.live_non_striker_id) return false;
     const type = d.extras_type?.toLowerCase() || "";
@@ -277,16 +277,16 @@ export function generateTournamentStandings(
 
     // Add stats to Team 1
     t1.played += 1;
-    t1.runsScored += match.team1_runs;
+    t1.runsScored += match.team1_score;
     t1.oversFaced += t1OversFaced;
-    t1.runsConceded += match.team2_runs;
+    t1.runsConceded += match.team2_score;
     t1.oversBowled += t2OversFaced;
 
     // Add stats to Team 2
     t2.played += 1;
-    t2.runsScored += match.team2_runs;
+    t2.runsScored += match.team2_score;
     t2.oversFaced += t2OversFaced;
-    t2.runsConceded += match.team1_runs;
+    t2.runsConceded += match.team1_score;
     t2.oversBowled += t1OversFaced;
 
     // Distribute Points
@@ -333,7 +333,7 @@ export function generateTournamentLeaderboards(
     // 1. Batting Aggregation
     const batDelivs = deliveries.filter((d) => d.striker_id === player.id);
     const runs = batDelivs.reduce((sum, d) => sum + (d.runs_off_bat || 0), 0);
-    
+
     // 🚨 FIXED: Exclude wide, penalty, dead-ball from tournament batting stats
     const balls = batDelivs.filter((d) => {
       const type = d.extras_type?.toLowerCase() || "";

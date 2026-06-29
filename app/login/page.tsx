@@ -50,7 +50,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `/dashboard`,
       },
     });
 
@@ -79,8 +79,7 @@ export default function LoginPage() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={googleLoading || loading}
-          className="flex items-center justify-center gap-3 w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-bold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
-        >
+          className="flex items-center justify-center gap-3 w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-bold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50">
           {googleLoading ? (
             "Connecting to Google..."
           ) : (
@@ -192,8 +191,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl mt-4 transition-all"
-          >
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl mt-4 transition-all">
             {loading
               ? "Authenticating..."
               : isSignUp
@@ -206,8 +204,7 @@ export default function LoginPage() {
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             type="button"
-            className="text-sm font-bold text-slate-500 hover:text-teal-500 transition-colors"
-          >
+            className="text-sm font-bold text-slate-500 hover:text-teal-500 transition-colors">
             {isSignUp
               ? "Already have an account? Log in."
               : "Need an account? Sign up."}

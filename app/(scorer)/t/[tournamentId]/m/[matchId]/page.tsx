@@ -1,5 +1,7 @@
 "use client";
-import { useEffect, useState, useRef, use } from "react";
+import AdBanner from "../../../../../components/AdBanner";
+import { useEffect, useState, useRef, use, useContext } from "react";
+import { TournamentContext } from "@/app/(scorer)/t/[tournamentId]/(hub)/layout";
 // import { fetchAICommentary } from "../../../../../utils/gemini";
 import Link from "next/link";
 import {
@@ -46,6 +48,8 @@ export default function UnifiedLiveMatchPage({
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   const engine = useMatchEngine(tournamentId, matchId);
+
+  const { tournament } = useContext(TournamentContext);
 
   // Setup States
   const [tossWinnerId, setTossWinnerId] = useState("");
@@ -114,60 +118,60 @@ export default function UnifiedLiveMatchPage({
   const [completedRuns, setCompletedRuns] = useState(0);
 
   // 🔒 --- AUTHENTICATION CHECKER --- 🔒
-useEffect(() => {
-  const checkAuthorization = async () => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      // 1. Unauthenticated users are strictly blocked
-      if (!session) {
-        setIsAuthorized(false);
-        return;
-      }
-
-      // 2. Handle Quick Match Logic cleanly in one place
-      if (tournamentId === "QUICK_MATCH") {
-        if (!engine.match) {
-          // Keep authorized as false (or a separate loading state) until match metadata is available
-          setIsAuthorized(false); 
+        // 1. Unauthenticated users are strictly blocked
+        if (!session) {
+          setIsAuthorized(false);
           return;
         }
-        
-        // Authorize ONLY if the logged-in user is the creator of this quick match
-        const isCreator = session.user.id === engine.match.created_by;
-        setIsAuthorized(isCreator);
-        return;
+
+        // 2. Handle Quick Match Logic cleanly in one place
+        if (tournamentId === "QUICK_MATCH") {
+          if (!engine.match) {
+            // Keep authorized as false (or a separate loading state) until match metadata is available
+            setIsAuthorized(false);
+            return;
+          }
+
+          // Authorize ONLY if the logged-in user is the creator of this quick match
+          const isCreator = session.user.id === engine.match.created_by;
+          setIsAuthorized(isCreator);
+          return;
+        }
+
+        // 3. Regular Tournament Database Verification
+        const { data: tData } = await supabase
+          .from("tournaments")
+          .select("owner_id")
+          .eq("id", tournamentId)
+          .single();
+
+        const { data: pData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        const isSuperAdmin = pData?.role === "super_admin";
+        const isTournamentOwner = tData?.owner_id === session.user.id;
+        const isAssignedScorer =
+          pData?.role === "scorer" || pData?.role === "admin";
+
+        setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setIsAuthorized(false);
       }
+    };
 
-      // 3. Regular Tournament Database Verification
-      const { data: tData } = await supabase
-        .from("tournaments")
-        .select("owner_id")
-        .eq("id", tournamentId)
-        .single();
-
-      const { data: pData } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .single();
-
-      const isSuperAdmin = pData?.role === "super_admin";
-      const isTournamentOwner = tData?.owner_id === session.user.id;
-      const isAssignedScorer = pData?.role === "scorer" || pData?.role === "admin";
-
-      setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
-
-    } catch (error) {
-      console.error("Auth check failed:", error);
-      setIsAuthorized(false);
-    }
-  };
-
-  checkAuthorization();
-}, [tournamentId, engine.match?.created_by]); // 💡 Optimized dependency to track the exact property safely
+    checkAuthorization();
+  }, [tournamentId, engine.match?.created_by]); // 💡 Optimized dependency to track the exact property safely
 
   const stats = deriveMatchStats(
     engine.match,
@@ -818,8 +822,7 @@ useEffect(() => {
         <p className="text-[var(--text-muted)] font-bold mb-8">{subtitle}</p>
         <Link
           href={`/t/${tournamentId}/matches`}
-          className="block w-full bg-[var(--surface-2)] py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--border-1)] transition-colors text-[var(--foreground)]"
-        >
+          className="block w-full bg-[var(--surface-2)] py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--border-1)] transition-colors text-[var(--foreground)]">
           Return to Matches
         </Link>
       </div>
@@ -843,8 +846,7 @@ useEffect(() => {
           href={
             tournamentId === "QUICK_MATCH" ? "/" : `/t/${tournamentId}/matches`
           }
-          className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max"
-        >
+          className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max">
           <ArrowLeft size={16} />{" "}
           {tournamentId === "QUICK_MATCH" ? "Exit Match" : "Back to Schedule"}
         </Link>
@@ -896,14 +898,12 @@ useEffect(() => {
               <div className="flex gap-4">
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team1_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                >
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                   {engine.match.team1?.name}
                 </button>
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team2_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                >
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                   {engine.match.team2?.name}
                 </button>
               </div>
@@ -916,14 +916,12 @@ useEffect(() => {
                 <div className="flex gap-4">
                   <button
                     onClick={() => setTossDecision("bat")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bat" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                  >
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bat" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                     Elected to Bat
                   </button>
                   <button
                     onClick={() => setTossDecision("bowl")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bowl" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                  >
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bowl" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                     Elected to Bowl
                   </button>
                 </div>
@@ -934,8 +932,7 @@ useEffect(() => {
                 engine.saveTossAndStart(tossWinnerId, tossDecision)
               }
               disabled={!tossWinnerId}
-              className="w-full mt-8 bg-[var(--foreground)] text-[var(--background)] disabled:opacity-50 font-black uppercase py-4 rounded-xl transition-opacity hover:opacity-90"
-            >
+              className="w-full mt-8 bg-[var(--foreground)] text-[var(--background)] disabled:opacity-50 font-black uppercase py-4 rounded-xl transition-opacity hover:opacity-90">
               Start Match
             </button>
           </div>
@@ -979,8 +976,7 @@ useEffect(() => {
                   <select
                     value={setupStriker}
                     onChange={(e) => setSetupStriker(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-                  >
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
                     <option value="">Select...</option>
                     {stats.battingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -996,8 +992,7 @@ useEffect(() => {
                   <select
                     value={setupNonStriker}
                     onChange={(e) => setSetupNonStriker(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-                  >
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
                     <option value="">Select...</option>
                     {stats.battingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -1013,8 +1008,7 @@ useEffect(() => {
                     setQuickAddRole("batter");
                     setShowQuickAddPlayer(true);
                   }}
-                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                >
+                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
                   + Add Extra Batter to Squad
                 </button>
               </div>
@@ -1026,8 +1020,7 @@ useEffect(() => {
               <select
                 value={setupBowler}
                 onChange={(e) => setSetupBowler(e.target.value)}
-                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-              >
+                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
                 <option value="">Select...</option>
                 {stats.bowlingSquad.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -1041,8 +1034,7 @@ useEffect(() => {
                     setQuickAddRole("bowler");
                     setShowQuickAddPlayer(true);
                   }}
-                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                >
+                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
                   + Add Extra Bowler to Squad
                 </button>
               </div>
@@ -1051,8 +1043,7 @@ useEffect(() => {
               onClick={() =>
                 engine.saveOpeners(setupStriker, setupNonStriker, setupBowler)
               }
-              className="w-full bg-[var(--accent)] text-[var(--background)] font-black text-lg uppercase tracking-widest py-5 rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg"
-            >
+              className="w-full bg-[var(--accent)] text-[var(--background)] font-black text-lg uppercase tracking-widest py-5 rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg">
               Play Ball
             </button>
           </div>
@@ -1091,8 +1082,7 @@ useEffect(() => {
                             <button
                               key={idx}
                               onClick={() => handleQuickAddPlayer(p.full_name)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
-                            >
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer">
                               <span className="font-bold text-[var(--foreground)] text-left">
                                 {p.full_name}
                               </span>
@@ -1118,15 +1108,13 @@ useEffect(() => {
                       setNewPlayerName("");
                       setGlobalSearchResults([]);
                     }}
-                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl"
-                  >
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl">
                     Cancel
                   </button>
                   <button
                     onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg">
                     Create New
                   </button>
                 </div>
@@ -1152,8 +1140,7 @@ useEffect(() => {
       className={`min-h-screen bg-[var(--background)] text-[var(--foreground)] p-2 md:p-6 font-sans relative overflow-hidden lg:overflow-visible transition-colors duration-300 ${
         /* Only apply heavy bottom padding on Mobile when Keypad is active */
         isAuthorized && !isCompleted ? "pb-[200px] lg:pb-10" : "pb-10"
-      }`}
-    >
+      }`}>
       {/* HEADER & TOP NAVIGATION */}
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6 px-2 mt-2 animate-in fade-in">
         <div className="flex items-center gap-4">
@@ -1161,8 +1148,7 @@ useEffect(() => {
             onClick={() =>
               (window.location.href = `/t/${tournamentId}/matches`)
             }
-            className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)]"
-          >
+            className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)]">
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -1183,15 +1169,13 @@ useEffect(() => {
           {isAuthorized && tournamentId === "QUICK_MATCH" && (
             <button
               onClick={handleDeleteMatch}
-              className="flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm"
-            >
+              className="flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm">
               <Trash2 size={14} /> Delete
             </button>
           )}
           <button
             onClick={handleShareMatch}
-            className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm"
-          >
+            className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm">
             {isSharing ? (
               <Check size={14} className="text-emerald-500" />
             ) : (
@@ -1211,8 +1195,7 @@ useEffect(() => {
       <div
         className={`max-w-[1400px] mx-auto flex gap-6 relative animate-in fade-in ${
           isCompleted ? "flex-col lg:flex-row" : "flex-col-reverse lg:flex-row"
-        }`}
-      >
+        }`}>
         {/* --- LEFT COLUMN: DYNAMIC CONTEXT (AWARDS OR SCORING KEYPAD) --- */}
         <div className="flex-1 flex flex-col gap-6 lg:max-w-[350px] xl:max-w-[400px] w-full shrink-0">
           {isCompleted ? (
@@ -1268,8 +1251,7 @@ useEffect(() => {
               {isAuthorized && (
                 <button
                   onClick={() => setShowPostMatchModal(true)}
-                  className="w-full relative z-10 bg-yellow-500 text-[var(--background)] font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20"
-                >
+                  className="w-full relative z-10 bg-yellow-500 text-[var(--background)] font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20">
                   Edit Awards 🏆
                 </button>
               )}
@@ -1303,8 +1285,7 @@ useEffect(() => {
                         key={runs}
                         onClick={() => handleRecordBall(runs)}
                         disabled={engine.isSubmittingBall}
-                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95"
-                      >
+                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95">
                         {runs}
                       </button>
                     ))}
@@ -1315,15 +1296,13 @@ useEffect(() => {
                     <button
                       onClick={() => handleRecordBall(4)}
                       disabled={engine.isSubmittingBall}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95"
-                    >
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95">
                       4
                     </button>
                     <button
                       onClick={() => handleRecordBall(6)}
                       disabled={engine.isSubmittingBall}
-                      className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all shadow-md active:scale-95"
-                    >
+                      className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all shadow-md active:scale-95">
                       6
                     </button>
 
@@ -1333,8 +1312,7 @@ useEffect(() => {
                         setMoreActionType("penalty-add"); // Default reset
                         setShowMoreModal(true);
                       }}
-                      className="col-span-2 bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-2 sm:py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2"
-                    >
+                      className="col-span-2 bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-2 sm:py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                       ⚙️ More Actions
                     </button>
                   </div>
@@ -1348,8 +1326,7 @@ useEffect(() => {
                         setPendingExtraType("wide");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       WD
                     </button>
                     <button
@@ -1357,8 +1334,7 @@ useEffect(() => {
                         setPendingExtraType("no-ball");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       NB
                     </button>
                     <button
@@ -1366,8 +1342,7 @@ useEffect(() => {
                         setPendingExtraType("leg-bye");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       LB
                     </button>
                     <button
@@ -1375,8 +1350,7 @@ useEffect(() => {
                         setPendingExtraType("bye");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       B
                     </button>
                     <button
@@ -1384,8 +1358,7 @@ useEffect(() => {
                         setPlayerOutId(engine.match!.live_striker_id);
                         setShowWicketModal(true);
                       }}
-                      className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl shadow-md active:scale-95 transition-all"
-                    >
+                      className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl shadow-md active:scale-95 transition-all">
                       OUT
                     </button>
                   </div>
@@ -1425,6 +1398,12 @@ useEffect(() => {
               team2Players={engine.team2Players}
               currentOverDeliveries={stats.currentOverDeliveries}
             />
+
+            {!isAuthorized && tournament?.subscription_tier === "free" && (
+              <div className="w-full bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] p-2 shadow-sm overflow-hidden flex items-center justify-center">
+                 <AdBanner dataAdSlot="YOUR_HORIZONTAL_SLOT_ID" dataAdFormat="horizontal" />
+              </div>
+            )}
 
             {!isCompleted && (
               <ActivePlayers
@@ -1470,8 +1449,7 @@ useEffect(() => {
                     activeTab === tab.id
                       ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                       : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                  }`}
-                >
+                  }`}>
                   {tab.label}
                   {activeTab === tab.id ? (
                     <ChevronUp size={14} className="ml-1" />
@@ -1485,6 +1463,12 @@ useEffect(() => {
             {/* ONLY RENDER CONTENT IF A TAB IS ACTIVE */}
             {activeTab && (
               <div className="p-4 sm:p-6 min-h-[400px]">
+                {!isAuthorized && tournament?.subscription_tier === "free" && (
+                  <div className="mb-6">
+                    <AdBanner dataAdSlot="YOUR_RESPONSIVE_SLOT_ID" />
+                  </div>
+                )}
+                
                 {activeTab === "scorecard" && (
                   <FullScorecard
                     deliveries={engine.deliveries}
@@ -1537,8 +1521,7 @@ useEffect(() => {
                         <button
                           key={p.id}
                           onClick={() => setSelectedNewBowlerId(p.id)}
-                          className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg transition-colors ${selectedNewBowlerId === p.id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
-                        >
+                          className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg transition-colors ${selectedNewBowlerId === p.id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}>
                           <span>{p.full_name}</span>
                         </button>
                       ))}
@@ -1550,8 +1533,7 @@ useEffect(() => {
                       setSelectedNewBowlerId("");
                     }}
                     disabled={!selectedNewBowlerId}
-                    className="w-full mt-6 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-2xl disabled:opacity-30 text-lg hover:opacity-90 transition-opacity"
-                  >
+                    className="w-full mt-6 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-2xl disabled:opacity-30 text-lg hover:opacity-90 transition-opacity">
                     Confirm Bowler
                   </button>
                   <button
@@ -1559,8 +1541,7 @@ useEffect(() => {
                       setQuickAddRole("bowler");
                       setShowQuickAddPlayer(true);
                     }}
-                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 border-dashed rounded-xl py-3 font-bold transition-colors"
-                  >
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 border-dashed rounded-xl py-3 font-bold transition-colors">
                     <UserPlus size={18} /> Quick Add Bowler
                   </button>
                 </div>
@@ -1587,8 +1568,7 @@ useEffect(() => {
                         <button
                           key={id}
                           onClick={() => setPlayerOutId(id)}
-                          className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm transition-colors ${playerOutId === id ? "border-red-500 bg-red-500/10 text-red-500" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                        >
+                          className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm transition-colors ${playerOutId === id ? "border-red-500 bg-red-500/10 text-red-500" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                           {
                             stats.battingSquad.find((p) => p.id === id)
                               ?.full_name
@@ -1604,8 +1584,7 @@ useEffect(() => {
                     <select
                       value={wicketType}
                       onChange={(e) => setWicketType(e.target.value)}
-                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                    >
+                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                       <option className="bg-[var(--surface-1)]" value="bowled">
                         Bowled
                       </option>
@@ -1631,8 +1610,7 @@ useEffect(() => {
                       <select
                         value={fielderId}
                         onChange={(e) => setFielderId(e.target.value)}
-                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                      >
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                         <option className="bg-[var(--surface-1)]" value="">
                           Select Fielder...
                         </option>
@@ -1640,8 +1618,7 @@ useEffect(() => {
                           <option
                             className="bg-[var(--surface-1)]"
                             key={p.id}
-                            value={p.id}
-                          >
+                            value={p.id}>
                             {p.full_name}
                           </option>
                         ))}
@@ -1663,8 +1640,7 @@ useEffect(() => {
                               completedRuns === runs
                                 ? "bg-[var(--accent)] text-[var(--background)] shadow-md border-[var(--accent)] border"
                                 : "bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"
-                            }`}
-                          >
+                            }`}>
                             {runs}
                           </button>
                         ))}
@@ -1693,8 +1669,7 @@ useEffect(() => {
                       <select
                         value={newBatsmanId}
                         onChange={(e) => setNewBatsmanId(e.target.value)}
-                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                      >
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                         <option className="bg-[var(--surface-1)]" value="">
                           Select New Batsman...
                         </option>
@@ -1709,8 +1684,7 @@ useEffect(() => {
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}
-                            >
+                              value={p.id}>
                               {p.full_name}
                             </option>
                           ))}
@@ -1721,8 +1695,7 @@ useEffect(() => {
                             setQuickAddRole("batter");
                             setShowQuickAddPlayer(true);
                           }}
-                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                        >
+                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
                           + Add Extra Player to Squad
                         </button>
                       </div>
@@ -1747,8 +1720,7 @@ useEffect(() => {
                       />
                       <label
                         htmlFor="wicketExtra"
-                        className="text-sm font-black text-orange-500 uppercase cursor-pointer"
-                      >
+                        className="text-sm font-black text-orange-500 uppercase cursor-pointer">
                         Wicket on an Extra?
                       </label>
                     </div>
@@ -1762,8 +1734,7 @@ useEffect(() => {
                                 setWicketExtraType(ext as any);
                                 setForceLegalBall(false);
                               }}
-                              className={`flex-1 py-3 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                            >
+                              className={`flex-1 py-3 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                               {ext.replace("-", " ")}
                             </button>
                           ))}
@@ -1782,8 +1753,7 @@ useEffect(() => {
                             />
                             <label
                               htmlFor="forceLegal"
-                              className="text-sm font-bold text-[var(--text-muted)] cursor-pointer"
-                            >
+                              className="text-sm font-bold text-[var(--text-muted)] cursor-pointer">
                               Count this as a legal delivery?
                             </label>
                           </div>
@@ -1797,8 +1767,7 @@ useEffect(() => {
                               <button
                                 key={num}
                                 onClick={() => setWicketExtraRuns(num)}
-                                className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                              >
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                                 +{num}
                               </button>
                             ))}
@@ -1810,8 +1779,7 @@ useEffect(() => {
                   <div className="flex gap-4 pt-4">
                     <button
                       onClick={() => setShowWicketModal(false)}
-                      className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl text-lg transition-colors"
-                    >
+                      className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl text-lg transition-colors">
                       Cancel
                     </button>
                     <button
@@ -1827,8 +1795,7 @@ useEffect(() => {
                         ).length > 0 &&
                           !newBatsmanId)
                       }
-                      className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20"
-                    >
+                      className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20">
                       {stats.battingSquad.filter(
                         (p) =>
                           p.id !== engine.match!.live_striker_id &&
@@ -1858,8 +1825,7 @@ useEffect(() => {
                     <button
                       key={num}
                       onClick={() => setExtraAdditionalRuns(num)}
-                      className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"}`}
-                    >
+                      className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"}`}>
                       {num}
                     </button>
                   ))}
@@ -1867,14 +1833,12 @@ useEffect(() => {
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowExtrasModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors"
-                  >
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors">
                     Cancel
                   </button>
                   <button
                     onClick={submitExtra}
-                    className="flex-[2] bg-[var(--foreground)] hover:opacity-80 transition-opacity text-[var(--background)] font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest"
-                  >
+                    className="flex-[2] bg-[var(--foreground)] hover:opacity-80 transition-opacity text-[var(--background)] font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest">
                     Confirm
                   </button>
                 </div>
@@ -1891,8 +1855,7 @@ useEffect(() => {
                 <div className="space-y-8">
                   <button
                     onClick={() => setEditingBall(null)}
-                    className="w-full py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors"
-                  >
+                    className="w-full py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors">
                     Cancel
                   </button>
                 </div>
@@ -1931,15 +1894,13 @@ useEffect(() => {
                 {engine.match!.current_innings === 1 ? (
                   <button
                     onClick={engine.startSecondInnings}
-                    className="w-full bg-[var(--accent)] text-[var(--background)] font-black py-6 rounded-2xl text-2xl mt-4 hover:opacity-90 transition-opacity shadow-lg"
-                  >
+                    className="w-full bg-[var(--accent)] text-[var(--background)] font-black py-6 rounded-2xl text-2xl mt-4 hover:opacity-90 transition-opacity shadow-lg">
                     START 2ND INNINGS
                   </button>
                 ) : (
                   <button
                     onClick={() => setShowPostMatchModal(true)}
-                    className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
-                  >
+                    className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20">
                     POST-MATCH AWARDS 🏆
                   </button>
                 )}
@@ -1974,15 +1935,13 @@ useEffect(() => {
                               live_striker_id: e.target.value,
                             })
                           }
-                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
-                        >
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]">
                           <option value="">Select...</option>
                           {stats.battingSquad.map((p) => (
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}
-                            >
+                              value={p.id}>
                               {p.full_name}
                             </option>
                           ))}
@@ -2001,15 +1960,13 @@ useEffect(() => {
                               live_non_striker_id: e.target.value,
                             })
                           }
-                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
-                        >
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]">
                           <option value="">Select...</option>
                           {stats.battingSquad.map((p) => (
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}
-                            >
+                              value={p.id}>
                               {p.full_name}
                             </option>
                           ))}
@@ -2022,8 +1979,7 @@ useEffect(() => {
                           setQuickAddRole("batter");
                           setShowQuickAddPlayer(true);
                         }}
-                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2"
-                      >
+                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2">
                         <UserPlus size={14} /> Add Extra Batter
                       </button>
                     </div>
@@ -2042,15 +1998,13 @@ useEffect(() => {
                           live_bowler_id: e.target.value,
                         })
                       }
-                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4"
-                    >
+                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4">
                       <option value="">Select...</option>
                       {stats.bowlingSquad.map((p) => (
                         <option
                           className="bg-[var(--surface-1)]"
                           key={p.id}
-                          value={p.id}
-                        >
+                          value={p.id}>
                           {p.full_name}
                         </option>
                       ))}
@@ -2062,8 +2016,7 @@ useEffect(() => {
                         setQuickAddRole("bowler");
                         setShowQuickAddPlayer(true);
                       }}
-                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2"
-                    >
+                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2">
                       <UserPlus size={14} /> Add Extra Bowler
                     </button>
                   </div>
@@ -2075,8 +2028,7 @@ useEffect(() => {
                       setShowEditPlayersModal(false);
                       engine.fetchMatchData();
                     }}
-                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-base transition-colors"
-                  >
+                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-base transition-colors">
                     Cancel
                   </button>
                   <button
@@ -2088,8 +2040,7 @@ useEffect(() => {
                       );
                       setShowEditPlayersModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-base transition-opacity shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-base transition-opacity shadow-lg">
                     Save Changes
                   </button>
                 </div>
@@ -2113,8 +2064,7 @@ useEffect(() => {
                         onClick={() =>
                           setTempOversLimit(Math.max(1, tempOversLimit - 1))
                         }
-                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                         -
                       </button>
                       <span className="text-5xl font-black w-24 text-center text-[var(--foreground)]">
@@ -2122,8 +2072,7 @@ useEffect(() => {
                       </span>
                       <button
                         onClick={() => setTempOversLimit(tempOversLimit + 1)}
-                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                         +
                       </button>
                     </div>
@@ -2139,8 +2088,7 @@ useEffect(() => {
                             Math.max(1, tempMaxOversPerBowler - 1),
                           )
                         }
-                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors">
                         -
                       </button>
                       <span className="text-3xl font-black w-16 text-center text-[var(--foreground)]">
@@ -2150,8 +2098,7 @@ useEffect(() => {
                         onClick={() =>
                           setTempMaxOversPerBowler(tempMaxOversPerBowler + 1)
                         }
-                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors">
                         +
                       </button>
                     </div>
@@ -2166,8 +2113,7 @@ useEffect(() => {
                           onClick={() =>
                             setTempTargetScore((tempTargetScore || 0) - 1)
                           }
-                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl"
-                        >
+                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl">
                           -
                         </button>
                         <span className="text-4xl font-black w-24 text-center text-orange-500">
@@ -2177,8 +2123,7 @@ useEffect(() => {
                           onClick={() =>
                             setTempTargetScore((tempTargetScore || 0) + 1)
                           }
-                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl"
-                        >
+                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl">
                           +
                         </button>
                       </div>
@@ -2191,8 +2136,7 @@ useEffect(() => {
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowSettingsModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg"
-                  >
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg">
                     Cancel
                   </button>
                   <button
@@ -2205,8 +2149,7 @@ useEffect(() => {
                       );
                       setShowSettingsModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase py-5 rounded-2xl text-lg tracking-widest transition-opacity shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase py-5 rounded-2xl text-lg tracking-widest transition-opacity shadow-lg">
                     Save
                   </button>
                 </div>
@@ -2236,8 +2179,7 @@ useEffect(() => {
                             setMoreActionType("penalty-add");
                             setCustomRuns(1);
                           }}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           Penalty (+)
                         </button>
                         <button
@@ -2245,8 +2187,7 @@ useEffect(() => {
                             setMoreActionType("penalty-minus");
                             setCustomRuns(1);
                           }}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           Penalty (-)
                         </button>
                       </div>
@@ -2255,22 +2196,19 @@ useEffect(() => {
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setMoreActionType("dead-ball")}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           Dead Ball
                         </button>
                         <button
                           onClick={() => setMoreActionType("end-innings")}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           End Innings ⏹️
                         </button>
                         {engine.match?.current_innings === 2 && (
                           <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                             <button
                               onClick={handleUndoEndInnings}
-                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm"
-                            >
+                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm">
                               ⚠️ Revert to 1st Innings
                             </button>
                           </div>
@@ -2291,8 +2229,7 @@ useEffect(() => {
                           onClick={() =>
                             setCustomRuns(Math.max(1, customRuns - 1))
                           }
-                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                        >
+                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                           -
                         </button>
                         <input
@@ -2307,8 +2244,7 @@ useEffect(() => {
                         />
                         <button
                           onClick={() => setCustomRuns(customRuns + 1)}
-                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                        >
+                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                           +
                         </button>
                       </div>
@@ -2343,8 +2279,7 @@ useEffect(() => {
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowMoreModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg"
-                  >
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg">
                     Cancel
                   </button>
                   <button
@@ -2354,8 +2289,7 @@ useEffect(() => {
                         : submitMoreAction
                     }
                     disabled={engine.isSubmittingBall}
-                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-2xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}
-                  >
+                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-2xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}>
                     {moreActionType === "end-innings"
                       ? "Confirm End"
                       : "Submit Action"}
@@ -2399,8 +2333,7 @@ useEffect(() => {
                             <button
                               key={idx}
                               onClick={() => handleQuickAddPlayer(p.full_name)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
-                            >
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer">
                               <span className="font-bold text-[var(--foreground)] text-left">
                                 {p.full_name}
                               </span>
@@ -2426,15 +2359,13 @@ useEffect(() => {
                       setNewPlayerName("");
                       setGlobalSearchResults([]);
                     }}
-                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl"
-                  >
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl">
                     Cancel
                   </button>
                   <button
                     onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg">
                     Create New
                   </button>
                 </div>
@@ -2473,8 +2404,7 @@ useEffect(() => {
               />
               <label
                 htmlFor="strictMom"
-                className="text-xs font-black text-yellow-500 uppercase tracking-widest leading-tight cursor-pointer"
-              >
+                className="text-xs font-black text-yellow-500 uppercase tracking-widest leading-tight cursor-pointer">
                 MOM must be from the winning team
               </label>
             </div>
@@ -2487,8 +2417,7 @@ useEffect(() => {
                 <select
                   value={momId}
                   onChange={(e) => setMomId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                >
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2496,8 +2425,7 @@ useEffect(() => {
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}
-                    >
+                      value={p.id}>
                       {p.full_name} (
                       {p.team_id === engine.match!.team1_id
                         ? engine.match!.team1?.short_name
@@ -2515,8 +2443,7 @@ useEffect(() => {
                 <select
                   value={bestBatsmanId}
                   onChange={(e) => setBestBatsmanId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                >
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2524,8 +2451,7 @@ useEffect(() => {
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}
-                    >
+                      value={p.id}>
                       {p.full_name}
                     </option>
                   ))}
@@ -2539,8 +2465,7 @@ useEffect(() => {
                 <select
                   value={bestBowlerId}
                   onChange={(e) => setBestBowlerId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                >
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2548,8 +2473,7 @@ useEffect(() => {
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}
-                    >
+                      value={p.id}>
                       {p.full_name}
                     </option>
                   ))}
@@ -2559,8 +2483,7 @@ useEffect(() => {
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setShowPostMatchModal(false)}
-                  className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors"
-                >
+                  className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors">
                   Cancel
                 </button>
                 {/* <button
@@ -2599,8 +2522,7 @@ useEffect(() => {
 
                     setShowPostMatchModal(false);
                   }}
-                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors"
-                >
+                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors">
                   Finish Match & Save
                 </button>
               </div>

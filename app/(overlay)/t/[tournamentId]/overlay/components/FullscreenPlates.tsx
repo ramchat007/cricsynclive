@@ -81,14 +81,14 @@ export default function FullscreenPlates({
             t2.pts += 1;
           }
 
-          t1.runsFor += m.team1_runs || 0;
+          t1.runsFor += m.team1_score || 0;
           t1.ballsFor += m.team1_balls || 0;
-          t1.runsAgainst += m.team2_runs || 0;
+          t1.runsAgainst += m.team2_score || 0;
           t1.ballsAgainst += m.team2_balls || 0;
 
-          t2.runsFor += m.team2_runs || 0;
+          t2.runsFor += m.team2_score || 0;
           t2.ballsFor += m.team2_balls || 0;
-          t2.runsAgainst += m.team1_runs || 0;
+          t2.runsAgainst += m.team1_score || 0;
           t2.ballsAgainst += m.team1_balls || 0;
         });
 

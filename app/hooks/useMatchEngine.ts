@@ -20,19 +20,29 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
       .channel(`live_match_${matchId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "deliveries", filter: `match_id=eq.${matchId}` },
+        {
+          event: "*",
+          schema: "public",
+          table: "deliveries",
+          filter: `match_id=eq.${matchId}`,
+        },
         () => {
           // console.log("Auto-Sync: Delivery detected from database.");
-          fetchMatchData(); 
-        }
+          fetchMatchData();
+        },
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "matches", filter: `id=eq.${matchId}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "matches",
+          filter: `id=eq.${matchId}`,
+        },
         () => {
           // console.log("Auto-Sync: Match state updated.");
           fetchMatchData();
-        }
+        },
       )
       .subscribe();
 
@@ -211,7 +221,7 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
           scorePayload.team2_overs = updatedStats.currentOvers;
         }
 
-        console.log("Attempting to sync payload to Supabase:", scorePayload);
+        // console.log("Attempting to sync payload to Supabase:", scorePayload);
 
         // Fire a silent background update to the matches table
         supabase
@@ -422,12 +432,18 @@ export function useMatchEngine(tournamentId: string, matchId: string) {
         player_of_match_id: momId || null,
         best_batsman_id: bestBatId || null,
         best_bowler_id: bestBowlId || null,
-        team1_runs: team1Stats.runs,
+        // team1_runs: team1Stats.runs,
+        // team1_wickets: team1Stats.wickets,
+        // team1_balls: team1Stats.balls,
+        // team2_runs: team2Stats.runs,
+        // team2_wickets: team2Stats.wickets,
+        // team2_balls: team2Stats.balls,
+        team1_score: team1Stats.runs,
         team1_wickets: team1Stats.wickets,
-        team1_balls: team1Stats.balls,
-        team2_runs: team2Stats.runs,
+        team1_overs: team1Stats.balls,
+        team2_score: team2Stats.runs,
         team2_wickets: team2Stats.wickets,
-        team2_balls: team2Stats.balls,
+        team2_overs: team2Stats.balls,
       })
       .eq("id", matchId);
 
