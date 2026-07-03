@@ -449,14 +449,12 @@ export default function ScoreTicker({
         {/* ---------------------------------------------------- */}
         <div
           className={`event-overlay-layer backdrop-blur-md ${eventTrigger ? "active" : ""}`}
-          style={{ ...eventBgStyle, ...eventBorderStyle }}
-        >
+          style={{ ...eventBgStyle, ...eventBorderStyle }}>
           <div className="glass-glare" />
           <div className="relative z-10 flex items-center gap-6">
             <span
               className="text-[56px] text-white italic tracking-[2px] font-black uppercase"
-              style={{ textShadow: "0 3px 6px rgba(0,0,0,0.5)" }}
-            >
+              style={{ textShadow: "0 3px 6px rgba(0,0,0,0.5)" }}>
               {eventTrigger === "WICKET"
                 ? "WICKET!"
                 : eventTrigger === "SIX"
@@ -465,8 +463,7 @@ export default function ScoreTicker({
             </span>
             <span
               className="text-[20px] tracking-[6px] font-black uppercase"
-              style={subtextStyle}
-            >
+              style={subtextStyle}>
               {subtextContent}
             </span>
           </div>
@@ -476,7 +473,7 @@ export default function ScoreTicker({
         {/* 🔥 2. TOP TABS (Z-INDEX FIXED) 🔥 */}
         {/* Changed z-20 to z-[2] so the animation slides cleanly in front of them */}
         {/* ---------------------------------------------------- */}
-        <div className="absolute -top-[32px] left-0 w-full flex justify-between items-end px-24 z-[2]">
+        <div className="absolute -top-[52px] left-0 w-full flex justify-between items-end px-24 z-[2]">
           <div className="w-[220px] text-center">
             <span className="block bg-slate-950/95 border-t border-l border-r border-white/20 rounded-t-xl px-4 py-1 shadow-lg text-[15px] font-black uppercase text-white pb-1">
               {battingName}
@@ -488,12 +485,10 @@ export default function ScoreTicker({
             style={{
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
-            }}
-          >
+            }}>
             <span
               className="shrink-0"
-              style={{ color: selectedTheme.tokens.warning }}
-            >
+              style={{ color: selectedTheme.tokens.warning }}>
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -503,8 +498,7 @@ export default function ScoreTicker({
             <span className="text-white/40 shrink-0">|</span>
             <span
               className="drop-shadow-md min-w-0"
-              style={{ color: selectedTheme.tokens.accent }}
-            >
+              style={{ color: selectedTheme.tokens.accent }}>
               {calculatedTarget
                 ? `${battingName} - ${equationStr}`
                 : tossWinnerName
@@ -525,8 +519,7 @@ export default function ScoreTicker({
           className="relative z-10 w-full h-full flex overflow-hidden border-t-[3px] border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.9)]"
           style={{
             background: `linear-gradient(90deg, ${battingColor} 0%, ${battingColor} 18%, rgba(10, 10, 15, 0.98) 40%, rgba(10, 10, 15, 0.98) 60%, ${bowlingColor} 82%, ${bowlingColor} 100%)`,
-          }}
-        >
+          }}>
           <div
             className={`full-bar-flash ${eventTrigger ? "active" : ""}`}
             style={flashBgStyle}
@@ -568,8 +561,7 @@ export default function ScoreTicker({
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
-                >
+                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}>
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -726,8 +718,7 @@ export default function ScoreTicker({
                       style={{
                         animation: `shootIn 0.35s ease-out forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}
-                    >
+                      }}>
                       {bText}
                     </div>
                   );

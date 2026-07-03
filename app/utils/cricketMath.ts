@@ -403,3 +403,65 @@ export function generateTournamentLeaderboards(
     };
   });
 }
+
+export const getMatchContext = (
+  match: any,
+  team1Score: number,
+  team2Score: number,
+  team1Balls: number,
+  team2Balls: number,
+  team1Name: string,
+  team2Name: string,
+) => {
+  const isFirstInnings = match.current_innings === 1;
+  const score = isFirstInnings ? team1Score : team2Score;
+  const totalBalls = isFirstInnings ? team1Balls : team2Balls;
+
+  const totalMatchBalls = (Number(match.overs_count) || 20) * 6;
+  const crr = totalBalls > 0 ? ((score / totalBalls) * 6).toFixed(2) : "0.00";
+
+  let rrr = "0.00";
+  let equationStr = "MATCH IN PROGRESS";
+  let projScoreStr = "0";
+
+  if (!isFirstInnings) {
+    const target = team1Score + 1; // Or match.revised_target if you use DLS
+    const runsNeeded = target - score;
+    const ballsRemaining = totalMatchBalls - totalBalls;
+    const battingName =
+      match.toss_winner_id === match.team1_id && match.toss_decision === "bat"
+        ? team1Name
+        : team2Name; // Adjust based on your actual batting team logic
+    const bowlingName = battingName === team1Name ? team2Name : team1Name;
+
+    if (runsNeeded <= 0) {
+      equationStr = `${battingName} WON`;
+      rrr = "-";
+    } else if (ballsRemaining <= 0 || match.status === "completed") {
+      equationStr =
+        runsNeeded === 1 && ballsRemaining === 0
+          ? "MATCH TIED"
+          : `${bowlingName} WON`;
+      rrr = "-";
+    } else {
+      rrr =
+        ballsRemaining > 0
+          ? ((runsNeeded / ballsRemaining) * 6).toFixed(2)
+          : "0.00";
+      equationStr = `NEED ${runsNeeded} runs in ${ballsRemaining} balls`;
+    }
+  } else {
+    projScoreStr =
+      totalBalls > 0
+        ? Math.round((score / totalBalls) * totalMatchBalls).toString()
+        : "0";
+  }
+
+  return {
+    crr,
+    rrr,
+    equationStr,
+    projScoreStr,
+    isFirstInnings,
+  };
+};

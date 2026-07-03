@@ -2,6 +2,7 @@
 import AdBanner from "../../../../../components/AdBanner";
 import { useEffect, useState, useRef, use, useContext } from "react";
 import { TournamentContext } from "@/app/(scorer)/t/[tournamentId]/(hub)/layout";
+import { useMatchContext } from "../../../../../hooks/useMatchContext";
 // import { fetchAICommentary } from "../../../../../utils/gemini";
 import Link from "next/link";
 import {
@@ -181,6 +182,8 @@ export default function UnifiedLiveMatchPage({
   );
 
   const isCompleted = engine.match?.status === "completed";
+
+  const ctx = useMatchContext(engine.match, stats);
 
   // 🔗 --- SHARE SCORECARD LOGIC --- 🔗
   const handleShareMatch = async () => {
@@ -1366,8 +1369,68 @@ export default function UnifiedLiveMatchPage({
               </div>
             </div>
           ) : (
-            /* LIVE (PUBLIC): EMPTY LEFT COLUMN. */
-            <div className="hidden"></div>
+            /* LIVE (PUBLIC): FAN WIDGET & AD SPACE */
+            <div className="flex flex-col gap-6 w-full lg:sticky lg:top-6">
+              {/* Match Context Card */}
+              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2.5rem] p-6 sm:p-8 shadow-sm">
+                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-6 ml-1">
+                  Match Context
+                </h3>
+                
+                {/* Toss Info */}
+                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-[var(--border-1)]">
+                  <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-2xl shrink-0 border border-[var(--border-1)]">
+                    🪙
+                  </div>
+                  <div>
+                    <p className="font-bold text-[var(--foreground)] text-sm">
+                      {ctx.tossWinnerName || "Toss Details"} won the toss
+                    </p>
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">
+                      Elected to {engine.match.toss_decision || "TBA"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Run Rates */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-[var(--surface-2)] rounded-2xl p-4 text-center border border-[var(--border-1)]">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
+                      CRR
+                    </p>
+                    <p className="text-xl font-black text-[var(--foreground)]">
+                      {ctx.crr || "0.00"}
+                    </p>
+                  </div>
+                  <div className="bg-[var(--surface-2)] rounded-2xl p-4 text-center border border-[var(--border-1)]">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
+                      {engine.match.current_innings === 2 ? "Req. RR" : "Proj. Score"}
+                    </p>
+                    <p className="text-xl font-black text-[var(--accent)]">
+                      {ctx.isChasing ? `${ctx.rrr}` : `${ctx.proj}`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Venue Details */}
+                <div className="text-center bg-[var(--surface-2)] rounded-2xl p-4 border border-[var(--border-1)]">
+                  <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                    📍 {engine.match.venue || "Venue TBD"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Revenue Generation: Free Tier Ad Placement */}
+              {tournament?.subscription_tier === "free" && (
+                <div className="bg-[var(--surface-1)] rounded-[2.5rem] border border-[var(--border-1)] p-4 shadow-sm overflow-hidden flex items-center justify-center">
+                  <AdBanner
+                    dataAdSlot="3688504113"
+                    dataAdFormat="rectangle"
+                    dataFullWidthResponsive={true}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -1401,7 +1464,11 @@ export default function UnifiedLiveMatchPage({
 
             {!isAuthorized && tournament?.subscription_tier === "free" && (
               <div className="w-full bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] p-2 shadow-sm overflow-hidden flex items-center justify-center">
-                 <AdBanner dataAdSlot="YOUR_HORIZONTAL_SLOT_ID" dataAdFormat="horizontal" />
+                <AdBanner
+                  dataAdSlot="3688504113"
+                  dataAdFormat="auto"
+                  dataFullWidthResponsive={true}
+                />
               </div>
             )}
 
@@ -1465,10 +1532,14 @@ export default function UnifiedLiveMatchPage({
               <div className="p-4 sm:p-6 min-h-[400px]">
                 {!isAuthorized && tournament?.subscription_tier === "free" && (
                   <div className="mb-6">
-                    <AdBanner dataAdSlot="YOUR_RESPONSIVE_SLOT_ID" />
+                    <AdBanner
+                      dataAdSlot="3688504113"
+                      data-ad-format="auto"
+                      data-full-width-responsive="true"
+                    />
                   </div>
                 )}
-                
+
                 {activeTab === "scorecard" && (
                   <FullScorecard
                     deliveries={engine.deliveries}

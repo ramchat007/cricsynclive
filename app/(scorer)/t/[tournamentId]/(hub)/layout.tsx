@@ -412,7 +412,11 @@ export default function TournamentLayout({
 
         {showAds && (
           <div className="border-t border-[var(--border-1)] pt-6">
-            <AdBanner dataAdSlot="1234567890" />
+            <AdBanner
+              dataAdSlot="3688504113"
+              dataAdFormat="auto"
+              dataFullWidthResponsive={true}
+            />
           </div>
         )}
 
