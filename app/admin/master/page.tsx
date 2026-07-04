@@ -18,10 +18,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { forceUpdateTier } from "@/app/actions/admin";
+import AnalyticsDashboard from "./analytics/analytics";
 
 export default function MasterAdminPage() {
   const [activeTab, setActiveTab] = useState<
-    "tournaments" | "settings" | "coupons"
+    "tournaments" | "settings" | "coupons" | "analytics"
   >("tournaments");
 
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -69,7 +70,9 @@ export default function MasterAdminPage() {
   const fetchData = async () => {
     setIsLoading(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       setHasAccess(false);
@@ -280,12 +283,12 @@ export default function MasterAdminPage() {
             Access Denied
           </h1>
           <p className="text-red-400 font-bold uppercase tracking-widest text-sm mb-8 leading-relaxed">
-            This sector is strictly restricted to Level-1 Super Administrators. Your attempt has been logged.
+            This sector is strictly restricted to Level-1 Super Administrators.
+            Your attempt has been logged.
           </p>
           <button
             onClick={() => router.push("/")}
-            className="bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-sm py-4 px-8 rounded-xl transition-all"
-          >
+            className="bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-sm py-4 px-8 rounded-xl transition-all">
             Return to Safety
           </button>
         </div>
@@ -320,6 +323,11 @@ export default function MasterAdminPage() {
             onClick={() => setActiveTab("coupons")}
             className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "coupons" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}>
             <Tag size={18} /> Promos
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "analytics" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}>
+            <Star size={18} /> Analytics
           </button>
         </div>
       </div>
@@ -720,6 +728,8 @@ export default function MasterAdminPage() {
             </div>
           </div>
         )}
+
+        {activeTab === "analytics" && <AnalyticsDashboard />}
       </div>
     </div>
   );
