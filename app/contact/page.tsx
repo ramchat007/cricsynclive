@@ -15,6 +15,7 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     message: "",
   });
   const [status, setStatus] = useState("idle");
@@ -28,6 +29,7 @@ export default function ContactPage() {
         {
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           message: formData.message,
           status: "unread",
         },
@@ -36,7 +38,7 @@ export default function ContactPage() {
       if (error) throw error;
 
       setStatus("success");
-      setFormData({ name: "", email: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (error: any) {
       console.error("Supabase Error:", error.message);
       setStatus("error");
@@ -79,8 +81,7 @@ export default function ContactPage() {
           height="24"
           viewBox="0 0 93 93"
           fill="none"
-          className="w-6 h-6 shrink-0"
-        >
+          className="w-6 h-6 shrink-0">
           <rect
             x="1.13867"
             y="1"
@@ -109,8 +110,7 @@ export default function ContactPage() {
           height="24"
           viewBox="0 0 93 92"
           fill="none"
-          className="w-6 h-6 shrink-0"
-        >
+          className="w-6 h-6 shrink-0">
           <rect
             x="1.13867"
             width="91.5618"
@@ -129,8 +129,7 @@ export default function ContactPage() {
               y1="91.5618"
               x2="-0.621143"
               y2="-2.46459e-06"
-              gradientUnits="userSpaceOnUse"
-            >
+              gradientUnits="userSpaceOnUse">
               <stop stopColor="#FBE18A" />
               <stop offset="0.21" stopColor="#FCBB45" />
               <stop offset="0.38" stopColor="#F75274" />
@@ -153,8 +152,7 @@ export default function ContactPage() {
         {/* Navigation Back */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest mt-4 mb-8 transition-colors"
-        >
+          className="inline-flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest mt-4 mb-8 transition-colors">
           <Home size={14} /> Back to Hub
         </Link>
 
@@ -191,8 +189,7 @@ export default function ContactPage() {
                       {item.link ? (
                         <a
                           href={item.link}
-                          className="font-bold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
-                        >
+                          className="font-bold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors">
                           {item.value}
                         </a>
                       ) : (
@@ -217,8 +214,7 @@ export default function ContactPage() {
                       href={social.link}
                       target="_blank"
                       rel="noreferrer"
-                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-2 bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] ${social.color}`}
-                    >
+                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-2 bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] ${social.color}`}>
                       {social.icon}
                       <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline-block">
                         {social.name}
@@ -254,32 +250,30 @@ export default function ContactPage() {
                   </p>
                   <button
                     onClick={() => setStatus("idle")}
-                    className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-4 text-[var(--accent)] hover:opacity-80"
-                  >
+                    className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-4 text-[var(--accent)] hover:opacity-80">
                     Send another message
                   </button>
                 </div>
               ) : (
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-5 relative z-10"
-                >
+                  className="space-y-5 relative z-10">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Full Name"
+                      required
+                      className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Full Name"
-                        required
-                        className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                      />
-                    </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
                         Email Address
@@ -295,6 +289,21 @@ export default function ContactPage() {
                         }
                       />
                     </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        required
+                        className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -302,9 +311,9 @@ export default function ContactPage() {
                       Your Message
                     </label>
                     <textarea
-                      placeholder="Tell us about your tournament..."
+                      placeholder="Tell us about your tournament or package inquiry..."
                       required
-                      rows={6}
+                      rows={5}
                       className="w-full p-4 rounded-2xl border outline-none font-medium resize-none transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
                       value={formData.message}
                       onChange={(e) =>
@@ -322,8 +331,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={status === "submitting"}
-                    className="w-full py-4 bg-[var(--accent)] text-[var(--background)] font-black rounded-2xl uppercase tracking-widest hover:opacity-90 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg disabled:opacity-70 disabled:active:scale-100"
-                  >
+                    className="w-full py-4 bg-[var(--accent)] text-[var(--background)] font-black rounded-2xl uppercase tracking-widest hover:opacity-90 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg disabled:opacity-70 disabled:active:scale-100">
                     {status === "submitting" ? (
                       <span className="animate-pulse">Sending...</span>
                     ) : (

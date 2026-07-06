@@ -7,50 +7,53 @@ import {
   Users,
   Trophy,
   Globe,
+  Phone,
+  Mail,
+  Globe as GlobeIcon,
 } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About Us | CricSync Live",
+  title: "About Us | CricSyncLive",
   description:
-    "Learn more about CricSync and our mission to revolutionize community cricket tournaments.",
+    "Learn more about CricSyncLive and our mission to elevate community cricket tournaments into professional broadcasts.",
   openGraph: {
-    title: "About Us | CricSync Live",
+    title: "About Us | CricSyncLive",
     description:
-      "Learn more about CricSync and our mission to revolutionize community cricket tournaments.",
+      "Learn more about CricSyncLive and our mission to elevate community cricket tournaments into professional broadcasts.",
   },
 };
 
 const features = [
   {
-    icon: Users,
-    title: "A Complete Organization",
-    desc: "Effortlessly plan tournaments with Umpires, both Offline and Online scorers, and Commentators available on demand.",
+    icon: Play,
+    title: "Broadcast-Grade Live Streaming",
+    desc: "Experience seamless YouTube live streaming equipped with professional TV-style graphics, custom overlays, and sponsor integrations.",
   },
   {
     icon: Activity,
-    title: "Instantaneous Scoring",
-    desc: "Instantly synchronize digital scoresheets across all devices, with lightning-fast ball-by-ball updates.",
+    title: "Instantaneous Real-Time Scoring",
+    desc: "Lightning-fast, ball-by-ball digital updates synchronized instantly across all devices and broadcast screens.",
   },
   {
     icon: Gavel,
-    title: "Real-Time Player Auctions",
-    desc: "Effortlessly handle virtual wallets, team owners, and live bidding in real-time.",
+    title: "Live Player Auctions",
+    desc: "Effortlessly handle virtual purses, team owners, and dynamic real-time bidding for your tournament draft.",
   },
   {
-    icon: Play,
-    title: "Live Broadcasting",
-    desc: "Experience effortlessly seamless YouTube live streaming with professional-grade overlays.",
+    icon: Users,
+    title: "End-to-End Organization",
+    desc: "Plan effortlessly with our network of professional Umpires, Offline/Online Scorers, and Commentators available on demand.",
   },
   {
     icon: GitMerge,
-    title: "Automated Brackets",
-    desc: "Intelligent tournament brackets that automatically progress winners and promptly display updated table rankings.",
+    title: "Automated Brackets & Points",
+    desc: "Intelligent tournament brackets that automatically progress winners and instantly update group rankings.",
   },
   {
     icon: Globe,
-    title: "Worldwide Player Statistics",
-    desc: "Keep track of your career accomplishments! All runs and wickets are automatically recorded for all tournaments.",
+    title: "Global Player Statistics",
+    desc: "Every run and wicket is automatically recorded, building a comprehensive career profile for every player in your ecosystem.",
   },
 ];
 
@@ -66,15 +69,20 @@ export default function AboutPage() {
             </div>
           </div>
           <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter mb-6 text-slate-900 dark:text-white transition-colors">
-            Raising the Importance of{" "}
+            Elevating{" "}
             <span className="text-teal-500 block md:inline">
               Community Cricket
             </span>
           </h1>
           <p className="text-lg md:text-xl max-w-2xl mx-auto font-medium text-slate-600 dark:text-slate-400 transition-colors">
-            CricSync is a high-quality platform for managing tournaments,
-            specifically created to provide local and corporate cricket leagues
-            with professional-grade tools.
+            <strong className="text-teal-500 font-black">CricSyncLive</strong>{" "}
+            is a premium tournament management and broadcasting engine,
+            specifically built to provide local and corporate cricket leagues
+            with television-grade tools.
+          </p>
+          <p className="text-md mt-4 max-w-xl mx-auto font-medium text-slate-500 dark:text-slate-400 transition-colors">
+            We don't just record scores; we transform local matches into
+            professional sporting events.
           </p>
         </div>
 
@@ -83,8 +91,7 @@ export default function AboutPage() {
           {features.map((f, i) => (
             <div
               key={i}
-              className="p-6 md:p-8 rounded-3xl border bg-white dark:bg-[#1C2128]/80 border-slate-200 dark:border-white/5 hover:-translate-y-1 hover:border-teal-300 dark:hover:border-teal-500/30 shadow-lg hover:shadow-teal-500/10 dark:hover:shadow-teal-500/10 transition-all duration-300 backdrop-blur-sm"
-            >
+              className="p-6 md:p-8 rounded-3xl border bg-white dark:bg-[#1C2128]/80 border-slate-200 dark:border-white/5 hover:-translate-y-1 hover:border-teal-300 dark:hover:border-teal-500/30 shadow-lg hover:shadow-teal-500/10 dark:hover:shadow-teal-500/10 transition-all duration-300 backdrop-blur-sm">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 transition-colors">
                 <f.icon size={26} />
               </div>
@@ -99,14 +106,14 @@ export default function AboutPage() {
         </div>
 
         {/* --- TEAM & MISSION SECTION --- */}
-        <div className="mt-20 mb-8">
+        <div className="mt-20 mb-20">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-500 mb-4">
-              CricSync Features
+              The CricSyncLive Difference
             </h2>
             <p className="max-w-2xl mx-auto font-bold uppercase tracking-widest text-xs md:text-sm text-slate-500 dark:text-slate-400 transition-colors">
-              Possessing a wealth of expertise and discipline, our company
-              adheres to the highest industry standards.
+              Built by experts, adhering to the highest industry standards for
+              broadcast and operations.
             </p>
           </div>
 
@@ -121,22 +128,23 @@ export default function AboutPage() {
                   <Users size={32} />
                 </div>
                 <h3 className="text-3xl font-black uppercase mb-4 leading-tight text-slate-900 dark:text-white transition-colors">
-                  Those with expertise in the field
+                  Built by Experts, For the Game
                 </h3>
                 <p className="text-base leading-relaxed font-medium mb-8 text-slate-600 dark:text-slate-400 transition-colors">
-                  Our team is a dynamic group of skilled developers and ardent
-                  fans of cricket. Moreover, we have extensive experience in
-                  organizing tournaments, ensuring strict adherence to rules,
-                  etiquette, and comprehensive understanding of the sport.
+                  Our team isn't just a group of skilled software developers—we
+                  are ardent cricket fans and experienced tournament organizers.
+                  We understand the discipline, etiquette, and fast-paced nature
+                  of the sport from the ground up, ensuring our technology
+                  adheres to the highest industry standards.
                 </p>
 
                 {/* Ethos Badges */}
                 <div className="flex flex-wrap gap-3">
                   <span className="px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-sm transition-colors">
-                    Effective Management
+                    Flawless Execution
                   </span>
                   <span className="px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-sm transition-colors">
-                    Steadfast Implementation
+                    Tournament Strategy
                   </span>
                 </div>
               </div>
@@ -152,10 +160,11 @@ export default function AboutPage() {
                     <Trophy size={18} /> Our Core Mission
                   </h3>
                   <p className="text-lg md:text-xl font-medium leading-relaxed text-slate-800 dark:text-slate-200 transition-colors">
-                    Our goal is to deliver a professional experience using
-                    top-notch equipment. We guarantee efficient management of
-                    your entire tournament, upholding strict discipline and
-                    extensive knowledge of cricket from start to finish.
+                    We don't just provide software; we deliver a professional
+                    experience using top-tier broadcasting equipment. We
+                    guarantee efficient digital management of your entire
+                    tournament from the first ball to the final trophy
+                    presentation.
                   </p>
                 </div>
               </div>
@@ -164,13 +173,13 @@ export default function AboutPage() {
               <div className="p-6 md:p-8 rounded-[2rem] border flex flex-col justify-center transition-transform hover:-translate-y-1 bg-slate-50 dark:bg-[#13161a] border-slate-200 dark:border-white/5 shadow-sm dark:shadow-lg">
                 <Activity className="text-amber-500 mb-5" size={28} />
                 <h4 className="text-sm font-black uppercase tracking-widest mb-3 text-slate-900 dark:text-white transition-colors">
-                  Fostering local communities
+                  Fostering Local Communities
                 </h4>
                 <p className="text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-400 transition-colors">
-                  The limited budgets and technical resources of local
-                  tournaments often result in compromised quality. Our goal is
-                  to prioritize these leagues and provide them with premium
-                  online services that surpass their expectations.
+                  Local tournaments often suffer from limited budgets and
+                  technical resources. Our goal is to empower grassroots leagues
+                  with premium digital services that completely surpass their
+                  expectations.
                 </p>
               </div>
 
@@ -184,12 +193,46 @@ export default function AboutPage() {
                   Making it to the Major Leagues
                 </h4>
                 <p className="text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-400 transition-colors">
-                  After establishing the foundation, we expand our
-                  infrastructure to accommodate large-scale, high-stakes
-                  tournaments that demand significant resources, flawless
-                  execution, and robust digital ecosystems.
+                  We build infrastructure designed to scale. From weekend
+                  box-cricket cups to high-stakes corporate leagues, we provide
+                  the robust digital ecosystem your event demands.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- CALL TO ACTION SECTION --- */}
+        <div className="mt-12 bg-[var(--surface-1)] dark:bg-teal-900/20 rounded-[2.5rem] p-8 md:p-12 text-center border border-[var(--border-1)] dark:border-teal-500/20 shadow-2xl relative overflow-hidden transition-colors duration-500">
+          <div className="absolute inset-0 opacity-10 dark:opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-500 via-transparent to-transparent"></div>
+
+          <div className="relative z-10">
+            {/* Updated Header with Variable Color */}
+            <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-[var(--foreground)] mb-4 transition-colors">
+              Want to Elevate Your Next Tournament?
+            </h2>
+
+            {/* Updated Subtitle with Variable Color */}
+            <p className="text-[var(--text-muted)] font-medium max-w-xl mx-auto mb-10 text-sm md:text-base transition-colors">
+              Stop settling for basic scoreboards. Let's make your local league
+              look like a major international broadcast.
+            </p>
+
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+              <a
+                href="https://wa.me/919702485146"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto hover:shadow-lg hover:shadow-teal-500/20 hover:-translate-y-1">
+                <Phone size={20} />
+                Book a Broadcast
+              </a>
+              <a
+                href="mailto:ramchat007@gmail.com"
+                className="flex items-center gap-3 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/70 text-[var(--foreground)] font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto border border-[var(--border-1)] hover:-translate-y-1">
+                <Mail size={20} />
+                Contact Us
+              </a>
             </div>
           </div>
         </div>

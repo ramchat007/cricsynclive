@@ -11,6 +11,9 @@ import {
   Tag,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+const router = useRouter();
 
 export default function TournamentBillingPage({
   params,
@@ -109,7 +112,7 @@ export default function TournamentBillingPage({
     const finalPrice = Math.round(
       basePrice - basePrice * (appliedDiscount / 100),
     );
-    alert(`Contact Administrator for the ${planName} plan at ₹${finalPrice}.`);
+    router.push(`/contact?plan=${encodeURIComponent(planName)}&price=${finalPrice}`);
   };
 
   if (isLoading)
