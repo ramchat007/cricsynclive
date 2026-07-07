@@ -82,16 +82,31 @@ export default function Navbar() {
           <Link
             href="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center">
-            {/* If you have a dark mode logo, you can swap it here based on theme later! */}
+            className="flex items-center gap-3 group"
+          >
             <img
-              src="/cricsync-light-logo.png"
-              alt="CricSync"
-              className="w-50 md:w-[235px] h-auto object-contain"
+              src="/cricsync-logo.png"
+              alt="CricSyncLive"
+              className="w-16 md:w-20 h-auto object-contain"
             />
+            
+            {/* Text Container: Stacks the title and tagline vertically */}
+            <div className="flex flex-col justify-center">
+              
+              {/* Main Logo Text */}
+              <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-[var(--foreground)] leading-none mb-1">
+                CricSync<span className="text-[var(--accent)]">Live</span>
+              </div>
+              
+              {/* Tagline */}
+              <span className="text-[9px] md:text-[9.5px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                Score, Stream, Synchronize
+              </span>
+              
+            </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.path}

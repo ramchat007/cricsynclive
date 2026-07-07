@@ -3,11 +3,66 @@ import { Providers } from "./providers";
 import LayoutWrapper from "./components/LayoutWrapper";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from 'next/script';
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "CricSync | The Industry Standard Tournament OS",
+export const metadata: Metadata = {
+  title: "CricSyncLive | The Industry Standard Cricket Tournament OS",
   description:
-    "Elevating local and mega cricket tournaments with professional live scoring, IPL-style auctions, and TV-quality broadcast overlays.",
+    "Elevate local and corporate cricket tournaments with CricSyncLive. Discover professional real-time live scoring, IPL-style digital player auctions, and TV-quality OBS broadcast overlays for YouTube streaming.",
+  keywords: [
+    /* Primary App Keywords */
+    "live cricket scoring app",
+    "cricket tournament management software",
+    "cricket player auction app",
+    
+    /* Auction & Management Features */
+    "live player bidding software",
+    "season based cricket tournament system",
+    "real-time budget control cricket auction",
+    "cricket league operating system",
+    
+    /* Broadcasting & Streaming Features */
+    "cricket broadcast overlays OBS",
+    "YouTube live streaming cricket graphics",
+    "TV dashboard cricket scoring",
+    
+    /* Niche & Grassroots Targeting */
+    "box cricket scoring system",
+    "digital cricket scoresheet",
+    "local cricket live stream"
+  ],
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    // Optional: Add an apple-touch-icon if you generate one later
+    apple: [
+      { url: "/favicon.png", type: "image/png" }, 
+    ],
+  },
+  openGraph: {
+    title: "CricSyncLive | Premium Cricket Tournament OS",
+    description: "End-to-end cricket management: Real-time scoring, live digital auctions, and broadcast-grade streaming overlays.",
+    type: "website",
+    siteName: "CricSyncLive",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CricSyncLive | The Industry Standard Cricket Tournament OS",
+    description: "Elevate your cricket tournament with professional live scoring, IPL-style auctions, and TV-quality broadcast overlays.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
