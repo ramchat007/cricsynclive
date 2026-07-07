@@ -51,6 +51,7 @@ function AnimatedNumber({ value }: { value: number }) {
 export default function Home() {
   const [liveMatches, setLiveMatches] = useState<any[]>([]);
   const [completedMatches, setCompletedMatches] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [systemStats, setSystemStats] = useState({
     matches: 0,
@@ -102,6 +103,7 @@ export default function Home() {
       supabase.from("players").select("*", { count: "exact", head: true }),
     ]);
 
+    setIsLoading(false);
     if (liveData) setLiveMatches(liveData);
     if (completedData) setCompletedMatches(completedData);
     setSystemStats({
@@ -153,8 +155,7 @@ export default function Home() {
           loop
           muted
           playsInline
-          className="w-full h-full object-cover opacity-70"
-        >
+          className="w-full h-full object-cover opacity-70">
           <source src="/cricket-bg.mp4" type="video/mp4" />
         </video>
         {/* Soft Radial/Linear Gradient: Darker at edges, transparent in center to reveal the video */}
@@ -164,30 +165,57 @@ export default function Home() {
 
       <div className="relative z-10 flex-1 flex flex-col pt-20 pb-10">
         {/* --- SECTION 1: LIVE MATCHES TICKER --- */}
-        {liveMatches.length > 0 && (
-          <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700">
-            <div className="flex items-center gap-3 mb-4 px-2">
-              <Activity
-                className="text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"
-                size={24}
-              />
-              <h2 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)]">
-                Action Live Now
-              </h2>
-            </div>
+        {/* We remove the conditional wrapper so the section always renders immediately */}
+        <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700 min-h-[220px]">
+          <div className="flex items-center gap-3 mb-4 px-2">
+            <Activity
+              className="text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+              size={24}
+            />
+            <h2 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)]">
+              Action Live Now
+            </h2>
+          </div>
 
-            <div className="flex overflow-x-auto gap-5 pb-6 pt-2 hide-scrollbar snap-x px-2">
-              {liveMatches.map((match) => (
+          <div className="flex overflow-x-auto gap-5 pb-6 pt-2 hide-scrollbar snap-x px-2">
+            {/* 1. Show Skeletons while fetching data */}
+            {isLoading ? (
+              [1, 2, 3].map((skeleton) => (
+                <div
+                  key={skeleton}
+                  className="shrink-0 w-80 md:w-96 bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center animate-pulse shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex gap-2">
+                      <div className="h-6 w-16 bg-[var(--foreground)]/10 rounded-full"></div>
+                      <div className="h-6 w-20 bg-[var(--foreground)]/10 rounded-lg"></div>
+                    </div>
+                  </div>
+                  <div className="mb-5 h-4 w-3/4 bg-[var(--foreground)]/10 rounded"></div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="h-5 w-1/3 bg-[var(--foreground)]/10 rounded"></div>
+                      <div className="h-8 w-16 bg-[var(--foreground)]/10 rounded-xl"></div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-5 w-1/3 bg-[var(--foreground)]/10 rounded"></div>
+                      <div className="h-8 w-16 bg-[var(--foreground)]/10 rounded-xl"></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : liveMatches.length > 0 ? (
+              /* 2. Show actual matches once data arrives */
+              liveMatches.map((match) => (
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative shrink-0 w-80 md:w-96 bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
-                >
+                  className="group relative shrink-0 w-80 md:w-96 bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm">
                   {/* Neon Glow inside the Glass Card */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
 
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
+                      {/* LCP Target: Rendered efficiently without waiting for deep DOM trees */}
                       <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
                         LIVE
                       </span>
@@ -238,14 +266,20 @@ export default function Home() {
                     </div>
                   </div>
                 </Link>
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            ) : (
+              /* 3. Empty State if no matches are live */
+              <div className="w-full text-center py-8 text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest border border-dashed border-[var(--foreground)]/10 rounded-3xl">
+                No live matches at the moment.
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* --- MAIN HERO & CTA --- */}
-        <section className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-4 mb-16">
-          <div className="max-w-4xl animate-in zoom-in-95 duration-1000">
+        <section className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-4 mb-16 min-h-[60vh]">
+          {/* Added min-h-[300px] to strictly reserve the text space before animation completes */}
+          <div className="max-w-4xl min-h-[300px] flex flex-col items-center justify-center animate-in zoom-in-95 duration-1000">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
               CricSync <br className="md:hidden" />
               <span className="text-[var(--accent)] drop-shadow-[0_0_20px_rgba(245,158,11,0.3)]">
@@ -255,18 +289,16 @@ export default function Home() {
             <p className="text-sm md:text-xl font-bold uppercase tracking-[0.2em] mt-6 opacity-80 transition-colors duration-300">
               Run Cricket Like a Pro — From Toss to Trophy
             </p>
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5">
+            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
               <Link
                 href="/quick-match"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--accent)] text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:scale-105 transition-all active:scale-95 group"
-              >
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--accent)] text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:scale-105 transition-all active:scale-95 group">
                 <Flame size={20} className="group-hover:animate-bounce" /> Start
                 Quick Match
               </Link>
               <Link
                 href="/explore"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm"
-              >
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm">
                 <Search size={18} /> Find Tournaments
               </Link>
             </div>
@@ -291,8 +323,7 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
-                >
+                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden">
                   <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-all duration-500" />
 
                   <div>
@@ -558,8 +589,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center text-center px-4 group cursor-pointer hover:bg-[var(--foreground)]/5 rounded-2xl py-2 transition-colors">
             <a
               href="/dashboard"
-              className="text-sm font-black text-[var(--foreground)] uppercase flex items-center gap-2 group-hover:translate-x-2 transition-transform tracking-widest"
-            >
+              className="text-sm font-black text-[var(--foreground)] uppercase flex items-center gap-2 group-hover:translate-x-2 transition-transform tracking-widest">
               Create Tournament
               <ArrowRight size={16} className="text-[var(--accent)]" />
             </a>
