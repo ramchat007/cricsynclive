@@ -165,7 +165,6 @@ export default function Home() {
 
       <div className="relative z-10 flex-1 flex flex-col pt-20 pb-10">
         {/* --- SECTION 1: LIVE MATCHES TICKER --- */}
-        {/* We remove the conditional wrapper so the section always renders immediately */}
         <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700 min-h-[220px]">
           <div className="flex items-center gap-3 mb-4 px-2">
             <Activity
@@ -278,7 +277,6 @@ export default function Home() {
 
         {/* --- MAIN HERO & CTA --- */}
         <section className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-4 mb-16 min-h-[60vh]">
-          {/* Added min-h-[300px] to strictly reserve the text space before animation completes */}
           <div className="max-w-4xl min-h-[300px] flex flex-col items-center justify-center animate-in zoom-in-95 duration-1000">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
               CricSync <br className="md:hidden" />

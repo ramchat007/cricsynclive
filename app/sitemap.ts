@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Replace this with your actual live domain once deployed
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cricsynclive.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cricsynclive.in';
 
   // 1. Core Static Routes
   const staticRoutes = [

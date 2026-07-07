@@ -184,11 +184,6 @@ body {
   background-color: var(--accent) !important;
 }
 
-/* Smooth transitions for theme changes */
-* {
-  @apply transition-colors duration-300;
-}
-
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }

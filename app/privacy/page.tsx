@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
         <p>We use third-party advertising companies, including Google AdSense, to serve ads when you visit our Website. These companies may use aggregated information (not including your name, address, email address, or telephone number) about your visits to this and other Web sites in order to provide advertisements about goods and services of interest to you.</p>
 
         <h2 className="text-2xl font-bold text-[var(--foreground)] mt-8 mb-4">4. Contact Us</h2>
-        <p>If you have questions or comments about this notice, you may email us at contact@cricsynclive.com.</p>
+        <p>If you have questions or comments about this notice, you may email us at <a href="mailto:ramchat007@gmail.com">ramchat007@gmail.com</a>.</p>
       </div>
     </main>
   );
