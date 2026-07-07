@@ -277,7 +277,7 @@ export default function Home() {
 
         {/* --- MAIN HERO & CTA --- */}
         <section className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-4 mb-16 min-h-[60vh]">
-          <div className="max-w-4xl min-h-[300px] flex flex-col items-center justify-center animate-in zoom-in-95 duration-1000">
+          <div className="animate-in zoom-in-95 duration-1000 flex flex-col items-center">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
               CricSync <br className="md:hidden" />
               <span className="text-[var(--accent)] drop-shadow-[0_0_20px_rgba(245,158,11,0.3)]">

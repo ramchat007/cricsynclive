@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { LogOut, Menu, X, User, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { APP_THEMES } from "@/lib/themes";
+import Image from "next/image";
 
 export default function Navbar() {
   const router = useRouter();
@@ -84,10 +85,14 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 group"
           >
-            <img
+
+            <Image
               src="/cricsync-logo.png"
               alt="CricSyncLive"
-              className="w-16 md:w-20 h-auto object-contain"
+              width={80}
+              height={51}
+              priority
+              className="w-16 md:w-20 h-auto object-contain transition-transform group-hover:scale-105"
             />
             
             {/* Text Container: Stacks the title and tagline vertically */}
