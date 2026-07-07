@@ -1,8 +1,32 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export function useMatchContext(match: any, stats: any) {
+  // 1. Let the hook manage its own state for the tournament name
+  const [tournamentName, setTournamentName] = useState("Community Cricket League");
+
+  // 2. The hook will automatically fetch the name itself!
+  useEffect(() => {
+    const fetchTournamentName = async () => {
+      // If we have a match and it has a tournament_id, ask Supabase for the name
+      if (match?.tournament_id) {
+        const { data } = await supabase
+          .from("tournaments")
+          .select("name")
+          .eq("id", match.tournament_id)
+          .single();
+
+        if (data?.name) {
+          setTournamentName(data.name);
+        }
+      }
+    };
+
+    fetchTournamentName();
+  }, [match?.tournament_id]); // Only re-run this if the tournament ID changes
+
+  // 3. Do all the calculations using the fetched name
   return useMemo(() => {
-    // 1. Fallback for loading states
     if (!match || !stats) {
       return {
         crr: "0.00",
@@ -11,87 +35,94 @@ export function useMatchContext(match: any, stats: any) {
         equation: "LOADING...",
         isChasing: false,
         tossWinnerName: "TBA",
+        tossDecision: "play",
         tossString: "Toss details pending",
+        scoreContextText: "Loading match data...",
+        team1Name: "Team 1",
+        team2Name: "Team 2",
+        team1ShortName: "T1",
+        team2ShortName: "T2",
+        tournamentName: "Loading...", // Shows while fetching
+        venue: "Main Ground",
+        oversCount: 20,
+        currentInnings: 1,
+        matchStatus: "live",
+        team1Score: 0,
+        team2Score: 0,
       };
     }
 
-    const isChasing = match.current_innings === 2;
-    const currentScore = isChasing ? match.team2_score : match.team1_score;
-    const totalBalls = stats.validDeliveries || 0;
-    const totalMatchBalls = (Number(match.overs_count) || 20) * 6;
+    const team1Name = match.team1?.name || "Team 1";
+    const team2Name = match.team2?.name || "Team 2";
+    const team1ShortName = match.team1?.short_name || "T1";
+    const team2ShortName = match.team2?.short_name || "T2";
+    const venue = match.venue || "the main ground";
+    const oversCount = Number(match.overs_count) || 20;
+    const currentInnings = match.current_innings || 1;
+    const matchStatus = match.status || "live";
+    const team1Score = match.team1_score || 0;
+    const team2Score = match.team2_score || 0;
 
-    // 2. Toss Logic Setup
+    const isChasing = currentInnings === 2;
+    const currentScore = isChasing ? team2Score : team1Score;
+    const totalBalls = stats.validDeliveries || 0;
+    const totalMatchBalls = oversCount * 6;
+
     const tossWinnerName =
       match.toss_winner_id === match.team1_id
-        ? match.team1?.name || "Team 1"
-        : match.team2?.name || "Team 2";
+        ? team1Name
+        : match.toss_winner_id === match.team2_id
+        ? team2Name
+        : "TBA";
 
     const tossDecision = match.toss_decision || "bat";
     const tossString = match.toss_winner_id
       ? `${tossWinnerName} won the toss and elected to ${tossDecision}`
       : "Toss not yet decided";
 
-    // 3. Current Run Rate (CRR)
-    const crr =
-      totalBalls > 0 ? ((currentScore / totalBalls) * 6).toFixed(2) : "0.00";
+    const crr = totalBalls > 0 ? ((currentScore / totalBalls) * 6).toFixed(2) : "0.00";
 
     let rrr = "0.00";
     let equation = "MATCH IN PROGRESS";
     let proj = "0";
     let scoreContextText = "";
 
-    // 4. The Chasing Logic (Innings 2)
     if (isChasing) {
-      const target = (match.team1_score || 0) + 1;
+      const target = team1Score + 1;
       const runsNeeded = target - currentScore;
       const ballsRemaining = totalMatchBalls - totalBalls;
 
       const battingName =
-        match.toss_winner_id === match.team1_id && match.toss_decision === "bat"
-          ? match.team2?.short_name || "Team"
-          : match.team1?.short_name || "Opponent";
+        match.toss_winner_id === match.team1_id && tossDecision === "bat"
+          ? team2ShortName
+          : team1ShortName;
       const bowlingName =
-        battingName === match.team1?.short_name
-          ? match.team2?.short_name
-          : match.team1?.short_name;
+        battingName === team1ShortName ? team2ShortName : team1ShortName;
 
       scoreContextText = `${bowlingName} Bowling`;
 
       if (runsNeeded <= 0) {
-        equation = `${battingName?.toUpperCase()} WON`;
+        equation = `${battingName.toUpperCase()} WON`;
         rrr = "-";
-      } else if (ballsRemaining <= 0 || match.status === "completed") {
-        equation =
-          runsNeeded === 1 && ballsRemaining === 0
-            ? "MATCH TIED"
-            : `${bowlingName?.toUpperCase()} WON`;
+      } else if (ballsRemaining <= 0 || matchStatus === "completed") {
+        equation = runsNeeded === 1 && ballsRemaining === 0 ? "MATCH TIED" : `${bowlingName.toUpperCase()} WON`;
         rrr = "-";
       } else {
         rrr = ((runsNeeded / ballsRemaining) * 6).toFixed(2);
         equation = `NEED ${runsNeeded} RUNS IN ${ballsRemaining} BALLS`;
       }
-    }
-    // 5. The Setting Target Logic (Innings 1)
-    else {
-      proj =
-        totalBalls > 0
-          ? Math.round((currentScore / totalBalls) * totalMatchBalls).toString()
-          : "0";
+    } else {
+      proj = totalBalls > 0 ? Math.round((currentScore / totalBalls) * totalMatchBalls).toString() : "0";
       equation = `PROJ. SCORE: ${proj}`;
 
-      // Broadcast Ticker pro-tip: Show toss info for the first 2 overs, then switch to "X Bowling"
       const bowlingName =
-        tossWinnerName === match.team1?.name && tossDecision === "bat"
-          ? match.team2?.short_name
-          : match.team1?.short_name;
+        tossWinnerName === team1Name && tossDecision === "bat"
+          ? team2ShortName
+          : team1ShortName;
 
-      scoreContextText =
-        totalBalls < 12
-          ? `${tossWinnerName} won toss, elected to ${tossDecision}`
-          : `${bowlingName} Bowling`;
+      scoreContextText = totalBalls < 12 ? `${tossWinnerName} won toss, elected to ${tossDecision}` : `${bowlingName} Bowling`;
     }
 
-    // Return the ultimate frozen snapshot
     return {
       crr,
       rrr,
@@ -99,8 +130,20 @@ export function useMatchContext(match: any, stats: any) {
       equation,
       isChasing,
       tossWinnerName,
+      tossDecision,
       tossString,
       scoreContextText,
+      team1Name,
+      team2Name,
+      team1ShortName,
+      team2ShortName,
+      tournamentName, // <--- Now it returns the state from the hook!
+      venue,
+      oversCount,
+      currentInnings,
+      matchStatus,
+      team1Score,
+      team2Score,
     };
-  }, [match, stats]);
+  }, [match, stats, tournamentName]); // <-- Added tournamentName to dependencies so it updates when fetched
 }
