@@ -91,7 +91,7 @@ export default function Home() {
         .select(selectQuery)
         .eq("status", "live")
         .order("created_at", { ascending: false })
-        .limit(10),
+        .limit(3),
       supabase
         .from("matches")
         .select(selectQuery)
@@ -165,7 +165,7 @@ export default function Home() {
 
       <div className="relative z-10 flex-1 flex flex-col pt-20 pb-10">
         {/* --- SECTION 1: LIVE MATCHES TICKER --- */}
-        <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700 min-h-[220px]">
+        <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700 min-h-[300px] overflow-hidden">
           <div className="flex items-center gap-3 mb-4 px-2">
             <Activity
               className="text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"
@@ -176,13 +176,13 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto gap-5 pb-6 pt-2 hide-scrollbar snap-x px-2">
+          <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-5 pb-6 pt-2 hide-scrollbar snap-x px-2">
             {/* 1. Show Skeletons while fetching data */}
             {isLoading ? (
               [1, 2, 3].map((skeleton) => (
                 <div
                   key={skeleton}
-                  className="shrink-0 w-80 md:w-96 bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center animate-pulse shadow-sm">
+                  className="shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center animate-pulse shadow-sm">
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex gap-2">
                       <div className="h-6 w-16 bg-[var(--foreground)]/10 rounded-full"></div>
@@ -203,18 +203,15 @@ export default function Home() {
                 </div>
               ))
             ) : liveMatches.length > 0 ? (
-              /* 2. Show actual matches once data arrives */
               liveMatches.map((match) => (
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative shrink-0 w-80 md:w-96 bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm">
-                  {/* Neon Glow inside the Glass Card */}
+                  className="group relative shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
 
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      {/* LCP Target: Rendered efficiently without waiting for deep DOM trees */}
                       <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
                         LIVE
                       </span>
@@ -267,8 +264,7 @@ export default function Home() {
                 </Link>
               ))
             ) : (
-              /* 3. Empty State if no matches are live */
-              <div className="w-full text-center py-8 text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest border border-dashed border-[var(--foreground)]/10 rounded-3xl">
+              <div className="w-full md:col-span-3 text-center py-8 text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest border border-dashed border-[var(--foreground)]/10 rounded-3xl">
                 No live matches at the moment.
               </div>
             )}
@@ -276,7 +272,7 @@ export default function Home() {
         </section>
 
         {/* --- MAIN HERO & CTA --- */}
-        <section className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-4 mb-16 min-h-[60vh]">
+        <section className="flex-1 flex flex-col items-center justify-center text-center mb-16 min-h-[60vh]">
           <div className="animate-in zoom-in-95 duration-1000 flex flex-col items-center">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
               CricSync <br className="md:hidden" />
@@ -315,13 +311,49 @@ export default function Home() {
             </h2>
           </div>
 
-          {completedMatches.length > 0 ? (
+          {/* 1. Show Skeletons while fetching data */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3,4 ,5, 6].map((skeleton) => (
+                <div
+                  key={skeleton}
+                  className="bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] flex flex-col justify-between min-h-[160px] animate-pulse shadow-sm"
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-4 border-b border-[var(--foreground)]/10 pb-3">
+                      <div className="h-6 w-24 bg-[var(--foreground)]/10 rounded-lg"></div>
+                      <div className="h-4 w-20 bg-[var(--foreground)]/10 rounded-md"></div>
+                    </div>
+
+                    <div className="mb-4 h-4 w-3/4 bg-[var(--foreground)]/10 rounded"></div>
+
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div className="h-5 w-1/3 bg-[var(--foreground)]/10 rounded"></div>
+                        <div className="h-6 w-16 bg-[var(--foreground)]/10 rounded-md"></div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-5 w-1/3 bg-[var(--foreground)]/10 rounded"></div>
+                        <div className="h-6 w-16 bg-[var(--foreground)]/10 rounded-md"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-3 border-t border-[var(--foreground)]/10">
+                    <div className="h-4 w-1/2 bg-[var(--foreground)]/10 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : completedMatches.length > 0 ? (
+            /* 2. Show actual matches once data arrives */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {completedMatches.map((match) => (
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden">
+                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
+                >
                   <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-all duration-500" />
 
                   <div>
@@ -383,6 +415,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
+            /* 3. Empty State if no matches are found */
             <div className="text-center py-12 bg-[var(--background)]/[0.7] backdrop-blur-md rounded-[2rem] border border-dashed border-[var(--foreground)]/20 opacity-60 text-xs font-bold uppercase tracking-wider">
               No completed matches found yet.
             </div>
