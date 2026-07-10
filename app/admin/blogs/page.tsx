@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+import RichTextEditor from "../../components/RichTextEditor";
+
 export default function BlogAdmin() {
   const [formData, setFormData] = useState({
     title: "",
@@ -92,15 +94,9 @@ export default function BlogAdmin() {
           <label className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
             Full Content (HTML/Text)
           </label>
-          <textarea
-            required
-            rows={10}
-            value={formData.content}
-            onChange={(e) =>
-              setFormData({ ...formData, content: e.target.value })
-            }
-            className="w-full p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--foreground)]"
-            placeholder="<p>Write your article here...</p>"
+          <RichTextEditor 
+            content={formData.content}
+            onChange={(html) => setFormData({ ...formData, content: html })}
           />
         </div>
 

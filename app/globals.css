@@ -202,3 +202,30 @@ button,
 a {
   cursor: pointer;
 }
+
+.ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid var(--border-1) !important;
+  background-color: var(--surface-1);
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+  min-height: 300px;
+}
+
+.ql-editor {
+  min-height: 300px;
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--foreground) !important;
+}
+.ql-snow .ql-fill, .ql-snow .ql-stroke.ql-fill {
+  fill: var(--foreground) !important;
+}
+.ql-snow .ql-picker {
+  color: var(--foreground) !important;
+}
