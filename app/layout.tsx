@@ -82,7 +82,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4257726751596254"
         />
-        <Script id="microsoft-clarity" strategy="afterInteractive">
+        {/* <Script id="microsoft-clarity" strategy="afterInteractive">
           {`
             (function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -90,7 +90,7 @@ export default function RootLayout({
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
             })(window, document, "clarity", "script", "xlsa5b7w0r");
           `}
-        </Script>
+        </Script> */}
       </body>
     </html>
   );
