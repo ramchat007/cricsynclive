@@ -83,9 +83,7 @@ export default function Navbar() {
           <Link
             href="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 group"
-          >
-
+            className="flex items-center gap-3 group">
             <Image
               src="/cricsync-logo.png"
               alt="CricSyncLive"
@@ -94,20 +92,18 @@ export default function Navbar() {
               priority
               className="w-16 md:w-20 h-auto object-contain transition-transform group-hover:scale-105"
             />
-            
+
             {/* Text Container: Stacks the title and tagline vertically */}
             <div className="flex flex-col justify-center">
-              
               {/* Main Logo Text */}
               <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-[var(--foreground)] leading-none mb-1">
                 CricSync<span className="text-[var(--accent)]">Live</span>
               </div>
-              
+
               {/* Tagline */}
               <span className="text-[9px] md:text-[9.5px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">
                 Score, Stream, Synchronize
               </span>
-              
             </div>
           </Link>
 
@@ -174,13 +170,15 @@ export default function Navbar() {
             {/* NEW: SEARCH BUTTON (Mobile) */}
             <Link
               href="/search"
-              className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform">
+              className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform"
+              aria-label="Search">
               <Search size={20} />
             </Link>
 
             <button
               onClick={() => setIsOpen(true)}
-              className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform">
+              className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform"
+              aria-label="Menu">
               <Menu size={20} />
             </button>
           </div>
