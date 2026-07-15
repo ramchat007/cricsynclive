@@ -410,7 +410,7 @@ export default function TournamentLayout({
           </div>
         </div>
 
-        {showAds && (
+        {/* {showAds && (
           <div className="border-t border-[var(--border-1)] pt-6">
             <AdBanner
               dataAdSlot="3688504113"
@@ -418,7 +418,7 @@ export default function TournamentLayout({
               dataFullWidthResponsive={true}
             />
           </div>
-        )}
+        )} */}
 
         <div className="p-6 md:p-12 max-w-7xl w-full mx-auto animate-in fade-in duration-700">
           <TournamentContext.Provider value={{ isAdmin, tournament }}>

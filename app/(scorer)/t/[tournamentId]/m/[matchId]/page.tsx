@@ -1466,7 +1466,7 @@ export default function UnifiedLiveMatchPage({
               </div>
 
               {/* Revenue Generation: Free Tier Ad Placement */}
-              {tournament?.subscription_tier === "free" && (
+              {/* {tournament?.subscription_tier === "free" && (
                 <div className="bg-[var(--surface-1)] rounded-[2.5rem] border border-[var(--border-1)] p-4 shadow-sm overflow-hidden flex items-center justify-center">
                   <AdBanner
                     dataAdSlot="3688504113"
@@ -1474,7 +1474,7 @@ export default function UnifiedLiveMatchPage({
                     dataFullWidthResponsive={true}
                   />
                 </div>
-              )}
+              )} */}
             </div>
           )}
         </div>
@@ -1507,7 +1507,7 @@ export default function UnifiedLiveMatchPage({
               currentOverDeliveries={stats.currentOverDeliveries}
             />
 
-            {!isAuthorized && tournament?.subscription_tier === "free" && (
+            {/* {!isAuthorized && tournament?.subscription_tier === "free" && (
               <div className="w-full bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] p-2 shadow-sm overflow-hidden flex items-center justify-center">
                 <AdBanner
                   dataAdSlot="3688504113"
@@ -1515,7 +1515,7 @@ export default function UnifiedLiveMatchPage({
                   dataFullWidthResponsive={true}
                 />
               </div>
-            )}
+            )} */}
 
             {!isCompleted && (
               <ActivePlayers
@@ -1576,7 +1576,7 @@ export default function UnifiedLiveMatchPage({
             {/* ONLY RENDER CONTENT IF A TAB IS ACTIVE */}
             {activeTab && (
               <div className="p-4 sm:p-6 min-h-[400px]">
-                {!isAuthorized && tournament?.subscription_tier === "free" && (
+                {/* {!isAuthorized && tournament?.subscription_tier === "free" && (
                   <div className="mb-6">
                     <AdBanner
                       dataAdSlot="3688504113"
@@ -1584,7 +1584,7 @@ export default function UnifiedLiveMatchPage({
                       data-full-width-responsive="true"
                     />
                   </div>
-                )}
+                )} */}
 
                 {activeTab === "scorecard" && (
                   <FullScorecard
