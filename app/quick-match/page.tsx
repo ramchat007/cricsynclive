@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Swords, Trophy, Zap, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Swords, Zap, Sparkles, LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function QuickMatchStarter() {
@@ -17,30 +17,51 @@ export default function QuickMatchStarter() {
 
   const [overs, setOvers] = useState(12);
   const [squadSize, setSquadSize] = useState(9);
-  const [ballType, setBallType] = useState("tennis");
+  const [ballType, setBallType] = useState("Hard Tennis");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // Check authentication state immediately on load
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
 
   const handleStartMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // 1. Verify Authentication to prevent 401 errors
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) {
+      alert(
+        "Authentication Required: Please log in to your account to start and host live matches.",
+      );
+      setIsLoading(false);
+      router.push("/login");
+      return;
+    }
 
     try {
-      // 1. Create Team A on the fly
+      // 2. Create Team A on the fly
       const { data: team1, error: err1 } = await supabase
         .from("teams")
         .insert({
           name: teamA,
           short_name: teamA.substring(0, 3).toUpperCase(),
-          // Note: tournament_id is left null for Quick Matches
         })
         .select("id")
         .single();
 
-      // 2. Create Team B on the fly
+      // 3. Create Team B on the fly
       const { data: team2, error: err2 } = await supabase
         .from("teams")
         .insert({
@@ -50,40 +71,49 @@ export default function QuickMatchStarter() {
         .select("id")
         .single();
 
-      if (err1 || err2) throw new Error("Failed to generate teams.");
+      if (err1 || err2) {
+        console.error("Team Generation Error:", err1 || err2);
+        throw new Error(
+          "Failed to generate teams. Please check database permissions.",
+        );
+      }
 
-      // 3. Resolve Toss Winner ID
+      // 4. Resolve Toss Winner ID
       const winningTeamId = tossWinner === "A" ? team1.id : team2.id;
 
-      // 4. Create the Match with the Real Team IDs
+      // 5. Construct Match Data Payload safely
+      const matchPayload: Record<string, any> = {
+        tournament_id: "00000000-0000-0000-0000-000000000000",
+        team1_id: team1.id,
+        team2_id: team2.id,
+        overs_count: overs,
+        players_per_team: squadSize,
+        ball_type: ballType,
+        toss_winner_id: winningTeamId,
+        toss_decision: decision,
+        status: "live",
+        current_innings: 1,
+        created_by: user.id, // Attached securely since we verified user object exists
+      };
+
+      // 6. Create the Match
       const { data: newMatch, error: matchError } = await supabase
         .from("matches")
-        .insert({
-          tournament_id: "00000000-0000-0000-0000-000000000000",
-          team1_id: team1.id,
-          team2_id: team2.id,
-          overs_count: overs,
-          players_per_team: squadSize,
-          ball_type: ballType,
-          toss_winner_id: winningTeamId,
-          toss_decision: decision,
-          status: "live",
-          current_innings: 1,
-          created_by: user?.id, // 🚨 CRITICAL: Assign ownership to the Scorer!
-        })
+        .insert(matchPayload)
         .select("id")
         .single();
+
       if (matchError) throw matchError;
 
-      // 5. Instantly route to the full-screen scorer pad!
+      // 7. Route to the live match pad
       router.push(`/t/QUICK_MATCH/m/${newMatch.id}`);
     } catch (error: any) {
-      alert("Error starting quick match: " + error.message);
+      console.error("Quick Match Generation Failure Detail:", error);
+      alert("Error starting quick match: " + (error.details || error.message));
       setIsLoading(false);
     }
   };
 
-  // Helper to resolve real names for the Toss summary string
   const winnerName = tossWinner === "A" ? teamA : teamB;
 
   return (
@@ -100,8 +130,28 @@ export default function QuickMatchStarter() {
           <Zap size={14} className="text-red-500 fill-red-500" /> Quick Match
           Setup
         </span>
-        <div className="w-8" /> {/* Balance spacer */}
+        <div className="w-8" />
       </header>
+
+      {/* ANONYMOUS WARNING HEADER CARD */}
+      {isAuthenticated === false && (
+        <div className="max-w-xl mx-auto mx-4 mt-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="text-center sm:text-left">
+            <h4 className="text-xs font-black uppercase text-amber-400 tracking-wider">
+              Scorer Session Required
+            </h4>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+              You must be signed in to open database sockets for live scores.
+            </p>
+          </div>
+          <Link
+            href="/login"
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[10px] uppercase tracking-wider px-3 py-2 rounded-xl transition-colors shrink-0"
+          >
+            <LogIn size={12} /> Sign In Now
+          </Link>
+        </div>
+      )}
 
       <form
         onSubmit={handleStartMatch}
@@ -132,7 +182,6 @@ export default function QuickMatchStarter() {
               />
             </div>
 
-            {/* VS Badge */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden sm:flex w-9 h-9 rounded-full bg-red-600 border-4 border-slate-900 items-center justify-center font-black text-[10px] italic shadow-lg">
               VS
             </div>
@@ -153,7 +202,7 @@ export default function QuickMatchStarter() {
           </div>
         </div>
 
-        {/* --- SECTION 2: THE TOSS (CRITICAL PATH) --- */}
+        {/* --- SECTION 2: THE TOSS --- */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative shadow-xl space-y-6">
           <div className="absolute top-0 right-0 bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Step 02
@@ -219,7 +268,6 @@ export default function QuickMatchStarter() {
             </div>
           </div>
 
-          {/* Dynamic visual confirmation box */}
           <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-2xl flex items-center gap-2.5">
             <Sparkles size={16} className="text-amber-400 shrink-0" />
             <p className="text-xs text-slate-500 font-bold truncate">
@@ -234,16 +282,16 @@ export default function QuickMatchStarter() {
           </div>
         </div>
 
-        {/* --- SECTION 3: RULES PRESETS (ONE-TAP PILLS) --- */}
+        {/* --- SECTION 3: RULES PRESETS --- */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl relative">
           <div className="absolute top-0 right-0 bg-slate-800 text-slate-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Defaults
           </div>
 
-          {/* Overs */}
+          {/* Overs Counter Component */}
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5 flex items-center justify-between">
-              <span>Total Overs</span>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">
+              Total Overs
             </label>
             <div className="flex flex-wrap gap-2">
               {[5, 10, 15, 20].map((ov) => (
@@ -269,7 +317,8 @@ export default function QuickMatchStarter() {
               >
                 -
               </button>
-              <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
+              {/* UI FIX: Swapped out invisible text-slate-900 for high-contrast white */}
+              <span className="font-black text-white text-sm uppercase tracking-widest">
                 {overs}
               </span>
               <button
@@ -282,7 +331,7 @@ export default function QuickMatchStarter() {
             </div>
           </div>
 
-          {/* Squad Size & Ball */}
+          {/* Squad Size & Ball Selection Row */}
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
@@ -312,7 +361,8 @@ export default function QuickMatchStarter() {
                 >
                   -
                 </button>
-                <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
+                {/* UI FIX: Swapped out invisible text-slate-900 for high-contrast white */}
+                <span className="font-black text-white text-sm uppercase tracking-widest">
                   {squadSize}
                 </span>
                 <button
@@ -351,7 +401,7 @@ export default function QuickMatchStarter() {
           </div>
         </div>
 
-        {/* --- SUBMIT CTA (FIXED TO BOTTOM FOR MOBILE) --- */}
+        {/* --- SUBMIT CTA --- */}
         <div className="fixed sm:static bottom-0 left-0 right-0 p-4 sm:p-0 bg-slate-950/90 sm:bg-transparent backdrop-blur-lg border-t border-slate-800 sm:border-0 z-40">
           <button
             type="submit"
