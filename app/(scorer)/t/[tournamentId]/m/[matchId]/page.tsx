@@ -978,42 +978,63 @@ export default function UnifiedLiveMatchPage({
               <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                 Select Batsmen
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
-                    Striker
-                  </label>
-                  <select
-                    value={setupStriker}
-                    onChange={(e) => setSetupStriker(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+
+              {/* 🌟 NEW: GRACEFUL FALLBACK FOR EMPTY SQUADS 🌟 */}
+              {stats.battingSquad.length === 0 ? (
+                <div className="text-center py-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                  <p className="text-xs text-red-500 font-bold mb-3">
+                    No players found in this team.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setQuickAddRole("batter");
+                      setShowQuickAddPlayer(true);
+                    }}
+                    className="px-4 py-2 bg-red-500 text-white font-black text-[10px] uppercase rounded-lg shadow-sm"
                   >
-                    <option value="">Select...</option>
-                    {stats.battingSquad.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name}
-                      </option>
-                    ))}
-                  </select>
+                    + Create Opening Batsman
+                  </button>
                 </div>
-                <div>
-                  <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
-                    Non-Striker
-                  </label>
-                  <select
-                    value={setupNonStriker}
-                    onChange={(e) => setSetupNonStriker(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-                  >
-                    <option value="">Select...</option>
-                    {stats.battingSquad.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name}
-                      </option>
-                    ))}
-                  </select>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
+                      Striker
+                    </label>
+                    <select
+                      value={setupStriker}
+                      onChange={(e) => setSetupStriker(e.target.value)}
+                      className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+                    >
+                      <option value="">Select...</option>
+                      {stats.battingSquad.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
+                      Non-Striker
+                    </label>
+                    <select
+                      value={setupNonStriker}
+                      onChange={(e) => setSetupNonStriker(e.target.value)}
+                      className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+                    >
+                      <option value="">Select...</option>
+                      {stats.battingSquad.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Keep your existing Add Extra button here */}
               <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                 <button
                   onClick={() => {
@@ -1026,22 +1047,43 @@ export default function UnifiedLiveMatchPage({
                 </button>
               </div>
             </div>
+
             <div className="bg-[var(--surface-2)] p-6 rounded-2xl border border-[var(--border-1)]">
               <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                 Select Bowler
               </h3>
-              <select
-                value={setupBowler}
-                onChange={(e) => setSetupBowler(e.target.value)}
-                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-              >
-                <option value="">Select...</option>
-                {stats.bowlingSquad.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name}
-                  </option>
-                ))}
-              </select>
+
+              {/* 🌟 NEW: GRACEFUL FALLBACK FOR EMPTY SQUADS 🌟 */}
+              {stats.bowlingSquad.length === 0 ? (
+                <div className="text-center py-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+                  <p className="text-xs text-blue-500 font-bold mb-3">
+                    No players found in this team.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setQuickAddRole("bowler");
+                      setShowQuickAddPlayer(true);
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white font-black text-[10px] uppercase rounded-lg shadow-sm"
+                  >
+                    + Create Opening Bowler
+                  </button>
+                </div>
+              ) : (
+                <select
+                  value={setupBowler}
+                  onChange={(e) => setSetupBowler(e.target.value)}
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+                >
+                  <option value="">Select...</option>
+                  {stats.bowlingSquad.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.full_name}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                 <button
                   onClick={() => {
