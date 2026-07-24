@@ -304,7 +304,7 @@ export default function QuickMatchStarter() {
                 className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
                 -
               </button>
-              <span className="font-black text-white text-sm uppercase tracking-widest">
+              <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
                 {overs}
               </span>
               <button
