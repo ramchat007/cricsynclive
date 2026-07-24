@@ -172,7 +172,7 @@ export default function UnifiedLiveMatchPage({
     };
 
     checkAuthorization();
-  }, [tournamentId, engine.match?.created_by]); // 💡 Optimized dependency to track the exact property safely
+  }, [tournamentId, engine.match?.created_by]);
 
   const stats = deriveMatchStats(
     engine.match,

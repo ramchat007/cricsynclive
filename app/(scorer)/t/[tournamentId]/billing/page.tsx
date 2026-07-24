@@ -13,13 +13,13 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const router = useRouter();
 
 export default function TournamentBillingPage({
   params,
 }: {
   params: Promise<{ tournamentId: string }>;
 }) {
+  const router = useRouter();
   const { tournamentId } = use(params);
   const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,7 +112,9 @@ export default function TournamentBillingPage({
     const finalPrice = Math.round(
       basePrice - basePrice * (appliedDiscount / 100),
     );
-    router.push(`/contact?plan=${encodeURIComponent(planName)}&price=${finalPrice}`);
+    router.push(
+      `/contact?plan=${encodeURIComponent(planName)}&price=${finalPrice}`,
+    );
   };
 
   if (isLoading)

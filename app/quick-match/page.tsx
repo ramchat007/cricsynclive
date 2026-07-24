@@ -24,12 +24,24 @@ export default function QuickMatchStarter() {
   const handleStartMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
     try {
-      // 1. Create Team A on the fly
+      // 1. Check for an existing logged-in user
+      let {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+
+      // 2. If not logged in, generate a Guest (Anonymous) Session
+      if (!currentUser) {
+        const { data: guestData, error: guestError } = await supabase.auth.signInAnonymously();
+        
+        if (guestError) {
+          throw new Error("Failed to start guest session: " + guestError.message);
+        }
+        currentUser = guestData.user;
+      }
+
+      // 3. Create Team A on the fly
       const { data: team1, error: err1 } = await supabase
         .from("teams")
         .insert({
@@ -40,7 +52,7 @@ export default function QuickMatchStarter() {
         .select("id")
         .single();
 
-      // 2. Create Team B on the fly
+      // 4. Create Team B on the fly
       const { data: team2, error: err2 } = await supabase
         .from("teams")
         .insert({
@@ -52,10 +64,10 @@ export default function QuickMatchStarter() {
 
       if (err1 || err2) throw new Error("Failed to generate teams.");
 
-      // 3. Resolve Toss Winner ID
+      // 5. Resolve Toss Winner ID
       const winningTeamId = tossWinner === "A" ? team1.id : team2.id;
 
-      // 4. Create the Match with the Real Team IDs
+      // 6. Create the Match with the Real Team IDs & Guest/User ID
       const { data: newMatch, error: matchError } = await supabase
         .from("matches")
         .insert({
@@ -69,13 +81,13 @@ export default function QuickMatchStarter() {
           toss_decision: decision,
           status: "live",
           current_innings: 1,
-          created_by: user?.id, // 🚨 CRITICAL: Assign ownership to the Scorer!
+          created_by: currentUser?.id, // 🚨 Now works for both Real Users and Guests
         })
         .select("id")
         .single();
       if (matchError) throw matchError;
 
-      // 5. Instantly route to the full-screen scorer pad!
+      // 7. Instantly route to the full-screen scorer pad!
       router.push(`/t/QUICK_MATCH/m/${newMatch.id}`);
     } catch (error: any) {
       alert("Error starting quick match: " + error.message);
