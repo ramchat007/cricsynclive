@@ -1160,7 +1160,7 @@ export default function UnifiedLiveMatchPage({
           </button>
           <div>
             <h1 className="font-black text-lg md:text-2xl uppercase tracking-tight leading-none text-[var(--foreground)]">
-              {engine.match?.team1_name} vs {engine.match?.team2_name}
+              {ctx.team1Name} vs {ctx.team2Name}
             </h1>
             <p className="text-[10px] md:text-sm font-bold text-[var(--accent)] uppercase tracking-widest mt-1">
               {isCompleted

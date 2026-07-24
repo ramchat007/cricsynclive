@@ -25,26 +25,21 @@ export default function QuickMatchStarter() {
     e.preventDefault();
     setIsLoading(true);
 
-    // 🚨 FIX: Change this to null so it doesn't trigger foreign key errors!
+    // QUICK_MATCH_TOURNAMENT_ID remains null to avoid foreign key errors
     const QUICK_MATCH_TOURNAMENT_ID = null;
 
     try {
       // 1. Check for an existing logged-in user
-      let {
+      const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
 
-      let isGuest = false;
-
-      // 2. If not logged in, generate a Guest (Anonymous) Session
+      // 2. 🚨 FORCED LOGIN: If not logged in, redirect to login page
       if (!currentUser) {
-        const { data: guestData, error: guestError } = await supabase.auth.signInAnonymously();
-        
-        if (guestError) {
-          throw new Error("Failed to start guest session: " + guestError.message);
-        }
-        currentUser = guestData.user;
-        isGuest = true;
+        // Optional: You can pass a redirect parameter so they come back here after login
+        // router.push('/login?redirect=/quick-match');
+        router.push("/login");
+        return; // Stop execution here!
       }
 
       // Generate tiny random strings to guarantee uniqueness
@@ -57,8 +52,8 @@ export default function QuickMatchStarter() {
         .insert({
           name: `${teamA} ${uid1}`,
           short_name: uid1.substring(0, 3),
-          tournament_id: QUICK_MATCH_TOURNAMENT_ID, // Now correctly inserts null
-          created_by: currentUser?.id,
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
+          created_by: currentUser.id,
         })
         .select("id")
         .single();
@@ -69,8 +64,8 @@ export default function QuickMatchStarter() {
         .insert({
           name: `${teamB} ${uid2}`,
           short_name: uid2.substring(0, 3),
-          tournament_id: QUICK_MATCH_TOURNAMENT_ID, // Now correctly inserts null
-          created_by: currentUser?.id,
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
+          created_by: currentUser.id,
         })
         .select("id")
         .single();
@@ -90,7 +85,7 @@ export default function QuickMatchStarter() {
           tournament_id: QUICK_MATCH_TOURNAMENT_ID,
           role: "batter",
           status: "active",
-          created_by: currentUser?.id,
+          created_by: currentUser.id, // Will fail if column doesn't exist (see fix below)
         });
         dummyPlayers.push({
           full_name: `${teamB} Player ${i}`,
@@ -98,12 +93,15 @@ export default function QuickMatchStarter() {
           tournament_id: QUICK_MATCH_TOURNAMENT_ID,
           role: "batter",
           status: "active",
-          created_by: currentUser?.id,
+          created_by: currentUser.id,
         });
       }
 
-      const { error: playersErr } = await supabase.from("players").insert(dummyPlayers);
-      if (playersErr) console.error("Dummy player insertion failed", playersErr);
+      const { error: playersErr } = await supabase
+        .from("players")
+        .insert(dummyPlayers);
+      if (playersErr)
+        console.error("Dummy player insertion failed", playersErr);
 
       // 6. Resolve Toss Winner ID
       const winningTeamId = tossWinner === "A" ? team1.id : team2.id;
@@ -122,19 +120,14 @@ export default function QuickMatchStarter() {
           toss_decision: decision,
           status: "live",
           current_innings: 1,
-          created_by: currentUser?.id, 
+          created_by: currentUser.id,
         })
         .select("id")
         .single();
 
       if (matchError) throw matchError;
 
-      // 8. Store guest session locally
-      if (isGuest) {
-        localStorage.setItem(`guest_match_owner_${newMatch.id}`, "true");
-      }
-
-      // 9. Route to scorer
+      // 8. Route to scorer
       router.push(`/t/QUICK_MATCH/m/${newMatch.id}`);
     } catch (error: any) {
       alert("Error starting quick match: " + (error.details || error.message));

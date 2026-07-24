@@ -16,7 +16,6 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // 1. Logic to find the current theme object and handle the cycle toggle
   const activeTheme = mounted ? theme : "light";
   const currentThemeConfig =
     APP_THEMES.find((t) => t.id === activeTheme) || APP_THEMES[0];
@@ -90,24 +89,20 @@ export default function Navbar() {
               width={80}
               height={51}
               priority
-              className="w-16 md:w-20 h-auto object-contain transition-transform group-hover:scale-105"
+              className="w-16 lg:w-20 h-auto object-contain transition-transform group-hover:scale-105"
             />
 
-            {/* Text Container: Stacks the title and tagline vertically */}
             <div className="flex flex-col justify-center">
-              {/* Main Logo Text */}
-              <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-[var(--foreground)] leading-none mb-1">
+              <div className="text-2xl lg:text-3xl font-black italic tracking-tighter text-[var(--foreground)] leading-none mb-1">
                 CricSync<span className="text-[var(--accent)]">Live</span>
               </div>
 
-              {/* Tagline */}
-              <span className="text-[9px] md:text-[9.5px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+              <span className="text-[9px] lg:text-[9.5px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">
                 Score, Stream, Synchronize
               </span>
             </div>
           </Link>
-
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -122,7 +117,6 @@ export default function Navbar() {
             ))}
 
             <div className="flex items-center gap-3">
-              {/* NEW: SEARCH BUTTON (Desktop) */}
               <Link
                 href="/search"
                 aria-label="Search"
@@ -130,7 +124,6 @@ export default function Navbar() {
                 <Search size={20} />
               </Link>
 
-              {/* THEME TOGGLE (Desktop) */}
               <button
                 onClick={toggleTheme}
                 aria-label="Toggle Theme"
@@ -140,7 +133,7 @@ export default function Navbar() {
             </div>
 
             {session ? (
-              <div className="flex items-center gap-5 border-l border-[var(--border-1)] pl-5">
+              <div className="flex items-center gap-4 xl:gap-5 border-l border-[var(--border-1)] pl-4 xl:pl-5">
                 <Link
                   href="/dashboard"
                   className={`text-[11px] font-black uppercase tracking-widest transition-all ${
@@ -157,17 +150,18 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <Link
-                href="/login"
-                className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-[var(--foreground)] text-[var(--background)] hover:opacity-80 transition-all shadow-lg">
-                Login / Register
-              </Link>
+              <div className="pl-2">
+                <Link
+                  href="/login"
+                  className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-[var(--foreground)] text-[var(--background)] hover:opacity-80 transition-all shadow-lg">
+                  Login / Register
+                </Link>
+              </div>
             )}
           </div>
 
-          {/* MOBILE ACTIONS */}
-          <div className="flex items-center gap-3 md:hidden">
-            {/* NEW: SEARCH BUTTON (Mobile) */}
+          {/* MOBILE & TABLET ACTIONS */}
+          <div className="flex items-center gap-3 lg:hidden">
             <Link
               href="/search"
               className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform"
@@ -185,9 +179,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* MOBILE SLIDE-OUT MENU */}
+      {/* MOBILE & TABLET SLIDE-OUT MENU */}
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] isolate md:hidden">
+        <div className="fixed inset-0 z-[9999] isolate lg:hidden">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
             onClick={() => setIsOpen(false)}
@@ -231,7 +225,7 @@ export default function Navbar() {
                 ))}
               </div>
 
-              {/* THEME TOGGLE (Mobile) */}
+              {/* THEME TOGGLE (Mobile/Tablet) */}
               <div className="mt-6 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4">
                 <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">
                   App Theme
