@@ -49,14 +49,17 @@ export default function QuickMatchStarter() {
         isGuest = true;
       }
 
+      const uid1 = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const uid2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+
       // 3. Create Team A
       const { data: team1, error: err1 } = await supabase
         .from("teams")
         .insert({
-          name: teamA,
-          short_name: teamA.substring(0, 3).toUpperCase(),
+          name: `${teamA} ${uid1}`, // e.g., "Team A X7B2"
+          short_name: uid1.substring(0, 3),
           tournament_id: QUICK_MATCH_TOURNAMENT_ID,
-          created_by: currentUser?.id, // Added to satisfy RLS
+          created_by: currentUser?.id,
         })
         .select("id")
         .single();
@@ -65,15 +68,19 @@ export default function QuickMatchStarter() {
       const { data: team2, error: err2 } = await supabase
         .from("teams")
         .insert({
-          name: teamB,
-          short_name: teamB.substring(0, 3).toUpperCase(),
+          name: `${teamB} ${uid2}`,
+          short_name: uid2.substring(0, 3),
           tournament_id: QUICK_MATCH_TOURNAMENT_ID,
-          created_by: currentUser?.id, // Added to satisfy RLS
+          created_by: currentUser?.id,
         })
         .select("id")
         .single();
 
-      if (err1 || err2) throw new Error("Failed to generate teams.");
+      if (err1 || err2) {
+        console.error("Team 1 Error:", err1);
+        console.error("Team 2 Error:", err2);
+        throw new Error("Failed to generate teams. Check console for details.");
+      }
 
       // 5. AUTO-GENERATE DUMMY PLAYERS FOR BOTH TEAMS
       const dummyPlayers = [];
@@ -333,7 +340,7 @@ export default function QuickMatchStarter() {
                   className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
                   -
                 </button>
-                <span className="font-black text-white text-sm uppercase tracking-widest">
+                <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
                   {squadSize}
                 </span>
                 <button

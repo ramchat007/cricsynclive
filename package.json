@@ -14,7 +14,7 @@
     "@ljharb/tsconfig": "^0.3.2",
     "@next/third-parties": "^16.2.4",
     "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.103.0",
+    "@supabase/supabase-js": "^2.110.8",
     "@tiptap/extension-link": "^3.27.3",
     "@tiptap/extension-underline": "^3.27.3",
     "@tiptap/pm": "^3.27.3",
