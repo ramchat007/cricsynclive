@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Swords, Trophy, Zap, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Swords, Zap, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function QuickMatchStarter() {
@@ -17,7 +17,7 @@ export default function QuickMatchStarter() {
 
   const [overs, setOvers] = useState(12);
   const [squadSize, setSquadSize] = useState(9);
-  const [ballType, setBallType] = useState("tennis");
+  const [ballType, setBallType] = useState("Hard Tennis");
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,53 +25,93 @@ export default function QuickMatchStarter() {
     e.preventDefault();
     setIsLoading(true);
 
+    const QUICK_MATCH_TOURNAMENT_ID = "00000000-0000-0000-0000-000000000000";
+
     try {
       // 1. Check for an existing logged-in user
       let {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
 
+      let isGuest = false;
+
       // 2. If not logged in, generate a Guest (Anonymous) Session
       if (!currentUser) {
-        const { data: guestData, error: guestError } = await supabase.auth.signInAnonymously();
-        
+        const { data: guestData, error: guestError } =
+          await supabase.auth.signInAnonymously();
+
         if (guestError) {
-          throw new Error("Failed to start guest session: " + guestError.message);
+          throw new Error(
+            "Failed to start guest session: " + guestError.message,
+          );
         }
         currentUser = guestData.user;
+        isGuest = true;
       }
 
-      // 3. Create Team A on the fly
+      // 3. Create Team A
       const { data: team1, error: err1 } = await supabase
         .from("teams")
         .insert({
           name: teamA,
           short_name: teamA.substring(0, 3).toUpperCase(),
-          // Note: tournament_id is left null for Quick Matches
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
+          created_by: currentUser?.id, // Added to satisfy RLS
         })
         .select("id")
         .single();
 
-      // 4. Create Team B on the fly
+      // 4. Create Team B
       const { data: team2, error: err2 } = await supabase
         .from("teams")
         .insert({
           name: teamB,
           short_name: teamB.substring(0, 3).toUpperCase(),
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
+          created_by: currentUser?.id, // Added to satisfy RLS
         })
         .select("id")
         .single();
 
       if (err1 || err2) throw new Error("Failed to generate teams.");
 
-      // 5. Resolve Toss Winner ID
+      // 5. AUTO-GENERATE DUMMY PLAYERS FOR BOTH TEAMS
+      const dummyPlayers = [];
+      for (let i = 1; i <= squadSize; i++) {
+        dummyPlayers.push({
+          full_name: `${teamA} Player ${i}`,
+          team_id: team1.id,
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
+          role: "batter",
+          status: "active",
+          created_by: currentUser?.id,
+        });
+        dummyPlayers.push({
+          full_name: `${teamB} Player ${i}`,
+          team_id: team2.id,
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
+          role: "batter",
+          status: "active",
+          created_by: currentUser?.id,
+        });
+      }
+
+      // Insert all players at once
+      const { error: playersErr } = await supabase
+        .from("players")
+        .insert(dummyPlayers);
+      if (playersErr) {
+        console.error("Dummy player insertion failed", playersErr);
+      }
+
+      // 6. Resolve Toss Winner ID
       const winningTeamId = tossWinner === "A" ? team1.id : team2.id;
 
-      // 6. Create the Match with the Real Team IDs & Guest/User ID
+      // 7. Create the Match
       const { data: newMatch, error: matchError } = await supabase
         .from("matches")
         .insert({
-          tournament_id: "00000000-0000-0000-0000-000000000000",
+          tournament_id: QUICK_MATCH_TOURNAMENT_ID,
           team1_id: team1.id,
           team2_id: team2.id,
           overs_count: overs,
@@ -81,21 +121,27 @@ export default function QuickMatchStarter() {
           toss_decision: decision,
           status: "live",
           current_innings: 1,
-          created_by: currentUser?.id, // 🚨 Now works for both Real Users and Guests
+          created_by: currentUser?.id,
         })
         .select("id")
         .single();
+
       if (matchError) throw matchError;
 
-      // 7. Instantly route to the full-screen scorer pad!
+      // 8. Store guest session locally if needed for your UI
+      if (isGuest) {
+        localStorage.setItem(`guest_match_owner_${newMatch.id}`, "true");
+      }
+
+      // 9. Instantly route to the full-screen scorer pad!
       router.push(`/t/QUICK_MATCH/m/${newMatch.id}`);
     } catch (error: any) {
-      alert("Error starting quick match: " + error.message);
+      alert("Error starting quick match: " + (error.details || error.message));
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Helper to resolve real names for the Toss summary string
   const winnerName = tossWinner === "A" ? teamA : teamB;
 
   return (
@@ -104,21 +150,19 @@ export default function QuickMatchStarter() {
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 h-16 flex items-center justify-between">
         <Link
           href="/"
-          className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
-        >
+          className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors">
           <ArrowLeft size={22} />
         </Link>
         <span className="font-black uppercase tracking-widest text-xs flex items-center gap-1.5 text-slate-200">
           <Zap size={14} className="text-red-500 fill-red-500" /> Quick Match
           Setup
         </span>
-        <div className="w-8" /> {/* Balance spacer */}
+        <div className="w-8" />
       </header>
 
       <form
         onSubmit={handleStartMatch}
-        className="max-w-xl mx-auto px-4 pt-6 space-y-8 animate-in fade-in duration-300"
-      >
+        className="max-w-xl mx-auto px-4 pt-6 space-y-8 animate-in fade-in duration-300">
         {/* --- SECTION 1: THE TEAMS --- */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden shadow-xl">
           <div className="absolute top-0 right-0 bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
@@ -144,7 +188,6 @@ export default function QuickMatchStarter() {
               />
             </div>
 
-            {/* VS Badge */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden sm:flex w-9 h-9 rounded-full bg-red-600 border-4 border-slate-900 items-center justify-center font-black text-[10px] italic shadow-lg">
               VS
             </div>
@@ -165,7 +208,7 @@ export default function QuickMatchStarter() {
           </div>
         </div>
 
-        {/* --- SECTION 2: THE TOSS (CRITICAL PATH) --- */}
+        {/* --- SECTION 2: THE TOSS --- */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative shadow-xl space-y-6">
           <div className="absolute top-0 right-0 bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Step 02
@@ -179,23 +222,13 @@ export default function QuickMatchStarter() {
               <button
                 type="button"
                 onClick={() => setTossWinner("A")}
-                className={`py-3.5 px-4 rounded-2xl font-black text-sm truncate border transition-all ${
-                  tossWinner === "A"
-                    ? "bg-blue-600/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10"
-                    : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"
-                }`}
-              >
+                className={`py-3.5 px-4 rounded-2xl font-black text-sm truncate border transition-all ${tossWinner === "A" ? "bg-blue-600/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
                 {teamA || "Team 1"}
               </button>
               <button
                 type="button"
                 onClick={() => setTossWinner("B")}
-                className={`py-3.5 px-4 rounded-2xl font-black text-sm truncate border transition-all ${
-                  tossWinner === "B"
-                    ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10"
-                    : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"
-                }`}
-              >
+                className={`py-3.5 px-4 rounded-2xl font-black text-sm truncate border transition-all ${tossWinner === "B" ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
                 {teamB || "Team 2"}
               </button>
             </div>
@@ -209,29 +242,18 @@ export default function QuickMatchStarter() {
               <button
                 type="button"
                 onClick={() => setDecision("bat")}
-                className={`py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${
-                  decision === "bat"
-                    ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20"
-                    : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"
-                }`}
-              >
+                className={`py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${decision === "bat" ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
                 🏏 Bat First
               </button>
               <button
                 type="button"
                 onClick={() => setDecision("bowl")}
-                className={`py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${
-                  decision === "bowl"
-                    ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20"
-                    : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"
-                }`}
-              >
+                className={`py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${decision === "bowl" ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
                 🥎 Bowl First
               </button>
             </div>
           </div>
 
-          {/* Dynamic visual confirmation box */}
           <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-2xl flex items-center gap-2.5">
             <Sparkles size={16} className="text-amber-400 shrink-0" />
             <p className="text-xs text-slate-500 font-bold truncate">
@@ -246,7 +268,7 @@ export default function QuickMatchStarter() {
           </div>
         </div>
 
-        {/* --- SECTION 3: RULES PRESETS (ONE-TAP PILLS) --- */}
+        {/* --- SECTION 3: RULES PRESETS --- */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl relative">
           <div className="absolute top-0 right-0 bg-slate-800 text-slate-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Defaults
@@ -263,12 +285,7 @@ export default function QuickMatchStarter() {
                   key={ov}
                   type="button"
                   onClick={() => setOvers(ov)}
-                  className={`flex-1 min-w-[50px] py-2.5 rounded-xl font-black text-xs border transition-all ${
-                    overs === ov
-                      ? "bg-white text-slate-950 border-white shadow-md"
-                      : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
-                  }`}
-                >
+                  className={`flex-1 min-w-[50px] py-2.5 rounded-xl font-black text-xs border transition-all ${overs === ov ? "bg-white text-slate-950 border-white shadow-md" : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"}`}>
                   {ov}
                 </button>
               ))}
@@ -277,18 +294,16 @@ export default function QuickMatchStarter() {
               <button
                 type="button"
                 onClick={() => setOvers((prev) => Math.max(1, prev - 1))}
-                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
-              >
+                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
                 -
               </button>
-              <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
+              <span className="font-black text-white text-sm uppercase tracking-widest">
                 {overs}
               </span>
               <button
                 type="button"
                 onClick={() => setOvers((prev) => prev + 1)}
-                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
-              >
+                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
                 +
               </button>
             </div>
@@ -306,12 +321,7 @@ export default function QuickMatchStarter() {
                     key={sz}
                     type="button"
                     onClick={() => setSquadSize(sz)}
-                    className={`flex-1 py-2 rounded-xl font-black text-xs border transition-all ${
-                      squadSize === sz
-                        ? "bg-slate-700 text-white border-slate-500"
-                        : "bg-slate-950 border-slate-800 text-slate-500"
-                    }`}
-                  >
+                    className={`flex-1 py-2 rounded-xl font-black text-xs border transition-all ${squadSize === sz ? "bg-slate-700 text-white border-slate-500" : "bg-slate-950 border-slate-800 text-slate-500"}`}>
                     {sz}
                   </button>
                 ))}
@@ -320,18 +330,16 @@ export default function QuickMatchStarter() {
                 <button
                   type="button"
                   onClick={() => setSquadSize((prev) => Math.max(1, prev - 1))}
-                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
-                >
+                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
                   -
                 </button>
-                <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
+                <span className="font-black text-white text-sm uppercase tracking-widest">
                   {squadSize}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSquadSize((prev) => prev + 1)}
-                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
-                >
+                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
                   +
                 </button>
               </div>
@@ -348,12 +356,7 @@ export default function QuickMatchStarter() {
                       key={type}
                       type="button"
                       onClick={() => setBallType(type)}
-                      className={`w-full py-3.5 px-1 rounded-xl font-black uppercase text-[10px] border tracking-wider transition-all truncate ${
-                        ballType === type
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm"
-                          : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"
-                      }`}
-                    >
+                      className={`w-full py-3.5 px-1 rounded-xl font-black uppercase text-[10px] border tracking-wider transition-all truncate ${ballType === type ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm" : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"}`}>
                       {type}
                     </button>
                   ),
@@ -363,16 +366,15 @@ export default function QuickMatchStarter() {
           </div>
         </div>
 
-        {/* --- SUBMIT CTA (FIXED TO BOTTOM FOR MOBILE) --- */}
+        {/* --- SUBMIT CTA --- */}
         <div className="fixed sm:static bottom-0 left-0 right-0 p-4 sm:p-0 bg-slate-950/90 sm:bg-transparent backdrop-blur-lg border-t border-slate-800 sm:border-0 z-40">
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50"
-          >
+            className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50">
             {isLoading ? (
               <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
                 Generating Matchpad...
               </>
             ) : (
