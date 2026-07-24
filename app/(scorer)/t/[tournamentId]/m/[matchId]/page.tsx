@@ -118,6 +118,8 @@ export default function UnifiedLiveMatchPage({
 
   const [completedRuns, setCompletedRuns] = useState(0);
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   // 🔒 --- AUTHENTICATION CHECKER --- 🔒
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -172,7 +174,7 @@ export default function UnifiedLiveMatchPage({
     };
 
     checkAuthorization();
-  }, [tournamentId, engine.match?.created_by]);
+  }, [tournamentId, engine.match?.created_by]); // 💡 Optimized dependency to track the exact property safely
 
   const stats = deriveMatchStats(
     engine.match,
@@ -573,6 +575,9 @@ export default function UnifiedLiveMatchPage({
       return;
     }
 
+    // 🚨 THE FIX: Convert "QUICK_MATCH" to null so Postgres doesn't crash on the UUID constraint
+    const dbTournamentId = tournamentId === "QUICK_MATCH" ? null : tournamentId;
+
     // 1. Check if the player is ALREADY on this exact team
     const { data: teamMatch } = await supabase
       .from("players")
@@ -588,13 +593,12 @@ export default function UnifiedLiveMatchPage({
       finalPlayerId = teamMatch.id;
     } else {
       // 2. Insert directly into THIS team.
-      // (This fixes the bug where players were hidden because they belonged to a different team_id)
       const { data: newP, error } = await supabase
         .from("players")
         .insert({
           full_name: normalizedName,
           team_id: targetTeamId,
-          tournament_id: tournamentId,
+          tournament_id: dbTournamentId, // <-- Using the safe ID here
           role: quickAddRole,
           status: "active",
         })
@@ -610,7 +614,6 @@ export default function UnifiedLiveMatchPage({
 
     // 3. REFRESH ENGINE SO THEY APPEAR IN THE ARRAY
     await engine.refreshPlayers();
-
     // 4. AUTO-ASSIGN TO DROPDOWNS
     const isPreMatch = !engine.match?.live_striker_id && !isCompleted;
     if (isPreMatch) {
@@ -628,6 +631,7 @@ export default function UnifiedLiveMatchPage({
     setNewPlayerName("");
     setGlobalSearchResults([]);
     setShowQuickAddPlayer(false);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleRecordBall = async (runs: number) => {
@@ -825,8 +829,7 @@ export default function UnifiedLiveMatchPage({
         <p className="text-[var(--text-muted)] font-bold mb-8">{subtitle}</p>
         <Link
           href={`/t/${tournamentId}/matches`}
-          className="block w-full bg-[var(--surface-2)] py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--border-1)] transition-colors text-[var(--foreground)]"
-        >
+          className="block w-full bg-[var(--surface-2)] py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--border-1)] transition-colors text-[var(--foreground)]">
           Return to Matches
         </Link>
       </div>
@@ -850,8 +853,7 @@ export default function UnifiedLiveMatchPage({
           href={
             tournamentId === "QUICK_MATCH" ? "/" : `/t/${tournamentId}/matches`
           }
-          className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max"
-        >
+          className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max">
           <ArrowLeft size={16} />{" "}
           {tournamentId === "QUICK_MATCH" ? "Exit Match" : "Back to Schedule"}
         </Link>
@@ -903,14 +905,12 @@ export default function UnifiedLiveMatchPage({
               <div className="flex gap-4">
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team1_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                >
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                   {engine.match.team1?.name}
                 </button>
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team2_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                >
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                   {engine.match.team2?.name}
                 </button>
               </div>
@@ -923,14 +923,12 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setTossDecision("bat")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bat" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                  >
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bat" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                     Elected to Bat
                   </button>
                   <button
                     onClick={() => setTossDecision("bowl")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bowl" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                  >
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bowl" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                     Elected to Bowl
                   </button>
                 </div>
@@ -941,8 +939,7 @@ export default function UnifiedLiveMatchPage({
                 engine.saveTossAndStart(tossWinnerId, tossDecision)
               }
               disabled={!tossWinnerId}
-              className="w-full mt-8 bg-[var(--foreground)] text-[var(--background)] disabled:opacity-50 font-black uppercase py-4 rounded-xl transition-opacity hover:opacity-90"
-            >
+              className="w-full mt-8 bg-[var(--foreground)] text-[var(--background)] disabled:opacity-50 font-black uppercase py-4 rounded-xl transition-opacity hover:opacity-90">
               Start Match
             </button>
           </div>
@@ -978,120 +975,73 @@ export default function UnifiedLiveMatchPage({
               <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                 Select Batsmen
               </h3>
-
-              {/* 🌟 NEW: GRACEFUL FALLBACK FOR EMPTY SQUADS 🌟 */}
-              {stats.battingSquad.length === 0 ? (
-                <div className="text-center py-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-                  <p className="text-xs text-red-500 font-bold mb-3">
-                    No players found in this team.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setQuickAddRole("batter");
-                      setShowQuickAddPlayer(true);
-                    }}
-                    className="px-4 py-2 bg-red-500 text-white font-black text-[10px] uppercase rounded-lg shadow-sm"
-                  >
-                    + Create Opening Batsman
-                  </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
+                    Striker
+                  </label>
+                  <select
+                    value={setupStriker}
+                    onChange={(e) => setSetupStriker(e.target.value)}
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
+                    <option value="">Select...</option>
+                    {stats.battingSquad.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.full_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
-                      Striker
-                    </label>
-                    <select
-                      value={setupStriker}
-                      onChange={(e) => setSetupStriker(e.target.value)}
-                      className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-                    >
-                      <option value="">Select...</option>
-                      {stats.battingSquad.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
-                      Non-Striker
-                    </label>
-                    <select
-                      value={setupNonStriker}
-                      onChange={(e) => setSetupNonStriker(e.target.value)}
-                      className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-                    >
-                      <option value="">Select...</option>
-                      {stats.battingSquad.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
+                  <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
+                    Non-Striker
+                  </label>
+                  <select
+                    value={setupNonStriker}
+                    onChange={(e) => setSetupNonStriker(e.target.value)}
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
+                    <option value="">Select...</option>
+                    {stats.battingSquad.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.full_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
-
-              {/* Keep your existing Add Extra button here */}
+              </div>
               <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                 <button
                   onClick={() => {
                     setQuickAddRole("batter");
                     setShowQuickAddPlayer(true);
                   }}
-                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                >
+                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
                   + Add Extra Batter to Squad
                 </button>
               </div>
             </div>
-
             <div className="bg-[var(--surface-2)] p-6 rounded-2xl border border-[var(--border-1)]">
               <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                 Select Bowler
               </h3>
-
-              {/* 🌟 NEW: GRACEFUL FALLBACK FOR EMPTY SQUADS 🌟 */}
-              {stats.bowlingSquad.length === 0 ? (
-                <div className="text-center py-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                  <p className="text-xs text-blue-500 font-bold mb-3">
-                    No players found in this team.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setQuickAddRole("bowler");
-                      setShowQuickAddPlayer(true);
-                    }}
-                    className="px-4 py-2 bg-blue-500 text-white font-black text-[10px] uppercase rounded-lg shadow-sm"
-                  >
-                    + Create Opening Bowler
-                  </button>
-                </div>
-              ) : (
-                <select
-                  value={setupBowler}
-                  onChange={(e) => setSetupBowler(e.target.value)}
-                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
-                >
-                  <option value="">Select...</option>
-                  {stats.bowlingSquad.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.full_name}
-                    </option>
-                  ))}
-                </select>
-              )}
-
+              <select
+                value={setupBowler}
+                onChange={(e) => setSetupBowler(e.target.value)}
+                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
+                <option value="">Select...</option>
+                {stats.bowlingSquad.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name}
+                  </option>
+                ))}
+              </select>
               <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                 <button
                   onClick={() => {
                     setQuickAddRole("bowler");
                     setShowQuickAddPlayer(true);
                   }}
-                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                >
+                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
                   + Add Extra Bowler to Squad
                 </button>
               </div>
@@ -1100,8 +1050,7 @@ export default function UnifiedLiveMatchPage({
               onClick={() =>
                 engine.saveOpeners(setupStriker, setupNonStriker, setupBowler)
               }
-              className="w-full bg-[var(--accent)] text-[var(--background)] font-black text-lg uppercase tracking-widest py-5 rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg"
-            >
+              className="w-full bg-[var(--accent)] text-[var(--background)] font-black text-lg uppercase tracking-widest py-5 rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg">
               Play Ball
             </button>
           </div>
@@ -1109,7 +1058,7 @@ export default function UnifiedLiveMatchPage({
           {/* 🔍 QUICK ADD MODAL WITH LIVE SEARCH (INJECTED FOR PRE-MATCH ACCESSIBILITY) 🔍 */}
           {showQuickAddPlayer && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-2xl h-[50vh] p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95 flex flex-col">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-2 flex items-center gap-2">
                   <Search className="text-[var(--accent)]" size={20} /> Quick
                   Add Player
@@ -1129,19 +1078,18 @@ export default function UnifiedLiveMatchPage({
 
                   {/* LIVE SEARCH RESULTS DROPDOWN */}
                   {newPlayerName.length >= 2 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="absolute top-full left-0 right-0 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-xl overflow-hidden z-50">
                       {isSearchingGlobal ? (
                         <div className="p-4 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest">
                           Searching...
                         </div>
                       ) : globalSearchResults.length > 0 ? (
-                        <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                        <div className="max-h-32 overflow-y-auto custom-scrollbar">
                           {globalSearchResults.map((p, idx) => (
                             <button
                               key={idx}
                               onClick={() => handleQuickAddPlayer(p.full_name)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
-                            >
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer">
                               <span className="font-bold text-[var(--foreground)] text-left">
                                 {p.full_name}
                               </span>
@@ -1160,22 +1108,20 @@ export default function UnifiedLiveMatchPage({
                   )}
                 </div>
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex gap-4 mt-auto">
                   <button
                     onClick={() => {
                       setShowQuickAddPlayer(false);
                       setNewPlayerName("");
                       setGlobalSearchResults([]);
                     }}
-                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl"
-                  >
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl">
                     Cancel
                   </button>
                   <button
                     onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg">
                     Create New
                   </button>
                 </div>
@@ -1201,8 +1147,7 @@ export default function UnifiedLiveMatchPage({
       className={`min-h-screen bg-[var(--background)] text-[var(--foreground)] p-2 md:p-6 font-sans relative overflow-hidden lg:overflow-visible transition-colors duration-300 ${
         /* Only apply heavy bottom padding on Mobile when Keypad is active */
         isAuthorized && !isCompleted ? "pb-[200px] lg:pb-10" : "pb-10"
-      }`}
-    >
+      }`}>
       {/* HEADER & TOP NAVIGATION */}
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6 px-2 mt-2 animate-in fade-in">
         <div className="flex items-center gap-4">
@@ -1210,8 +1155,7 @@ export default function UnifiedLiveMatchPage({
             onClick={() =>
               (window.location.href = `/t/${tournamentId}/matches`)
             }
-            className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)]"
-          >
+            className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)]">
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -1232,15 +1176,13 @@ export default function UnifiedLiveMatchPage({
           {isAuthorized && tournamentId === "QUICK_MATCH" && (
             <button
               onClick={handleDeleteMatch}
-              className="flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm"
-            >
+              className="flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm">
               <Trash2 size={14} /> Delete
             </button>
           )}
           <button
             onClick={handleShareMatch}
-            className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm"
-          >
+            className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm">
             {isSharing ? (
               <Check size={14} className="text-emerald-500" />
             ) : (
@@ -1272,8 +1214,7 @@ export default function UnifiedLiveMatchPage({
       <div
         className={`max-w-[1400px] mx-auto flex gap-6 relative animate-in fade-in ${
           isCompleted ? "flex-col lg:flex-row" : "flex-col-reverse lg:flex-row"
-        }`}
-      >
+        }`}>
         {/* --- LEFT COLUMN: DYNAMIC CONTEXT (AWARDS OR SCORING KEYPAD) --- */}
         <div className="flex-1 flex flex-col gap-6 lg:max-w-[350px] xl:max-w-[400px] w-full shrink-0">
           {isCompleted ? (
@@ -1329,8 +1270,7 @@ export default function UnifiedLiveMatchPage({
               {isAuthorized && (
                 <button
                   onClick={() => setShowPostMatchModal(true)}
-                  className="w-full relative z-10 bg-yellow-500 text-[var(--background)] font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20"
-                >
+                  className="w-full relative z-10 bg-yellow-500 text-[var(--background)] font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20">
                   Edit Awards 🏆
                 </button>
               )}
@@ -1364,8 +1304,7 @@ export default function UnifiedLiveMatchPage({
                         key={runs}
                         onClick={() => handleRecordBall(runs)}
                         disabled={engine.isSubmittingBall}
-                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95"
-                      >
+                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95">
                         {runs}
                       </button>
                     ))}
@@ -1376,15 +1315,13 @@ export default function UnifiedLiveMatchPage({
                     <button
                       onClick={() => handleRecordBall(4)}
                       disabled={engine.isSubmittingBall}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95"
-                    >
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95">
                       4
                     </button>
                     <button
                       onClick={() => handleRecordBall(6)}
                       disabled={engine.isSubmittingBall}
-                      className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all shadow-md active:scale-95"
-                    >
+                      className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all shadow-md active:scale-95">
                       6
                     </button>
 
@@ -1394,8 +1331,7 @@ export default function UnifiedLiveMatchPage({
                         setMoreActionType("penalty-add"); // Default reset
                         setShowMoreModal(true);
                       }}
-                      className="col-span-2 bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-2 sm:py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2"
-                    >
+                      className="col-span-2 bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-2 sm:py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
                       ⚙️ More Actions
                     </button>
                   </div>
@@ -1409,8 +1345,7 @@ export default function UnifiedLiveMatchPage({
                         setPendingExtraType("wide");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       WD
                     </button>
                     <button
@@ -1418,8 +1353,7 @@ export default function UnifiedLiveMatchPage({
                         setPendingExtraType("no-ball");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       NB
                     </button>
                     <button
@@ -1427,8 +1361,7 @@ export default function UnifiedLiveMatchPage({
                         setPendingExtraType("leg-bye");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       LB
                     </button>
                     <button
@@ -1436,8 +1369,7 @@ export default function UnifiedLiveMatchPage({
                         setPendingExtraType("bye");
                         setShowExtrasModal(true);
                       }}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all"
-                    >
+                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
                       B
                     </button>
                     <button
@@ -1445,8 +1377,7 @@ export default function UnifiedLiveMatchPage({
                         setPlayerOutId(engine.match!.live_striker_id);
                         setShowWicketModal(true);
                       }}
-                      className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl shadow-md active:scale-95 transition-all"
-                    >
+                      className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl shadow-md active:scale-95 transition-all">
                       OUT
                     </button>
                   </div>
@@ -1603,8 +1534,7 @@ export default function UnifiedLiveMatchPage({
                     activeTab === tab.id
                       ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                       : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                  }`}
-                >
+                  }`}>
                   {tab.label}
                   {activeTab === tab.id ? (
                     <ChevronUp size={14} className="ml-1" />
@@ -1701,8 +1631,7 @@ export default function UnifiedLiveMatchPage({
                         <button
                           key={p.id}
                           onClick={() => setSelectedNewBowlerId(p.id)}
-                          className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg transition-colors ${selectedNewBowlerId === p.id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
-                        >
+                          className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg transition-colors ${selectedNewBowlerId === p.id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}>
                           <span>{p.full_name}</span>
                         </button>
                       ))}
@@ -1714,8 +1643,7 @@ export default function UnifiedLiveMatchPage({
                       setSelectedNewBowlerId("");
                     }}
                     disabled={!selectedNewBowlerId}
-                    className="w-full mt-6 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-2xl disabled:opacity-30 text-lg hover:opacity-90 transition-opacity"
-                  >
+                    className="w-full mt-6 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-2xl disabled:opacity-30 text-lg hover:opacity-90 transition-opacity">
                     Confirm Bowler
                   </button>
                   <button
@@ -1723,8 +1651,7 @@ export default function UnifiedLiveMatchPage({
                       setQuickAddRole("bowler");
                       setShowQuickAddPlayer(true);
                     }}
-                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 border-dashed rounded-xl py-3 font-bold transition-colors"
-                  >
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 border-dashed rounded-xl py-3 font-bold transition-colors">
                     <UserPlus size={18} /> Quick Add Bowler
                   </button>
                 </div>
@@ -1751,8 +1678,7 @@ export default function UnifiedLiveMatchPage({
                         <button
                           key={id}
                           onClick={() => setPlayerOutId(id)}
-                          className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm transition-colors ${playerOutId === id ? "border-red-500 bg-red-500/10 text-red-500" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                        >
+                          className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm transition-colors ${playerOutId === id ? "border-red-500 bg-red-500/10 text-red-500" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                           {
                             stats.battingSquad.find((p) => p.id === id)
                               ?.full_name
@@ -1768,8 +1694,7 @@ export default function UnifiedLiveMatchPage({
                     <select
                       value={wicketType}
                       onChange={(e) => setWicketType(e.target.value)}
-                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                    >
+                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                       <option className="bg-[var(--surface-1)]" value="bowled">
                         Bowled
                       </option>
@@ -1795,8 +1720,7 @@ export default function UnifiedLiveMatchPage({
                       <select
                         value={fielderId}
                         onChange={(e) => setFielderId(e.target.value)}
-                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                      >
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                         <option className="bg-[var(--surface-1)]" value="">
                           Select Fielder...
                         </option>
@@ -1804,8 +1728,7 @@ export default function UnifiedLiveMatchPage({
                           <option
                             className="bg-[var(--surface-1)]"
                             key={p.id}
-                            value={p.id}
-                          >
+                            value={p.id}>
                             {p.full_name}
                           </option>
                         ))}
@@ -1827,8 +1750,7 @@ export default function UnifiedLiveMatchPage({
                               completedRuns === runs
                                 ? "bg-[var(--accent)] text-[var(--background)] shadow-md border-[var(--accent)] border"
                                 : "bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"
-                            }`}
-                          >
+                            }`}>
                             {runs}
                           </button>
                         ))}
@@ -1857,8 +1779,7 @@ export default function UnifiedLiveMatchPage({
                       <select
                         value={newBatsmanId}
                         onChange={(e) => setNewBatsmanId(e.target.value)}
-                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                      >
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                         <option className="bg-[var(--surface-1)]" value="">
                           Select New Batsman...
                         </option>
@@ -1873,8 +1794,7 @@ export default function UnifiedLiveMatchPage({
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}
-                            >
+                              value={p.id}>
                               {p.full_name}
                             </option>
                           ))}
@@ -1885,8 +1805,7 @@ export default function UnifiedLiveMatchPage({
                             setQuickAddRole("batter");
                             setShowQuickAddPlayer(true);
                           }}
-                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
-                        >
+                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
                           + Add Extra Player to Squad
                         </button>
                       </div>
@@ -1911,8 +1830,7 @@ export default function UnifiedLiveMatchPage({
                       />
                       <label
                         htmlFor="wicketExtra"
-                        className="text-sm font-black text-orange-500 uppercase cursor-pointer"
-                      >
+                        className="text-sm font-black text-orange-500 uppercase cursor-pointer">
                         Wicket on an Extra?
                       </label>
                     </div>
@@ -1926,8 +1844,7 @@ export default function UnifiedLiveMatchPage({
                                 setWicketExtraType(ext as any);
                                 setForceLegalBall(false);
                               }}
-                              className={`flex-1 py-3 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                            >
+                              className={`flex-1 py-3 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                               {ext.replace("-", " ")}
                             </button>
                           ))}
@@ -1946,8 +1863,7 @@ export default function UnifiedLiveMatchPage({
                             />
                             <label
                               htmlFor="forceLegal"
-                              className="text-sm font-bold text-[var(--text-muted)] cursor-pointer"
-                            >
+                              className="text-sm font-bold text-[var(--text-muted)] cursor-pointer">
                               Count this as a legal delivery?
                             </label>
                           </div>
@@ -1961,8 +1877,7 @@ export default function UnifiedLiveMatchPage({
                               <button
                                 key={num}
                                 onClick={() => setWicketExtraRuns(num)}
-                                className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
-                              >
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
                                 +{num}
                               </button>
                             ))}
@@ -1974,8 +1889,7 @@ export default function UnifiedLiveMatchPage({
                   <div className="flex gap-4 pt-4">
                     <button
                       onClick={() => setShowWicketModal(false)}
-                      className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl text-lg transition-colors"
-                    >
+                      className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl text-lg transition-colors">
                       Cancel
                     </button>
                     <button
@@ -1991,8 +1905,7 @@ export default function UnifiedLiveMatchPage({
                         ).length > 0 &&
                           !newBatsmanId)
                       }
-                      className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20"
-                    >
+                      className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20">
                       {stats.battingSquad.filter(
                         (p) =>
                           p.id !== engine.match!.live_striker_id &&
@@ -2022,8 +1935,7 @@ export default function UnifiedLiveMatchPage({
                     <button
                       key={num}
                       onClick={() => setExtraAdditionalRuns(num)}
-                      className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"}`}
-                    >
+                      className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"}`}>
                       {num}
                     </button>
                   ))}
@@ -2031,14 +1943,12 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowExtrasModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors"
-                  >
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors">
                     Cancel
                   </button>
                   <button
                     onClick={submitExtra}
-                    className="flex-[2] bg-[var(--foreground)] hover:opacity-80 transition-opacity text-[var(--background)] font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest"
-                  >
+                    className="flex-[2] bg-[var(--foreground)] hover:opacity-80 transition-opacity text-[var(--background)] font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest">
                     Confirm
                   </button>
                 </div>
@@ -2055,8 +1965,7 @@ export default function UnifiedLiveMatchPage({
                 <div className="space-y-8">
                   <button
                     onClick={() => setEditingBall(null)}
-                    className="w-full py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors"
-                  >
+                    className="w-full py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors">
                     Cancel
                   </button>
                 </div>
@@ -2095,15 +2004,13 @@ export default function UnifiedLiveMatchPage({
                 {engine.match!.current_innings === 1 ? (
                   <button
                     onClick={engine.startSecondInnings}
-                    className="w-full bg-[var(--accent)] text-[var(--background)] font-black py-6 rounded-2xl text-2xl mt-4 hover:opacity-90 transition-opacity shadow-lg"
-                  >
+                    className="w-full bg-[var(--accent)] text-[var(--background)] font-black py-6 rounded-2xl text-2xl mt-4 hover:opacity-90 transition-opacity shadow-lg">
                     START 2ND INNINGS
                   </button>
                 ) : (
                   <button
                     onClick={() => setShowPostMatchModal(true)}
-                    className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
-                  >
+                    className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20">
                     POST-MATCH AWARDS 🏆
                   </button>
                 )}
@@ -2138,15 +2045,13 @@ export default function UnifiedLiveMatchPage({
                               live_striker_id: e.target.value,
                             })
                           }
-                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
-                        >
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]">
                           <option value="">Select...</option>
                           {stats.battingSquad.map((p) => (
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}
-                            >
+                              value={p.id}>
                               {p.full_name}
                             </option>
                           ))}
@@ -2165,15 +2070,13 @@ export default function UnifiedLiveMatchPage({
                               live_non_striker_id: e.target.value,
                             })
                           }
-                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
-                        >
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]">
                           <option value="">Select...</option>
                           {stats.battingSquad.map((p) => (
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}
-                            >
+                              value={p.id}>
                               {p.full_name}
                             </option>
                           ))}
@@ -2186,8 +2089,7 @@ export default function UnifiedLiveMatchPage({
                           setQuickAddRole("batter");
                           setShowQuickAddPlayer(true);
                         }}
-                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2"
-                      >
+                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2">
                         <UserPlus size={14} /> Add Extra Batter
                       </button>
                     </div>
@@ -2206,15 +2108,13 @@ export default function UnifiedLiveMatchPage({
                           live_bowler_id: e.target.value,
                         })
                       }
-                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4"
-                    >
+                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4">
                       <option value="">Select...</option>
                       {stats.bowlingSquad.map((p) => (
                         <option
                           className="bg-[var(--surface-1)]"
                           key={p.id}
-                          value={p.id}
-                        >
+                          value={p.id}>
                           {p.full_name}
                         </option>
                       ))}
@@ -2226,8 +2126,7 @@ export default function UnifiedLiveMatchPage({
                         setQuickAddRole("bowler");
                         setShowQuickAddPlayer(true);
                       }}
-                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2"
-                    >
+                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2">
                       <UserPlus size={14} /> Add Extra Bowler
                     </button>
                   </div>
@@ -2239,8 +2138,7 @@ export default function UnifiedLiveMatchPage({
                       setShowEditPlayersModal(false);
                       engine.fetchMatchData();
                     }}
-                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-base transition-colors"
-                  >
+                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-base transition-colors">
                     Cancel
                   </button>
                   <button
@@ -2252,8 +2150,7 @@ export default function UnifiedLiveMatchPage({
                       );
                       setShowEditPlayersModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-base transition-opacity shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-base transition-opacity shadow-lg">
                     Save Changes
                   </button>
                 </div>
@@ -2277,8 +2174,7 @@ export default function UnifiedLiveMatchPage({
                         onClick={() =>
                           setTempOversLimit(Math.max(1, tempOversLimit - 1))
                         }
-                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                         -
                       </button>
                       <span className="text-5xl font-black w-24 text-center text-[var(--foreground)]">
@@ -2286,8 +2182,7 @@ export default function UnifiedLiveMatchPage({
                       </span>
                       <button
                         onClick={() => setTempOversLimit(tempOversLimit + 1)}
-                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                         +
                       </button>
                     </div>
@@ -2303,8 +2198,7 @@ export default function UnifiedLiveMatchPage({
                             Math.max(1, tempMaxOversPerBowler - 1),
                           )
                         }
-                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors">
                         -
                       </button>
                       <span className="text-3xl font-black w-16 text-center text-[var(--foreground)]">
@@ -2314,8 +2208,7 @@ export default function UnifiedLiveMatchPage({
                         onClick={() =>
                           setTempMaxOversPerBowler(tempMaxOversPerBowler + 1)
                         }
-                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors"
-                      >
+                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors">
                         +
                       </button>
                     </div>
@@ -2330,8 +2223,7 @@ export default function UnifiedLiveMatchPage({
                           onClick={() =>
                             setTempTargetScore((tempTargetScore || 0) - 1)
                           }
-                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl"
-                        >
+                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl">
                           -
                         </button>
                         <span className="text-4xl font-black w-24 text-center text-orange-500">
@@ -2341,8 +2233,7 @@ export default function UnifiedLiveMatchPage({
                           onClick={() =>
                             setTempTargetScore((tempTargetScore || 0) + 1)
                           }
-                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl"
-                        >
+                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl">
                           +
                         </button>
                       </div>
@@ -2355,8 +2246,7 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowSettingsModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg"
-                  >
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg">
                     Cancel
                   </button>
                   <button
@@ -2369,8 +2259,7 @@ export default function UnifiedLiveMatchPage({
                       );
                       setShowSettingsModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase py-5 rounded-2xl text-lg tracking-widest transition-opacity shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase py-5 rounded-2xl text-lg tracking-widest transition-opacity shadow-lg">
                     Save
                   </button>
                 </div>
@@ -2400,8 +2289,7 @@ export default function UnifiedLiveMatchPage({
                             setMoreActionType("penalty-add");
                             setCustomRuns(1);
                           }}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           Penalty (+)
                         </button>
                         <button
@@ -2409,8 +2297,7 @@ export default function UnifiedLiveMatchPage({
                             setMoreActionType("penalty-minus");
                             setCustomRuns(1);
                           }}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           Penalty (-)
                         </button>
                       </div>
@@ -2419,22 +2306,19 @@ export default function UnifiedLiveMatchPage({
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setMoreActionType("dead-ball")}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           Dead Ball
                         </button>
                         <button
                           onClick={() => setMoreActionType("end-innings")}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
-                        >
+                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
                           End Innings ⏹️
                         </button>
                         {engine.match?.current_innings === 2 && (
                           <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                             <button
                               onClick={handleUndoEndInnings}
-                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm"
-                            >
+                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm">
                               ⚠️ Revert to 1st Innings
                             </button>
                           </div>
@@ -2455,8 +2339,7 @@ export default function UnifiedLiveMatchPage({
                           onClick={() =>
                             setCustomRuns(Math.max(1, customRuns - 1))
                           }
-                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                        >
+                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                           -
                         </button>
                         <input
@@ -2471,8 +2354,7 @@ export default function UnifiedLiveMatchPage({
                         />
                         <button
                           onClick={() => setCustomRuns(customRuns + 1)}
-                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
-                        >
+                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
                           +
                         </button>
                       </div>
@@ -2507,8 +2389,7 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowMoreModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg"
-                  >
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg">
                     Cancel
                   </button>
                   <button
@@ -2518,8 +2399,7 @@ export default function UnifiedLiveMatchPage({
                         : submitMoreAction
                     }
                     disabled={engine.isSubmittingBall}
-                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-2xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}
-                  >
+                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-2xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}>
                     {moreActionType === "end-innings"
                       ? "Confirm End"
                       : "Submit Action"}
@@ -2532,7 +2412,7 @@ export default function UnifiedLiveMatchPage({
           {/* 🔍 QUICK ADD MODAL WITH LIVE SEARCH (NOW PLACED AT THE VERY BOTTOM OF THE ADMIN BLOCK) 🔍 */}
           {showQuickAddPlayer && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-2xl h-[50vh] p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95 flex flex-col">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-2 flex items-center gap-2">
                   <Search className="text-[var(--accent)]" size={20} /> Quick
                   Add Player
@@ -2563,8 +2443,7 @@ export default function UnifiedLiveMatchPage({
                             <button
                               key={idx}
                               onClick={() => handleQuickAddPlayer(p.full_name)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
-                            >
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer">
                               <span className="font-bold text-[var(--foreground)] text-left">
                                 {p.full_name}
                               </span>
@@ -2583,22 +2462,20 @@ export default function UnifiedLiveMatchPage({
                   )}
                 </div>
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex gap-4 mt-auto">
                   <button
                     onClick={() => {
                       setShowQuickAddPlayer(false);
                       setNewPlayerName("");
                       setGlobalSearchResults([]);
                     }}
-                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl"
-                  >
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl">
                     Cancel
                   </button>
                   <button
                     onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg"
-                  >
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg">
                     Create New
                   </button>
                 </div>
@@ -2637,8 +2514,7 @@ export default function UnifiedLiveMatchPage({
               />
               <label
                 htmlFor="strictMom"
-                className="text-xs font-black text-yellow-500 uppercase tracking-widest leading-tight cursor-pointer"
-              >
+                className="text-xs font-black text-yellow-500 uppercase tracking-widest leading-tight cursor-pointer">
                 MOM must be from the winning team
               </label>
             </div>
@@ -2651,8 +2527,7 @@ export default function UnifiedLiveMatchPage({
                 <select
                   value={momId}
                   onChange={(e) => setMomId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                >
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2660,8 +2535,7 @@ export default function UnifiedLiveMatchPage({
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}
-                    >
+                      value={p.id}>
                       {p.full_name} (
                       {p.team_id === engine.match!.team1_id
                         ? engine.match!.team1?.short_name
@@ -2679,8 +2553,7 @@ export default function UnifiedLiveMatchPage({
                 <select
                   value={bestBatsmanId}
                   onChange={(e) => setBestBatsmanId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                >
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2688,8 +2561,7 @@ export default function UnifiedLiveMatchPage({
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}
-                    >
+                      value={p.id}>
                       {p.full_name}
                     </option>
                   ))}
@@ -2703,8 +2575,7 @@ export default function UnifiedLiveMatchPage({
                 <select
                   value={bestBowlerId}
                   onChange={(e) => setBestBowlerId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
-                >
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2712,8 +2583,7 @@ export default function UnifiedLiveMatchPage({
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}
-                    >
+                      value={p.id}>
                       {p.full_name}
                     </option>
                   ))}
@@ -2723,8 +2593,7 @@ export default function UnifiedLiveMatchPage({
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setShowPostMatchModal(false)}
-                  className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors"
-                >
+                  className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors">
                   Cancel
                 </button>
                 {/* <button
@@ -2763,8 +2632,7 @@ export default function UnifiedLiveMatchPage({
 
                     setShowPostMatchModal(false);
                   }}
-                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors"
-                >
+                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors">
                   Finish Match & Save
                 </button>
               </div>
