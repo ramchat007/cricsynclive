@@ -9,7 +9,8 @@ type FeatureKey =
   | "brackets_enabled"
   | "obs_overlays_enabled"
   | "youtube_sync_enabled"
-  | "whatsapp_alerts_enabled";
+  | "whatsapp_alerts_enabled"
+  | "ai_umpire_enabled";
 
 interface FeatureGateProps {
   tournamentId: string;
