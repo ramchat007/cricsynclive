@@ -41,6 +41,9 @@ function AIUmpireControlPanelContent({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+
   const [matchState, setMatchState] = useState<MatchState>("IDLE");
   const [camStatus, setCamStatus] = useState<"LOADING" | "ACTIVE" | "ERROR">(
     "LOADING",
@@ -79,13 +82,54 @@ function AIUmpireControlPanelContent({
     };
   }, []);
 
-  // Initialize Webcam
   useEffect(() => {
+    const getCameras = async () => {
+      try {
+        // Prompt for permission first, otherwise devices are hidden/unnamed
+        await navigator.mediaDevices.getUserMedia({ video: true });
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(
+          (device) => device.kind === "videoinput",
+        );
+
+        setVideoDevices(cameras);
+
+        // Select the first camera by default, or prefer OBS Virtual Camera if found
+        const obsCam = cameras.find((c) =>
+          c.label.toLowerCase().includes("obs"),
+        );
+        if (obsCam) {
+          setSelectedDeviceId(obsCam.deviceId);
+        } else if (cameras.length > 0) {
+          setSelectedDeviceId(cameras[0].deviceId);
+        }
+      } catch (err) {
+        console.error("Error fetching devices:", err);
+      }
+    };
+    getCameras();
+  }, []);
+
+  // 2. UPDATED EFFECT: Start Camera (re-runs when selectedDeviceId changes)
+  useEffect(() => {
+    if (!selectedDeviceId) return; // Wait until we have a device selected
+
+    let currentStream: MediaStream | null = null;
+
     const startCamera = async () => {
+      setCamStatus("LOADING");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
+          video: {
+            deviceId: { exact: selectedDeviceId },
+            width: 1280,
+            height: 720,
+            frameRate: { ideal: 30 },
+          },
         });
+
+        currentStream = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setCamStatus("ACTIVE");
@@ -95,8 +139,16 @@ function AIUmpireControlPanelContent({
         setCamStatus("ERROR");
       }
     };
+
     startCamera();
-  }, []);
+
+    // Cleanup: Stop the previous camera stream when switching cameras
+    return () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [selectedDeviceId]);
 
   // Initialize TensorFlow & MoveNet
   useEffect(() => {
@@ -398,6 +450,23 @@ function AIUmpireControlPanelContent({
   return (
     <div className="flex flex-col gap-6 font-sans">
       <header className="flex justify-between items-center bg-neutral-800 p-4 rounded-lg text-white">
+        <div>
+          <h1 className="text-2xl font-bold text-emerald-400">AI Umpire</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-sm text-neutral-400">Status: {camStatus}</p>
+
+            <select
+              value={selectedDeviceId}
+              onChange={(e) => setSelectedDeviceId(e.target.value)}
+              className="bg-neutral-900 border border-neutral-700 text-xs rounded px-2 py-1 text-neutral-300 outline-none focus:border-emerald-500 max-w-[200px]">
+              {videoDevices.map((cam) => (
+                <option key={cam.deviceId} value={cam.deviceId}>
+                  {cam.label || `Camera ${cam.deviceId.slice(0, 5)}...`}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div>
           <h1 className="text-2xl font-bold text-emerald-400">AI Umpire</h1>
           <p className="text-sm text-neutral-400">Camera Status: {camStatus}</p>
