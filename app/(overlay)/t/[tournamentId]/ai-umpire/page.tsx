@@ -10,7 +10,8 @@ import Link from "next/link";
 // --- TYPES ---
 type MatchState = "IDLE" | "LIVE";
 type CalibrationKey =
-  | "poppingCrease"
+  | "bowlerCrease"
+  | "batterCrease"
   | "pitchNoBall"
   | "leftPitch"
   | "rightPitch"
@@ -22,7 +23,8 @@ type CalibrationKey =
 type CalibrationData = Record<CalibrationKey, number | null>;
 
 const DEFAULT_CALIBRATION: CalibrationData = {
-  poppingCrease: null,
+  bowlerCrease: null,
+  batterCrease: null,
   pitchNoBall: null,
   leftPitch: null,
   rightPitch: null,
@@ -247,14 +249,14 @@ function AIUmpireControlPanelContent({
           // --- AUTO DETECT LOGIC ---
           if (autoDetect && !pendingCheck) {
             // 1. Auto-check Foot Fault
-            if (calibration.poppingCrease) {
+            if (calibration.bowlerCrease) {
               const ankles = pose.keypoints.filter(
                 (k) => k.name === "left_ankle" || k.name === "right_ankle",
               );
               if (
                 ankles.some(
                   (a) =>
-                    (a.score ?? 0) > 0.6 && a.y > calibration.poppingCrease!,
+                    (a.score ?? 0) > 0.6 && a.y > calibration.bowlerCrease!,
                 )
               ) {
                 setUnconfirmedAlert("FOOT FAULT");
@@ -329,13 +331,13 @@ function AIUmpireControlPanelContent({
       switch (key) {
         case " ":
           e.preventDefault();
-          if (!pose || !calibration.poppingCrease) return;
+          if (!pose || !calibration.bowlerCrease) return;
           const ankles = pose.keypoints.filter(
             (k) => k.name === "left_ankle" || k.name === "right_ankle",
           );
           if (
             ankles.some(
-              (a) => (a.score ?? 0) > 0.4 && a.y > calibration.poppingCrease!,
+              (a) => (a.score ?? 0) > 0.4 && a.y > calibration.bowlerCrease!,
             )
           ) {
             triggerAlert("FOOT FAULT");
@@ -388,9 +390,12 @@ function AIUmpireControlPanelContent({
     if (activeCalibTool) {
       const newCalib = {
         ...calibration,
-        [activeCalibTool]: ["waistY", "poppingCrease", "pitchNoBall"].includes(
-          activeCalibTool,
-        )
+        [activeCalibTool]: [
+          "waistY",
+          "bowlerCrease",
+          "batterCrease",
+          "pitchNoBall",
+        ].includes(activeCalibTool)
           ? y
           : x,
       };
@@ -426,6 +431,14 @@ function AIUmpireControlPanelContent({
           )
             setUnconfirmedAlert("WIDE");
           break;
+        case "R":
+          e.preventDefault();
+          setUnconfirmedAlert("RUN OUT");
+          break;
+        case "S":
+          e.preventDefault();
+          setUnconfirmedAlert("STUMPING");
+          break;
       }
       setPendingCheck(null);
     }
@@ -458,7 +471,8 @@ function AIUmpireControlPanelContent({
             <select
               value={selectedDeviceId}
               onChange={(e) => setSelectedDeviceId(e.target.value)}
-              className="bg-neutral-900 border border-neutral-700 text-xs rounded px-2 py-1 text-neutral-300 outline-none focus:border-emerald-500 max-w-[200px]">
+              className="bg-neutral-900 border border-neutral-700 text-xs rounded px-2 py-1 text-neutral-300 outline-none focus:border-emerald-500 max-w-[200px]"
+            >
               {videoDevices.map((cam) => (
                 <option key={cam.deviceId} value={cam.deviceId}>
                   {cam.label || `Camera ${cam.deviceId.slice(0, 5)}...`}
@@ -475,17 +489,20 @@ function AIUmpireControlPanelContent({
           <Link
             href={`/t/${tournamentId}/ai-umpire/overlay`}
             target="_blank"
-            className={`px-4 py-2 rounded-lg font-bold transition-colors border bg-neutral-700 border-neutral-600 text-neutral-300}`}>
+            className={`px-4 py-2 rounded-lg font-bold transition-colors border bg-neutral-700 border-neutral-600 text-neutral-300}`}
+          >
             Overlay
           </Link>
           <button
             onClick={() => setAutoDetect(!autoDetect)}
-            className={`px-4 py-2 rounded-lg font-bold transition-colors border ${autoDetect ? "bg-blue-600 border-blue-500 text-white" : "bg-neutral-700 border-neutral-600 text-neutral-300"}`}>
+            className={`px-4 py-2 rounded-lg font-bold transition-colors border ${autoDetect ? "bg-blue-600 border-blue-500 text-white" : "bg-neutral-700 border-neutral-600 text-neutral-300"}`}
+          >
             {autoDetect ? "🤖 Auto-Detect ON" : "🤖 Auto-Detect OFF"}
           </button>
           <button
             onClick={toggleMatchState}
-            className={`px-6 py-3 rounded-lg font-bold text-lg transition-colors ${matchState === "LIVE" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}>
+            className={`px-6 py-3 rounded-lg font-bold text-lg transition-colors ${matchState === "LIVE" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+          >
             {matchState === "LIVE" ? "🔴 LIVE ACTIVE" : "⚪ IDLE"}
           </button>
         </div>
@@ -516,7 +533,8 @@ function AIUmpireControlPanelContent({
               <div className="flex gap-6 mt-4">
                 <button
                   onClick={() => triggerAlert(unconfirmedAlert)}
-                  className="bg-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-xl hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                  className="bg-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-xl hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                >
                   Confirm [ENTER]
                 </button>
                 <button
@@ -524,7 +542,8 @@ function AIUmpireControlPanelContent({
                     setUnconfirmedAlert(null);
                     lastAlertTimeRef.current = Date.now(); // trigger cooldown to avoid immediate repeat
                   }}
-                  className="bg-neutral-600 text-white px-8 py-4 rounded-xl font-bold text-xl hover:bg-neutral-500 transition-all">
+                  className="bg-neutral-600 text-white px-8 py-4 rounded-xl font-bold text-xl hover:bg-neutral-500 transition-all"
+                >
                   Dismiss [ESC]
                 </button>
               </div>
@@ -553,7 +572,8 @@ function AIUmpireControlPanelContent({
             <h2 className="text-xl font-semibold">Calibration</h2>
             <button
               onClick={handleResetCalibration}
-              className="text-xs text-red-400 hover:text-red-300 underline">
+              className="text-xs text-red-400 hover:text-red-300 underline"
+            >
               Reset Lines
             </button>
           </div>
@@ -569,7 +589,8 @@ function AIUmpireControlPanelContent({
                 activeCalibTool === key
                   ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
                   : "border-neutral-600 bg-neutral-700 hover:bg-neutral-600"
-              }`}>
+              }`}
+            >
               Set {key.replace(/([A-Z])/g, " $1").trim()}
               {calibration[key] !== null && " ✓"}
             </button>
@@ -623,7 +644,8 @@ export default function AIUmpirePage({
       tournamentId={tournamentId}
       requiredTier="broadcast"
       featureKey="ai_umpire_enabled"
-      featureName="AI Umpire">
+      featureName="AI Umpire"
+    >
       <div className="h-[100vh] bg-neutral-900 p-6">
         <AIUmpireControlPanelContent tournamentId={tournamentId} />
       </div>
