@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useRef } from "react";
 
-// Web Audio API helper for offline sound generation
 const playBeep = (type: string) => {
   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
   const osc = ctx.createOscillator();
@@ -42,8 +41,8 @@ export default function AIUmpireOverlay() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Force transparent background for OBS
-    document.body.style.backgroundColor = "transparent";
+    // FIX: Use Chroma Green instead of transparent
+    document.body.style.backgroundColor = "#00FF00";
 
     const channel = new BroadcastChannel("cricsync-ai-channel");
 
@@ -77,7 +76,7 @@ export default function AIUmpireOverlay() {
   };
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center overflow-hidden bg-transparent pointer-events-none relative">
+    <div className="w-screen h-screen flex items-center justify-center overflow-hidden pointer-events-none relative">
       <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm">
         <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
         <span className="text-white text-xs font-bold tracking-widest font-sans">
@@ -92,7 +91,8 @@ export default function AIUmpireOverlay() {
             px-12 py-6 rounded-2xl border-4 bg-black/80 backdrop-blur-md
             shadow-[0_0_40px_rgba(0,0,0,0.8)]
             ${getAlertColor(activeAlert)}
-          `}>
+          `}
+        >
           <h1 className="text-7xl font-black tracking-tighter uppercase text-center font-sans">
             {activeAlert}
           </h1>

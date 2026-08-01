@@ -462,7 +462,13 @@ function AIUmpireControlPanelContent({
 
   return (
     <div className="flex flex-col gap-6 font-sans">
-      <header className="flex justify-between items-center bg-neutral-800 p-4 rounded-lg text-white">
+      <header className="flex items-center bg-neutral-800 p-4 rounded-lg text-white gap-10">
+        <Link
+          href={`/t/${tournamentId}/teams`}
+          className={`px-4 py-2 rounded-lg font-bold transition-colors border bg-neutral-700 border-neutral-600 text-neutral-300}`}
+        >
+          Back
+        </Link>
         <div>
           <h1 className="text-2xl font-bold text-emerald-400">AI Umpire</h1>
           <div className="flex items-center gap-3 mt-1">
@@ -552,7 +558,7 @@ function AIUmpireControlPanelContent({
 
           <video
             ref={videoRef}
-            className="absolute opacity-0 w-[1px] h-[1px] pointer-events-none"
+            className="absolute inset-0 w-full h-full opacity-0 pointer-events-none -z-10"
             autoPlay
             playsInline
             muted
