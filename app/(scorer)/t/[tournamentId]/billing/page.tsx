@@ -9,17 +9,19 @@ import {
   ArrowLeft,
   Loader2,
   Tag,
+  Phone,
+  Wallet,
+  X,
+  SmartphoneNfc,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
+import PaymentModal from "@/app/components/PaymentModal";
 
 export default function TournamentBillingPage({
   params,
 }: {
   params: Promise<{ tournamentId: string }>;
 }) {
-  const router = useRouter();
   const { tournamentId } = use(params);
   const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,6 +49,13 @@ export default function TournamentBillingPage({
   const [couponStatus, setCouponStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+
+  // 🌟 NEW: Purchase Modal State
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{
+    name: string;
+    price: number;
+  } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,13 +117,22 @@ export default function TournamentBillingPage({
     }
   };
 
+  const getFinalPrice = (price: number) =>
+    Math.round(price - price * (appliedDiscount / 100));
+
+  // 🌟 TRIGGER MODAL INSTEAD OF REDIRECT
   const handleUpgradeClick = (planName: string, basePrice: number) => {
-    const finalPrice = Math.round(
-      basePrice - basePrice * (appliedDiscount / 100),
-    );
-    router.push(
-      `/contact?plan=${encodeURIComponent(planName)}&price=${finalPrice}`,
-    );
+    const finalPrice = getFinalPrice(basePrice);
+    setSelectedPlan({ name: `${planName} Tier Upgrade`, price: finalPrice });
+    setShowPurchaseModal(true);
+  };
+
+  // 🌟 UPI LINK GENERATOR
+  const generateUPILink = (amount: number, planName: string) => {
+    const upiId = "9820160376@okaxis";
+    const payeeName = "CricSyncLive";
+    const note = `CricSync ${planName} Upgrade - ${tournamentId.substring(0, 8)}`;
+    return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
   };
 
   if (isLoading)
@@ -124,15 +142,12 @@ export default function TournamentBillingPage({
       </div>
     );
 
-  const getFinalPrice = (price: number) =>
-    Math.round(price - price * (appliedDiscount / 100));
-
   return (
-    // FIX: Changed min-h-screen to w-full h-auto, added pb-32 for heavy mobile scrolling clearance
     <div className="w-full h-auto bg-transparent p-4 md:p-8 font-sans text-[var(--foreground)] pb-32">
       <Link
         href={`/t/${tournamentId}/teams`}
-        className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-10 hover:text-[var(--accent)] w-max transition-colors">
+        className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-10 hover:text-[var(--accent)] w-max transition-colors"
+      >
         <ArrowLeft size={16} /> Back to Dashboard
       </Link>
 
@@ -165,7 +180,8 @@ export default function TournamentBillingPage({
           <button
             onClick={applyCoupon}
             disabled={!couponInput || couponStatus === "loading"}
-            className="bg-[var(--foreground)] text-[var(--background)] px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity">
+            className="bg-[var(--foreground)] text-[var(--background)] px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
             {couponStatus === "loading" ? (
               <Loader2 className="animate-spin" size={16} />
             ) : (
@@ -188,7 +204,8 @@ export default function TournamentBillingPage({
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* FREE TIER */}
         <div
-          className={`relative bg-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "free" ? "border-zinc-500 shadow-xl scale-105 z-10" : "border-[var(--border-1)] opacity-70 hover:opacity-100"}`}>
+          className={`relative bg-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "free" ? "border-zinc-500 shadow-xl scale-105 z-10" : "border-[var(--border-1)] opacity-70 hover:opacity-100"}`}
+        >
           {currentTier === "free" && (
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-zinc-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
               Current Plan
@@ -205,7 +222,8 @@ export default function TournamentBillingPage({
             {displayFeatures.free.map((f, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 text-sm font-bold text-[var(--text-muted)]">
+                className="flex items-center gap-3 text-sm font-bold text-[var(--text-muted)]"
+              >
                 <CheckCircle2 className="text-zinc-500 shrink-0" size={18} />{" "}
                 {f}
               </li>
@@ -215,7 +233,8 @@ export default function TournamentBillingPage({
 
         {/* PRO TIER */}
         <div
-          className={`relative bg-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "pro" ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.15)] scale-105 z-10" : "border-[var(--border-1)] hover:border-emerald-500/50"}`}>
+          className={`relative bg-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "pro" ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.15)] scale-105 z-10" : "border-[var(--border-1)] hover:border-emerald-500/50"}`}
+        >
           {currentTier === "pro" && (
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
               Current Plan
@@ -249,7 +268,8 @@ export default function TournamentBillingPage({
             {displayFeatures.pro.map((f, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 text-sm font-bold text-[var(--text-muted)]">
+                className="flex items-center gap-3 text-sm font-bold text-[var(--text-muted)]"
+              >
                 <CheckCircle2 className="text-emerald-500 shrink-0" size={18} />{" "}
                 {f}
               </li>
@@ -258,7 +278,8 @@ export default function TournamentBillingPage({
           {currentTier !== "pro" && currentTier !== "broadcast" && (
             <button
               onClick={() => handleUpgradeClick("Pro", prices.pro)}
-              className="w-full bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors font-black uppercase tracking-widest py-4 rounded-xl text-sm border border-emerald-500/30">
+              className="w-full bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors font-black uppercase tracking-widest py-4 rounded-xl text-sm border border-emerald-500/30"
+            >
               Upgrade to Pro
             </button>
           )}
@@ -266,7 +287,8 @@ export default function TournamentBillingPage({
 
         {/* BROADCAST TIER */}
         <div
-          className={`relative bg-gradient-to-br from-purple-500/10 to-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "broadcast" ? "border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)] scale-105 z-10" : "border-purple-500/30 hover:border-purple-500/80"}`}>
+          className={`relative bg-gradient-to-br from-purple-500/10 to-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "broadcast" ? "border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)] scale-105 z-10" : "border-purple-500/30 hover:border-purple-500/80"}`}
+        >
           {currentTier === "broadcast" && (
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg shadow-purple-500/30">
               Current Plan
@@ -301,7 +323,8 @@ export default function TournamentBillingPage({
             {displayFeatures.broadcast.map((f, i) => (
               <li
                 key={i}
-                className="flex items-start gap-3 text-sm font-bold text-[var(--foreground)]">
+                className="flex items-start gap-3 text-sm font-bold text-[var(--foreground)]"
+              >
                 <CheckCircle2
                   className="text-purple-500 shrink-0 mt-0.5"
                   size={18}
@@ -313,12 +336,25 @@ export default function TournamentBillingPage({
           {currentTier !== "broadcast" && (
             <button
               onClick={() => handleUpgradeClick("Broadcast", prices.broadcast)}
-              className="w-full bg-purple-500 text-white hover:bg-purple-400 transition-colors font-black uppercase tracking-widest py-4 rounded-xl text-sm shadow-lg shadow-purple-500/20">
+              className="w-full bg-purple-500 text-white hover:bg-purple-400 transition-colors font-black uppercase tracking-widest py-4 rounded-xl text-sm shadow-lg shadow-purple-500/20"
+            >
               Unlock Broadcasting
             </button>
           )}
         </div>
       </div>
+
+      {/* 🌟 NEW: THE PURCHASE MODAL 🌟 */}
+      {showPurchaseModal && selectedPlan && (
+        <PaymentModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          amount={selectedPlan?.price || 0}
+          itemName={selectedPlan?.name || ""}
+          tournamentId={tournamentId}
+          description="Upgrade to the premium tier to unlock advanced broadcasting and admin features."
+        />
+      )}
     </div>
   );
 }

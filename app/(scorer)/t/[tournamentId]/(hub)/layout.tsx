@@ -546,54 +546,55 @@ export default function TournamentLayout({
                   Tournament Rules
                 </h3>
 
-                {/* 🔒 PRO FEATURE LOCK: AUCTIONS */}
-                <div
-                  className={`flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 transition-all ${!isProOrHigher ? "opacity-70" : ""}`}>
-                  <div>
-                    <h4
-                      className={`text-sm font-bold flex items-center gap-2 ${!isProOrHigher ? "text-emerald-500" : "text-[var(--foreground)]"}`}>
-                      Franchise Auction {!isProOrHigher && <Lock size={14} />}
-                    </h4>
-                    <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase mt-1">
-                      {!isProOrHigher
-                        ? "Requires Pro Tier to Unlock"
-                        : "Track bidding & team budgets."}
-                    </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div
+                    className={`flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 transition-all ${!isProOrHigher ? "opacity-70" : ""}`}>
+                    <div>
+                      <h4
+                        className={`text-sm font-bold flex items-center gap-2 ${!isProOrHigher ? "text-emerald-500" : "text-[var(--foreground)]"}`}>
+                        Franchise Auction {!isProOrHigher && <Lock size={14} />}
+                      </h4>
+                      <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase mt-1">
+                        {!isProOrHigher
+                          ? "Requires Pro Tier to Unlock"
+                          : "Track bidding & team budgets."}
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={editForm.is_auction_enabled}
+                      disabled={!isProOrHigher}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          is_auction_enabled: e.target.checked,
+                        })
+                      }
+                      className="w-6 h-6 accent-[var(--accent)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={editForm.is_auction_enabled}
-                    disabled={!isProOrHigher}
-                    onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        is_auction_enabled: e.target.checked,
-                      })
-                    }
-                    className="w-6 h-6 accent-[var(--accent)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
 
-                <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
-                  <div>
-                    <h4 className="text-sm font-bold text-amber-600">
-                      Strict POTM Rule
-                    </h4>
-                    <p className="text-[10px] text-amber-600/70 font-medium uppercase mt-1">
-                      Must be from winning team.
-                    </p>
+                  <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
+                    <div>
+                      <h4 className="text-sm font-bold text-amber-600">
+                        Strict POTM Rule
+                      </h4>
+                      <p className="text-[10px] text-amber-600/70 font-medium uppercase mt-1">
+                        Must be from winning team.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={editForm.strict_mom_rule}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          strict_mom_rule: e.target.checked,
+                        })
+                      }
+                      className="w-6 h-6 accent-amber-500 cursor-pointer"
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={editForm.strict_mom_rule}
-                    onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        strict_mom_rule: e.target.checked,
-                      })
-                    }
-                    className="w-6 h-6 accent-amber-500 cursor-pointer"
-                  />
                 </div>
               </div>
 
@@ -620,12 +621,8 @@ export default function TournamentLayout({
                   )}
                 </h3>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
-                      Live Stream URL
-                    </label>
-                    <input
+                <div className="grid grid-cols-2 gap-4">
+                  <input
                       value={editForm.live_stream_url}
                       disabled={!isBroadcastTier}
                       onChange={(e) =>
@@ -637,19 +634,33 @@ export default function TournamentLayout({
                       placeholder={
                         !isBroadcastTier
                           ? "Locked - Upgrade to Broadcast Tier"
-                          : "https://youtube.com/live/..."
+                          : "Live Stream URL - https://youtube.com/live/..."
                       }
-                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-sm font-bold text-[var(--foreground)] outline-none focus:border-red-500 transition-all disabled:cursor-not-allowed disabled:text-[var(--text-muted)]"
+                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-2 text-sm font-bold text-[var(--foreground)] outline-none focus:border-red-500 transition-all disabled:cursor-not-allowed disabled:text-[var(--text-muted)]"
                     />
+                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl px-4 py-2 flex justify-between items-center">
+                    <div>
+                      <p
+                        className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}>
+                        OBS Overlay Controller
+                      </p>
+                    </div>
+                    <button
+                      disabled={!isBroadcastTier}
+                      onClick={() =>
+                        copyLink(
+                          `${window.location.origin}/t/${tournamentId}/controller`,
+                        )
+                      }
+                      className="p-3 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl hover:text-[var(--accent)] transition-colors disabled:cursor-not-allowed disabled:hover:text-inherit">
+                      <Copy size={18} />
+                    </button>
                   </div>
-                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 flex justify-between items-center">
+                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl px-4 py-2 flex justify-between items-center">
                     <div>
                       <p
                         className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}>
                         OBS Overlay Link
-                      </p>
-                      <p className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-1">
-                        Browser Source (1920x1080)
                       </p>
                     </div>
                     <button
@@ -664,14 +675,11 @@ export default function TournamentLayout({
                     </button>
                   </div>
                   {tournament?.is_auction_enabled && (
-                    <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 flex justify-between items-center">
+                    <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl px-4 py-2 flex justify-between items-center">
                       <div>
                         <p
                           className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}>
                           Auction OBS Overlay
-                        </p>
-                        <p className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-1">
-                          Browser Source (1920x1080)
                         </p>
                       </div>
                       <button

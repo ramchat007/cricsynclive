@@ -1159,9 +1159,15 @@ export default function UnifiedLiveMatchPage({
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="font-black text-lg md:text-2xl uppercase tracking-tight leading-none text-[var(--foreground)]">
+            <span className="text-xs uppercase font-black text-teal-500 tracking-wider">
+              {ctx.tournamentName}
+            </span>
+            <h1 className="text-2xl font-black">
               {ctx.team1Name} vs {ctx.team2Name}
             </h1>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              📍 {ctx.venue} | <span className="text-[15px] font-bold">{ctx.oversCount} Overs Match</span>
+            </p>
             <p className="text-[10px] md:text-sm font-bold text-[var(--accent)] uppercase tracking-widest mt-1">
               {isCompleted
                 ? "Match Completed"
@@ -1199,15 +1205,7 @@ export default function UnifiedLiveMatchPage({
       </div>
       {/* Clean, dynamic header using the unified context data */}
       <div className="mb-4 max-w-[1400px] mx-auto">
-        <span className="text-xs uppercase font-black text-teal-500 tracking-wider">
-          {ctx.tournamentName}
-        </span>
-        <h1 className="text-2xl font-black">
-          {ctx.team1Name} vs {ctx.team2Name}
-        </h1>
-        <p className="text-xs text-[var(--text-muted)] mt-1">
-          📍 {ctx.venue} | {ctx.oversCount} Overs Match
-        </p>
+        
       </div>
 
       {/* --- MASTER GRID CONTAINER --- */}
@@ -1770,6 +1768,16 @@ export default function UnifiedLiveMatchPage({
                       <p className="text-[var(--text-muted)] text-xs font-bold mt-1">
                         This is the final wicket. No batsmen remaining.
                       </p>
+                      <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
+                        <button
+                          onClick={() => {
+                            setQuickAddRole("batter");
+                            setShowQuickAddPlayer(true);
+                          }}
+                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
+                          + Add Extra Player to Squad
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <div>

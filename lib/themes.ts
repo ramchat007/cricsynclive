@@ -129,8 +129,17 @@ export const BROADCAST_THEMES = [
   },
 ] as const;
 
+export const SCORETICKER_THEMES = [
+  { id: "basic", label: "Basic Ticker", premium: false },
+  { id: "ipl-style", label: "Neon Impact (IPL Style)", premium: true },
+  { id: "world-cup", label: "Global Classic (WC Style)", premium: true },
+];
+
 export const getBroadcastTheme = (themeId?: string) =>
   BROADCAST_THEMES.find((theme) => theme.id === themeId) || BROADCAST_THEMES[0];
+
+export const getScoreTickerTheme = (themeId?: string) =>
+  SCORETICKER_THEMES.find((theme) => theme.id === themeId) || SCORETICKER_THEMES[0];
 
 export const getThemeColors = (themeId?: string): ThemeColors => {
   const id = (themeId || "light") as ThemeId;
