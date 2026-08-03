@@ -107,7 +107,7 @@ export default function GlobalStatsPage() {
     setIsLoading(false);
   };
 
-// ------------------------------------------------------------------
+  // ------------------------------------------------------------------
   // THE ULTIMATE SORT & FILTER ENGINE
   // ------------------------------------------------------------------
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function GlobalStatsPage() {
 
       // Primary Sort: Highest number goes to the top
       if (valB !== valA) {
-        return valB - valA; 
+        return valB - valA;
       }
 
       // ---------------------------------------------
@@ -148,8 +148,8 @@ export default function GlobalStatsPage() {
         const srA = Number(a.career_strike_rate) || 0;
         const srB = Number(b.career_strike_rate) || 0;
         if (srB !== srA) return srB - srA;
-      } 
-      
+      }
+
       if (sortBy === "total_wickets") {
         // Tie-breaker 1: Lowest Economy wins (Treat 0 or missing as 999 to penalize non-bowlers)
         const econA = Number(a.career_economy) || 999;
@@ -175,7 +175,7 @@ export default function GlobalStatsPage() {
         const runsA = Number(a.total_runs) || 0;
         const runsB = Number(b.total_runs) || 0;
         if (runsB !== runsA) return runsB - runsA;
-        
+
         const srA = Number(a.career_strike_rate) || 0;
         const srB = Number(b.career_strike_rate) || 0;
         return srB - srA;
@@ -195,7 +195,6 @@ export default function GlobalStatsPage() {
       // Only award caps if the top player actually has > 0 runs/wickets
       setTopBatter(Number(batters[0].total_runs) > 0 ? batters[0] : null);
       setTopBowler(Number(bowlers[0].total_wickets) > 0 ? bowlers[0] : null);
-
     } else {
       setTopBatter(null);
       setTopBowler(null);
@@ -255,8 +254,7 @@ export default function GlobalStatsPage() {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-600 uppercase tracking-widest mb-4 transition-colors"
-            >
+              className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-600 uppercase tracking-widest mb-4 transition-colors">
               <Home size={14} /> Back to Hub
             </Link>
             <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-slate-900 leading-none">
@@ -274,16 +272,14 @@ export default function GlobalStatsPage() {
             {topBatter && (
               <div
                 onClick={() => openPlayerProfile(topBatter)}
-                className="bg-orange-50 border border-orange-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-orange-500/10 transition-all group"
-              >
+                className="bg-orange-50 border border-orange-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-orange-500/10 transition-all group">
                 <div
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 border-orange-500 shadow-lg bg-cover bg-center shrink-0 flex items-center justify-center text-orange-200"
                   style={{
                     backgroundImage: topBatter.photo_url
                       ? `url(${topBatter.photo_url})`
                       : "none",
-                  }}
-                >
+                  }}>
                   {!topBatter.photo_url && <User size={32} />}
                 </div>
                 <div className="flex-1 w-full min-w-0">
@@ -304,16 +300,14 @@ export default function GlobalStatsPage() {
             {topBowler && (
               <div
                 onClick={() => openPlayerProfile(topBowler)}
-                className="bg-purple-50 border border-purple-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-purple-500/10 transition-all group"
-              >
+                className="bg-purple-50 border border-purple-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-purple-500/10 transition-all group">
                 <div
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 border-purple-500 shadow-lg bg-cover bg-center shrink-0 flex items-center justify-center text-purple-200"
                   style={{
                     backgroundImage: topBowler.photo_url
                       ? `url(${topBowler.photo_url})`
                       : "none",
-                  }}
-                >
+                  }}>
                   {!topBowler.photo_url && <User size={32} />}
                 </div>
                 <div className="flex-1 w-full min-w-0">
@@ -360,8 +354,7 @@ export default function GlobalStatsPage() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer"
-                >
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
                   <option value="All">All Roles</option>
                   <option value="Batsman">Batsmen</option>
                   <option value="Bowler">Bowlers</option>
@@ -378,8 +371,7 @@ export default function GlobalStatsPage() {
                 <select
                   value={tournamentFilter}
                   onChange={(e) => setTournamentFilter(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer"
-                >
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
                   <option value="All">All Tournaments</option>
                   {tournamentsList.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -397,8 +389,7 @@ export default function GlobalStatsPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full bg-teal-50 border border-teal-200 text-teal-700 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer"
-                >
+                  className="w-full bg-teal-50 border border-teal-200 text-teal-700 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
                   <option value="total_runs">Sort: Most Runs</option>
                   <option value="total_wickets">Sort: Most Wickets</option>
                   <option value="career_strike_rate">Sort: Highest SR</option>
@@ -416,8 +407,7 @@ export default function GlobalStatsPage() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500">
                   <th className="p-4 md:p-5 w-16 text-center">Rank</th>
-                  <th className="p-4 md:p-5">Athlete</th>
-                  <th className="p-4 md:p-5">Role</th>
+                  <th className="p-4 md:p-5">Player Name</th>
                   <th className="p-4 md:p-5 text-right">Runs</th>
                   <th className="p-4 md:p-5 text-right">SR</th>
                   <th className="p-4 md:p-5 text-right">6s</th>
@@ -430,8 +420,7 @@ export default function GlobalStatsPage() {
                   <tr>
                     <td
                       colSpan={8}
-                      className="p-10 text-center text-slate-400 font-bold"
-                    >
+                      className="p-10 text-center text-slate-400 font-bold">
                       No athletes match your filters.
                     </td>
                   </tr>
@@ -440,8 +429,7 @@ export default function GlobalStatsPage() {
                     <tr
                       key={player.player_id || player.full_name || index}
                       onClick={() => openPlayerProfile(player)}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer group"
-                    >
+                      className="hover:bg-slate-50 transition-colors cursor-pointer group">
                       <td className="p-4 md:p-5 text-center font-black text-slate-400 group-hover:text-teal-500">
                         #{index + 1}
                       </td>
@@ -453,8 +441,7 @@ export default function GlobalStatsPage() {
                               backgroundImage: player.photo_url
                                 ? `url(${player.photo_url})`
                                 : "none",
-                            }}
-                          >
+                            }}>
                             {!player.photo_url && (
                               <User
                                 size={16}
@@ -474,29 +461,20 @@ export default function GlobalStatsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 md:p-5">
-                        <span className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded whitespace-nowrap">
-                          {player.player_role}
-                        </span>
-                      </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_runs" ? "text-orange-600 text-lg" : "text-slate-700"}`}
-                      >
+                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_runs" ? "text-orange-600 text-lg" : "text-slate-700"}`}>
                         {player.total_runs}
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "career_strike_rate" ? "text-teal-600 text-lg" : "text-slate-500"}`}
-                      >
+                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "career_strike_rate" ? "text-teal-600 text-lg" : "text-slate-500"}`}>
                         {player.career_strike_rate}
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "total_sixes" ? "text-blue-600 text-lg" : "text-slate-500"}`}
-                      >
+                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "total_sixes" ? "text-blue-600 text-lg" : "text-slate-500"}`}>
                         {player.total_sixes}
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_wickets" ? "text-purple-600 text-lg" : "text-slate-700"}`}
-                      >
+                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_wickets" ? "text-purple-600 text-lg" : "text-slate-700"}`}>
                         {player.total_wickets}
                       </td>
                       <td className="p-4 md:p-5 text-right font-bold text-slate-500">
@@ -518,8 +496,7 @@ export default function GlobalStatsPage() {
             <div className="bg-white w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden custom-scrollbar animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-slate-200 relative">
               <button
                 onClick={() => setSelectedPlayer(null)}
-                className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50 shadow-lg"
-              >
+                className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50 shadow-lg">
                 <X size={20} />
               </button>
 
@@ -531,8 +508,7 @@ export default function GlobalStatsPage() {
                     backgroundImage: selectedPlayer.photo_url
                       ? `url(${selectedPlayer.photo_url})`
                       : "none",
-                  }}
-                >
+                  }}>
                   {!selectedPlayer.photo_url && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <User size={64} className="text-slate-400" />
@@ -556,6 +532,7 @@ export default function GlobalStatsPage() {
                   </h3>
 
                   <div className="space-y-4">
+                    {/* --- BATTING STATS (Orange) --- */}
                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex justify-between items-center">
                       <div>
                         <p className="text-[10px] font-black text-orange-600/70 uppercase tracking-widest">
@@ -576,6 +553,7 @@ export default function GlobalStatsPage() {
                       </div>
                     </div>
 
+                    {/* --- BOWLING STATS (Purple) --- */}
                     <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl flex justify-between items-center">
                       <div>
                         <p className="text-[10px] font-black text-purple-600/70 uppercase tracking-widest">
@@ -586,7 +564,11 @@ export default function GlobalStatsPage() {
                         </p>
                       </div>
                       <div className="text-right">
+                        {/* Added Runs Conceded here to provide context for the Economy Rate */}
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          Runs Conceded: {selectedPlayer.runs_conceded || 0}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                           Econ: {selectedPlayer.career_economy}
                         </p>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
@@ -607,8 +589,7 @@ export default function GlobalStatsPage() {
                   </h2>
                   <button
                     onClick={() => setSelectedPlayer(null)}
-                    className="hidden md:flex text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-colors"
-                  >
+                    className="hidden md:flex text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-colors">
                     <X size={20} />
                   </button>
                 </div>
@@ -630,8 +611,7 @@ export default function GlobalStatsPage() {
                         <Link
                           key={match.id}
                           href={`/match/${match.id}`}
-                          className="block bg-white border border-slate-200 rounded-2xl p-4 hover:border-teal-500 hover:shadow-md transition-all group"
-                        >
+                          className="block bg-white border border-slate-200 rounded-2xl p-4 hover:border-teal-500 hover:shadow-md transition-all group">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate pr-4">
                               {(Array.isArray(match.tournaments)
@@ -640,8 +620,7 @@ export default function GlobalStatsPage() {
                                 "Tournament Match"}
                             </span>
                             <span
-                              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shrink-0 ${match.status?.toLowerCase() === "completed" ? "bg-teal-50 text-teal-600 border-teal-200" : match.status?.toLowerCase() === "live" ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-slate-50 text-slate-600 border-slate-200"}`}
-                            >
+                              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shrink-0 ${match.status?.toLowerCase() === "completed" ? "bg-teal-50 text-teal-600 border-teal-200" : match.status?.toLowerCase() === "live" ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-slate-50 text-slate-600 border-slate-200"}`}>
                               {match.status || "Scheduled"}
                             </span>
                           </div>

@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { forceUpdateTier } from "@/app/actions/admin";
 import AnalyticsDashboard from "./analytics/analytics";
+import AdminSyncButton from "./AdminSyncButton";
 
 export default function MasterAdminPage() {
   const [activeTab, setActiveTab] = useState<
@@ -730,6 +731,10 @@ export default function MasterAdminPage() {
         )}
 
         {activeTab === "analytics" && <AnalyticsDashboard />}
+
+      </div>
+      <div className="max-w-6xl mx-auto mt-5">
+        <AdminSyncButton />
       </div>
     </div>
   );

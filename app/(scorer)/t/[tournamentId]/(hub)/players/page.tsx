@@ -17,6 +17,10 @@ export default function PlayersPage({
   const [roleFilter, setRoleFilter] = useState("All");
   const [editingPlayer, setEditingPlayer] = useState<any>(null);
 
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+
   useEffect(() => {
     checkAdminAndFetch();
   }, [tournamentId]);
@@ -113,13 +117,45 @@ export default function PlayersPage({
     }
   };
 
+  const fetchExistingPhotos = async () => {
+  // If we already fetched them, just open the gallery
+  if (existingPhotos.length > 0) {
+    setIsGalleryOpen(true);
+    return;
+  }
+
+  setIsLoadingPhotos(true);
+  setIsGalleryOpen(true);
+
+  // Fetch all non-null photos from the players table
+  const { data, error } = await supabase
+    .from("players")
+    .select("photo_url")
+    .not("photo_url", "is", null);
+
+  if (!error && data) {
+    // Extract URLs, remove empties, and use Set to remove duplicates
+    const uniquePhotos = Array.from(
+      new Set(data.map((p) => p.photo_url).filter(Boolean))
+    );
+    setExistingPhotos(uniquePhotos as string[]);
+  }
+  setIsLoadingPhotos(false);
+};
+
   const filteredPlayers = players.filter((p) => {
-    const matchesSearch =
-      p.full_name.toLowerCase().includes(playerSearch.toLowerCase()) ||
-      p.mobile_number.includes(playerSearch);
+    // Safely lowercase the search term, fallback to empty string if undefined
+    const search = playerSearch?.toLowerCase() || "";
+    
+    // Use optional chaining (?.) and fallbacks (|| "") to prevent null errors
+    const nameMatch = (p.full_name || "").toLowerCase().includes(search);
+    const mobileMatch = (p.mobile_number || "").includes(playerSearch || "");
+    
+    const matchesSearch = nameMatch || mobileMatch;
     const matchesRole = roleFilter === "All" || p.player_role === roleFilter;
+    
     return matchesSearch && matchesRole;
-  });
+});
 
   return (
     <div className="animate-in fade-in transition-colors duration-300">
@@ -258,46 +294,103 @@ export default function PlayersPage({
 
             <div className="space-y-4">
               {/* Photo Upload */}
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-16 h-16 rounded-2xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)] shrink-0"
-                  style={{ backgroundImage: `url(${editingPlayer.photo_url})` }}
-                />
-                <CldUploadWidget
-                  uploadPreset={String(
-                    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-                  )}
-                  options={{
-                    multiple: false,
-                    cropping: true,
-                    showSkipCropButton: false,
-                    croppingAspectRatio: 1,
-                    showCompletedButton: true,
-                  }}
-                  onSuccess={(result: any) =>{
-                    let url = result.info.secure_url;
-                    if (
-                      result.info.coordinates &&
-                      result.info.coordinates.custom
-                    ) {
-                      url = url.replace("/upload/", "/upload/c_crop,g_custom/");
-                    }
-                    setEditingPlayer({
-                      ...editingPlayer,
-                      photo_url: url,
-                    })
-                  }
-                  }
-                >
-                  {({ open }) => (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-16 h-16 rounded-2xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)] shrink-0"
+                    style={{ backgroundImage: `url(${editingPlayer.photo_url})` }}
+                  />
+                  
+                  <div className="flex gap-2">
+                    <CldUploadWidget
+                      uploadPreset={String(
+                        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+                      )}
+                      options={{
+                        multiple: false,
+                        cropping: true,
+                        showSkipCropButton: false,
+                        croppingAspectRatio: 1,
+                        showCompletedButton: true,
+                      }}
+                      onSuccess={(result: any) => {
+                        let url = result.info.secure_url;
+                        if (
+                          result.info.coordinates &&
+                          result.info.coordinates.custom
+                        ) {
+                          url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                        }
+                        setEditingPlayer({
+                          ...editingPlayer,
+                          photo_url: url,
+                        });
+                      }}
+                    >
+                      {({ open }) => (
+                        <button
+                          type="button"
+                          onClick={() => open()}
+                          className="text-xs font-bold bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] px-4 py-2 rounded-lg hover:text-[var(--foreground)] hover:border-[var(--accent)] transition-colors"
+                        >
+                          Upload New
+                        </button>
+                      )}
+                    </CldUploadWidget>
+
                     <button
-                      onClick={() => open()}
+                      type="button"
+                      onClick={fetchExistingPhotos}
                       className="text-xs font-bold bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] px-4 py-2 rounded-lg hover:text-[var(--foreground)] hover:border-[var(--accent)] transition-colors"
                     >
-                      Change Photo
+                      Choose Existing
                     </button>
-                  )}
-                </CldUploadWidget>
+                  </div>
+                </div>
+
+                {/* Existing Photos Gallery */}
+                {isGalleryOpen && (
+                  <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-3 animate-in slide-in-from-top-2">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                        Select from database
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsGalleryOpen(false)}
+                        className="text-[10px] font-bold text-[var(--foreground)] hover:text-red-500"
+                      >
+                        CLOSE
+                      </button>
+                    </div>
+
+                    {isLoadingPhotos ? (
+                      <div className="text-xs text-center text-[var(--text-muted)] py-4">
+                        Loading photos...
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                        {existingPhotos.length > 0 ? (
+                          existingPhotos.map((url, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => {
+                                setEditingPlayer({ ...editingPlayer, photo_url: url });
+                                setIsGalleryOpen(false); // Auto-close on select
+                              }}
+                              className="aspect-square rounded-lg bg-cover bg-center cursor-pointer border-2 border-transparent hover:border-[var(--accent)] transition-all hover:scale-105"
+                              style={{ backgroundImage: `url(${url})` }}
+                            />
+                          ))
+                        ) : (
+                          <div className="col-span-5 text-xs text-center text-[var(--text-muted)]">
+                            No existing photos found.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -305,7 +398,7 @@ export default function PlayersPage({
                   Full Name
                 </label>
                 <input
-                  value={editingPlayer.full_name}
+                  value={editingPlayer.full_name || ""}
                   onChange={(e) =>
                     setEditingPlayer({
                       ...editingPlayer,
@@ -346,7 +439,7 @@ export default function PlayersPage({
                     Jersey Size
                   </label>
                   <select
-                    value={editingPlayer.tshirt_size}
+                    value={editingPlayer.tshirt_size || ""}
                     onChange={(e) =>
                       setEditingPlayer({
                         ...editingPlayer,
@@ -367,7 +460,7 @@ export default function PlayersPage({
                     Status
                   </label>
                   <select
-                    value={editingPlayer.status}
+                    value={editingPlayer.status || ""}
                     onChange={(e) =>
                       setEditingPlayer({
                         ...editingPlayer,
@@ -392,7 +485,7 @@ export default function PlayersPage({
                     Batting
                   </label>
                   <select
-                    value={editingPlayer.batting_hand}
+                    value={editingPlayer.batting_hand || ""}
                     onChange={(e) =>
                       setEditingPlayer({
                         ...editingPlayer,
@@ -412,7 +505,7 @@ export default function PlayersPage({
                     Bowling
                   </label>
                   <select
-                    value={editingPlayer.bowling_style}
+                    value={editingPlayer.bowling_style || ""}
                     onChange={(e) =>
                       setEditingPlayer({
                         ...editingPlayer,

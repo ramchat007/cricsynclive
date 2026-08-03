@@ -6,6 +6,8 @@ import Footer from "./Footer";
 export default function LayoutWrapper({ children }: any) {
   const pathname = usePathname();
 
+  const isHomepage = pathname === "/";
+
   const isOverlay =
     pathname.includes("/overlay") || pathname.includes("/camera");
 
@@ -13,7 +15,7 @@ export default function LayoutWrapper({ children }: any) {
     <>
       {!isOverlay && <Navbar />}
       {children}
-      {!isOverlay && <Footer />}
+      {isHomepage && <Footer />}
     </>
   );
 }

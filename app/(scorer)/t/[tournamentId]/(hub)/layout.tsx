@@ -387,7 +387,7 @@ export default function TournamentLayout({
                     target="_blank"
                     rel="noreferrer"
                     className="bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full flex items-center gap-1 animate-pulse shadow-lg">
-                    <Video size={12} /> LIVE
+                    <Video size={12} /> YouTube
                   </a>
                 )}
               </div>

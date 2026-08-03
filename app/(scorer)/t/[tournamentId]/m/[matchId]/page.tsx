@@ -95,9 +95,36 @@ export default function UnifiedLiveMatchPage({
   >("penalty-add");
   const [customRuns, setCustomRuns] = useState(5);
 
-  const [activeTab, setActiveTab] = useState<
-    "scorecard" | "commentary" | "predictor" | "info" | null
-  >(null);
+  const [activeTab, setActiveTab] = useState("summary");
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const minSwipeDistance = 50; 
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe || isRightSwipe) {
+      const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+      if (isLeftSwipe && currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1].id as any);
+      }
+      if (isRightSwipe && currentIndex > 0) {
+        setActiveTab(tabs[currentIndex - 1].id as any);
+      }
+    }
+  };
 
   const [showPostMatchModal, setShowPostMatchModal] = useState(false);
   const [momId, setMomId] = useState("");
@@ -1135,6 +1162,7 @@ export default function UnifiedLiveMatchPage({
 
   // --- TAB DEFINITIONS ---
   const tabs = [
+    { id: "summary", label: "Summary" },
     { id: "scorecard", label: "Full Scorecard" },
     { id: "commentary", label: "Commentary" },
     { id: "predictor", label: "Win Predictor" },
@@ -1149,25 +1177,33 @@ export default function UnifiedLiveMatchPage({
         isAuthorized && !isCompleted ? "pb-[200px] lg:pb-10" : "pb-10"
       }`}>
       {/* HEADER & TOP NAVIGATION */}
-      <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6 px-2 mt-2 animate-in fade-in">
-        <div className="flex items-center gap-4">
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6 px-3 md:px-2 mt-2 animate-in fade-in">
+        
+        {/* LEFT: BACK BUTTON & MATCH DETAILS */}
+        <div className="flex items-start md:items-center gap-3 md:gap-4 w-full md:w-auto">
           <button
-            onClick={() =>
-              (window.location.href = `/t/${tournamentId}/matches`)
-            }
-            className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)]">
-            <ArrowLeft size={20} />
+            onClick={() => (window.location.href = `/t/${tournamentId}/matches`)}
+            className="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)] mt-1 md:mt-0"
+          >
+            <ArrowLeft size={18} className="md:w-5 md:h-5" />
           </button>
-          <div>
-            <span className="text-xs uppercase font-black text-teal-500 tracking-wider">
+          
+          <div className="flex-1">
+            <span className="text-[10px] md:text-xs uppercase font-black text-teal-500 tracking-wider block mb-0.5">
               {ctx.tournamentName}
             </span>
-            <h1 className="text-2xl font-black">
-              {ctx.team1Name} vs {ctx.team2Name}
+            
+            <h1 className="text-lg md:text-2xl font-black leading-tight">
+              {ctx.team1Name} <span className="text-[var(--text-muted)] text-sm md:text-xl font-bold mx-0.5 md:mx-1">vs</span> {ctx.team2Name}
             </h1>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              📍 {ctx.venue} | <span className="text-[15px] font-bold">{ctx.oversCount} Overs Match</span>
+            
+            <p className="text-[10px] md:text-xs text-[var(--text-muted)] mt-1 flex flex-wrap items-center gap-x-1.5">
+              <span>📍 {ctx.venue}</span> 
+              <span className="hidden md:inline">|</span> 
+              <span className="md:hidden">•</span>
+              <span className="text-xs md:text-[15px] font-bold">{ctx.oversCount} Overs</span>
             </p>
+            
             <p className="text-[10px] md:text-sm font-bold text-[var(--accent)] uppercase tracking-widest mt-1">
               {isCompleted
                 ? "Match Completed"
@@ -1178,34 +1214,38 @@ export default function UnifiedLiveMatchPage({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* RIGHT: ACTION BUTTONS */}
+        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end border-t border-[var(--border-1)] md:border-none pt-3 md:pt-0 mt-1 md:mt-0">
           {isAuthorized && tournamentId === "QUICK_MATCH" && (
             <button
               onClick={handleDeleteMatch}
-              className="flex items-center gap-1 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm">
-              <Trash2 size={14} /> Delete
+              className="flex items-center justify-center gap-1.5 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm flex-1 md:flex-none"
+            >
+              <Trash2 size={14} className="shrink-0" /> 
+              <span>Delete</span>
             </button>
           )}
+          
           <button
             onClick={handleShareMatch}
-            className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm">
+            className="flex items-center justify-center gap-1.5 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm flex-1 md:flex-none"
+          >
             {isSharing ? (
-              <Check size={14} className="text-emerald-500" />
+              <Check size={14} className="text-emerald-500 shrink-0" />
             ) : (
-              <Share2 size={14} />
+              <Share2 size={14} className="shrink-0" />
             )}
-            {isSharing ? "Link Copied" : "Share Scorecard"}
+            <span>{isSharing ? "Copied" : "Share"}</span>
+            {/* Hide "Scorecard" text on mobile to save space */}
+            <span className="hidden md:inline">{isSharing ? "" : " Scorecard"}</span>
           </button>
+          
           {isAuthorized && (
             <span className="hidden md:flex bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest items-center gap-2">
               <Settings size={12} /> Admin Mode
             </span>
           )}
         </div>
-      </div>
-      {/* Clean, dynamic header using the unified context data */}
-      <div className="mb-4 max-w-[1400px] mx-auto">
-        
       </div>
 
       {/* --- MASTER GRID CONTAINER --- */}
@@ -1450,138 +1490,139 @@ export default function UnifiedLiveMatchPage({
           )}
         </div>
 
-        {/* --- RIGHT COLUMN: MAIN CONTENT (Fixed Top + Tabs) --- */}
+        {/* --- RIGHT COLUMN: MAIN CONTENT --- */}
         <div className="flex-1 w-full z-10 relative flex flex-col gap-6 min-w-0">
-          {/* 1. FIXED TOP WIDGETS (Always visible regardless of tabs) */}
-          <div className="flex flex-col gap-4">
-            <Scoreboard
-              battingTeam={stats.battingTeam}
-              currentScore={stats.currentScore}
-              currentWickets={stats.currentWickets}
-              currentOvers={stats.currentOvers}
-              match={engine.match}
-              runRate={stats.runRate}
-              targetScore={stats.targetScore}
-              rrr={stats.rrr}
-              remainingRuns={stats.remainingRuns}
-              remainingBalls={stats.remainingBalls}
-              isAuthorized={isAuthorized}
-              openSettings={
-                isAuthorized && !isCompleted
-                  ? () => setShowSettingsModal(true)
-                  : undefined
-              }
-              extras={stats.extrasBreakdown}
-              deliveries={engine.deliveries}
-              team1Players={engine.team1Players}
-              team2Players={engine.team2Players}
-              currentOverDeliveries={stats.currentOverDeliveries}
-            />
-
-            {/* {!isAuthorized && tournament?.subscription_tier === "free" && (
-              <div className="w-full bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] p-2 shadow-sm overflow-hidden flex items-center justify-center">
-                <AdBanner
-                  dataAdSlot="3688504113"
-                  dataAdFormat="auto"
-                  dataFullWidthResponsive={true}
-                />
-              </div>
-            )} */}
-
-            {!isCompleted && (
-              <ActivePlayers
-                battingSquad={stats.battingSquad}
-                bowlingSquad={stats.bowlingSquad}
-                match={engine.match}
-                manualSwapStrike={
-                  isAuthorized ? engine.manualSwapStrike : undefined
-                }
-                strikerRuns={stats.strikerRuns}
-                strikerBalls={stats.strikerBalls}
-                nonStrikerRuns={stats.nonStrikerRuns}
-                nonStrikerBalls={stats.nonStrikerBalls}
-                bowlerOvers={stats.bowlerOvers}
-                bowlerRuns={stats.bowlerRuns}
-                bowlerWickets={stats.bowlerWickets}
-                setShowEditPlayersModal={
-                  isAuthorized ? setShowEditPlayersModal : undefined
-                }
-                currentOverDeliveries={stats.currentOverDeliveries}
-                isAuthorized={isAuthorized}
-              />
-            )}
-
-            {!isCompleted && !isAuthorized && (
-              <RecentBalls
-                deliveries={engine.deliveries}
-                currentOvers={stats.currentOvers}
-              />
-            )}
-          </div>
-
-          {/* 2. TABS & CONTENT */}
-          <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] shadow-sm overflow-hidden">
-            <div className="flex overflow-x-auto border-b border-[var(--border-1)] p-2 gap-2 hide-scrollbar">
+          
+          <div className="bg-[var(--surface-1)] overflow-hidden flex flex-col">
+            
+            {/* SWIPEABLE TAB BAR */}
+            <div className="flex overflow-x-auto border-b border-[var(--border-1)] p-1 md:p-1 gap-1 md:gap-1 no-scrollbar snap-x snap-mandatory touch-pan-x">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() =>
-                    setActiveTab(activeTab === tab.id ? null : (tab.id as any))
-                  }
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black uppercase whitespace-nowrap transition-all shrink-0 ${
+                  onClick={() => setActiveTab(tab.id as any)} 
+                  className={`flex items-center gap-1 md:gap-1 px-3 py-1 md:px-3 md:py-2 rounded-md md:rounded-lg text-[10px] sm:text-sm md:text-sm font-bold uppercase whitespace-nowrap transition-all shrink-0 snap-start touch-manipulation ${
                     activeTab === tab.id
                       ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                       : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
                   }`}>
                   {tab.label}
                   {activeTab === tab.id ? (
-                    <ChevronUp size={14} className="ml-1" />
+                    <ChevronUp size={12} className="md:w-3.5 md:h-3.5" />
                   ) : (
-                    <ChevronDown size={14} className="ml-1 opacity-50" />
+                    <ChevronDown size={12} className="opacity-50 md:w-3.5 md:h-3.5" />
                   )}
                 </button>
               ))}
             </div>
 
-            {/* ONLY RENDER CONTENT IF A TAB IS ACTIVE */}
+            {/* TAB CONTENT (With Swipe Listeners attached) */}
             {activeTab && (
-              <div className="p-4 sm:p-6 min-h-[400px]">
-                {/* {!isAuthorized && tournament?.subscription_tier === "free" && (
-                  <div className="mb-6">
-                    <AdBanner
-                      dataAdSlot="3688504113"
-                      data-ad-format="auto"
-                      data-full-width-responsive="true"
-                    />
-                  </div>
-                )} */}
+              <div 
+                className="min-h-[60vh] md:min-h-[500px] w-full overflow-hidden"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
+                {/* Visual swipe hint for mobile users */}
+                <div className="md:hidden flex justify-center mb-4">
+                  <div className="w-10 h-1 rounded-full bg-[var(--border-1)] opacity-50"></div>
+                </div>
 
-                {activeTab === "scorecard" && (
-                  <FullScorecard
-                    deliveries={engine.deliveries}
-                    battingSquad={stats.battingSquad}
-                    bowlingSquad={stats.bowlingSquad}
-                    match={engine.match}
-                  />
-                )}
-                {activeTab === "commentary" && (
-                  <Commentary
-                    match={engine.match}
-                    deliveries={engine.deliveries}
-                    battingSquad={stats.battingSquad}
-                    bowlingSquad={stats.bowlingSquad}
-                  />
-                )}
-                {activeTab === "predictor" && (
-                  <Predictor match={engine.match} stats={stats} />
-                )}
-                {activeTab === "info" && (
-                  <Info
-                    match={engine.match}
-                    team1Players={engine.team1Players}
-                    team2Players={engine.team2Players}
-                  />
-                )}
+                <div className="animate-in slide-in-from-right-4 fade-in duration-200 mt-5">
+                  {/* SUMMARY TAB */}
+                  {activeTab === "summary" && (
+                    <div className="flex flex-col gap-3 md:gap-4">
+                      <Scoreboard
+                        battingTeam={stats.battingTeam}
+                        currentScore={stats.currentScore}
+                        currentWickets={stats.currentWickets}
+                        currentOvers={stats.currentOvers}
+                        match={engine.match}
+                        runRate={stats.runRate}
+                        targetScore={stats.targetScore}
+                        rrr={stats.rrr}
+                        remainingRuns={stats.remainingRuns}
+                        remainingBalls={stats.remainingBalls}
+                        isAuthorized={isAuthorized}
+                        openSettings={
+                          isAuthorized && !isCompleted
+                            ? () => setShowSettingsModal(true)
+                            : undefined
+                        }
+                        extras={stats.extrasBreakdown}
+                        deliveries={engine.deliveries}
+                        team1Players={engine.team1Players}
+                        team2Players={engine.team2Players}
+                        currentOverDeliveries={stats.currentOverDeliveries}
+                      />
+
+                      {!isCompleted && (
+                        <ActivePlayers
+                          battingSquad={stats.battingSquad}
+                          bowlingSquad={stats.bowlingSquad}
+                          match={engine.match}
+                          manualSwapStrike={
+                            isAuthorized ? engine.manualSwapStrike : undefined
+                          }
+                          strikerRuns={stats.strikerRuns}
+                          strikerBalls={stats.strikerBalls}
+                          nonStrikerRuns={stats.nonStrikerRuns}
+                          nonStrikerBalls={stats.nonStrikerBalls}
+                          bowlerOvers={stats.bowlerOvers}
+                          bowlerRuns={stats.bowlerRuns}
+                          bowlerWickets={stats.bowlerWickets}
+                          setShowEditPlayersModal={
+                            isAuthorized ? setShowEditPlayersModal : undefined
+                          }
+                          currentOverDeliveries={stats.currentOverDeliveries}
+                          isAuthorized={isAuthorized}
+                        />
+                      )}
+
+                      {!isCompleted && !isAuthorized && (
+                        <RecentBalls
+                          deliveries={engine.deliveries}
+                          currentOvers={stats.currentOvers}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* SCORECARD TAB */}
+                  {activeTab === "scorecard" && (
+                    <FullScorecard
+                      deliveries={engine.deliveries}
+                      battingSquad={stats.battingSquad}
+                      bowlingSquad={stats.bowlingSquad}
+                      match={engine.match}
+                    />
+                  )}
+
+                  {/* COMMENTARY TAB */}
+                  {activeTab === "commentary" && (
+                    <Commentary
+                      match={engine.match}
+                      deliveries={engine.deliveries}
+                      battingSquad={stats.battingSquad}
+                      bowlingSquad={stats.bowlingSquad}
+                    />
+                  )}
+
+                  {/* PREDICTOR TAB */}
+                  {activeTab === "predictor" && (
+                    <Predictor match={engine.match} stats={stats} />
+                  )}
+
+                  {/* INFO TAB */}
+                  {activeTab === "info" && (
+                    <Info
+                      match={engine.match}
+                      team1Players={engine.team1Players}
+                      team2Players={engine.team2Players}
+                    />
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1613,7 +1654,7 @@ export default function UnifiedLiveMatchPage({
       {isAuthorized && !isCompleted && (
         <>
           {showBowlerModal && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">
               <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8 text-[var(--foreground)]">
                   Over Completed!
