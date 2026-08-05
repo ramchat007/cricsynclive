@@ -135,11 +135,11 @@ export default function Navbar() {
               >
                 {mounted ? <IconTag size={20} /> : <div className="w-5 h-5" />}
               </button>
+              <InstallAppButton />
             </div>
 
             {session ? (
               <div className="flex items-center gap-4 xl:gap-5 border-l border-[var(--border-1)] pl-4 xl:pl-5">
-                <InstallAppButton />
                 <Link
                   href="/dashboard"
                   className={`text-[11px] font-black uppercase tracking-widest transition-all ${

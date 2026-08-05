@@ -9,19 +9,13 @@ export default function InstallAppButton() {
   useEffect(() => {
     // 1. Listen for the browser announcing that the app is installable
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent Chrome from automatically showing its default mini-infobar
       e.preventDefault();
-
-      // Save the event so we can trigger it later
       setDeferredPrompt(e);
-
-      // Show our custom button
       setIsInstallable(true);
     };
 
     // 2. Listen for a successful installation
     const handleAppInstalled = () => {
-      // Hide the button once the app is installed
       setIsInstallable(false);
       setDeferredPrompt(null);
     };
