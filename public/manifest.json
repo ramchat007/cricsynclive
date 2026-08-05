@@ -1,7 +1,7 @@
 {
-  "name": "CicSyncLive",
-  "short_name": "CicSyncLive",
-  "description": "Live Cricket Scoring and Stats",
+  "name": "CricSyncLive",
+  "short_name": "CricSyncLive",
+  "description": "The Industry Standard Cricket Tournament OS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",

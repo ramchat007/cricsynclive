@@ -30,6 +30,10 @@ import Commentary from "./components/Commentary";
 import Predictor from "./components/Predictor";
 import Info from "./components/Info";
 
+import { Mic, MicOff } from "lucide-react";
+import { useVoiceScorer, VoiceCommand } from "../../../../../hooks/useVoiceScorer";
+import VoiceConfirmationToast from "./components/VoiceConfirmationToast";
+
 // IMPORT ENGINE & MATH
 import { useMatchEngine } from "../../../../../hooks/useMatchEngine";
 import { supabase } from "@/lib/supabase";
@@ -37,6 +41,7 @@ import {
   deriveMatchStats,
   getPlayerMatchStats,
 } from "../../../../../utils/cricketMath";
+import Keypad from "./components/Keypad";
 
 export default function UnifiedLiveMatchPage({
   params,
@@ -124,6 +129,51 @@ export default function UnifiedLiveMatchPage({
         setActiveTab(tabs[currentIndex - 1].id as any);
       }
     }
+  };
+
+  const [pendingVoice, setPendingVoice] = useState<{ command: VoiceCommand, text: string } | null>(null);
+
+  const { isListening, toggleListening } = useVoiceScorer((command, rawText) => {
+    // Added showMoreModal and showSettingsModal so it doesn't trigger if they are fixing a penalty!
+    if (!engine.isSubmittingBall && !showExtrasModal && !showWicketModal && !showMoreModal && !showSettingsModal) {
+      setPendingVoice({ command, text: rawText });
+    }
+  });
+
+  const handleVoiceAccept = async () => {
+    if (!pendingVoice) return;
+    
+    const { command } = pendingVoice;
+    
+    // Act exactly like a manual button click
+    if (command.type === "runs") {
+      handleRecordBall(command.value);
+    } else if (command.type === "extra") {
+      setPendingExtraType(command.value as any);
+      setShowExtrasModal(true);
+    } else if (command.type === "out") {
+      setPlayerOutId(engine.match!.live_striker_id);
+      setShowWicketModal(true);
+    } else if (command.type === "undo") {
+      // 🔥 FIX: Grab the last delivery ID to delete
+      const lastDelivery = engine.deliveries[engine.deliveries.length - 1];
+      
+      if (!lastDelivery) {
+        alert("No deliveries to undo.");
+      } else if (window.confirm("Undo the last delivery?")) {
+        await engine.deleteLastBall(lastDelivery.id); // Pass the ID here!
+      }
+    }
+    
+    setPendingVoice(null); // Clear the toast
+  };
+
+  // -------------------------
+
+  // --- UPDATE YOUR KEYPAD PROPS ---
+  // If the user manually taps the keypad while a voice toast is active, kill the voice toast instantly.
+  const handleManualAction = () => {
+    if (pendingVoice) setPendingVoice(null);
   };
 
   const [showPostMatchModal, setShowPostMatchModal] = useState(false);
@@ -1216,6 +1266,23 @@ export default function UnifiedLiveMatchPage({
 
         {/* RIGHT: ACTION BUTTONS */}
         <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end border-t border-[var(--border-1)] md:border-none pt-3 md:pt-0 mt-1 md:mt-0">
+          {isAuthorized && !isCompleted && (
+            <div className="flex items-center gap-2 mr-2 border-r border-[var(--border-1)] pr-3 md:pr-4">
+              <button 
+                onClick={toggleListening}
+                className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-all shadow-sm ${
+                  isListening 
+                    ? "bg-red-500 text-white animate-pulse shadow-red-500/40" 
+                    : "bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--accent)]"
+                }`}
+              >
+                {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+              </button>
+              
+              {/* Don't forget to import VoiceManualModal at the top of your file! */}
+              {/* <VoiceManualModal /> */} 
+            </div>
+          )}
           {isAuthorized && tournamentId === "QUICK_MATCH" && (
             <button
               onClick={handleDeleteMatch}
@@ -1326,101 +1393,18 @@ export default function UnifiedLiveMatchPage({
                   isAuthorized={isAuthorized}
                 />
               </div>
-
               {/* Responsive Keypad wrapper (Fixed bottom sheet on mobile, static on desktop) */}
-              {/* --- FIXED COMPACT KEYPAD DOCK (Mobile) / STATIC (Desktop) --- */}
-              <div className="order-1 lg:order-1 fixed bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/95 backdrop-blur-xl border-t border-[var(--border-1)] shadow-[0_-10px_30px_rgba(0,0,0,0.1)] pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-3 px-3 lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:pb-0">
-                <div className="lg:bg-[var(--surface-1)] lg:p-6 lg:rounded-[2.5rem] lg:border lg:border-[var(--border-1)] lg:shadow-sm">
-                  <h3 className="hidden lg:block text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 ml-1">
-                    Record Next Ball
-                  </h3>
-
-                  {/* Top Row: 0, 1, 2, 3 */}
-                  <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-1.5 sm:mb-3">
-                    {[0, 1, 2, 3].map((runs) => (
-                      <button
-                        key={runs}
-                        onClick={() => handleRecordBall(runs)}
-                        disabled={engine.isSubmittingBall}
-                        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95">
-                        {runs}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Middle Row: 4, 6, More Actions (Spans 2 columns) */}
-                  <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-2 sm:mb-6">
-                    <button
-                      onClick={() => handleRecordBall(4)}
-                      disabled={engine.isSubmittingBall}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all active:scale-95">
-                      4
-                    </button>
-                    <button
-                      onClick={() => handleRecordBall(6)}
-                      disabled={engine.isSubmittingBall}
-                      className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] font-black text-xl sm:text-2xl py-2 sm:py-3 rounded-xl transition-all shadow-md active:scale-95">
-                      6
-                    </button>
-
-                    {/* 🔥 WIDE "MORE ACTIONS" BUTTON 🔥 */}
-                    <button
-                      onClick={() => {
-                        setMoreActionType("penalty-add"); // Default reset
-                        setShowMoreModal(true);
-                      }}
-                      className="col-span-2 bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[11px] sm:text-sm uppercase py-2 sm:py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
-                      ⚙️ More Actions
-                    </button>
-                  </div>
-
-                  <hr className="border-[var(--border-1)] hidden sm:block mb-3" />
-
-                  {/* Bottom Row: WD, NB, LB, B, OUT */}
-                  <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
-                    <button
-                      onClick={() => {
-                        setPendingExtraType("wide");
-                        setShowExtrasModal(true);
-                      }}
-                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
-                      WD
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingExtraType("no-ball");
-                        setShowExtrasModal(true);
-                      }}
-                      className="bg-orange-500/10 border border-orange-500/20 text-orange-500 font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
-                      NB
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingExtraType("leg-bye");
-                        setShowExtrasModal(true);
-                      }}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
-                      LB
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingExtraType("bye");
-                        setShowExtrasModal(true);
-                      }}
-                      className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl active:scale-95 transition-all">
-                      B
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPlayerOutId(engine.match!.live_striker_id);
-                        setShowWicketModal(true);
-                      }}
-                      className="bg-red-500 hover:bg-red-600 text-white font-black text-xs sm:text-base uppercase py-2.5 sm:py-5 rounded-xl shadow-md active:scale-95 transition-all">
-                      OUT
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <Keypad 
+                engine={engine}
+                handleRecordBall={handleRecordBall}
+                setMoreActionType={(type) => setMoreActionType(type as any)}
+                setShowMoreModal={setShowMoreModal}
+                setPendingExtraType={setPendingExtraType}
+                setShowExtrasModal={setShowExtrasModal}
+                setPlayerOutId={setPlayerOutId}
+                setShowWicketModal={setShowWicketModal}
+                onManualInteraction={handleManualAction} 
+              />
             </div>
           ) : (
             /* LIVE (PUBLIC): FAN WIDGET & AD SPACE */
@@ -2688,6 +2672,14 @@ export default function UnifiedLiveMatchPage({
             </div>
           </div>
         </div>
+      )}
+      {pendingVoice && (
+        <VoiceConfirmationToast
+          commandText={pendingVoice.text}
+          onAccept={handleVoiceAccept}
+          onCancel={() => setPendingVoice(null)}
+          durationMs={3000} 
+        />
       )}
     </div>
   );
