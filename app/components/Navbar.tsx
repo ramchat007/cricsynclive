@@ -7,6 +7,7 @@ import { LogOut, Menu, X, User, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { APP_THEMES } from "@/lib/themes";
 import Image from "next/image";
+import InstallAppButton from "./InstallAppButton";
 
 export default function Navbar() {
   const router = useRouter();
@@ -82,7 +83,8 @@ export default function Navbar() {
           <Link
             href="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 group">
+            className="flex items-center gap-3 group"
+          >
             <Image
               src="/cricsync-logo.png"
               alt="CricSyncLive"
@@ -111,7 +113,8 @@ export default function Navbar() {
                   isActive(link.path)
                     ? "text-[var(--accent)]"
                     : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-                }`}>
+                }`}
+              >
                 {link.name}
               </Link>
             ))}
@@ -120,14 +123,16 @@ export default function Navbar() {
               <Link
                 href="/search"
                 aria-label="Search"
-                className="p-2.5 rounded-full transition-all active:scale-95 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]">
+                className="p-2.5 rounded-full transition-all active:scale-95 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"
+              >
                 <Search size={20} />
               </Link>
 
               <button
                 onClick={toggleTheme}
                 aria-label="Toggle Theme"
-                className="p-2.5 rounded-full transition-all active:scale-95 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]">
+                className="p-2.5 rounded-full transition-all active:scale-95 bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"
+              >
                 {mounted ? <IconTag size={20} /> : <div className="w-5 h-5" />}
               </button>
             </div>
@@ -140,12 +145,14 @@ export default function Navbar() {
                     isActive("/dashboard")
                       ? "text-[var(--accent)]"
                       : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-                  }`}>
+                  }`}
+                >
                   Dashboard
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition-colors tracking-widest flex items-center gap-1.5">
+                  className="text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition-colors tracking-widest flex items-center gap-1.5"
+                >
                   <LogOut size={14} /> Logout
                 </button>
               </div>
@@ -153,7 +160,8 @@ export default function Navbar() {
               <div className="pl-2">
                 <Link
                   href="/login"
-                  className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-[var(--foreground)] text-[var(--background)] hover:opacity-80 transition-all shadow-lg">
+                  className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-[var(--foreground)] text-[var(--background)] hover:opacity-80 transition-all shadow-lg"
+                >
                   Login / Register
                 </Link>
               </div>
@@ -165,14 +173,16 @@ export default function Navbar() {
             <Link
               href="/search"
               className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform"
-              aria-label="Search">
+              aria-label="Search"
+            >
               <Search size={20} />
             </Link>
 
             <button
               onClick={() => setIsOpen(true)}
               className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--foreground)] active:scale-90 transition-transform"
-              aria-label="Menu">
+              aria-label="Menu"
+            >
               <Menu size={20} />
             </button>
           </div>
@@ -188,16 +198,34 @@ export default function Navbar() {
           />
           <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-[var(--surface-1)] border-l border-[var(--border-1)] shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
             <div className="flex justify-between items-center px-6 h-20 border-b border-[var(--border-1)]">
-              <Link href="/" onClick={() => setIsOpen(false)}>
-                <img
-                  src="/cricsync-light-logo.png"
-                  alt="CricSync"
-                  className="w-50 h-auto object-contain"
+              <Link
+                href="/"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 group"
+              >
+                <Image
+                  src="/cricsync-logo.png"
+                  alt="CricSyncLive"
+                  width={80}
+                  height={51}
+                  priority
+                  className="w-16 lg:w-20 h-auto object-contain transition-transform group-hover:scale-105"
                 />
+
+                <div className="flex flex-col justify-center">
+                  <div className="text-2xl lg:text-3xl font-black italic tracking-tighter text-[var(--foreground)] leading-none mb-1">
+                    CricSync<span className="text-[var(--accent)]">Live</span>
+                  </div>
+
+                  <span className="text-[9px] lg:text-[9.5px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                    Score, Stream, Synchronize
+                  </span>
+                </div>
               </Link>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] transition-all active:scale-90 hover:text-[var(--foreground)]">
+                className="w-10 h-10 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-muted)] transition-all active:scale-90 hover:text-[var(--foreground)]"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -212,11 +240,12 @@ export default function Navbar() {
                     key={link.path}
                     href={link.path}
                     onClick={() => setIsOpen(false)}
-                    className={`flex items-center justify-between p-6 rounded-[2rem] text-xl font-black uppercase tracking-tighter transition-all active:scale-95 border ${
+                    className={`flex items-center justify-between p-5 rounded-[1rem] text-lg font-black uppercase transition-all active:scale-95 border ${
                       isActive(link.path)
                         ? "bg-[var(--accent)] border-[var(--accent)] text-[var(--background)] shadow-lg shadow-[var(--accent)]/20"
                         : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"
-                    }`}>
+                    }`}
+                  >
                     {link.name}
                     {isActive(link.path) && (
                       <div className="w-2 h-2 bg-[var(--background)] rounded-full animate-pulse shadow-sm" />
@@ -232,7 +261,8 @@ export default function Navbar() {
                 </p>
                 <button
                   onClick={toggleTheme}
-                  className="w-full flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] active:scale-[0.98] transition-all">
+                  className="w-full flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] active:scale-[0.98] transition-all"
+                >
                   <div className="flex items-center gap-3">
                     {mounted ? (
                       <IconTag size={20} className="text-[var(--accent)]" />
@@ -255,7 +285,8 @@ export default function Navbar() {
                     <Link
                       href="/dashboard"
                       onClick={() => setIsOpen(false)}
-                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] border border-[var(--border-1)] bg-[var(--surface-2)] hover:bg-[var(--border-1)] transition-colors">
+                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] border border-[var(--border-1)] bg-[var(--surface-2)] hover:bg-[var(--border-1)] transition-colors"
+                    >
                       <User size={24} className="text-[var(--accent)]" />
                       <span className="text-[10px] font-black text-[var(--foreground)] uppercase tracking-widest">
                         Dashboard
@@ -263,7 +294,8 @@ export default function Navbar() {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-colors">
+                      className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+                    >
                       <LogOut size={24} className="text-red-500" />
                       <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">
                         Logout
@@ -274,11 +306,13 @@ export default function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="w-full py-5 rounded-[2rem] text-center font-black uppercase tracking-widest text-sm shadow-xl bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition-opacity">
+                    className="w-full py-5 rounded-[2rem] text-center font-black uppercase tracking-widest text-sm shadow-xl bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition-opacity"
+                  >
                     Login / Register
                   </Link>
                 )}
               </div>
+              <InstallAppButton />
             </div>
           </div>
         </div>

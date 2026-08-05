@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+// @ts-expect-error - next-pwa does not have official typescript definitions
+import withPWAInit from "next-pwa";
+
+// Configure the PWA plugin
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+});
+
 const nextConfig: NextConfig = {
   // 1. Webpack config (used if you run standard build or force webpack)
   webpack: (config) => {
@@ -19,4 +30,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap your config with the PWA initialization
+export default withPWA(nextConfig);

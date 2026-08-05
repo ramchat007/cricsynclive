@@ -1501,7 +1501,7 @@ export default function UnifiedLiveMatchPage({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)} 
-                  className={`flex items-center gap-1 md:gap-1 px-3 py-1 md:px-3 md:py-2 rounded-md md:rounded-lg text-[10px] sm:text-sm md:text-sm font-bold uppercase whitespace-nowrap transition-all shrink-0 snap-start touch-manipulation ${
+                  className={`flex items-center gap-1 md:gap-1 px-3 py-1 md:px-3 md:py-2 rounded-md md:rounded-lg text-[13px] sm:text-sm md:text-sm font-bold uppercase whitespace-nowrap transition-all shrink-0 snap-start touch-manipulation ${
                     activeTab === tab.id
                       ? "bg-[var(--accent)]/10 text-[var(--accent)]"
                       : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
@@ -1520,9 +1520,9 @@ export default function UnifiedLiveMatchPage({
             {activeTab && (
               <div 
                 className="min-h-[60vh] md:min-h-[500px] w-full overflow-hidden"
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
+                // onTouchStart={onTouchStart}
+                // onTouchMove={onTouchMove}
+                // onTouchEnd={onTouchEnd}
               >
                 {/* Visual swipe hint for mobile users */}
                 <div className="md:hidden flex justify-center mb-4">

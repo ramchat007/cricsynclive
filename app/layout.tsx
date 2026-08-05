@@ -3,7 +3,15 @@ import { Providers } from "./providers";
 import LayoutWrapper from "./components/LayoutWrapper";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+
+export const viewport: Viewport = {
+  themeColor: "#020617", // THEME_COLORS.dark.background
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 export const metadata: Metadata = {
   title: "CricSyncLive | The Industry Standard Cricket Tournament OS",
@@ -44,6 +52,15 @@ export const metadata: Metadata = {
       "End-to-end cricket management: Real-time scoring, live digital auctions, and broadcast-grade streaming overlays.",
     type: "website",
     siteName: "CricSyncLive",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CricScore",
+  },
+  formatDetection: {
+    telephone: false,
   },
   twitter: {
     card: "summary_large_image",

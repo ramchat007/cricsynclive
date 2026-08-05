@@ -16,10 +16,12 @@ import {
   Tv,
   Network,
   UserCheck,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import InstallAppButton from "./components/InstallAppButton";
 
 // --- ANIMATED COUNTER COMPONENT ---
 function AnimatedNumber({ value }: { value: number }) {
@@ -155,7 +157,8 @@ export default function Home() {
           loop
           muted
           playsInline
-          className="w-full h-full object-cover opacity-70">
+          className="w-full h-full object-cover opacity-70"
+        >
           <source src="/cricket-bg.mp4" type="video/mp4" />
         </video>
         {/* Soft Radial/Linear Gradient: Darker at edges, transparent in center to reveal the video */}
@@ -163,7 +166,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--background)]/80 via-transparent to-[var(--background)] transition-colors duration-500" />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col pt-20 pb-10">
+      <div className="relative z-10 flex-1 flex flex-col pt-10 md:pt-20 pb-10">
         {/* --- SECTION 1: LIVE MATCHES TICKER --- */}
         <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700 min-h-[300px] overflow-hidden">
           <div className="flex items-center gap-3 mb-4 px-2">
@@ -176,13 +179,14 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-5 pb-6 pt-2 hide-scrollbar snap-x px-2">
+          <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-5 pb-6 pt-2 no-scrollbar snap-x px-2">
             {/* 1. Show Skeletons while fetching data */}
             {isLoading ? (
               [1, 2, 3].map((skeleton) => (
                 <div
                   key={skeleton}
-                  className="shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center animate-pulse shadow-sm">
+                  className="shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center animate-pulse shadow-sm"
+                >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex gap-2">
                       <div className="h-6 w-16 bg-[var(--foreground)]/10 rounded-full"></div>
@@ -207,7 +211,8 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm">
+                  className="group relative shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
+                >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
 
                   <div className="flex justify-between items-center mb-4">
@@ -272,7 +277,7 @@ export default function Home() {
         </section>
 
         {/* --- MAIN HERO & CTA --- */}
-        <section className="flex-1 flex flex-col items-center justify-center text-center mb-16 min-h-[60vh]">
+        <section className="flex-1 flex flex-col items-center justify-center text-center mb-5 md:mb-16 min-h-[60vh] p-4">
           <div className="animate-in zoom-in-95 duration-1000 flex flex-col items-center">
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
               CricSync <br className="md:hidden" />
@@ -286,21 +291,31 @@ export default function Home() {
             <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
               <Link
                 href="/quick-match"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--accent)] text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:scale-105 transition-all active:scale-95 group">
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--accent)] text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:scale-105 transition-all active:scale-95 group"
+              >
                 <Flame size={20} className="group-hover:animate-bounce" /> Start
                 Quick Match
               </Link>
               <Link
                 href="/explore"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm">
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm"
+              >
                 <Search size={18} /> Find Tournaments
+              </Link>
+              <Link
+                href="/dashboard"
+                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm"
+              >
+                <Plus size={18} /> Create Your Tournament
               </Link>
             </div>
           </div>
         </section>
 
+        <InstallAppButton />
+
         {/* --- SECTION 2: RECENT RESULTS --- */}
-        <section className="w-full max-w-7xl mx-auto px-4 mb-20">
+        <section className="w-full max-w-7xl mx-auto px-4 mb-10 md:mb-16">
           <div className="flex items-center gap-3 mb-8 px-2 border-b border-[var(--foreground)]/10 pb-4">
             <CheckCircle2
               className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
@@ -314,7 +329,7 @@ export default function Home() {
           {/* 1. Show Skeletons while fetching data */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3,4 ,5, 6].map((skeleton) => (
+              {[1, 2, 3, 4, 5, 6].map((skeleton) => (
                 <div
                   key={skeleton}
                   className="bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] flex flex-col justify-between min-h-[160px] animate-pulse shadow-sm"
@@ -423,7 +438,7 @@ export default function Home() {
         </section>
 
         {/* --- SECTION 3: THE 6 ECOSYSTEM MODULES --- */}
-        <section className="w-full max-w-7xl mx-auto px-4 mb-16">
+        <section className="w-full max-w-7xl mx-auto px-4 mb-5 md:mb-16">
           <div className="flex items-center gap-3 mb-10 px-2 border-b border-[var(--foreground)]/10 pb-4">
             <Zap className="text-[var(--accent)] animate-bounce" size={24} />
             <h2 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)]">
@@ -592,7 +607,7 @@ export default function Home() {
 
       {/* --- LIVE ANIMATED STATS FOOTER --- */}
       <section className="border-t border-[var(--foreground)]/10 bg-[var(--background)]/80 backdrop-blur-3xl w-full py-8 mt-auto relative z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-[var(--foreground)]/10">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-3 md:grid-cols-3 gap-5 divide-x divide-[var(--foreground)]/10">
           <div className="flex flex-col items-center justify-center text-center px-4">
             <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
               <AnimatedNumber value={systemStats.matches} />+
@@ -617,14 +632,15 @@ export default function Home() {
               <Users size={12} /> Players Enrolled
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center text-center px-4 group cursor-pointer hover:bg-[var(--foreground)]/5 rounded-2xl py-2 transition-colors">
+          {/* <div className="flex flex-col items-center justify-center text-center px-4 group cursor-pointer hover:bg-[var(--foreground)]/5 rounded-2xl py-2 transition-colors">
             <a
               href="/dashboard"
-              className="text-sm font-black text-[var(--foreground)] uppercase flex items-center gap-2 group-hover:translate-x-2 transition-transform tracking-widest">
+              className="text-sm font-black text-[var(--foreground)] uppercase flex items-center gap-2 group-hover:translate-x-2 transition-transform tracking-widest"
+            >
               Create Tournament
               <ArrowRight size={16} className="text-[var(--accent)]" />
             </a>
-          </div>
+          </div> */}
         </div>
       </section>
     </main>
