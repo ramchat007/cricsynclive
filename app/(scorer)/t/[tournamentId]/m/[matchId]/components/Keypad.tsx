@@ -84,7 +84,6 @@ export default function Keypad({
             <span>⚙️</span>
             <span>More</span>
           </button>
-          <VoiceManualModal />
         </div>
 
         <hr className="border-[var(--border-1)] hidden sm:block mb-3" />
@@ -138,6 +137,7 @@ export default function Keypad({
           </button>
         </div>
       </div>
+        {/* <VoiceManualModal /> */}
     </div>
   );
 }

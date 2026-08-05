@@ -42,6 +42,7 @@ import {
   getPlayerMatchStats,
 } from "../../../../../utils/cricketMath";
 import Keypad from "./components/Keypad";
+import VoiceManualModal from "./components/VoiceManualModal";
 
 export default function UnifiedLiveMatchPage({
   params,
@@ -1279,8 +1280,7 @@ export default function UnifiedLiveMatchPage({
                 {isListening ? <Mic size={18} /> : <MicOff size={18} />}
               </button>
               
-              {/* Don't forget to import VoiceManualModal at the top of your file! */}
-              {/* <VoiceManualModal /> */} 
+              <VoiceManualModal /> 
             </div>
           )}
           {isAuthorized && tournamentId === "QUICK_MATCH" && (

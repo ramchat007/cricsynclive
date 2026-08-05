@@ -14,8 +14,8 @@ export function useVoiceScorer(
   const [error, setError] = useState<string | null>(null);
   
   const recognitionRef = useRef<any>(null);
-  // 🔥 NEW: Track if the user explicitly clicked the "Off" button
   const isIntentionalStopRef = useRef(false);
+  const lockUntilRef = useRef<number>(0); 
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -26,86 +26,79 @@ export function useVoiceScorer(
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true; 
-    recognition.interimResults = false;
-    recognition.lang = "en-IN"; // Optimized for Indian English
+    recognition.interimResults = true; 
+    recognition.lang = "en-IN"; // Keep this for Indian accents
     recognitionRef.current = recognition;
 
     recognition.onresult = (event: any) => {
-      const current = event.resultIndex;
-      const result = event.results[current][0];
-      const confidence = result.confidence;
+      // 1. If we are processing a toast, ignore new audio
+      if (Date.now() < lockUntilRef.current) return;
 
-      const rawTranscript = result.transcript.toLowerCase();
-      const transcript = rawTranscript.replace(/[.,!?]/g, '').trim();
+      // 2. Read the latest chunk of audio
+      const current = event.results.length - 1;
+      const rawText = event.results[current][0].transcript.toLowerCase();
+      
+      // Strip ALL weird characters the browser tries to add, leaving only letters, numbers, and spaces
+      const text = rawText.replace(/[^a-z0-9\s-]/g, ' ').trim();
+      
+      if (!text) return;
+      console.log(`🎤 Heard: "${text}"`);
 
-      if (confidence < 0.75) return;
+      // 3. Trigger Function (The "Rest & Reset" action)
+      const triggerAction = (command: VoiceCommand, label: string) => {
+        console.log(`✅ MATCHED: ${label}`);
+        
+        // Lock out new commands for 3.5 seconds
+        lockUntilRef.current = Date.now() + 3500; 
+        onCommandHeard(command, label);
+        
+        // IMMEDIATELY KILL THE MIC to wipe the browser's memory buffer
+        recognition.stop(); 
+      };
 
-      switch (transcript) {
-        case "dot ball":
-        case "zero":
-          onCommandHeard({ type: "runs", value: 0 }, "Dot Ball");
-          break;
-        case "single":
-        case "one":
-          onCommandHeard({ type: "runs", value: 1 }, "1 Run");
-          break;
-        case "double":
-        case "two":
-          onCommandHeard({ type: "runs", value: 2 }, "2 Runs");
-          break;
-        case "three":
-          onCommandHeard({ type: "runs", value: 3 }, "3 Runs");
-          break;
-        case "four":
-        case "boundary":
-          onCommandHeard({ type: "runs", value: 4 }, "4 Runs");
-          break;
-        case "six":
-        case "maximum":
-          onCommandHeard({ type: "runs", value: 6 }, "6 Runs");
-          break;
-        case "wide":
-          onCommandHeard({ type: "extra", value: "wide" }, "Wide Ball");
-          break;
-        case "no ball":
-          onCommandHeard({ type: "extra", value: "no-ball" }, "No Ball");
-          break;
-        case "wicket":
-        case "out":
-          onCommandHeard({ type: "out" }, "Wicket");
-          break;
-        case "undo":
-        case "revert":
-          onCommandHeard({ type: "undo" }, "Undo Last Ball");
-          break;
-        default:
-          break;
-      }
+      // 4. Ultra-Aggressive Keyword Matching (Trained for Phonetic Typos)
+      if (/\b(zero|dot|0|hero|jhero)\b/.test(text)) return triggerAction({ type: "runs", value: 0 }, "Dot Ball");
+      if (/\b(one|single|1|van|won|on|un)\b/.test(text)) return triggerAction({ type: "runs", value: 1 }, "1 Run");
+      if (/\b(two|double|2|too|to|tu|do)\b/.test(text)) return triggerAction({ type: "runs", value: 2 }, "2 Runs");
+      if (/\b(three|3|tree|free|tri)\b/.test(text)) return triggerAction({ type: "runs", value: 3 }, "3 Runs");
+      if (/\b(four|boundary|4|for|far|phor|phone)\b/.test(text)) return triggerAction({ type: "runs", value: 4 }, "4 Runs");
+      if (/\b(six|maximum|6|sex|siks|seek)\b/.test(text)) return triggerAction({ type: "runs", value: 6 }, "6 Runs");
+      if (/\b(wide|why|white|void)\b/.test(text)) return triggerAction({ type: "extra", value: "wide" }, "Wide Ball");
+      if (/\b(no\s?ball|noball|no bowl)\b/.test(text)) return triggerAction({ type: "extra", value: "no-ball" }, "No Ball");
+      if (/\b(wicket|out|howzat|catch)\b/.test(text)) return triggerAction({ type: "out" }, "Wicket");
+      if (/\b(undo|revert)\b/.test(text)) return triggerAction({ type: "undo" }, "Undo");
     };
 
-    // 🔥 FIX 1: Ignore the "no-speech" timeout
     recognition.onerror = (event: any) => {
-      if (event.error === "no-speech") {
-        // Normal silence between balls. Do nothing!
-        return; 
+      // Ignore normal silent pauses
+      if (event.error === "no-speech" || event.error === "aborted") return;
+      
+      console.error("Speech API Error:", event.error);
+      
+      // If we hit a network limit, don't crash the UI. Just wait.
+      if (event.error === "network") {
+        console.warn("Network error hit. Backing off for 2 seconds...");
+        // Temporarily lock the mic so it doesn't spam Google's servers
+        lockUntilRef.current = Date.now() + 2000; 
       }
-      if (event.error === "aborted") {
-        // Normal when we manually stop it.
-        return;
-      }
-      console.error("Speech recognition error:", event.error);
-      setIsListening(false);
     };
 
-    // 🔥 FIX 2: Automatically restart the mic if Chrome kills it
     recognition.onend = () => {
-      // If the user didn't click the STOP button, force it back on!
       if (!isIntentionalStopRef.current) {
-        try {
-          recognition.start();
-        } catch (e) {
-          // Prevent crashes if it tries to restart too fast
-        }
+        // Check if we are currently locked (due to a toast OR a network error)
+        const timeRemaining = Math.max(0, lockUntilRef.current - Date.now());
+        
+        setTimeout(() => {
+          try {
+            // Only restart if the user hasn't manually turned it off in the meantime
+            if (!isIntentionalStopRef.current) {
+              recognition.start();
+              console.log("🔄 Mic Rebooted");
+            }
+          } catch (e) {
+            console.error("Reboot failed", e);
+          }
+        }, timeRemaining + 100); 
       }
     };
 
@@ -119,19 +112,18 @@ export function useVoiceScorer(
 
   const toggleListening = () => {
     if (isListening) {
-      // User physically clicked OFF
       isIntentionalStopRef.current = true;
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
       try {
-        // User physically clicked ON
         isIntentionalStopRef.current = false;
+        lockUntilRef.current = 0;
         recognitionRef.current?.start();
         setIsListening(true);
         setError(null);
       } catch (e) {
-        console.error("Recognition already started", e);
+        console.error("Failed to start", e);
       }
     }
   };

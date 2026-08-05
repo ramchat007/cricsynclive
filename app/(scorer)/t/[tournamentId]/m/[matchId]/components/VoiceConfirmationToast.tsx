@@ -18,21 +18,24 @@ export default function VoiceConfirmationToast({
   const [progress, setProgress] = useState(100);
 
   useEffect(() => {
-    const intervalTime = 30;
+    // 1. Visual Progress Bar Timer (Only updates UI)
+    const intervalTime = 30; 
     const step = (intervalTime / durationMs) * 100;
-
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev - step <= 0) {
-          clearInterval(timer);
-          onAccept();
-          return 0;
-        }
-        return prev - step;
-      });
+    
+    const progressTimer = setInterval(() => {
+      setProgress((prev) => Math.max(0, prev - step));
     }, intervalTime);
 
-    return () => clearInterval(timer);
+    // 2. Action Timer (Safely calls the parent function)
+    const actionTimer = setTimeout(() => {
+      onAccept();
+    }, durationMs);
+
+    // Cleanup both timers if user manually clicks a button to kill the toast
+    return () => {
+      clearInterval(progressTimer);
+      clearTimeout(actionTimer);
+    };
   }, [durationMs, onAccept]);
 
   return (
@@ -53,13 +56,13 @@ export default function VoiceConfirmationToast({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
+            <button 
               onClick={onCancel}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all"
             >
               <X size={20} />
             </button>
-            <button
+            <button 
               onClick={onAccept}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--background)] active:scale-90 transition-all shadow-md"
             >
@@ -68,7 +71,7 @@ export default function VoiceConfirmationToast({
           </div>
         </div>
         <div className="w-full h-1.5 bg-[var(--surface-2)]">
-          <div
+          <div 
             className="h-full bg-[var(--accent)] transition-all ease-linear"
             style={{ width: `${progress}%` }}
           />

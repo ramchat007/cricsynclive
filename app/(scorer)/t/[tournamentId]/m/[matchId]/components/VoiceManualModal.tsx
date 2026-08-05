@@ -9,11 +9,9 @@ export default function VoiceManualModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[15px] uppercase rounded-xl transition-all active:scale-95 flex flex-col items-center justify-center"
-          >
-            <span><Info size={18} /></span>
-            <span>Info</span>
-        
+        className="bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--text-muted)] font-black text-[12px] uppercase rounded-xl transition-all active:scale-95 flex flex-col items-center justify-center"
+      >
+        <Info size={18} />
       </button>
 
       {isOpen && (
@@ -53,10 +51,16 @@ export default function VoiceManualModal() {
                     Runs
                   </span>
                   <div className="text-sm font-bold text-[var(--foreground)]">
-                    "Dot Ball" or "Zero"
+                    "Dot" or "Zero"
                   </div>
                   <div className="text-sm font-bold text-[var(--foreground)]">
                     "Single" or "One"
+                  </div>
+                  <div className="text-sm font-bold text-[var(--foreground)]">
+                    "Double" or "Two"
+                  </div>
+                  <div className="text-sm font-bold text-[var(--foreground)]">
+                    "Three"
                   </div>
                   <div className="text-sm font-bold text-[var(--foreground)]">
                     "Four" or "Boundary"
@@ -66,18 +70,25 @@ export default function VoiceManualModal() {
                   </div>
                 </div>
 
-                <div className="bg-[var(--surface-2)] p-3 rounded-xl border border-[var(--border-1)]">
-                  <span className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest block mb-1">
-                    Extras & Wickets
-                  </span>
-                  <div className="text-sm font-bold text-orange-500">
-                    "Wide"
+                <div className="bg-[var(--surface-2)] p-3 rounded-xl border border-[var(--border-1)] flex flex-col gap-4">
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest block mb-1">
+                      Extras
+                    </span>
+                    <div className="text-sm font-bold text-orange-500">
+                      "Wide"
+                    </div>
+                    <div className="text-sm font-bold text-orange-500">
+                      "No Ball"
+                    </div>
                   </div>
-                  <div className="text-sm font-bold text-orange-500">
-                    "No Ball"
-                  </div>
-                  <div className="text-sm font-bold text-red-500 mt-2">
-                    "Wicket" or "Out"
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest block mb-1">
+                      Wickets
+                    </span>
+                    <div className="text-sm font-bold text-red-500">
+                      "Wicket" or "Out"
+                    </div>
                   </div>
                 </div>
               </div>
