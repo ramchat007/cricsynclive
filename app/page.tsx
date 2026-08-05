@@ -308,11 +308,10 @@ export default function Home() {
               >
                 <Plus size={18} /> Create Your Tournament
               </Link>
+              <InstallAppButton />
             </div>
           </div>
         </section>
-
-        <InstallAppButton />
 
         {/* --- SECTION 2: RECENT RESULTS --- */}
         <section className="w-full max-w-7xl mx-auto px-4 mb-10 md:mb-16">

@@ -139,6 +139,7 @@ export default function Navbar() {
 
             {session ? (
               <div className="flex items-center gap-4 xl:gap-5 border-l border-[var(--border-1)] pl-4 xl:pl-5">
+                <InstallAppButton />
                 <Link
                   href="/dashboard"
                   className={`text-[11px] font-black uppercase tracking-widest transition-all ${
@@ -278,6 +279,12 @@ export default function Navbar() {
                   </span>
                 </button>
               </div>
+              <div className="mt-6 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4">
+                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">
+                  Download the App
+                </p>
+                <InstallAppButton />
+              </div>
 
               <div className="mt-auto pt-10 pb-4 flex flex-col gap-4">
                 {session ? (
@@ -312,7 +319,6 @@ export default function Navbar() {
                   </Link>
                 )}
               </div>
-              <InstallAppButton />
             </div>
           </div>
         </div>
