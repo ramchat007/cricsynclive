@@ -228,7 +228,7 @@ export default function AboutPage() {
                 Book a Broadcast
               </a>
               <a
-                href="mailto:ramchat007@gmail.com"
+                href="/contact"
                 className="flex items-center gap-3 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/70 text-[var(--foreground)] font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto border border-[var(--border-1)] hover:-translate-y-1">
                 <Mail size={20} />
                 Contact Us
