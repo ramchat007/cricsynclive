@@ -308,7 +308,7 @@ export default function Home() {
               >
                 <Plus size={18} /> Create Your Tournament
               </Link>
-              <InstallAppButton />
+              <InstallAppButton className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)] text-[var(--background)] px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm hover:opacity-90 hover:scale-105 transition-all active:scale-95 shadow-xl" />
             </div>
           </div>
         </section>
