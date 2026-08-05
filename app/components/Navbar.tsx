@@ -79,7 +79,7 @@ export default function Navbar() {
   return (
     <>
       <nav className="sticky top-0 z-90 bg-[var(--glass-bg)] backdrop-blur-xl border-b border-[var(--border-1)] shadow-sm transition-colors duration-300">
-        <div className="mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="mx-auto px-6 md:px-2 h-16 flex items-center justify-between">
           <Link
             href="/"
             onClick={() => setIsOpen(false)}
@@ -104,7 +104,7 @@ export default function Navbar() {
               </span>
             </div>
           </Link>
-          <div className="hidden lg:flex items-center gap-5 xl:gap-7">
+          <div className="hidden lg:flex items-center gap-5 md:gap-4 xl:gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
