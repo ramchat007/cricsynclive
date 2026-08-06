@@ -118,32 +118,56 @@ export default function DashboardHub() {
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase.from("tournaments").insert({
-      owner_id: user.id,
-      name: newTournamentName,
-      location: newLocation,
-      start_date: newStartDate || null,
-      end_date: newEndDate || null,
-      banner_url: bannerUrl,
-      format: newFormat,
-      squad_limit: newSquadLimit,
-      status: "upcoming",
-      subscription_tier: "free",
-    });
+    // 1. Insert the tournament AND ask Supabase to return the newly created row
+    const { data: newTournament, error: tournamentError } = await supabase
+      .from("tournaments")
+      .insert({
+        owner_id: user.id,
+        name: newTournamentName,
+        location: newLocation,
+        start_date: newStartDate || null,
+        end_date: newEndDate || null,
+        banner_url: bannerUrl,
+        format: newFormat,
+        squad_limit: newSquadLimit,
+        status: "upcoming",
+        subscription_tier: "free",
+      })
+      .select()
+      .single(); // <-- Crucial: We need the new ID back
 
-    if (!error) {
-      setShowCreateModal(false);
-      setNewTournamentName("");
-      setNewLocation("");
-      setNewStartDate("");
-      setNewEndDate("");
-      setBannerUrl("");
-      setNewFormat("T20");
-      setNewSquadLimit(15);
-      fetchMyTournaments();
-    } else {
-      alert("Error creating tournament: " + error.message);
+    if (tournamentError) {
+      alert("Error creating tournament: " + tournamentError.message);
+      return;
     }
+
+    // 2. Explicitly assign the "owner" role in your roles table
+    // (⚠️ Note: Make sure "tournament_roles" matches your actual table name)
+    const { error: roleError } = await supabase
+      .from("tournament_roles")
+      .insert({
+        tournament_id: newTournament.id,
+        user_id: user.id,
+        role: "owner", // This ensures currentUserRole will equal "owner"
+      });
+
+    if (roleError) {
+      alert(
+        "Tournament created, but error assigning role: " + roleError.message,
+      );
+      return;
+    }
+
+    // 3. Success! Reset UI state
+    setShowCreateModal(false);
+    setNewTournamentName("");
+    setNewLocation("");
+    setNewStartDate("");
+    setNewEndDate("");
+    setBannerUrl("");
+    setNewFormat("T20");
+    setNewSquadLimit(15);
+    fetchMyTournaments();
   };
 
   const renderStatusBadge = (status: string) => {
@@ -171,28 +195,6 @@ export default function DashboardHub() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 font-sans w-full">
-      {/* TOP NAVIGATION TABS */}
-      <div className="flex items-center gap-1.5 sm:gap-2 mb-8 bg-slate-100 p-1.5 rounded-xl w-full sm:w-fit overflow-x-auto custom-scrollbar">
-        <Link
-          href="/dashboard"
-          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[13px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none"
-        >
-          <Trophy size={14} className="text-amber-500 shrink-0" /> Tournaments
-        </Link>
-        <Link
-          href="/my-matches"
-          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[13px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none"
-        >
-          <Swords size={14} className="shrink-0" /> My Matches
-        </Link>
-        <Link
-          href="/profile/edit"
-          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[13px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none"
-        >
-          <User size={14} className="shrink-0" /> Edit Profile
-        </Link>
-      </div>
-
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -214,7 +216,7 @@ export default function DashboardHub() {
 
           <button
             onClick={handleOpenCreateModal}
-            className="flex-1 md:flex-none bg-slate-900 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-95 transition-all shadow-lg"
+            className="flex-1 md:flex-none font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-95 transition-all shadow-lg"
           >
             <PlusCircle size={16} /> Create New
           </button>

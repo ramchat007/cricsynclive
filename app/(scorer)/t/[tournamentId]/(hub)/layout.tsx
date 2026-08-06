@@ -69,6 +69,13 @@ export default function TournamentLayout({
     fetchLayoutData();
   }, [tournamentId]);
 
+  useEffect(() => {
+    const handleOpenMenu = () => setIsSidebarOpen(true);
+    window.addEventListener("open-tournament-menu", handleOpenMenu);
+    return () =>
+      window.removeEventListener("open-tournament-menu", handleOpenMenu);
+  }, []);
+
   const fetchLayoutData = async () => {
     if (tournamentId === "QUICK_MATCH") {
       setTournament({
@@ -212,15 +219,15 @@ export default function TournamentLayout({
       requiredTier: "free",
     },
     {
-      name: "All Players",
-      href: `/t/${tournamentId}/players`,
-      icon: Shirt,
-      requiredTier: "free",
-    },
-    {
       name: "Points Table",
       href: `/t/${tournamentId}/standings`,
       icon: ListOrdered,
+      requiredTier: "free",
+    },
+    {
+      name: "All Players",
+      href: `/t/${tournamentId}/players`,
+      icon: Shirt,
       requiredTier: "free",
     },
     {
@@ -273,7 +280,7 @@ export default function TournamentLayout({
   }
 
   return (
-    <div className="h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden">
+    <div className="h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden pb-[80px] md:pb-0">
       <div
         className={`
     fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300
@@ -285,7 +292,7 @@ export default function TournamentLayout({
       {/* MORPHING SIDEBAR / BOTTOM SHEET */}
       <aside
         className={`
-    fixed inset-x-0 bottom-0 z-50 w-full max-h-[85vh] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
+    fixed inset-x-0 bottom-0 z-50 w-full max-h-[85vh] pb-[100px] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
     transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
     lg:static lg:inset-y-0 lg:top-[65px] lg:left-0 lg:h-full lg:w-72 lg:max-h-none lg:border-t-0 lg:border-r lg:rounded-none lg:shadow-none
     ${isSidebarOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
@@ -382,7 +389,7 @@ export default function TournamentLayout({
 
       {/* MAIN CONTENT */}
       <main className="flex-1 h-full flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
-        <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0 sticky top-0 z-40">
+        {/* <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0 sticky top-0 z-40">
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-[var(--foreground)]"
@@ -393,7 +400,7 @@ export default function TournamentLayout({
             Tournament Console
           </span>
           <div className="w-8 h-8"></div>
-        </header>
+        </header> */}
 
         <div
           className="relative w-full min-h-[18rem] md:min-h-[22rem] flex flex-col justify-end p-6 md:p-12 transition-all shrink-0 bg-slate-900"

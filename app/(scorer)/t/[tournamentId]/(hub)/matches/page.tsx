@@ -39,7 +39,7 @@ export default function MatchesPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // UI State
-  const [matchView, setMatchView] = useState("scheduled");
+  const [matchView, setMatchView] = useState("live");
   const [showScheduler, setShowScheduler] = useState(false);
   const [scheduleMode, setScheduleMode] = useState("single"); // 'single' or 'auto'
 
@@ -537,16 +537,16 @@ export default function MatchesPage({
       {/* SUB-TABS */}
       <div className="flex bg-[var(--surface-2)] border border-[var(--border-1)] p-1 rounded-xl w-fit mb-6 gap-1 mx-auto">
         <button
-          onClick={() => setMatchView("scheduled")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "scheduled" ? "bg-[var(--surface-1)] text-[var(--foreground)] shadow-sm border border-[var(--border-1)]" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-        >
-          <CalendarClock size={14} /> Upcoming
-        </button>
-        <button
           onClick={() => setMatchView("live")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "live" ? "bg-red-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
         >
           <PlayCircle size={14} /> Live
+        </button>
+        <button
+          onClick={() => setMatchView("scheduled")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "scheduled" ? "bg-[var(--surface-1)] text-[var(--foreground)] shadow-sm border border-[var(--border-1)]" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <CalendarClock size={14} /> Upcoming
         </button>
         <button
           onClick={() => setMatchView("completed")}

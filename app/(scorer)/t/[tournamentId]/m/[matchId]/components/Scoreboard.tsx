@@ -404,7 +404,7 @@ export default function Scoreboard({
 
           {/* Mobile-Only Unified Metrics */}
           <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-center gap-2 relative z-10 md:hidden">
-            <div className="flex items-center text-[11px] font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2.5 py-1.5 rounded-lg border border-[var(--border-1)] uppercase tracking-widest">
+            <div className="flex items-center text-[14px] font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2.5 py-1.5 rounded-lg border border-[var(--border-1)] uppercase tracking-widest">
               Overs:{" "}
               <span className="text-[var(--foreground)] ml-1 mr-0.5">
                 {currentOvers}
@@ -418,7 +418,7 @@ export default function Scoreboard({
                 </button>
               )}
             </div>
-            <div className="text-[11px] font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2.5 py-1.5 rounded-lg border border-[var(--border-1)] uppercase tracking-widest">
+            <div className="text-[14px] font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2.5 py-1.5 rounded-lg border border-[var(--border-1)] uppercase tracking-widest">
               CRR:{" "}
               <span className="text-[var(--foreground)] ml-1">{runRate}</span>
             </div>
@@ -439,7 +439,7 @@ export default function Scoreboard({
                       return (
                         <span
                           key={d.id || idx}
-                          className={`flex items-center justify-center min-w-[28px] h-[28px] sm:min-w-[36px] sm:h-[36px] px-1 rounded-full text-[11px] sm:text-sm font-black shadow-sm shrink-0 ${
+                          className={`flex items-center justify-center min-w-[28px] h-[28px] sm:min-w-[36px] sm:h-[36px] px-1 rounded-full text-[14px] sm:text-sm font-black shadow-sm shrink-0 ${
                             isWicket
                               ? "bg-red-500 text-white border border-red-600"
                               : isBoundary
@@ -461,7 +461,7 @@ export default function Scoreboard({
 
           <div className="text-center text-[12px] sm:text-xs font-bold text-[var(--text-muted)] mt-1 bg-[var(--surface-1)] border border-[var(--border-1)] p-2 rounded-xl">
             Extras:{" "}
-            <span className="text-[var(--foreground)] ml-0.5 mr-1 text-[11px] sm:text-sm font-black">
+            <span className="text-[var(--foreground)] ml-0.5 mr-1 text-[14px] sm:text-sm font-black">
               {extras?.total || 0}
             </span>
             <span className="opacity-70 uppercase tracking-widest">

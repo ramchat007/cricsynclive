@@ -21,8 +21,8 @@ export default function PaymentModal({
   if (!isOpen) return null;
 
   // 🌟 CENTRALIZED PAYMENT DETAILS - CHANGE THESE ONCE HERE 🌟
-  const UPI_ID = "YOUR_UPI_ID@bank";
-  const WA_NUMBER = "9702485146";
+  const UPI_ID = "9820160376@yescred";
+  const WA_NUMBER = "9820160376";
   const PAYEE_NAME = "CricSyncLive Payment";
 
   // Auto-generate the dynamic links

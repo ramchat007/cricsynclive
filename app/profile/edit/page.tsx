@@ -156,28 +156,6 @@ export default function EditProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 font-sans pb-24">
-      {/* TOP NAVIGATION TABS */}
-      <div className="flex items-center gap-2 mb-8 bg-slate-100 p-1.5 rounded-xl w-fit">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all"
-        >
-          <Trophy size={15} /> Tournaments
-        </Link>
-        <Link
-          href="/my-matches"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all"
-        >
-          <Swords size={15} /> My Matches
-        </Link>
-        <Link
-          href="/profile/edit"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all"
-        >
-          <User size={15} className="text-blue-500" /> Edit Profile
-        </Link>
-      </div>
-
       {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-3xl font-black uppercase tracking-widest text-slate-900">
@@ -308,7 +286,7 @@ export default function EditProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-xs py-4 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+            className="bg-[var(--accent)] text-[var(--background)] hover:bg-slate-400 font-black uppercase tracking-widest text-xs py-4 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
           >
             {saving ? (
               <Loader2 size={16} className="animate-spin" />
