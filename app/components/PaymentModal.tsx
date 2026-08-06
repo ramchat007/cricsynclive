@@ -38,7 +38,7 @@ export default function PaymentModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-[var(--surface-1)] w-full max-w-md rounded-[2.5rem] border border-[var(--border-1)] p-8 shadow-2xl relative overflow-hidden">
+      <div className="bg-[var(--surface-1)] w-full max-w-md rounded-2xl border border-[var(--border-1)] p-8 shadow-2xl relative overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-[var(--text-muted)] hover:text-white transition-colors"
@@ -60,8 +60,8 @@ export default function PaymentModal({
           {description}
         </p>
 
-        <div className="bg-[var(--surface-2)] p-6 rounded-2xl border border-[var(--border-1)] mb-6 text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+        <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-[var(--border-1)] mb-6 text-center">
+          <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
             Amount to Pay
           </p>
           <p className="text-4xl font-black text-muted">₹{amount}</p>
@@ -85,7 +85,7 @@ export default function PaymentModal({
           </a>
         </div>
 
-        <p className="text-[10px] text-[var(--text-muted)] font-bold text-center mt-6 uppercase">
+        <p className="text-[13px] text-[var(--text-muted)] font-bold text-center mt-6 uppercase">
           Activation takes 2-5 minutes after screenshot verification.
         </p>
       </div>

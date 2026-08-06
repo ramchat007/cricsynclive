@@ -54,17 +54,18 @@ const PlayerRow = React.memo(
     };
 
     const inputClass =
-      "bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--foreground)] rounded-lg p-2 text-[11px] outline-none font-bold focus:border-[var(--accent)] transition-colors";
+      "bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--foreground)] rounded-lg p-2 text-[14px] outline-none font-bold focus:border-[var(--accent)] transition-colors";
 
     return (
       <tr className="hover:bg-[var(--surface-2)]/50 transition-colors group">
         <td className="p-4 font-bold text-[var(--foreground)] whitespace-nowrap">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-xl bg-[var(--surface-3)] bg-cover bg-center border border-[var(--border-1)] shrink-0 flex items-center justify-center text-[11px] font-black"
+              className="w-10 h-10 rounded-xl bg-[var(--surface-3)] bg-cover bg-center border border-[var(--border-1)] shrink-0 flex items-center justify-center text-[14px] font-black"
               style={{
                 backgroundImage: p.photo_url ? `url(${p.photo_url})` : "none",
-              }}>
+              }}
+            >
               {!p.photo_url && (p.full_name || "P").charAt(0)}
             </div>
             <div>
@@ -87,7 +88,8 @@ const PlayerRow = React.memo(
               <select
                 className={`${inputClass} w-32`}
                 value={tempTeam}
-                onChange={(e) => setTempTeam(e.target.value)}>
+                onChange={(e) => setTempTeam(e.target.value)}
+              >
                 <option value="">Select Team</option>
                 {teams.map((t: any) => (
                   <option key={t.id} value={t.id}>
@@ -104,13 +106,14 @@ const PlayerRow = React.memo(
               <button
                 onClick={handleAssignClick}
                 disabled={!tempTeam}
-                className="bg-[var(--accent)] text-[var(--background)] px-3 py-2 rounded-lg text-[9px] font-black uppercase shadow-sm active:scale-95 transition-all hover:opacity-90 disabled:opacity-50">
+                className="bg-[var(--accent)] text-[var(--background)] px-3 py-2 rounded-lg text-[9px] font-black uppercase shadow-sm active:scale-95 transition-all hover:opacity-90 disabled:opacity-50"
+              >
                 Assign
               </button>
             </div>
           ) : (
             <div className="flex flex-col">
-              <span className="text-[11px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded w-max uppercase tracking-widest">
+              <span className="text-[14px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded w-max uppercase tracking-widest">
                 Sold
               </span>
               <span className="text-[9px] font-bold text-[var(--text-muted)] mt-1 ml-1">
@@ -124,7 +127,8 @@ const PlayerRow = React.memo(
           <select
             className={`${inputClass} w-full max-w-[160px] cursor-pointer`}
             value={p.auction_slot_id || ""}
-            onChange={(e) => onAssignSlot(p.id, e.target.value)}>
+            onChange={(e) => onAssignSlot(p.id, e.target.value)}
+          >
             <option value="">-- Unassigned --</option>
             {slots.map((s: any) => (
               <option key={s.id} value={s.id}>
@@ -136,7 +140,7 @@ const PlayerRow = React.memo(
 
         <td className="p-4 font-mono">
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1 text-[11px] font-bold">
+            <div className="flex items-center gap-1 text-[14px] font-bold">
               <span className="text-[var(--text-muted)]">BASE: ₹</span>
               {p.auction_status === "sold" ? (
                 <span className="text-[var(--foreground)]">
@@ -153,7 +157,7 @@ const PlayerRow = React.memo(
               )}
             </div>
             {p.auction_status === "sold" && p.sold_price && (
-              <div className="text-[11px] font-black text-emerald-500 mt-1">
+              <div className="text-[14px] font-black text-emerald-500 mt-1">
                 FINAL: ₹{p.sold_price.toLocaleString("en-IN")}
               </div>
             )}
@@ -168,7 +172,8 @@ const PlayerRow = React.memo(
                 ? "text-amber-500 bg-amber-500/10 scale-110"
                 : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]"
             }`}
-            title="Toggle Icon Player">
+            title="Toggle Icon Player"
+          >
             <Star size={16} className={p.is_icon ? "fill-amber-500" : ""} />
           </button>
 
@@ -176,7 +181,8 @@ const PlayerRow = React.memo(
             <button
               onClick={() => onMarkUnsold(p.id)}
               className="p-2 text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-colors rounded-lg"
-              title="Mark Unsold">
+              title="Mark Unsold"
+            >
               <Ban size={16} />
             </button>
           )}
@@ -185,7 +191,8 @@ const PlayerRow = React.memo(
             <button
               onClick={() => onReset(p)}
               className="p-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors rounded-lg"
-              title="Reset to Pending">
+              title="Reset to Pending"
+            >
               <RefreshCcw size={16} />
             </button>
           )}
@@ -193,7 +200,8 @@ const PlayerRow = React.memo(
           <button
             onClick={() => onDelete(p.id)}
             className="text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors p-2 rounded-lg"
-            title="Delete Permanently">
+            title="Delete Permanently"
+          >
             <Trash2 size={16} />
           </button>
         </td>
@@ -267,7 +275,7 @@ const RegistrationQueueModal = ({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-lg rounded-[2.5rem] flex flex-col max-h-[85vh] shadow-2xl animate-in zoom-in-95">
+      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-lg rounded-2xl flex flex-col max-h-[85vh] shadow-2xl animate-in zoom-in-95">
         <div className="p-6 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)] rounded-t-[2.5rem] shrink-0">
           <h3 className="text-[var(--foreground)] font-black uppercase tracking-widest text-lg flex items-center gap-2">
             <Database size={20} className="text-[var(--accent)]" /> Registration
@@ -275,7 +283,8 @@ const RegistrationQueueModal = ({
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors">
+            className="p-2 rounded-full hover:bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+          >
             ✕
           </button>
         </div>
@@ -295,17 +304,18 @@ const RegistrationQueueModal = ({
           </div>
 
           <div className="flex justify-between items-center mt-4">
-            <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+            <p className="text-[14px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
               {filtered.length} Pending Players
             </p>
             <button
               onClick={handleSelectAll}
               disabled={filtered.length === 0}
-              className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border transition-all disabled:opacity-50 ${
+              className={`text-[14px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border transition-all disabled:opacity-50 ${
                 isAllSelected
                   ? "bg-[var(--accent)] text-[var(--background)] border-[var(--accent)] shadow-md"
                   : "bg-[var(--surface-2)] text-[var(--foreground)] border-[var(--border-1)] hover:bg-[var(--surface-3)]"
-              }`}>
+              }`}
+            >
               {isAllSelected ? "Deselect All" : "Select All"}
             </button>
           </div>
@@ -328,11 +338,12 @@ const RegistrationQueueModal = ({
                 <div
                   key={p.id}
                   onClick={() => toggleSelect(p)}
-                  className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
+                  className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                     isSel
                       ? "bg-[var(--accent)]/10 border-[var(--accent)] shadow-sm"
                       : "bg-[var(--surface-2)] border-[var(--border-1)] hover:border-[var(--accent)]/50"
-                  }`}>
+                  }`}
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-xl bg-[var(--surface-3)] bg-cover bg-center border border-[var(--border-1)] flex items-center justify-center text-xs font-black text-[var(--text-muted)]"
@@ -340,7 +351,8 @@ const RegistrationQueueModal = ({
                         backgroundImage: p.photo_url
                           ? `url(${p.photo_url})`
                           : "none",
-                      }}>
+                      }}
+                    >
                       {!p.photo_url && name.charAt(0)}
                     </div>
                     <div>
@@ -349,10 +361,11 @@ const RegistrationQueueModal = ({
                           isSel
                             ? "text-[var(--accent)]"
                             : "text-[var(--foreground)]"
-                        }`}>
+                        }`}
+                      >
                         {name}
                       </div>
-                      <div className="text-[11px] text-[var(--text-muted)] uppercase font-bold tracking-widest mt-0.5">
+                      <div className="text-[14px] text-[var(--text-muted)] uppercase font-bold tracking-widest mt-0.5">
                         {p.player_role || "Unknown"}
                       </div>
                     </div>
@@ -371,13 +384,15 @@ const RegistrationQueueModal = ({
         <div className="p-6 border-t border-[var(--border-1)] flex justify-end gap-3 bg-[var(--surface-2)] rounded-b-[2.5rem] shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-4 border border-[var(--border-1)] bg-[var(--surface-1)] rounded-xl font-black uppercase tracking-widest text-xs text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors">
+            className="flex-1 px-6 py-4 border border-[var(--border-1)] bg-[var(--surface-1)] rounded-xl font-black uppercase tracking-widest text-xs text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+          >
             Cancel
           </button>
           <button
             onClick={() => onImport(selected)}
             disabled={selected.length === 0}
-            className="flex-[2] bg-[var(--accent)] text-[var(--background)] px-6 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg disabled:opacity-50 active:scale-95 transition-all hover:opacity-90">
+            className="flex-[2] bg-[var(--accent)] text-[var(--background)] px-6 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg disabled:opacity-50 active:scale-95 transition-all hover:opacity-90"
+          >
             Approve {selected.length} Players
           </button>
         </div>
@@ -823,7 +838,8 @@ export default function AuctionAdminPanel({
           <div>
             <Link
               href={`/t/${tournamentId}/auction`}
-              className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--accent)] flex items-center gap-1 mb-2 transition-colors">
+              className="text-[14px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--accent)] flex items-center gap-1 mb-2 transition-colors"
+            >
               <ArrowLeft size={12} /> Back to Live Auction
             </Link>
             <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-[var(--foreground)] flex items-center gap-3">
@@ -843,11 +859,12 @@ export default function AuctionAdminPanel({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[14px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-[var(--foreground)] text-[var(--background)] shadow-sm"
                     : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                }`}>
+                }`}
+              >
                 <tab.icon size={14} /> {tab.name}
               </button>
             ))}
@@ -860,32 +877,32 @@ export default function AuctionAdminPanel({
         {activeTab === "pool" && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-2xl shadow-sm transition-colors">
-                <p className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-xl shadow-sm transition-colors">
+                <p className="text-[14px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                   Total Active
                 </p>
                 <p className="text-3xl font-black text-[var(--foreground)] mt-1">
                   {stats.total}
                 </p>
               </div>
-              <div className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl shadow-sm">
-                <p className="text-[11px] font-black uppercase tracking-widest text-emerald-600">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-xl shadow-sm">
+                <p className="text-[14px] font-black uppercase tracking-widest text-emerald-600">
                   Sold
                 </p>
                 <p className="text-3xl font-black text-emerald-600 mt-1">
                   {stats.sold}
                 </p>
               </div>
-              <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl shadow-sm">
-                <p className="text-[11px] font-black uppercase tracking-widest text-amber-600">
+              <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-xl shadow-sm">
+                <p className="text-[14px] font-black uppercase tracking-widest text-amber-600">
                   Pending
                 </p>
                 <p className="text-3xl font-black text-amber-600 mt-1">
                   {stats.pending}
                 </p>
               </div>
-              <div className="bg-red-500/10 border border-red-500/20 p-5 rounded-2xl shadow-sm">
-                <p className="text-[11px] font-black uppercase tracking-widest text-red-600">
+              <div className="bg-red-500/10 border border-red-500/20 p-5 rounded-xl shadow-sm">
+                <p className="text-[14px] font-black uppercase tracking-widest text-red-600">
                   Unsold
                 </p>
                 <p className="text-3xl font-black text-red-600 mt-1">
@@ -894,17 +911,18 @@ export default function AuctionAdminPanel({
               </div>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-4 rounded-2xl flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-4 rounded-xl flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm transition-colors">
               <div className="flex bg-[var(--surface-2)] border border-[var(--border-1)] p-1 rounded-xl w-full md:w-auto">
                 {["PENDING", "SOLD", "UNSOLD"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setPoolFilter(f)}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-[14px] font-black uppercase tracking-widest transition-all ${
                       poolFilter === f
                         ? "bg-[var(--accent)] text-[var(--background)] shadow-sm"
                         : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
-                    }`}>
+                    }`}
+                  >
                     {f} (
                     {f === "PENDING"
                       ? stats.pending
@@ -931,15 +949,16 @@ export default function AuctionAdminPanel({
                 </div>
                 <button
                   onClick={() => setShowImportModal(true)}
-                  className="bg-[var(--foreground)] text-[var(--background)] px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity whitespace-nowrap">
+                  className="bg-[var(--foreground)] text-[var(--background)] px-6 py-2.5 rounded-xl text-[14px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity whitespace-nowrap"
+                >
                   Review Registrations
                 </button>
               </div>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-2xl overflow-hidden shadow-sm overflow-x-auto transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl overflow-hidden shadow-sm overflow-x-auto transition-colors">
               <table className="w-full text-left min-w-[1000px]">
-                <thead className="bg-[var(--surface-2)] border-b border-[var(--border-1)] text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                <thead className="bg-[var(--surface-2)] border-b border-[var(--border-1)] text-[14px] font-black text-[var(--text-muted)] uppercase tracking-widest">
                   <tr>
                     <th className="p-4">Player</th>
                     <th className="p-4">Force Assign</th>
@@ -978,13 +997,13 @@ export default function AuctionAdminPanel({
         {/* TAB 2: BUDGETS */}
         {activeTab === "budgets" && (
           <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] p-6 md:p-8 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 md:p-8 shadow-sm transition-colors">
               <h2 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] mb-6 flex items-center gap-2">
                 <DollarSign size={16} /> Global Budget Allocation
               </h2>
               <div className="flex flex-col md:flex-row items-end gap-4">
                 <div className="w-full md:flex-1">
-                  <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-2 block">
+                  <label className="text-[14px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-2 block">
                     Standard Starting Purse (₹)
                   </label>
                   <div className="relative">
@@ -1002,13 +1021,14 @@ export default function AuctionAdminPanel({
                 <button
                   onClick={applyGlobalPurse}
                   disabled={isProcessing}
-                  className="w-full md:w-auto bg-[var(--surface-2)] hover:bg-[var(--border-1)] text-[var(--foreground)] border border-[var(--border-1)] font-black text-xs uppercase tracking-widest py-4 px-8 rounded-xl transition-all shadow-sm active:scale-95 shrink-0 disabled:opacity-50">
+                  className="w-full md:w-auto bg-[var(--surface-2)] hover:bg-[var(--border-1)] text-[var(--foreground)] border border-[var(--border-1)] font-black text-xs uppercase tracking-widest py-4 px-8 rounded-xl transition-all shadow-sm active:scale-95 shrink-0 disabled:opacity-50"
+                >
                   {isProcessing ? "Processing..." : "Apply to All Teams"}
                 </button>
               </div>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] p-6 md:p-8 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 md:p-8 shadow-sm transition-colors">
               <h2 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] mb-6 flex items-center gap-2">
                 <Users size={16} /> Franchise Balances
               </h2>
@@ -1016,7 +1036,8 @@ export default function AuctionAdminPanel({
                 {teams.map((team) => (
                   <div
                     key={team.id}
-                    className="flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] p-4 rounded-2xl">
+                    className="flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] p-4 rounded-xl"
+                  >
                     <div className="flex items-center gap-3">
                       <div
                         className="w-4 h-4 rounded-full shadow-sm"
@@ -1039,7 +1060,8 @@ export default function AuctionAdminPanel({
                         />
                         <button
                           onClick={() => saveIndividualPurse(team.id)}
-                          className="bg-[var(--accent)] text-[var(--background)] p-2 rounded-lg hover:opacity-90 transition-opacity">
+                          className="bg-[var(--accent)] text-[var(--background)] p-2 rounded-lg hover:opacity-90 transition-opacity"
+                        >
                           <Save size={14} />
                         </button>
                       </div>
@@ -1053,7 +1075,8 @@ export default function AuctionAdminPanel({
                             setEditingTeamId(team.id);
                             setEditPurseValue(team.purse_balance || 0);
                           }}
-                          className="text-[11px] font-black uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 px-3 py-1.5 rounded-lg transition-colors">
+                          className="text-[14px] font-black uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 px-3 py-1.5 rounded-lg transition-colors"
+                        >
                           Edit
                         </button>
                       </div>
@@ -1068,13 +1091,13 @@ export default function AuctionAdminPanel({
         {/* TAB 3: RULES */}
         {activeTab === "rules" && (
           <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] p-6 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 shadow-sm transition-colors">
               <h2 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] mb-6">
                 Tournament Limits
               </h2>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                  <label className="text-[14px] font-black text-[var(--text-muted)] uppercase tracking-widest">
                     Min Squad Size
                   </label>
                   <input
@@ -1090,7 +1113,7 @@ export default function AuctionAdminPanel({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                  <label className="text-[14px] font-black text-[var(--text-muted)] uppercase tracking-widest">
                     Max Squad Size
                   </label>
                   <input
@@ -1106,7 +1129,7 @@ export default function AuctionAdminPanel({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                  <label className="text-[14px] font-black text-[var(--text-muted)] uppercase tracking-widest">
                     Global Min Base Price (₹)
                   </label>
                   <input
@@ -1122,7 +1145,7 @@ export default function AuctionAdminPanel({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-[var(--warning)] uppercase tracking-widest">
+                  <label className="text-[14px] font-black text-[var(--warning)] uppercase tracking-widest">
                     Max Bid Per Player (₹0 = Unlimited)
                   </label>
                   <input
@@ -1145,7 +1168,7 @@ export default function AuctionAdminPanel({
                     <h4 className="font-bold text-[var(--foreground)] text-sm">
                       Allow Direct Buy
                     </h4>
-                    <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
+                    <p className="text-[14px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
                       Allows admins to bypass the hammer and instantly buy
                       players.
                     </p>
@@ -1170,7 +1193,7 @@ export default function AuctionAdminPanel({
                     <h4 className="font-bold text-[var(--foreground)] text-sm">
                       Limit: 1 Player Per Slot
                     </h4>
-                    <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
+                    <p className="text-[14px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
                       Teams can only buy 1 player from each round.
                     </p>
                   </div>
@@ -1192,14 +1215,15 @@ export default function AuctionAdminPanel({
               </div>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] p-6 md:p-8 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 md:p-8 shadow-sm transition-colors">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
                   <ListOrdered size={16} /> Dynamic Bidding Slabs
                 </h2>
                 <button
                   onClick={addSlab}
-                  className="bg-[var(--accent)] text-[var(--background)] px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest hover:opacity-90 flex items-center gap-1 shadow-sm transition-all active:scale-95">
+                  className="bg-[var(--accent)] text-[var(--background)] px-4 py-2 rounded-lg text-[14px] font-black uppercase tracking-widest hover:opacity-90 flex items-center gap-1 shadow-sm transition-all active:scale-95"
+                >
                   <PlusCircle size={14} /> Add Slab
                 </button>
               </div>
@@ -1208,7 +1232,8 @@ export default function AuctionAdminPanel({
                 {config.bid_slabs.map((slab: any, index: number) => (
                   <div
                     key={index}
-                    className="flex gap-4 items-center p-3 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] transition-colors">
+                    className="flex gap-4 items-center p-3 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] transition-colors"
+                  >
                     <div className="flex-1">
                       <label className="text-[8px] text-[var(--text-muted)] block mb-1 uppercase font-black">
                         Up to (₹)
@@ -1237,7 +1262,8 @@ export default function AuctionAdminPanel({
                     </div>
                     <button
                       onClick={() => removeSlab(index)}
-                      className="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
+                      className="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors"
+                    >
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -1245,7 +1271,7 @@ export default function AuctionAdminPanel({
               </div>
 
               <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
-                <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest block mb-2">
+                <label className="text-[14px] font-black text-[var(--text-muted)] uppercase tracking-widest block mb-2">
                   Fallback Increment (If bid exceeds all slabs)
                 </label>
                 <input
@@ -1265,7 +1291,8 @@ export default function AuctionAdminPanel({
                 <button
                   onClick={handleSaveRules}
                   disabled={isProcessing}
-                  className="w-full bg-[var(--foreground)] text-[var(--background)] font-black py-4 rounded-xl uppercase text-xs shadow-lg transition-all active:scale-95 disabled:opacity-50">
+                  className="w-full bg-[var(--foreground)] text-[var(--background)] font-black py-4 rounded-xl uppercase text-xs shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                >
                   {isProcessing ? "Saving..." : "Save Rules & Slabs"}
                 </button>
               </div>
@@ -1275,7 +1302,7 @@ export default function AuctionAdminPanel({
 
         {/* TAB 4: SLOTS */}
         {activeTab === "slots" && (
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] p-6 md:p-8 shadow-sm max-w-3xl mx-auto transition-colors">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 md:p-8 shadow-sm max-w-3xl mx-auto transition-colors">
             <h2 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] mb-6">
               Auction Rounds / Slots
             </h2>
@@ -1289,7 +1316,8 @@ export default function AuctionAdminPanel({
               />
               <button
                 onClick={handleCreateSlot}
-                className="bg-[var(--accent)] text-[var(--background)] px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm active:scale-95 hover:opacity-90">
+                className="bg-[var(--accent)] text-[var(--background)] px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm active:scale-95 hover:opacity-90"
+              >
                 Add Slot
               </button>
             </div>
@@ -1298,16 +1326,18 @@ export default function AuctionAdminPanel({
               {slots.map((s, index) => (
                 <div
                   key={s.id}
-                  className="bg-[var(--surface-2)] p-4 rounded-xl flex justify-between items-center border border-[var(--border-1)] shadow-sm transition-colors">
+                  className="bg-[var(--surface-2)] p-4 rounded-xl flex justify-between items-center border border-[var(--border-1)] shadow-sm transition-colors"
+                >
                   <span className="text-[var(--foreground)] font-bold flex items-center gap-3">
-                    <span className="bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] w-6 h-6 rounded flex items-center justify-center text-[11px]">
+                    <span className="bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] w-6 h-6 rounded flex items-center justify-center text-[14px]">
                       {index + 1}
                     </span>
                     {s.name}
                   </span>
                   <button
                     onClick={() => handleDeleteSlot(s.id)}
-                    className="text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg p-2 transition-colors">
+                    className="text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg p-2 transition-colors"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -1324,12 +1354,12 @@ export default function AuctionAdminPanel({
         {/* TAB 5: DANGER ZONE */}
         {activeTab === "danger" && (
           <div className="max-w-3xl mx-auto space-y-6">
-            <div className="bg-[var(--surface-1)] border border-[var(--accent)]/30 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--accent)]/30 rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 transition-colors">
               <div>
                 <h4 className="font-black text-sm uppercase text-[var(--foreground)] mb-1">
                   Sync Base Prices
                 </h4>
-                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                <p className="text-[14px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                   Update all players to Min Base Price (₹{config.min_base_price}
                   )
                 </p>
@@ -1337,24 +1367,26 @@ export default function AuctionAdminPanel({
               <button
                 onClick={handleSyncBasePrices}
                 disabled={isProcessing}
-                className="w-full md:w-auto px-6 py-3 rounded-xl text-[11px] font-black uppercase bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] hover:border-[var(--accent)] transition-all whitespace-nowrap">
+                className="w-full md:w-auto px-6 py-3 rounded-xl text-[14px] font-black uppercase bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] hover:border-[var(--accent)] transition-all whitespace-nowrap"
+              >
                 Sync Prices
               </button>
             </div>
 
-            <div className="bg-red-500/10 border border-red-500/20 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
               <div>
                 <h4 className="font-black text-sm uppercase text-red-500 mb-1">
                   Reset Auction Pool
                 </h4>
-                <p className="text-[11px] font-bold text-red-500/70 uppercase tracking-widest">
+                <p className="text-[14px] font-bold text-red-500/70 uppercase tracking-widest">
                   Unsell all players, remove from rosters, refund purses.
                 </p>
               </div>
               <button
                 onClick={handleResetAllPlayers}
                 disabled={isProcessing}
-                className="w-full md:w-auto px-6 py-3 rounded-xl text-[11px] font-black uppercase bg-red-500 text-white hover:opacity-90 transition-all shadow-lg shadow-red-500/20 whitespace-nowrap">
+                className="w-full md:w-auto px-6 py-3 rounded-xl text-[14px] font-black uppercase bg-red-500 text-white hover:opacity-90 transition-all shadow-lg shadow-red-500/20 whitespace-nowrap"
+              >
                 Reset Auction
               </button>
             </div>

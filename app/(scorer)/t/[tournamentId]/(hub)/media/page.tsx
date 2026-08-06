@@ -83,7 +83,7 @@ export default function UnifiedMediaStudio({
   const renderCanvasStudio = () => {
     if (!isAdmin)
       return (
-        <div className="h-64 flex flex-col text-center items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-3xl p-12 uppercase font-black text-sm tracking-widest mt-8">
+        <div className="h-64 flex flex-col text-center items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-xl p-12 uppercase font-black text-sm tracking-widest mt-8">
           <span className="max-w-4xl  p-15">
             Your are not authorized to access this feature. Please contact the
             tournament admin for access.
@@ -92,7 +92,7 @@ export default function UnifiedMediaStudio({
       );
     if (!selectedItem)
       return (
-        <div className="h-64 flex flex-col text-center items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-3xl p-12 uppercase font-black text-sm tracking-widest mt-8">
+        <div className="h-64 flex flex-col text-center items-center justify-center text-[var(--muted-foreground)] bg-[var(--background)] border-2 border-dashed border-[var(--border)] rounded-xl p-12 uppercase font-black text-sm tracking-widest mt-8">
           Select a target to launch studio
         </div>
       );
@@ -205,10 +205,10 @@ export default function UnifiedMediaStudio({
       </div>
       {/* Control Panel */}
       {isAdmin && (
-        <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-2xl shadow-sm flex flex-col md:flex-row gap-6">
+        <div className="bg-[var(--card)] border border-[var(--border)] p-6 rounded-xl shadow-sm flex flex-col md:flex-row gap-6">
           {/* Step 1: Pick Type */}
           <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+            <label className="text-[13px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
               1. Select Graphic Type
             </label>
             <select
@@ -226,7 +226,7 @@ export default function UnifiedMediaStudio({
 
           {/* Step 2: Pick Target */}
           <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
+            <label className="text-[13px] font-black uppercase tracking-widest text-[var(--muted-foreground)]">
               2. Select Target
             </label>
             <select

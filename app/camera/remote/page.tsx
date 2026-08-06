@@ -239,7 +239,8 @@ function RemoteContent() {
     return (
       <div
         className="fixed inset-0 z-[9999] bg-slate-50 flex flex-col items-center justify-center text-slate-900"
-        style={{ colorScheme: "light" }}>
+        style={{ colorScheme: "light" }}
+      >
         <style>{`nav, header, footer { display: none !important; }`}</style>
         <AlertCircle size={56} className="text-red-500 mb-4" />
         <h1 className="text-2xl font-black uppercase tracking-widest text-red-600">
@@ -256,7 +257,8 @@ function RemoteContent() {
     return (
       <div
         className="fixed inset-0 z-[9999] bg-slate-50 flex flex-col items-center justify-center text-slate-900"
-        style={{ colorScheme: "light" }}>
+        style={{ colorScheme: "light" }}
+      >
         <style>{`nav, header, footer { display: none !important; }`}</style>
         <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
           <AlertCircle size={40} className="text-amber-500 animate-pulse" />
@@ -319,19 +321,19 @@ function RemoteContent() {
   const isSoundDetected = deviceHealth && deviceHealth.peakAudio > 5;
 
   return (
-    <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 shadow-2xl my-auto mx-auto relative z-10">
+    <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-2xl my-auto mx-auto relative z-10">
       <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black uppercase tracking-widest text-slate-900">
             PTZ Remote V2
           </h1>
-          <p className="text-[10px] sm:text-xs text-slate-500 font-mono mt-1 font-bold">
+          <p className="text-[13px] sm:text-xs text-slate-500 font-mono mt-1 font-bold">
             ID: {camParam}
           </p>
         </div>
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-2 rounded-full animate-pulse shadow-sm">
           <Radio size={14} />
-          <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">
+          <span className="text-[13px] sm:text-xs font-black uppercase tracking-widest">
             Live
           </span>
         </div>
@@ -353,7 +355,7 @@ function RemoteContent() {
                   }
                 />
               )}
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">
+              <span className="text-[13px] font-black uppercase tracking-widest text-slate-700">
                 {deviceHealth.batteryLevel}%
               </span>
             </div>
@@ -366,7 +368,7 @@ function RemoteContent() {
                     : "text-blue-500"
                 }
               />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">
+              <span className="text-[13px] font-black uppercase tracking-widest text-slate-700">
                 {deviceHealth.latency}ms
               </span>
             </div>
@@ -379,26 +381,28 @@ function RemoteContent() {
                     : "text-emerald-500"
                 }
               />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">
+              <span className="text-[13px] font-black uppercase tracking-widest text-slate-700">
                 {deviceHealth.fps} FPS
               </span>
             </div>
             <div className="flex flex-col items-center gap-1 sm:flex-row sm:px-4 flex-1">
               <Zap size={18} className="text-amber-500" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">
+              <span className="text-[13px] font-black uppercase tracking-widest text-slate-700">
                 {deviceHealth.bitrate} kbps
               </span>
             </div>
           </div>
           <div
-            className={`${networkBg} border ${networkBorder} rounded-xl p-4 mb-8 flex items-start gap-3 shadow-sm transition-colors`}>
+            className={`${networkBg} border ${networkBorder} rounded-xl p-4 mb-8 flex items-start gap-3 shadow-sm transition-colors`}
+          >
             <Info size={18} className={`mt-0.5 shrink-0 ${networkColor}`} />
             <div>
               <p
-                className={`text-xs font-black tracking-widest uppercase mb-1 ${networkColor}`}>
+                className={`text-xs font-black tracking-widest uppercase mb-1 ${networkColor}`}
+              >
                 {networkStatus}
               </p>
-              <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+              <p className="text-[14px] text-slate-600 font-medium leading-relaxed">
                 {networkTip}
               </p>
             </div>
@@ -415,7 +419,8 @@ function RemoteContent() {
           {/* --- NEW: AUDIO TELEMETRY BUTTON --- */}
           <button
             onClick={toggleRemoteMute}
-            className={`p-4 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteMuted ? "bg-red-50 text-red-600 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
+            className={`p-4 rounded-xl flex flex-row md:flex-col items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteMuted ? "bg-red-50 text-red-600 border-red-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+          >
             {remoteMuted ? (
               <MicOff size={24} className="mb-1" />
             ) : (
@@ -425,7 +430,8 @@ function RemoteContent() {
               <span>{remoteMuted ? "Muted" : "Mic Open"}</span>
               {!remoteMuted && deviceHealth && (
                 <span
-                  className={`text-[9px] mt-1.5 font-black tracking-widest px-2 py-0.5 rounded ${isSoundDetected ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"}`}>
+                  className={`text-[9px] mt-1.5 font-black tracking-widest px-2 py-0.5 rounded ${isSoundDetected ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"}`}
+                >
                   {isSoundDetected ? "Sound Detected" : "Silence"}
                 </span>
               )}
@@ -434,7 +440,8 @@ function RemoteContent() {
 
           <button
             onClick={toggleOledSleep}
-            className={`p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteOled ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
+            className={`p-5 rounded-xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteOled ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+          >
             {remoteOled ? <Moon size={24} /> : <Sun size={24} />}{" "}
             {remoteOled ? "Screen Off" : "Screen On"}
           </button>
@@ -442,7 +449,8 @@ function RemoteContent() {
           {camCapabilities?.torch !== undefined && (
             <button
               onClick={toggleRemoteTorch}
-              className={`w-full flex-1 p-5 rounded-2xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteTorch ? "bg-amber-50 text-amber-600 border-amber-300" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
+              className={`w-full flex-1 p-5 rounded-xl flex flex-row md:flex-col items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${remoteTorch ? "bg-amber-50 text-amber-600 border-amber-300" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+            >
               {remoteTorch ? <Flashlight size={24} /> : <ZapOff size={24} />}{" "}
               {remoteTorch ? "Torch ON" : "Torch OFF"}
             </button>
@@ -450,32 +458,36 @@ function RemoteContent() {
         </div>
 
         <div className="md:col-span-8 space-y-4 flex flex-col">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 flex-1 flex flex-col shadow-sm relative overflow-hidden">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 flex-1 flex flex-col shadow-sm relative overflow-hidden">
             <div className="flex justify-between gap-3 mb-8">
               <button
                 onClick={() => snapZoom(rawMin)}
-                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all">
+                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all"
+              >
                 Wide
               </button>
               <button
                 onClick={() => snapZoom(rawMin + (rawMax - rawMin) * 0.3)}
-                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all">
+                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-800 font-black text-xs py-4 rounded-xl border border-slate-200 shadow-sm active:scale-95 uppercase tracking-widest transition-all"
+              >
                 Pitch
               </button>
               <button
                 onClick={() => snapZoom(rawMax)}
-                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-xs py-4 rounded-xl shadow-sm active:scale-95 uppercase tracking-widest transition-all">
+                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-black text-xs py-4 rounded-xl shadow-sm active:scale-95 uppercase tracking-widest transition-all"
+              >
                 Tight
               </button>
             </div>
             <div className="flex items-center gap-6 mt-auto">
-              <div className="flex flex-col gap-1 shrink-0 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
+              <div className="flex flex-col gap-1 shrink-0 bg-slate-50 p-1.5 rounded-xl border border-slate-200 shadow-inner">
                 <button
                   onClick={() => stepInstantZoom(1)}
                   onPointerDown={() => startSmoothZoom(1)}
                   onPointerUp={stopSmoothZoom}
                   onPointerLeave={stopSmoothZoom}
-                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-t-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm">
+                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-t-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm"
+                >
                   <Plus size={28} strokeWidth={3} />
                 </button>
                 <button
@@ -483,7 +495,8 @@ function RemoteContent() {
                   onPointerDown={() => startSmoothZoom(-1)}
                   onPointerUp={stopSmoothZoom}
                   onPointerLeave={stopSmoothZoom}
-                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-b-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm">
+                  className="w-16 h-16 sm:w-20 sm:h-16 bg-white border border-slate-200 hover:bg-slate-50 active:bg-blue-50 active:text-blue-600 rounded-b-xl flex items-center justify-center text-slate-700 transition-colors touch-none select-none shadow-sm"
+                >
                   <Minus size={28} strokeWidth={3} />
                 </button>
               </div>
@@ -513,7 +526,7 @@ function RemoteContent() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center mb-5">
               <label className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
                 <Sun size={18} className="text-amber-500" /> Exposure (EV)
@@ -542,7 +555,8 @@ function RemoteContent() {
 
       <button
         onClick={handleKillStream}
-        className="w-full mt-8 py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-2xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm">
+        className="w-full mt-8 py-5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+      >
         <Power size={20} /> Emergency Kill Stream
       </button>
     </div>
@@ -553,15 +567,17 @@ export default function GenericRemoteControl() {
   return (
     <div
       className="fixed inset-0 z-[9999] bg-slate-100 flex items-center justify-center p-4 font-sans overflow-y-auto custom-scrollbar"
-      style={{ colorScheme: "light" }}>
+      style={{ colorScheme: "light" }}
+    >
       <style>{`nav, header, footer { display: none !important; } ::-webkit-scrollbar { display: none; }`}</style>
       <Suspense
         fallback={
-          <div className="text-slate-800 bg-white border border-slate-200 shadow-xl px-8 py-6 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-3">
+          <div className="text-slate-800 bg-white border border-slate-200 shadow-xl px-8 py-6 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-3">
             <RefreshCw className="animate-spin text-blue-500" size={20} />{" "}
             Loading Remote...
           </div>
-        }>
+        }
+      >
         <RemoteContent />
       </Suspense>
     </div>

@@ -457,7 +457,7 @@ export default function MasterController({
     >
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-6 font-sans pb-24 transition-colors duration-300">
         <div className="max-w-6xl mx-auto space-y-6">
-          <header className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center shadow-sm gap-4 transition-colors">
+          <header className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-xl flex flex-col md:flex-row justify-between items-center shadow-sm gap-4 transition-colors">
             <div className="flex items-center gap-3">
               <Radio className="text-[var(--accent)] animate-pulse" size={28} />
               <div>
@@ -484,7 +484,7 @@ export default function MasterController({
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl space-y-4 shadow-sm flex flex-col transition-colors">
               <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
                 <Tv size={16} className="text-[var(--text-muted)]" /> In-Game
                 Displays
@@ -537,7 +537,7 @@ export default function MasterController({
               </button>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm flex flex-col transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl space-y-4 shadow-sm flex flex-col transition-colors">
               <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
                 <Zap size={16} className="text-[var(--text-muted)]" /> Rapid
                 Triggers
@@ -563,13 +563,13 @@ export default function MasterController({
                 WICKET
               </button>
               {!!triggerNote && (
-                <p className="text-[11px] font-bold text-[var(--text-muted)] mt-1">
+                <p className="text-[14px] font-bold text-[var(--text-muted)] mt-1">
                   {triggerNote}
                 </p>
               )}
 
               <div className="pt-4 mt-auto border-t border-[var(--border-1)]">
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2 flex items-center gap-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase mb-2 flex items-center gap-1">
                   <MessageSquare size={12} /> Custom Bottom Ticker
                 </label>
                 <div className="flex gap-2">
@@ -592,7 +592,7 @@ export default function MasterController({
               </div>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl space-y-4 shadow-sm transition-colors">
               <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
                 <MonitorPlay size={16} className="text-[var(--text-muted)]" />{" "}
                 Full-Screen Overlays
@@ -618,7 +618,7 @@ export default function MasterController({
                   <button
                     key={overlay.id}
                     onClick={() => toggleFullscreenView(overlay.id)}
-                    className={`py-4 rounded-xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+                    className={`py-4 rounded-xl font-black text-[13px] uppercase flex flex-col items-center justify-center gap-2 border transition-all ${config.activeViews?.includes(overlay.id) ? "bg-emerald-500 border-emerald-500 text-white shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
                   >
                     <overlay.icon
                       size={18}
@@ -640,7 +640,7 @@ export default function MasterController({
               </button>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl space-y-4 shadow-sm transition-colors">
               <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
                 <LayoutTemplate
                   size={16}
@@ -648,7 +648,7 @@ export default function MasterController({
                 />{" "}
                 Broadcast Themes
               </h3>
-              <p className="text-[11px] text-[var(--text-muted)]">
+              <p className="text-[14px] text-[var(--text-muted)]">
                 Select a broadcast theme for your live stream overlays. Changes
                 apply instantly to your OBS browser sources.
               </p>
@@ -682,12 +682,12 @@ export default function MasterController({
               </div>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl space-y-4 shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl space-y-4 shadow-sm transition-colors">
               <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-2">
                 <MonitorPlay size={16} className="text-[var(--text-muted)]" />{" "}
                 Scoreticker Styles
               </h3>
-              <p className="text-[11px] text-[var(--text-muted)]">
+              <p className="text-[14px] text-[var(--text-muted)]">
                 Upgrade your bottom scoreticker with premium TV-style graphics.
                 Unlock per tournament for just ₹100.
               </p>
@@ -753,7 +753,7 @@ export default function MasterController({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm flex flex-col justify-between transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl shadow-sm flex flex-col justify-between transition-colors">
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2">
@@ -770,14 +770,14 @@ export default function MasterController({
                       }
                       className="w-3 h-3 accent-blue-600 cursor-pointer"
                     />
-                    <span className="text-[10px] font-bold uppercase text-blue-500 tracking-wider">
+                    <span className="text-[13px] font-bold uppercase text-blue-500 tracking-wider">
                       Auto-Show (10s)
                     </span>
                   </label>
                 </div>
 
                 <div className="mb-5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
+                  <label className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
                     Live Crease Controls
                   </label>
                   <div className="flex gap-2">
@@ -826,7 +826,7 @@ export default function MasterController({
                   </div>
                 </div>
 
-                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
+                <label className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
                   Manual Selection
                 </label>
                 <select
@@ -870,7 +870,7 @@ export default function MasterController({
               </button>
             </div>
 
-            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-2xl shadow-sm transition-colors">
+            <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-6 rounded-xl shadow-sm transition-colors">
               <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.2em] flex items-center gap-2 mb-6">
                 <ImageIcon size={16} className="text-[var(--text-muted)]" />{" "}
                 Sponsor Integration
@@ -878,7 +878,7 @@ export default function MasterController({
               <div className="grid grid-cols-2 gap-6 h-full">
                 {/* 🔥 Safe Array Setup for Banners 🔥 */}
                 <div className="flex flex-col gap-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
+                  <label className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
                     Fullscreen Banners
                   </label>
 
@@ -969,7 +969,7 @@ export default function MasterController({
 
                 {/* Bug Setup */}
                 <div className="flex flex-col gap-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
+                  <label className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">
                     Small Corner Bug
                   </label>
                   <CldUploadWidget
@@ -1183,7 +1183,7 @@ export default function MasterController({
                   showSubscribeBanner: false,
                 })
               }
-              className="w-full py-5 bg-red-500/10 text-red-500 font-black border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm"
+              className="w-full py-5 bg-red-500/10 text-red-500 font-black border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all uppercase text-sm tracking-[0.3em] shadow-sm"
             >
               🚨 Kill All Graphics 🚨
             </button>

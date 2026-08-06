@@ -47,7 +47,7 @@ export default function BlogAdmin() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 bg-[var(--surface-1)] p-8 rounded-3xl border border-[var(--border-1)]"
+        className="space-y-6 bg-[var(--surface-1)] p-8 rounded-xl border border-[var(--border-1)]"
       >
         <div>
           <label className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
@@ -94,7 +94,7 @@ export default function BlogAdmin() {
           <label className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 block">
             Full Content (HTML/Text)
           </label>
-          <RichTextEditor 
+          <RichTextEditor
             content={formData.content}
             onChange={(html) => setFormData({ ...formData, content: html })}
           />

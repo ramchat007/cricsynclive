@@ -76,7 +76,7 @@ export default function PlayerSpotlight({
 
   return (
     <div
-      className="flex bg-slate-900 border-[3px] rounded-2xl min-w-[450px] overflow-hidden"
+      className="flex bg-slate-900 border-[3px] rounded-xl min-w-[450px] overflow-hidden"
       style={{
         backgroundColor: "#0f172a",
         borderColor: teamColor,
@@ -102,7 +102,7 @@ export default function PlayerSpotlight({
       {/* Details & Stacked Stats */}
       <div className="flex-1 p-5 flex flex-col justify-center">
         <h3
-          className="font-black tracking-[0.3em] uppercase text-[10px] flex items-center gap-1.5 mb-1"
+          className="font-black tracking-[0.3em] uppercase text-[13px] flex items-center gap-1.5 mb-1"
           style={{ color: teamColor }}
         >
           <Globe size={12} /> Career Record

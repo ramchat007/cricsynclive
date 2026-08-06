@@ -365,7 +365,7 @@ export default function BroadcastOverlay({
               >
                 <div className="flex flex-col border-r border-white/20 pr-5">
                   <span
-                    className="text-[10px] font-black uppercase tracking-widest transition-colors duration-500"
+                    className="text-[13px] font-black uppercase tracking-widest transition-colors duration-500"
                     style={{ color: battingTeamColor }}
                   >
                     LIVE SCORE
@@ -380,7 +380,7 @@ export default function BroadcastOverlay({
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-white/50 font-black uppercase tracking-widest">
+                  <span className="text-[13px] text-white/50 font-black uppercase tracking-widest">
                     OVERS
                   </span>
                   <span className="text-white font-bold text-xl tabular-nums">

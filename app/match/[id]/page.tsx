@@ -80,12 +80,13 @@ export default function PublicMatchCenter({
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 font-sans max-w-4xl mx-auto pb-20 transition-colors duration-300">
       <Link
         href={`/`}
-        className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--foreground)] font-bold mb-8 w-max transition-colors">
+        className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--foreground)] font-bold mb-8 w-max transition-colors"
+      >
         <ArrowLeft size={16} /> Back to Home
       </Link>
 
       {/* PUBLIC HEADER */}
-      <div className="bg-[var(--surface-1)] rounded-[2rem] p-6 text-center mb-6 shadow-sm border border-[var(--border-1)] transition-colors">
+      <div className="bg-[var(--surface-1)] rounded-xl p-6 text-center mb-6 shadow-sm border border-[var(--border-1)] transition-colors">
         <h1 className="text-2xl font-black uppercase tracking-tight text-[var(--foreground)]">
           {match.team1.name}{" "}
           <span className="text-[var(--text-muted)] opacity-50 mx-2 text-lg">
@@ -101,13 +102,13 @@ export default function PublicMatchCenter({
       <div className="animate-in fade-in slide-in-from-bottom-4">
         {/* Conditional Rendering for Completed Matches */}
         {isCompleted ? (
-          <div className="mb-6 bg-[var(--foreground)] rounded-[2rem] p-8 text-center shadow-xl border border-[var(--border-1)] relative overflow-hidden transition-colors">
+          <div className="mb-6 bg-[var(--foreground)] rounded-xl p-8 text-center shadow-xl border border-[var(--border-1)] relative overflow-hidden transition-colors">
             <div className="absolute inset-0 bg-[var(--accent)]/10 blur-3xl rounded-full scale-150 pointer-events-none"></div>
             <div className="relative z-10">
               <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl border border-amber-500/20 shadow-sm">
                 <Trophy size={32} />
               </div>
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--background)] opacity-80 mb-2">
+              <h2 className="text-[13px] font-black uppercase tracking-[0.3em] text-[var(--background)] opacity-80 mb-2">
                 Match Completed
               </h2>
               <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-[var(--background)] drop-shadow-md leading-tight">
@@ -136,7 +137,7 @@ export default function PublicMatchCenter({
           </div>
         )}
 
-        <div className="bg-[var(--surface-1)] rounded-[2.5rem] p-4 sm:p-8 shadow-sm border border-[var(--border-1)] transition-colors">
+        <div className="bg-[var(--surface-1)] rounded-2xl p-4 sm:p-8 shadow-sm border border-[var(--border-1)] transition-colors">
           <FullScorecard
             deliveries={deliveries}
             battingSquad={stats.battingSquad}

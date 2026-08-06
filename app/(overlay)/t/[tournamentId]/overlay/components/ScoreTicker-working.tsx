@@ -702,7 +702,7 @@ export default function ScoreTicker({
             <div className="w-[430px] h-full flex flex-col justify-center shrink-0 relative border-r border-white/10">
               <div className="text-white text-[15px] font-black tracking-[0.25em] uppercase drop-shadow-md absolute top-2 left-8 right-8 opacity-90 ">
                 {battingInitials}{" "}
-                <span className="text-white/40 mx-2 text-[11px]">VS</span>{" "}
+                <span className="text-white/40 mx-2 text-[14px]">VS</span>{" "}
                 {bowlingInitials}
               </div>
 

@@ -65,7 +65,7 @@ export default function Footer() {
                 recentTournaments.map((tournament) => (
                   <li key={tournament.id}>
                     <Link 
-                      href={`/tournament/${tournament.id}`} 
+                      href={`/t/${tournament.id}`} 
                       className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors line-clamp-1"
                     >
                       {tournament.name || "Community Tournament"}

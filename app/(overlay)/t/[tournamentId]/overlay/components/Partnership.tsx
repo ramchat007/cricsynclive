@@ -73,11 +73,13 @@ export default function Partnership({
       style={{
         background: theme.tokens.panelBg,
         borderTop: `4px solid ${theme.tokens.accent}`,
-      }}>
+      }}
+    >
       <div className="flex flex-col border-r border-white/10 pr-10">
         <span
-          className="font-black uppercase tracking-[0.2em] text-[10px] mb-1"
-          style={{ color: theme.tokens.accent }}>
+          className="font-black uppercase tracking-[0.2em] text-[13px] mb-1"
+          style={{ color: theme.tokens.accent }}
+        >
           Partnership
         </span>
         <div className="flex items-baseline gap-2">
@@ -109,7 +111,8 @@ export default function Partnership({
               <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/5 flex items-baseline gap-1 shadow-inner">
                 <span
                   className="font-black text-2xl leading-none"
-                  style={{ color: theme.tokens.accent }}>
+                  style={{ color: theme.tokens.accent }}
+                >
                   {player.runs}
                 </span>
                 <span className="text-white/40 font-bold text-xs">

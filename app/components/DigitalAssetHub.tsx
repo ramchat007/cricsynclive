@@ -325,11 +325,11 @@ export default function DigitalAssetHub({
   };
 
   return (
-    <div className="bg-[var(--card)] text-[var(--card-foreground)] border border-[var(--border)] rounded-3xl p-8 max-w-4xl mx-auto shadow-sm">
+    <div className="bg-[var(--card)] text-[var(--card-foreground)] border border-[var(--border)] rounded-xl p-8 max-w-4xl mx-auto shadow-sm">
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       <div className="flex flex-col md:flex-row items-start gap-8">
-        <div className="w-full md:w-3/5 aspect-[16/9] bg-[#020617] rounded-2xl border border-[var(--border)] overflow-hidden relative shadow-2xl group flex items-center justify-center shrink-0">
+        <div className="w-full md:w-3/5 aspect-[16/9] bg-[#020617] rounded-xl border border-[var(--border)] overflow-hidden relative shadow-2xl group flex items-center justify-center shrink-0">
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -345,7 +345,7 @@ export default function DigitalAssetHub({
 
         <div className="w-full md:w-2/5 flex flex-col space-y-6">
           <div>
-            <span className="text-[var(--primary)] text-[10px] font-black uppercase tracking-[0.3em] bg-[var(--primary)]/10 px-3 py-1 rounded-full border border-[var(--primary)]/20">
+            <span className="text-[var(--primary)] text-[13px] font-black uppercase tracking-[0.3em] bg-[var(--primary)]/10 px-3 py-1 rounded-full border border-[var(--primary)]/20">
               Media Core Engine V2
             </span>
             <h2 className="text-[var(--foreground)] font-black text-2xl uppercase tracking-tight mt-3">
@@ -359,7 +359,7 @@ export default function DigitalAssetHub({
           {/* DYNAMIC IMAGE UPLOADER HOOK */}
           {(type === "PLAYER" || type === "AWARD" || type === "TEAM") && (
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest flex items-center gap-1">
+              <label className="text-[13px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest flex items-center gap-1">
                 <Camera size={12} /> Poster Profile Image
               </label>
 
@@ -399,7 +399,7 @@ export default function DigitalAssetHub({
           {type === "AWARD" && (
             <div className="space-y-4 bg-[var(--muted)] p-4 rounded-xl border border-[var(--border)]">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest flex items-center gap-1">
+                <label className="text-[13px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest flex items-center gap-1">
                   <Trophy size={12} /> Custom Award Title
                 </label>
                 <input
@@ -411,7 +411,7 @@ export default function DigitalAssetHub({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest flex items-center gap-1">
+                <label className="text-[13px] font-bold text-[var(--muted-foreground)] uppercase tracking-widest flex items-center gap-1">
                   <Star size={12} /> Achievement / Stats
                 </label>
                 <input

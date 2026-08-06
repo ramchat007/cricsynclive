@@ -298,7 +298,7 @@ export default function AdminManagementPage({
     return (
       <div
         key={member.id}
-        className="bg-[var(--surface-1)] p-5 rounded-3xl border border-[var(--border-1)] flex items-center justify-between shadow-sm transition-colors"
+        className="bg-[var(--surface-1)] p-5 rounded-xl border border-[var(--border-1)] flex items-center justify-between shadow-sm transition-colors"
       >
         <div className="flex items-center gap-4 min-w-0">
           <div
@@ -381,7 +381,7 @@ export default function AdminManagementPage({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* LEFT: GRANT ACCESS */}
           <div className="md:col-span-5">
-            <div className="bg-[var(--surface-1)] rounded-[2rem] p-6 sm:p-8 shadow-sm border border-[var(--border-1)] sticky top-6 transition-colors">
+            <div className="bg-[var(--surface-1)] rounded-xl p-6 sm:p-8 shadow-sm border border-[var(--border-1)] sticky top-6 transition-colors">
               {canManageAccess ? (
                 <>
                   <div className="w-16 h-16 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full flex items-center justify-center mb-6 transition-colors">
@@ -397,7 +397,7 @@ export default function AdminManagementPage({
                   <form onSubmit={handleAddMember} className="space-y-5">
                     {/* CORRECT PLACEMENT OF SEARCH DROPDOWN */}
                     <div className="relative">
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex items-center justify-between">
+                      <label className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex items-center justify-between">
                         <span>User Email</span>
                         {isSearchingUser && (
                           <Activity
@@ -456,7 +456,7 @@ export default function AdminManagementPage({
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
+                      <label className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
                         Role
                       </label>
                       <select
@@ -497,8 +497,8 @@ export default function AdminManagementPage({
                     </button>
 
                     {activeInviteLink && (
-                      <div className="mt-4 p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-2xl animate-in zoom-in-95">
-                        <p className="text-[10px] font-black text-[var(--accent)] uppercase mb-2">
+                      <div className="mt-4 p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-xl animate-in zoom-in-95">
+                        <p className="text-[13px] font-black text-[var(--accent)] uppercase mb-2">
                           Share this link:
                         </p>
                         <div className="flex items-center gap-2">
@@ -543,7 +543,7 @@ export default function AdminManagementPage({
           <div className="md:col-span-7 space-y-8">
             {owners.length > 0 && (
               <section>
-                <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <h3 className="text-[13px] font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Crown size={14} /> Tournament Owner
                 </h3>
                 <div className="space-y-3">{owners.map(renderUserCard)}</div>
@@ -552,7 +552,7 @@ export default function AdminManagementPage({
 
             {admins.length > 0 && (
               <section>
-                <h3 className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <h3 className="text-[13px] font-black text-purple-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <ShieldAlert size={14} /> Administrators ({admins.length})
                 </h3>
                 <div className="space-y-3">{admins.map(renderUserCard)}</div>
@@ -561,7 +561,7 @@ export default function AdminManagementPage({
 
             {scorers.length > 0 && (
               <section>
-                <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                <h3 className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Edit3 size={14} /> Match Scorers ({scorers.length})
                 </h3>
                 <div className="space-y-3">{scorers.map(renderUserCard)}</div>
@@ -569,7 +569,7 @@ export default function AdminManagementPage({
             )}
 
             {members.length === 0 && (
-              <div className="text-center p-8 bg-[var(--surface-1)] rounded-3xl border border-dashed border-[var(--border-1)] transition-colors">
+              <div className="text-center p-8 bg-[var(--surface-1)] rounded-xl border border-dashed border-[var(--border-1)] transition-colors">
                 <p className="text-sm font-bold text-[var(--text-muted)]">
                   No authorized users found.
                 </p>

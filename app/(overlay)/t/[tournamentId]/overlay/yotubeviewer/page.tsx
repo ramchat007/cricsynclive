@@ -153,7 +153,7 @@ export default function YouTubeViewersOverlay({
           {!activeVideoId ? (
             <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-amber-500/50 rounded-lg px-4 py-2 shadow-lg backdrop-blur-sm animate-pulse">
               <AlertCircle className="text-amber-500" size={18} />
-              <span className="text-amber-500 text-[10px] font-bold uppercase tracking-widest">
+              <span className="text-amber-500 text-[13px] font-bold uppercase tracking-widest">
                 Waiting for Stream URL...
               </span>
             </div>
@@ -167,7 +167,7 @@ export default function YouTubeViewersOverlay({
                     <span className="relative inline-flex rounded-full h-4 w-4 bg-white shadow-[0_0_8px_white]"></span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                    <span className="text-white/90 text-[13px] font-bold uppercase tracking-wider mb-0.5">
                       Live Now
                     </span>
                     <span className="text-white text-3xl font-black leading-none drop-shadow-md">
@@ -179,7 +179,7 @@ export default function YouTubeViewersOverlay({
                 <div className="flex items-center gap-3 px-4 py-3 bg-amber-500">
                   <Clock className="text-amber-950 shrink-0" size={24} />
                   <div className="flex flex-col">
-                    <span className="text-amber-950/80 text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                    <span className="text-amber-950/80 text-[13px] font-bold uppercase tracking-wider mb-0.5">
                       Scheduled
                     </span>
                     <span className="text-amber-950 text-2xl font-black leading-none drop-shadow-md">
@@ -191,7 +191,7 @@ export default function YouTubeViewersOverlay({
                 <div className="flex items-center gap-3 px-4 py-3 bg-zinc-700">
                   <Video className="text-white shrink-0" size={24} />
                   <div className="flex flex-col">
-                    <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                    <span className="text-white/70 text-[13px] font-bold uppercase tracking-wider mb-0.5">
                       Offline
                     </span>
                     <span className="text-white text-2xl font-black leading-none drop-shadow-md">
@@ -205,7 +205,7 @@ export default function YouTubeViewersOverlay({
               <div className="flex items-center gap-4 px-4 py-3 bg-zinc-900 border-l border-zinc-700">
                 <Eye className="text-gray-400 shrink-0" size={20} />
                 <div className="flex flex-col">
-                  <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                  <span className="text-gray-400 text-[13px] font-bold uppercase tracking-wider mb-0.5">
                     Total Views
                   </span>
                   <span className="text-white text-3xl font-black leading-none drop-shadow-md">

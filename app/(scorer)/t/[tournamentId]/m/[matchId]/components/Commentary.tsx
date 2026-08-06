@@ -303,7 +303,7 @@ export default function Commentary({
     <div className="flex flex-col gap-5 w-full animate-in fade-in pb-20 transition-colors duration-300">
       {/* 1. INNINGS TABS */}
       {(match.current_innings === 2 || match.status === "completed") && (
-        <div className="flex gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] p-1.5 rounded-2xl w-max">
+        <div className="flex gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] p-1.5 rounded-xl w-max">
           <button
             onClick={() => setSelectedInnings(1)}
             className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${
@@ -344,14 +344,14 @@ export default function Commentary({
 
       {/* 3. COMMENTARY FEED */}
       <div>
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 px-2">
+        <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 px-2">
           Ball-by-Ball Feed
         </h3>
 
-        <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors duration-300">
+        <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors duration-300">
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex justify-between items-center">
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]">
+            <span className="text-[13px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--accent)] shadow-sm animate-pulse"></span>
               Live Updates
             </span>
@@ -373,7 +373,7 @@ export default function Commentary({
                     className="p-5 border-y border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]/50 transition-colors"
                   >
                     <div>
-                      <div className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest mb-1">
+                      <div className="text-[13px] font-black text-[var(--accent)] uppercase tracking-widest mb-1">
                         Over {event.over} Done
                       </div>
                       <div className="font-black text-base text-[var(--foreground)]">
@@ -381,7 +381,7 @@ export default function Commentary({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] uppercase font-black mb-1 text-[var(--text-muted)]">
+                      <div className="text-[13px] uppercase font-black mb-1 text-[var(--text-muted)]">
                         Score
                       </div>
                       <div className="text-2xl sm:text-3xl font-mono font-black text-[var(--foreground)] leading-none">
@@ -426,7 +426,7 @@ export default function Commentary({
                   {/* Text Context */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-black text-[10px] sm:text-xs uppercase tracking-wider truncate text-[var(--foreground)]">
+                      <span className="font-black text-[13px] sm:text-xs uppercase tracking-wider truncate text-[var(--foreground)]">
                         {event.bowler}{" "}
                         <span className="text-[var(--text-muted)] opacity-50 mx-1">
                           ➜

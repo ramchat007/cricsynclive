@@ -81,7 +81,8 @@ export default function ContactPage() {
           height="24"
           viewBox="0 0 93 93"
           fill="none"
-          className="w-6 h-6 shrink-0">
+          className="w-6 h-6 shrink-0"
+        >
           <rect
             x="1.13867"
             y="1"
@@ -110,7 +111,8 @@ export default function ContactPage() {
           height="24"
           viewBox="0 0 93 92"
           fill="none"
-          className="w-6 h-6 shrink-0">
+          className="w-6 h-6 shrink-0"
+        >
           <rect
             x="1.13867"
             width="91.5618"
@@ -129,7 +131,8 @@ export default function ContactPage() {
               y1="91.5618"
               x2="-0.621143"
               y2="-2.46459e-06"
-              gradientUnits="userSpaceOnUse">
+              gradientUnits="userSpaceOnUse"
+            >
               <stop stopColor="#FBE18A" />
               <stop offset="0.21" stopColor="#FCBB45" />
               <stop offset="0.38" stopColor="#F75274" />
@@ -152,7 +155,8 @@ export default function ContactPage() {
         {/* Navigation Back */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest mt-4 mb-8 transition-colors">
+          className="inline-flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)] uppercase tracking-widest mt-4 mb-8 transition-colors"
+        >
           <Home size={14} /> Back to Hub
         </Link>
 
@@ -170,7 +174,7 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* --- LEFT: CONTACT DETAILS --- */}
           <div className="lg:col-span-5 space-y-8">
-            <div className="p-8 rounded-[2.5rem] border bg-[var(--surface-1)] border-[var(--border-1)] shadow-xl transition-colors">
+            <div className="p-8 rounded-2xl border bg-[var(--surface-1)] border-[var(--border-1)] shadow-xl transition-colors">
               <h3 className="text-2xl font-black text-[var(--foreground)] uppercase tracking-widest mb-6 leading-tight">
                 Contact <br />
                 <span className="text-[var(--accent)]">Information</span>
@@ -179,17 +183,18 @@ export default function ContactPage() {
               <div className="space-y-6">
                 {contactMethods.map((item, i) => (
                   <div key={i} className="flex items-center gap-4">
-                    <div className="w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center bg-[var(--accent)]/10 text-[var(--accent)] transition-colors">
+                    <div className="w-12 h-12 shrink-0 rounded-xl flex items-center justify-center bg-[var(--accent)]/10 text-[var(--accent)] transition-colors">
                       <item.icon size={20} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                      <p className="text-[13px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                         {item.title}
                       </p>
                       {item.link ? (
                         <a
                           href={item.link}
-                          className="font-bold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors">
+                          className="font-bold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+                        >
                           {item.value}
                         </a>
                       ) : (
@@ -204,7 +209,7 @@ export default function ContactPage() {
 
               {/* Social Links */}
               <div className="mt-8 pt-6 border-t border-[var(--border-1)] transition-colors">
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-4 text-[var(--text-muted)]">
+                <p className="text-[13px] font-bold uppercase tracking-widest mb-4 text-[var(--text-muted)]">
                   Follow Us
                 </p>
                 <div className="flex gap-4">
@@ -214,7 +219,8 @@ export default function ContactPage() {
                       href={social.link}
                       target="_blank"
                       rel="noreferrer"
-                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-2 bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] ${social.color}`}>
+                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-2 bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] ${social.color}`}
+                    >
                       {social.icon}
                       <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline-block">
                         {social.name}
@@ -228,7 +234,7 @@ export default function ContactPage() {
 
           {/* --- RIGHT: SUPABASE FORM --- */}
           <div className="lg:col-span-7">
-            <div className="p-8 md:p-10 rounded-[2.5rem] border relative overflow-hidden h-full bg-[var(--surface-1)] border-[var(--border-1)] shadow-xl transition-colors">
+            <div className="p-8 md:p-10 rounded-2xl border relative overflow-hidden h-full bg-[var(--surface-1)] border-[var(--border-1)] shadow-xl transition-colors">
               <h3 className="text-2xl font-black text-[var(--foreground)] uppercase tracking-widest mb-2">
                 Send a Message
               </h3>
@@ -238,7 +244,7 @@ export default function ContactPage() {
               </p>
 
               {status === "success" ? (
-                <div className="p-8 border rounded-3xl text-center flex flex-col items-center justify-center h-64 bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)] transition-colors">
+                <div className="p-8 border rounded-xl text-center flex flex-col items-center justify-center h-64 bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)] transition-colors">
                   <div className="w-16 h-16 bg-[var(--accent)] text-[var(--background)] rounded-full flex items-center justify-center mb-4 shadow-lg">
                     <Send size={24} className="ml-1" />
                   </div>
@@ -250,23 +256,25 @@ export default function ContactPage() {
                   </p>
                   <button
                     onClick={() => setStatus("idle")}
-                    className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-4 text-[var(--accent)] hover:opacity-80">
+                    className="mt-6 text-xs font-bold uppercase tracking-widest underline underline-offset-4 text-[var(--accent)] hover:opacity-80"
+                  >
                     Send another message
                   </button>
                 </div>
               ) : (
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-5 relative z-10">
+                  className="space-y-5 relative z-10"
+                >
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
+                    <label className="text-[13px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
                       Full Name
                     </label>
                     <input
                       type="text"
                       placeholder="Full Name"
                       required
-                      className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
+                      className="w-full p-4 rounded-xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
@@ -275,14 +283,14 @@ export default function ContactPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
+                      <label className="text-[13px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
                         Email Address
                       </label>
                       <input
                         type="email"
                         placeholder="email@example.com"
                         required
-                        className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
+                        className="w-full p-4 rounded-xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
                         value={formData.email}
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
@@ -290,14 +298,14 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
+                      <label className="text-[13px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
                         Phone Number
                       </label>
                       <input
                         type="tel"
                         placeholder="+91 98765 43210"
                         required
-                        className="w-full p-4 rounded-2xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
+                        className="w-full p-4 rounded-xl border outline-none font-medium transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
                         value={formData.phone}
                         onChange={(e) =>
                           setFormData({ ...formData, phone: e.target.value })
@@ -307,14 +315,14 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
+                    <label className="text-[13px] font-bold uppercase tracking-widest mb-2 block text-[var(--text-muted)]">
                       Your Message
                     </label>
                     <textarea
                       placeholder="Tell us about your tournament or package inquiry..."
                       required
                       rows={5}
-                      className="w-full p-4 rounded-2xl border outline-none font-medium resize-none transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
+                      className="w-full p-4 rounded-xl border outline-none font-medium resize-none transition-colors bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30"
                       value={formData.message}
                       onChange={(e) =>
                         setFormData({ ...formData, message: e.target.value })
@@ -331,7 +339,8 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={status === "submitting"}
-                    className="w-full py-4 bg-[var(--accent)] text-[var(--background)] font-black rounded-2xl uppercase tracking-widest hover:opacity-90 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg disabled:opacity-70 disabled:active:scale-100">
+                    className="w-full py-4 bg-[var(--accent)] text-[var(--background)] font-black rounded-xl uppercase tracking-widest hover:opacity-90 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg disabled:opacity-70 disabled:active:scale-100"
+                  >
                     {status === "submitting" ? (
                       <span className="animate-pulse">Sending...</span>
                     ) : (

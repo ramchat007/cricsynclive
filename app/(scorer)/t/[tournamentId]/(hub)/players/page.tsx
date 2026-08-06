@@ -118,44 +118,44 @@ export default function PlayersPage({
   };
 
   const fetchExistingPhotos = async () => {
-  // If we already fetched them, just open the gallery
-  if (existingPhotos.length > 0) {
+    // If we already fetched them, just open the gallery
+    if (existingPhotos.length > 0) {
+      setIsGalleryOpen(true);
+      return;
+    }
+
+    setIsLoadingPhotos(true);
     setIsGalleryOpen(true);
-    return;
-  }
 
-  setIsLoadingPhotos(true);
-  setIsGalleryOpen(true);
+    // Fetch all non-null photos from the players table
+    const { data, error } = await supabase
+      .from("players")
+      .select("photo_url")
+      .not("photo_url", "is", null);
 
-  // Fetch all non-null photos from the players table
-  const { data, error } = await supabase
-    .from("players")
-    .select("photo_url")
-    .not("photo_url", "is", null);
-
-  if (!error && data) {
-    // Extract URLs, remove empties, and use Set to remove duplicates
-    const uniquePhotos = Array.from(
-      new Set(data.map((p) => p.photo_url).filter(Boolean))
-    );
-    setExistingPhotos(uniquePhotos as string[]);
-  }
-  setIsLoadingPhotos(false);
-};
+    if (!error && data) {
+      // Extract URLs, remove empties, and use Set to remove duplicates
+      const uniquePhotos = Array.from(
+        new Set(data.map((p) => p.photo_url).filter(Boolean)),
+      );
+      setExistingPhotos(uniquePhotos as string[]);
+    }
+    setIsLoadingPhotos(false);
+  };
 
   const filteredPlayers = players.filter((p) => {
     // Safely lowercase the search term, fallback to empty string if undefined
     const search = playerSearch?.toLowerCase() || "";
-    
+
     // Use optional chaining (?.) and fallbacks (|| "") to prevent null errors
     const nameMatch = (p.full_name || "").toLowerCase().includes(search);
     const mobileMatch = (p.mobile_number || "").includes(playerSearch || "");
-    
+
     const matchesSearch = nameMatch || mobileMatch;
     const matchesRole = roleFilter === "All" || p.player_role === roleFilter;
-    
+
     return matchesSearch && matchesRole;
-});
+  });
 
   return (
     <div className="animate-in fade-in transition-colors duration-300">
@@ -210,7 +210,7 @@ export default function PlayersPage({
         {filteredPlayers.map((player) => (
           <div
             key={player.id}
-            className="bg-[var(--surface-1)] rounded-2xl p-4 border border-[var(--border-1)] shadow-sm relative overflow-hidden transition-all hover:border-[var(--accent)]/50 hover:shadow-md"
+            className="bg-[var(--surface-1)] rounded-xl p-4 border border-[var(--border-1)] shadow-sm relative overflow-hidden transition-all hover:border-[var(--accent)]/50 hover:shadow-md"
           >
             {/* Status Ribbon */}
             <div
@@ -222,7 +222,7 @@ export default function PlayersPage({
             />
             <div className="flex items-center gap-4">
               <div
-                className="w-16 h-16 shrink-0 rounded-2xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)]"
+                className="w-16 h-16 shrink-0 rounded-xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)]"
                 style={{
                   backgroundImage: player.photo_url
                     ? `url(${player.photo_url})`
@@ -287,7 +287,7 @@ export default function PlayersPage({
       {/* EDIT PLAYER MODAL */}
       {editingPlayer && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-[var(--surface-1)] rounded-[2rem] w-full max-w-md p-6 border border-[var(--border-1)] shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar transition-colors">
+          <div className="bg-[var(--surface-1)] rounded-xl w-full max-w-md p-6 border border-[var(--border-1)] shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar transition-colors">
             <h2 className="text-xl font-black uppercase tracking-widest mb-6 text-[var(--foreground)]">
               Edit Player Profile
             </h2>
@@ -297,10 +297,12 @@ export default function PlayersPage({
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-4">
                   <div
-                    className="w-16 h-16 rounded-2xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)] shrink-0"
-                    style={{ backgroundImage: `url(${editingPlayer.photo_url})` }}
+                    className="w-16 h-16 rounded-xl bg-[var(--surface-2)] bg-cover bg-center border border-[var(--border-1)] shrink-0"
+                    style={{
+                      backgroundImage: `url(${editingPlayer.photo_url})`,
+                    }}
                   />
-                  
+
                   <div className="flex gap-2">
                     <CldUploadWidget
                       uploadPreset={String(
@@ -319,7 +321,10 @@ export default function PlayersPage({
                           result.info.coordinates &&
                           result.info.coordinates.custom
                         ) {
-                          url = url.replace("/upload/", "/upload/c_crop,g_custom/");
+                          url = url.replace(
+                            "/upload/",
+                            "/upload/c_crop,g_custom/",
+                          );
                         }
                         setEditingPlayer({
                           ...editingPlayer,
@@ -352,13 +357,13 @@ export default function PlayersPage({
                 {isGalleryOpen && (
                   <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-3 animate-in slide-in-from-top-2">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                      <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                         Select from database
                       </span>
                       <button
                         type="button"
                         onClick={() => setIsGalleryOpen(false)}
-                        className="text-[10px] font-bold text-[var(--foreground)] hover:text-red-500"
+                        className="text-[13px] font-bold text-[var(--foreground)] hover:text-red-500"
                       >
                         CLOSE
                       </button>
@@ -375,7 +380,10 @@ export default function PlayersPage({
                             <div
                               key={idx}
                               onClick={() => {
-                                setEditingPlayer({ ...editingPlayer, photo_url: url });
+                                setEditingPlayer({
+                                  ...editingPlayer,
+                                  photo_url: url,
+                                });
                                 setIsGalleryOpen(false); // Auto-close on select
                               }}
                               className="aspect-square rounded-lg bg-cover bg-center cursor-pointer border-2 border-transparent hover:border-[var(--accent)] transition-all hover:scale-105"
@@ -394,7 +402,7 @@ export default function PlayersPage({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                   Full Name
                 </label>
                 <input
@@ -411,7 +419,7 @@ export default function PlayersPage({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Role
                   </label>
                   <select
@@ -435,7 +443,7 @@ export default function PlayersPage({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Jersey Size
                   </label>
                   <select
@@ -456,7 +464,7 @@ export default function PlayersPage({
                   </select>
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Status
                   </label>
                   <select
@@ -481,7 +489,7 @@ export default function PlayersPage({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Batting
                   </label>
                   <select
@@ -501,7 +509,7 @@ export default function PlayersPage({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                  <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                     Bowling
                   </label>
                   <select

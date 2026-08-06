@@ -163,7 +163,7 @@ export default function TournamentBillingPage({
 
       {/* Coupon Code Section */}
       <div className="max-w-md mx-auto mb-16 animate-in fade-in">
-        <div className="flex gap-2 p-2 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-2xl">
+        <div className="flex gap-2 p-2 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl">
           <div className="flex items-center pl-4 text-[var(--text-muted)]">
             <Tag size={20} />
           </div>
@@ -204,10 +204,10 @@ export default function TournamentBillingPage({
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* FREE TIER */}
         <div
-          className={`relative bg-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "free" ? "border-zinc-500 shadow-xl scale-105 z-10" : "border-[var(--border-1)] opacity-70 hover:opacity-100"}`}
+          className={`relative bg-[var(--surface-1)] rounded-2xl p-8 border-2 transition-all ${currentTier === "free" ? "border-zinc-500 shadow-xl scale-105 z-10" : "border-[var(--border-1)] opacity-70 hover:opacity-100"}`}
         >
           {currentTier === "free" && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-zinc-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-zinc-500 text-white text-[13px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
               Current Plan
             </div>
           )}
@@ -233,10 +233,10 @@ export default function TournamentBillingPage({
 
         {/* PRO TIER */}
         <div
-          className={`relative bg-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "pro" ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.15)] scale-105 z-10" : "border-[var(--border-1)] hover:border-emerald-500/50"}`}
+          className={`relative bg-[var(--surface-1)] rounded-2xl p-8 border-2 transition-all ${currentTier === "pro" ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.15)] scale-105 z-10" : "border-[var(--border-1)] hover:border-emerald-500/50"}`}
         >
           {currentTier === "pro" && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[13px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
               Current Plan
             </div>
           )}
@@ -287,10 +287,10 @@ export default function TournamentBillingPage({
 
         {/* BROADCAST TIER */}
         <div
-          className={`relative bg-gradient-to-br from-purple-500/10 to-[var(--surface-1)] rounded-[2.5rem] p-8 border-2 transition-all ${currentTier === "broadcast" ? "border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)] scale-105 z-10" : "border-purple-500/30 hover:border-purple-500/80"}`}
+          className={`relative bg-gradient-to-br from-purple-500/10 to-[var(--surface-1)] rounded-2xl p-8 border-2 transition-all ${currentTier === "broadcast" ? "border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.2)] scale-105 z-10" : "border-purple-500/30 hover:border-purple-500/80"}`}
         >
           {currentTier === "broadcast" && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg shadow-purple-500/30">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[13px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg shadow-purple-500/30">
               Current Plan
             </div>
           )}

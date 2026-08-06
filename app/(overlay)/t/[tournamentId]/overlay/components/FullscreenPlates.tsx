@@ -506,7 +506,7 @@ export default function FullscreenPlates({
             </h2>
           </div>
 
-          <div className="w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10">
+          <div className="w-full bg-black/40 rounded-xl overflow-hidden border border-white/10">
             <div className="grid grid-cols-12 gap-4 px-8 py-5 bg-white/5 border-b border-white/10 text-sm font-black uppercase tracking-widest text-white/50">
               <div className="col-span-1">#</div>
               <div className="col-span-5">Team</div>
@@ -582,7 +582,7 @@ export default function FullscreenPlates({
           <p className="text-4xl font-bold text-white/80 mt-8 leading-relaxed">
             won the toss and elected to <br />
             <span
-              className="uppercase text-6xl font-black inline-block mt-4 px-8 py-2 bg-white/10 rounded-2xl"
+              className="uppercase text-6xl font-black inline-block mt-4 px-8 py-2 bg-white/10 rounded-xl"
               style={{ color: tossWinnerColor }}
             >
               {matchData?.toss_decision || "bat"}
@@ -605,7 +605,7 @@ export default function FullscreenPlates({
           <div className="grid grid-cols-2 gap-16 mt-8">
             {/* 1st Innings Box */}
             <div
-              className="bg-black/30 border-t-8 border-white/10 rounded-3xl p-12 shadow-2xl relative overflow-hidden"
+              className="bg-black/30 border-t-8 border-white/10 rounded-xl p-12 shadow-2xl relative overflow-hidden"
               style={{ borderTopColor: firstInningsColor }}
             >
               <div
@@ -633,7 +633,7 @@ export default function FullscreenPlates({
 
             {/* Chase Target Box */}
             <div
-              className="bg-black/30 border-t-8 border-white/10 rounded-3xl p-12 shadow-2xl relative overflow-hidden"
+              className="bg-black/30 border-t-8 border-white/10 rounded-xl p-12 shadow-2xl relative overflow-hidden"
               style={{ borderTopColor: secondInningsColor }}
             >
               <div
@@ -734,7 +734,7 @@ export default function FullscreenPlates({
             <div className="grid grid-cols-2 gap-16">
               {/* 1st Innings Box */}
               <div
-                className="flex flex-col border-t-8 border-white/10 rounded-[2.5rem] bg-black/40 p-10 shadow-2xl relative overflow-hidden"
+                className="flex flex-col border-t-8 border-white/10 rounded-2xl bg-black/40 p-10 shadow-2xl relative overflow-hidden"
                 style={{ borderTopColor: firstInningsColor }}
               >
                 <div
@@ -763,7 +763,7 @@ export default function FullscreenPlates({
                   {inn1Stats.topBatters.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-2xl border-l-4 shadow-sm"
+                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-xl border-l-4 shadow-sm"
                       style={{ borderLeftColor: firstInningsColor }}
                     >
                       <div className="flex items-center gap-4">
@@ -795,7 +795,7 @@ export default function FullscreenPlates({
                   {inn1Stats.topBowlers.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-2xl border-l-4 shadow-sm"
+                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-xl border-l-4 shadow-sm"
                       style={{ borderLeftColor: secondInningsColor }}
                     >
                       <div className="flex items-center gap-4">
@@ -827,7 +827,7 @@ export default function FullscreenPlates({
 
               {/* 2nd Innings Box */}
               <div
-                className="flex flex-col border-t-8 border-white/10 rounded-[2.5rem] bg-black/40 p-10 shadow-2xl relative overflow-hidden"
+                className="flex flex-col border-t-8 border-white/10 rounded-2xl bg-black/40 p-10 shadow-2xl relative overflow-hidden"
                 style={{ borderTopColor: secondInningsColor }}
               >
                 <div
@@ -856,7 +856,7 @@ export default function FullscreenPlates({
                   {inn2Stats.topBatters.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-2xl border-l-4 shadow-sm"
+                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-xl border-l-4 shadow-sm"
                       style={{ borderLeftColor: secondInningsColor }}
                     >
                       <div className="flex items-center gap-4">
@@ -888,7 +888,7 @@ export default function FullscreenPlates({
                   {inn2Stats.topBowlers.map((b: any, i: number) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-2xl border-l-4 shadow-sm"
+                      className="flex justify-between items-center bg-white/5 px-6 py-4 rounded-xl border-l-4 shadow-sm"
                       style={{ borderLeftColor: firstInningsColor }}
                     >
                       <div className="flex items-center gap-4">
@@ -999,7 +999,7 @@ export default function FullscreenPlates({
             {(config.quizData.options || []).map((opt: string, i: number) => (
               <div
                 key={i}
-                className="bg-gradient-to-r from-white/10 to-transparent border border-white/20 p-10 rounded-[2.5rem] text-4xl font-bold flex items-center gap-10 shadow-2xl backdrop-blur-md"
+                className="bg-gradient-to-r from-white/10 to-transparent border border-white/20 p-10 rounded-2xl text-4xl font-bold flex items-center gap-10 shadow-2xl backdrop-blur-md"
               >
                 <span className="text-amber-400 font-black text-6xl opacity-90 drop-shadow-md">
                   {String.fromCharCode(65 + i)}

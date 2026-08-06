@@ -35,7 +35,7 @@ export default function RosterSummaryModal({
 
   return (
     <div className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-in zoom-in-95">
+      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-4xl rounded-xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-in zoom-in-95">
         {/* Modal Header & Tabs */}
         <div className="p-6 bg-[var(--surface-2)] border-b border-[var(--border-1)] flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
@@ -85,7 +85,7 @@ export default function RosterSummaryModal({
             return (
               <div
                 key={player.id}
-                className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 flex items-center justify-between gap-4"
+                className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 flex items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-4">
                   <div
@@ -115,7 +115,7 @@ export default function RosterSummaryModal({
                 <div className="text-right flex items-center gap-6">
                   {tab === "sold" && franchise ? (
                     <div className="text-right">
-                      <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-md text-emerald-950 bg-emerald-400 inline-block mb-1">
+                      <span className="text-[13px] font-black uppercase px-2.5 py-1 rounded-md text-emerald-950 bg-emerald-400 inline-block mb-1">
                         Sold: ₹{player.sold_price?.toLocaleString("en-IN")}
                       </span>
                       <p className="text-xs font-black uppercase text-[var(--text-muted)]">
@@ -124,7 +124,7 @@ export default function RosterSummaryModal({
                     </div>
                   ) : (
                     <div>
-                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase block">
+                      <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase block">
                         Base Price
                       </span>
                       <span className="text-sm font-black text-[var(--foreground)]">

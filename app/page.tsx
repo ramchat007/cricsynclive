@@ -185,7 +185,7 @@ export default function Home() {
               [1, 2, 3].map((skeleton) => (
                 <div
                   key={skeleton}
-                  className="shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center animate-pulse shadow-sm"
+                  className="shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl snap-center animate-pulse shadow-sm"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex gap-2">
@@ -211,16 +211,16 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
+                  className="group relative shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
 
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
+                      <span className="text-[13px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
                         LIVE
                       </span>
-                      <span className="text-[10px] opacity-80 font-bold uppercase tracking-wider bg-[var(--foreground)]/5 px-2 py-1 rounded-lg backdrop-blur-sm border border-[var(--foreground)]/10">
+                      <span className="text-[13px] opacity-80 font-bold uppercase tracking-wider bg-[var(--foreground)]/5 px-2 py-1 rounded-lg backdrop-blur-sm border border-[var(--foreground)]/10">
                         {match.ball_type || "Tennis"} Ball
                       </span>
                     </div>
@@ -244,7 +244,7 @@ export default function Home() {
                             /{match.team1_wickets || 0}
                           </span>
                         </span>
-                        <span className="opacity-50 text-[10px] font-black ml-1.5">
+                        <span className="opacity-50 text-[13px] font-black ml-1.5">
                           ({match.team1_overs || 0})
                         </span>
                       </div>
@@ -260,7 +260,7 @@ export default function Home() {
                             /{match.team2_wickets || 0}
                           </span>
                         </span>
-                        <span className="opacity-50 text-[10px] font-black ml-1.5">
+                        <span className="opacity-50 text-[13px] font-black ml-1.5">
                           ({match.team2_overs || 0})
                         </span>
                       </div>
@@ -269,7 +269,7 @@ export default function Home() {
                 </Link>
               ))
             ) : (
-              <div className="w-full md:col-span-3 text-center py-8 text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest border border-dashed border-[var(--foreground)]/10 rounded-3xl">
+              <div className="w-full md:col-span-3 text-center py-8 text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest border border-dashed border-[var(--foreground)]/10 rounded-xl">
                 No live matches at the moment.
               </div>
             )}
@@ -331,7 +331,7 @@ export default function Home() {
               {[1, 2, 3, 4, 5, 6].map((skeleton) => (
                 <div
                   key={skeleton}
-                  className="bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] flex flex-col justify-between min-h-[160px] animate-pulse shadow-sm"
+                  className="bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl flex flex-col justify-between min-h-[160px] animate-pulse shadow-sm"
                 >
                   <div>
                     <div className="flex justify-between items-center mb-4 border-b border-[var(--foreground)]/10 pb-3">
@@ -366,12 +366,12 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
+                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
                 >
                   <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-all duration-500" />
 
                   <div>
-                    <div className="flex justify-between items-center text-[10px] font-bold opacity-70 uppercase mb-4 border-b border-[var(--foreground)]/10 pb-3">
+                    <div className="flex justify-between items-center text-[13px] font-bold opacity-70 uppercase mb-4 border-b border-[var(--foreground)]/10 pb-3">
                       <div className="flex items-center gap-2">
                         <span className="bg-[var(--foreground)]/10 px-2 py-1 rounded-lg">
                           🏁 Finished
@@ -398,7 +398,7 @@ export default function Home() {
                           <span className="opacity-50 text-sm">
                             /{match.team1_wickets || 0}
                           </span>{" "}
-                          <span className="text-[10px] opacity-50 font-normal">
+                          <span className="text-[13px] opacity-50 font-normal">
                             ({match.team1_overs || 0})
                           </span>
                         </span>
@@ -412,7 +412,7 @@ export default function Home() {
                           <span className="opacity-50 text-sm">
                             /{match.team2_wickets || 0}
                           </span>{" "}
-                          <span className="text-[10px] opacity-50 font-normal">
+                          <span className="text-[13px] opacity-50 font-normal">
                             ({match.team2_overs || 0})
                           </span>
                         </span>
@@ -430,7 +430,7 @@ export default function Home() {
             </div>
           ) : (
             /* 3. Empty State if no matches are found */
-            <div className="text-center py-12 bg-[var(--background)]/[0.7] backdrop-blur-md rounded-[2rem] border border-dashed border-[var(--foreground)]/20 opacity-60 text-xs font-bold uppercase tracking-wider">
+            <div className="text-center py-12 bg-[var(--background)]/[0.7] backdrop-blur-md rounded-xl border border-dashed border-[var(--foreground)]/20 opacity-60 text-xs font-bold uppercase tracking-wider">
               No completed matches found yet.
             </div>
           )}
@@ -447,7 +447,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Module 01 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -z-10 group-hover:bg-blue-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -473,7 +473,7 @@ export default function Home() {
             </div>
 
             {/* Module 02 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-3xl -z-10 group-hover:bg-teal-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -499,7 +499,7 @@ export default function Home() {
             </div>
 
             {/* Module 03 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -z-10 group-hover:bg-amber-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -525,7 +525,7 @@ export default function Home() {
             </div>
 
             {/* Module 04 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-red-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-red-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -z-10 group-hover:bg-red-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -551,7 +551,7 @@ export default function Home() {
             </div>
 
             {/* Module 05 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/5 rounded-full blur-3xl -z-10 group-hover:bg-fuchsia-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -576,7 +576,7 @@ export default function Home() {
             </div>
 
             {/* Module 06 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-[2.5rem] hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -z-10 group-hover:bg-purple-500/10 transition-all" />
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -611,7 +611,7 @@ export default function Home() {
             <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
               <AnimatedNumber value={systemStats.matches} />+
             </span>
-            <span className="text-[10px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
+            <span className="text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
               <Play size={12} /> Matches Scored
             </span>
           </div>
@@ -619,7 +619,7 @@ export default function Home() {
             <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
               <AnimatedNumber value={systemStats.tournaments} />+
             </span>
-            <span className="text-[10px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
+            <span className="text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
               <Trophy size={12} /> Tournaments
             </span>
           </div>
@@ -627,11 +627,11 @@ export default function Home() {
             <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
               <AnimatedNumber value={systemStats.players} />+
             </span>
-            <span className="text-[10px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
+            <span className="text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
               <Users size={12} /> Players Enrolled
             </span>
           </div>
-          {/* <div className="flex flex-col items-center justify-center text-center px-4 group cursor-pointer hover:bg-[var(--foreground)]/5 rounded-2xl py-2 transition-colors">
+          {/* <div className="flex flex-col items-center justify-center text-center px-4 group cursor-pointer hover:bg-[var(--foreground)]/5 rounded-xl py-2 transition-colors">
             <a
               href="/dashboard"
               className="text-sm font-black text-[var(--foreground)] uppercase flex items-center gap-2 group-hover:translate-x-2 transition-transform tracking-widest"

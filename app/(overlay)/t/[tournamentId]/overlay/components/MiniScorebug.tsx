@@ -43,22 +43,25 @@ export default function MiniScorebug({ matchData, deliveries = [] }: any) {
 
   return (
     <div
-      className="bg-slate-950/95 backdrop-blur-md rounded-2xl overflow-hidden flex shadow-2xl border border-white/10"
+      className="bg-slate-950/95 backdrop-blur-md rounded-xl overflow-hidden flex shadow-2xl border border-white/10"
       style={{
         animation: "slide-in 0.5s ease-out forwards",
         boxShadow: `0 10px 40px ${battingTeamColor}30`, // Subtle glow of team color
-      }}>
+      }}
+    >
       {/* Team Box with Dynamic Background */}
       <div
         className="px-5 py-3 flex items-center justify-center font-black text-white uppercase tracking-widest text-xl drop-shadow-md"
-        style={{ backgroundColor: battingTeamColor }}>
+        style={{ backgroundColor: battingTeamColor }}
+      >
         {teamShortName}
       </div>
 
       {/* Score Box */}
       <div
         className="px-6 py-3 bg-slate-950 flex items-center gap-5 border-l-4"
-        style={{ borderLeftColor: battingTeamColor }}>
+        style={{ borderLeftColor: battingTeamColor }}
+      >
         <span className="text-white font-mono font-black text-4xl leading-none drop-shadow-sm">
           {runs}
           <span className="text-2xl text-white/60">/{wickets}</span>

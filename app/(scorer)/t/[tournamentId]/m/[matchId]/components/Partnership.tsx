@@ -77,14 +77,14 @@ export default function Partnership({
     combinedRuns > 0 ? (nonStrikerRuns / combinedRuns) * 100 : 50;
 
   return (
-    <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col gap-2 relative overflow-hidden z-10 w-full mb-1">
+    <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl sm:rounded-xl p-3 sm:p-4 shadow-sm flex flex-col gap-2 relative overflow-hidden z-10 w-full mb-1">
       <div className="flex justify-between items-end">
-        <p className="text-[10px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
+        <p className="text-[13px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
           Current Partnership
         </p>
         <p className="text-sm sm:text-lg font-black text-[var(--foreground)] leading-none">
           {totalRuns}{" "}
-          <span className="text-[10px] sm:text-xs font-bold text-[var(--text-muted)] opacity-70">
+          <span className="text-[13px] sm:text-xs font-bold text-[var(--text-muted)] opacity-70">
             ({totalBalls})
           </span>
         </p>
@@ -103,7 +103,7 @@ export default function Partnership({
       </div>
 
       {/* Player Breakdown */}
-      <div className="flex justify-between items-center text-[9px] sm:text-[11px] font-bold uppercase tracking-wider mt-1">
+      <div className="flex justify-between items-center text-[9px] sm:text-[14px] font-bold uppercase tracking-wider mt-1">
         <div className="flex gap-1.5 items-center">
           <span className="text-[var(--accent)]">{strikerRuns}</span>
           <span className="text-[var(--text-muted)] truncate max-w-[90px] sm:max-w-[140px]">

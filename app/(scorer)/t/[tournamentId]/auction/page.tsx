@@ -64,9 +64,9 @@ export default function AuctionConsole({
   useEffect(() => {
     const channel = supabase.channel(`auction_${tournamentId}`);
     channelRef.current = channel;
-    
+
     channel
-    .on("broadcast", { event: "state_sync" }, ({ payload }) => {
+      .on("broadcast", { event: "state_sync" }, ({ payload }) => {
         console.log("PAYLOAD RECEIVED IN OVERLAY:", payload);
         if (!isAdmin) {
           setActivePlayer(payload.activePlayer);
@@ -352,7 +352,7 @@ export default function AuctionConsole({
         .from("teams")
         .update({ purse_balance: team.purse_balance - finalPrice })
         .eq("id", team.id);
-        
+
       await supabase.from("auction_bids").insert({
         tournament_id: tournamentId,
         player_id: activePlayer.id,
@@ -381,10 +381,10 @@ export default function AuctionConsole({
       setDirectBuyModal({ isOpen: false, team: null });
       setActivePlayer(null);
       setHighestBidder(null);
-      
+
       // 2. Fetch fresh data
       await fetchAuctionData();
-      
+
       triggerGlobalRefresh();
     }
     setIsProcessing(false);
@@ -512,7 +512,7 @@ export default function AuctionConsole({
                   <button
                     onClick={drawRandomPlayer}
                     disabled={pendingPlayers.length === 0 || isProcessing}
-                    className="w-full bg-[var(--accent)] text-[var(--background)] py-4 px-6 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-xl hover:opacity-90 active:scale-95 transition-all"
+                    className="w-full bg-[var(--accent)] text-[var(--background)] py-4 px-6 rounded-xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-xl hover:opacity-90 active:scale-95 transition-all"
                   >
                     Draw Next Random Player
                   </button>
@@ -520,9 +520,9 @@ export default function AuctionConsole({
               </div>
             ) : (
               <div className="w-full max-w-4xl flex flex-col md:flex-row flex-wrap justify-center gap-4 items-center animate-in zoom-in-95 duration-200">
-                <div className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row items-center md:items-start gap-8 mb-6">
+                <div className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 shadow-2xl flex flex-col md:flex-row items-center md:items-start gap-8 mb-6">
                   <div
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-cover bg-center shadow-inner border border-[var(--border-1)] shrink-0 bg-[var(--surface-2)] flex items-center justify-center font-black text-4xl text-[var(--text-muted)]"
+                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-xl bg-cover bg-center shadow-inner border border-[var(--border-1)] shrink-0 bg-[var(--surface-2)] flex items-center justify-center font-black text-4xl text-[var(--text-muted)]"
                     style={{
                       backgroundImage: activePlayer.photo_url
                         ? `url(${activePlayer.photo_url})`
@@ -533,7 +533,7 @@ export default function AuctionConsole({
                       activePlayer.full_name?.charAt(0)}
                   </div>
                   <div className="flex-1 text-center sm:text-left min-w-0">
-                    <span className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-2">
+                    <span className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[13px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-2">
                       Base: ₹
                       {activePlayer.base_price?.toLocaleString() ||
                         config?.min_base_price?.toLocaleString() ||
@@ -559,7 +559,7 @@ export default function AuctionConsole({
 
                 {/* 📺 TIGHTER BID DISPLAY */}
                 <div className="text-center mb-4">
-                  <p className="text-[10px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">
+                  <p className="text-[13px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">
                     Current Total Bid
                   </p>
                   <div className="text-5xl sm:text-7xl font-black tracking-tight tabular-nums text-[var(--foreground)] leading-none mb-2 drop-shadow">
@@ -641,7 +641,7 @@ export default function AuctionConsole({
               return (
                 <div
                   key={team.id}
-                  className={`w-[250px] xl:w-[300px] shrink-0 bg-[var(--surface-2)] border rounded-2xl p-4 flex flex-col justify-between shadow-md transition-all ${isHighest ? "border-[var(--accent)] ring-2 ring-[var(--accent)]/50" : "border-[var(--border-1)]"}`}
+                  className={`w-[250px] xl:w-[300px] shrink-0 bg-[var(--surface-2)] border rounded-xl p-4 flex flex-col justify-between shadow-md transition-all ${isHighest ? "border-[var(--accent)] ring-2 ring-[var(--accent)]/50" : "border-[var(--border-1)]"}`}
                 >
                   <div>
                     <div className="flex justify-between items-start mb-3 border-b border-[var(--border-1)] pb-2.5">
@@ -684,7 +684,7 @@ export default function AuctionConsole({
                   </div>
 
                   <div>
-                    <div className="flex justify-between items-center text-[10px] uppercase font-black text-[var(--text-muted)] mb-2.5 px-1">
+                    <div className="flex justify-between items-center text-[13px] uppercase font-black text-[var(--text-muted)] mb-2.5 px-1">
                       <span>
                         {needed > 0
                           ? `Reserve: ₹${reserve.toLocaleString()}`
@@ -750,7 +750,7 @@ export default function AuctionConsole({
           directBuyModal.team &&
           activePlayer && (
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 overflow-hidden">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-md rounded-xl md:rounded-2xl shadow-2xl animate-in zoom-in-95 overflow-hidden">
                 <div className="bg-amber-500 p-4 md:p-6 text-amber-950 flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <Zap size={20} />
@@ -782,7 +782,7 @@ export default function AuctionConsole({
                         activePlayer.full_name?.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                      <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                         Assigning
                       </p>
                       <p className="font-black text-base leading-none mt-1 truncate">
@@ -792,7 +792,7 @@ export default function AuctionConsole({
                   </div>
 
                   <div className="mb-6 md:mb-8">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex justify-between">
+                    <label className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 flex justify-between">
                       <span>Final Sale Price (₹)</span>
                       <span>
                         Max: ₹
@@ -808,7 +808,7 @@ export default function AuctionConsole({
                     />
                     {Number(manualPrice) >
                       directBuyModal.team.purse_balance && (
-                      <p className="text-[10px] font-bold text-red-500 mt-2 uppercase tracking-widest flex items-center gap-1">
+                      <p className="text-[13px] font-bold text-red-500 mt-2 uppercase tracking-widest flex items-center gap-1">
                         <AlertCircle size={12} /> Exceeds Budget
                       </p>
                     )}
@@ -875,7 +875,7 @@ function RosterSummaryModal({
 
   return (
     <div className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in select-none">
-      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-in zoom-in-95">
+      <div className="bg-[var(--surface-1)] border border-[var(--border-1)] w-full max-w-4xl rounded-xl shadow-2xl flex flex-col h-[80vh] overflow-hidden animate-in zoom-in-95">
         <div className="p-6 bg-[var(--surface-2)] border-b border-[var(--border-1)] flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
           <div>
             <h2 className="text-xl font-black uppercase tracking-wider text-[var(--foreground)]">
@@ -923,7 +923,7 @@ function RosterSummaryModal({
             return (
               <div
                 key={player.id}
-                className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 flex items-center justify-between gap-4"
+                className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 flex items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-4">
                   <div
@@ -949,7 +949,7 @@ function RosterSummaryModal({
                 <div className="text-right flex items-center gap-6">
                   {tab === "sold" && franchise ? (
                     <div className="text-right">
-                      <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-md text-emerald-950 bg-emerald-400 inline-block mb-1">
+                      <span className="text-[13px] font-black uppercase px-2.5 py-1 rounded-md text-emerald-950 bg-emerald-400 inline-block mb-1">
                         Sold: ₹{player.sold_price?.toLocaleString("en-IN")}
                       </span>
                       <p className="text-xs font-black uppercase text-[var(--text-muted)]">
@@ -958,7 +958,7 @@ function RosterSummaryModal({
                     </div>
                   ) : (
                     <div>
-                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase block">
+                      <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase block">
                         Base Price
                       </span>
                       <span className="text-sm font-black text-[var(--foreground)]">

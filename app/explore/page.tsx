@@ -76,14 +76,15 @@ export default function ExploreTournamentsPage() {
               <div
                 key={i}
                 // Uses mapped surface-2 background seamlessly
-                className="h-64 bg-slate-100 rounded-[2rem] animate-pulse transition-colors"></div>
+                className="h-64 bg-slate-100 rounded-xl animate-pulse transition-colors"
+              ></div>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTournaments.length === 0 ? (
               // Empty State (No search results or no tournaments at all)
-              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[2rem] transition-colors bg-[var(--glass-bg)] backdrop-blur-sm">
+              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-xl transition-colors bg-[var(--glass-bg)] backdrop-blur-sm">
                 <Activity size={40} className="mx-auto text-slate-400 mb-4" />
                 <h3 className="text-xl font-black uppercase tracking-widest text-slate-900">
                   No Tournaments Found
@@ -96,7 +97,8 @@ export default function ExploreTournamentsPage() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="mt-6 accent-text font-bold hover:underline">
+                    className="mt-6 accent-text font-bold hover:underline"
+                  >
                     Clear Search
                   </button>
                 )}
@@ -107,7 +109,8 @@ export default function ExploreTournamentsPage() {
                 <Link
                   key={t.id}
                   href={`/t/${t.id}/`}
-                  className="group block relative h-64 rounded-[2rem] overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all">
+                  className="group block relative h-64 rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all"
+                >
                   <div
                     // Fallback background before image loads uses surface-2
                     className="absolute inset-0 bg-slate-100 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"

@@ -16,7 +16,7 @@ export default function VoiceManualModal() {
 
       {isOpen && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 w-screen h-screen">
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-5 border-b border-[var(--border-1)] bg-[var(--surface-2)]/50">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
@@ -26,7 +26,7 @@ export default function VoiceManualModal() {
                   <h3 className="font-black text-[var(--foreground)] leading-none text-lg">
                     Voice Scoring
                   </h3>
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
+                  <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
                     Command Manual
                   </p>
                 </div>

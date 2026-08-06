@@ -299,9 +299,9 @@ export default function FullScorecard({
   return (
     <div className="space-y-6 animate-in fade-in transition-colors duration-300">
       {/* 0. MATCHUP HEADER */}
-      <div className="bg-[var(--surface-1)] p-3 sm:p-4 rounded-[1.5rem] sm:rounded-2xl border border-[var(--border-1)] shadow-sm flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-3 transition-colors">
+      <div className="bg-[var(--surface-1)] p-3 sm:p-4 rounded-xl sm:rounded-xl border border-[var(--border-1)] shadow-sm flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-3 transition-colors">
         <div className="inline-block bg-[var(--surface-2)] px-3 py-1.5 rounded-lg border border-[var(--border-1)]">
-          <p className="text-[10px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
+          <p className="text-[13px] sm:text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
             {match?.stage || "Match"} <span className="mx-1 opacity-50">•</span>{" "}
             Innings {selectedInnings}
           </p>
@@ -334,7 +334,7 @@ export default function FullScorecard({
 
       {/* 1. INNINGS TABS */}
       {(match.current_innings === 2 || match.status === "completed") && (
-        <div className="flex gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] p-1.5 rounded-2xl w-max">
+        <div className="flex gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] p-1.5 rounded-xl w-max">
           <button
             onClick={() => setSelectedInnings(1)}
             className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${
@@ -344,7 +344,7 @@ export default function FullScorecard({
             }`}
           >
             {inn1TeamName}{" "}
-            <span className="opacity-50 text-[10px]">(1st Inn)</span>
+            <span className="opacity-50 text-[13px]">(1st Inn)</span>
           </button>
           <button
             onClick={() => setSelectedInnings(2)}
@@ -355,15 +355,15 @@ export default function FullScorecard({
             }`}
           >
             {inn2TeamName}{" "}
-            <span className="opacity-50 text-[10px]">(2nd Inn)</span>
+            <span className="opacity-50 text-[13px]">(2nd Inn)</span>
           </button>
         </div>
       )}
 
       {/* 2. INNINGS TOTALS BANNER */}
-      <div className="bg-gradient-to-br from-[var(--surface-2)] to-[var(--surface-1)] p-5 sm:p-6 rounded-[1.5rem] border border-[var(--border-1)] flex justify-between items-center shadow-inner">
+      <div className="bg-gradient-to-br from-[var(--surface-2)] to-[var(--surface-1)] p-5 sm:p-6 rounded-xl border border-[var(--border-1)] flex justify-between items-center shadow-inner">
         <div>
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
+          <p className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
             {selectedInnings === 1 ? inn1TeamName : inn2TeamName} Total
           </p>
           <h2 className="text-4xl sm:text-5xl font-black text-[var(--foreground)] leading-none tracking-tighter">
@@ -377,7 +377,7 @@ export default function FullScorecard({
           <div className="text-sm font-bold text-[var(--foreground)] bg-[var(--surface-1)] border border-[var(--border-1)] px-3 py-1.5 rounded-lg mb-2 inline-block">
             Overs: <span className="font-black">{tabOvers}</span>
           </div>
-          <p className="text-[10px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
+          <p className="text-[13px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
             Extras: {tabExtras.total}{" "}
             <span className="opacity-60">
               (W {tabExtras.w}, NB {tabExtras.nb}, B {tabExtras.b}, LB{" "}
@@ -389,14 +389,14 @@ export default function FullScorecard({
 
       {/* 3. BATTING SCORECARD */}
       <div>
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 sm:mb-4 px-2">
+        <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 sm:mb-4 px-2">
           Batting Scorecard
         </h3>
-        <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] overflow-hidden transition-colors">
+        <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] overflow-hidden transition-colors">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
-                <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[10px] uppercase font-black text-[var(--text-muted)]">
+                <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[13px] uppercase font-black text-[var(--text-muted)]">
                   <th className="p-3 sm:p-4">Batsman</th>
                   <th className="p-3 sm:p-4 text-center">R</th>
                   <th className="p-3 sm:p-4 text-center">B</th>
@@ -422,7 +422,7 @@ export default function FullScorecard({
                           </span>
                         </p>
                       </div>
-                      <p className="text-[9px] sm:text-[10px] font-medium text-[var(--text-muted)] mt-0.5 sm:mt-1 truncate max-w-[150px] sm:max-w-xs">
+                      <p className="text-[9px] sm:text-[13px] font-medium text-[var(--text-muted)] mt-0.5 sm:mt-1 truncate max-w-[150px] sm:max-w-xs">
                         {p.dismissalText}
                       </p>
                     </td>
@@ -450,7 +450,7 @@ export default function FullScorecard({
           {/* YET TO BAT SECTION */}
           {yetToBat.length > 0 && (
             <div className="bg-[var(--surface-2)] p-4 sm:p-5 border-t border-[var(--border-1)] flex gap-2 items-start transition-colors">
-              <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest shrink-0 mt-0.5">
+              <span className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest shrink-0 mt-0.5">
                 Yet to bat:
               </span>
               <span className="text-xs font-bold text-[var(--foreground)] opacity-80 leading-relaxed">
@@ -463,14 +463,14 @@ export default function FullScorecard({
 
       {/* 4. BOWLING FIGURES */}
       <div>
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 sm:mb-4 px-2">
+        <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3 sm:mb-4 px-2">
           Bowling Figures
         </h3>
-        <div className="bg-[var(--surface-1)] rounded-3xl border border-[var(--border-1)] overflow-hidden transition-colors">
+        <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] overflow-hidden transition-colors">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse min-w-[400px]">
               <thead>
-                <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[10px] uppercase font-black text-[var(--text-muted)]">
+                <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[13px] uppercase font-black text-[var(--text-muted)]">
                   <th className="p-3 sm:p-4">Bowler</th>
                   <th className="p-3 sm:p-4 text-center">O</th>
                   <th className="p-3 sm:p-4 text-center">M</th>
@@ -515,7 +515,7 @@ export default function FullScorecard({
           {/* YET TO BOWL SECTION */}
           {yetToBowl.length > 0 && (
             <div className="bg-[var(--surface-2)] p-4 sm:p-5 border-t border-[var(--border-1)] flex gap-2 items-start transition-colors">
-              <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest shrink-0 mt-0.5">
+              <span className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest shrink-0 mt-0.5">
                 Yet to bowl:
               </span>
               <span className="text-xs font-bold text-[var(--foreground)] opacity-80 leading-relaxed">

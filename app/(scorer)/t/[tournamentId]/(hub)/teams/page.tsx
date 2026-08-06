@@ -179,7 +179,7 @@ export default function TeamsPage({
       });
       error = insertError;
     }
-    setQuickPlayer({...quickPlayer,full_name: ""})
+    setQuickPlayer({ ...quickPlayer, full_name: "" });
 
     if (!error) {
       setSearchQuery("");
@@ -234,7 +234,7 @@ export default function TeamsPage({
     <div className="animate-in fade-in space-y-6 md:space-y-8">
       {/* 1. RESPONSIVE FRANCHISE REGISTRATION FORM */}
       {isAdmin && (
-        <div className="bg-[var(--surface-1)] rounded-3xl p-5 sm:p-6 border border-[var(--border-1)] shadow-sm">
+        <div className="bg-[var(--surface-1)] rounded-xl p-5 sm:p-6 border border-[var(--border-1)] shadow-sm">
           <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
             Register New Franchise
           </h3>
@@ -268,7 +268,7 @@ export default function TeamsPage({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:col-span-4">
               <div className="flex items-center gap-3 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-1 h-[46px]">
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase flex-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase flex-1">
                   Color
                 </label>
                 <input
@@ -336,7 +336,7 @@ export default function TeamsPage({
         {teams.map((team) => (
           <div
             key={team.id}
-            className="bg-[var(--surface-1)] rounded-[2rem] p-5 sm:p-6 border border-[var(--border-1)] shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col "
+            className="bg-[var(--surface-1)] rounded-xl p-5 sm:p-6 border border-[var(--border-1)] shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col "
           >
             {/* Background Glow uses dynamic team color */}
             <div
@@ -347,7 +347,7 @@ export default function TeamsPage({
             <div className="flex justify-between items-start mb-6 z-10 gap-2">
               <div className="flex gap-4 items-start min-w-0">
                 <div
-                  className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-2xl bg-[var(--surface-2)] bg-contain bg-no-repeat bg-center p-2 shadow-inner border border-[var(--border-1)]"
+                  className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-xl bg-[var(--surface-2)] bg-contain bg-no-repeat bg-center p-2 shadow-inner border border-[var(--border-1)]"
                   style={{
                     backgroundImage: team.logo_url
                       ? `url(${team.logo_url})`
@@ -355,7 +355,7 @@ export default function TeamsPage({
                   }}
                 />
                 <div className="flex flex-col gap-1 mt-1 truncate">
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded w-max">
+                  <span className="text-[9px] sm:text-[13px] font-black uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded w-max">
                     {team.group_name || "Unassigned"}
                   </span>
                   <span
@@ -385,7 +385,7 @@ export default function TeamsPage({
 
             <div className="mt-5 pt-4 border-t border-[var(--border-1)] flex justify-between z-10">
               <div>
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                   Squad Size
                 </p>
                 <p className="text-lg font-black text-[var(--foreground)]">
@@ -398,7 +398,7 @@ export default function TeamsPage({
 
               {isAuctionEnabled && (
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                  <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                     Remaining Purse
                   </p>
                   <p
@@ -414,13 +414,13 @@ export default function TeamsPage({
             {team.players && team.players.length > 0 && (
               <div className="mt-4 border-t border-[var(--border-1)] pt-4 z-10">
                 <div className="flex justify-between items-center mb-3">
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                  <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                     Current Squad
                   </p>
                   {isAdmin && (
                     <button
                       onClick={() => setAddingToTeam(team)}
-                      className="text-[10px] font-black uppercase text-[var(--accent)] hover:opacity-80 transition-colors bg-[var(--accent)]/10 px-2 py-1 rounded"
+                      className="text-[13px] font-black uppercase text-[var(--accent)] hover:opacity-80 transition-colors bg-[var(--accent)]/10 px-2 py-1 rounded"
                     >
                       + Add Player
                     </button>
@@ -442,7 +442,7 @@ export default function TeamsPage({
                           }}
                         />
                         <div className="truncate">
-                          <p className="text-[11px] sm:text-xs font-black text-[var(--foreground)] truncate">
+                          <p className="text-[14px] sm:text-xs font-black text-[var(--foreground)] truncate">
                             {p.full_name}
                           </p>
                           <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest truncate">
@@ -455,7 +455,7 @@ export default function TeamsPage({
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         {isAuctionEnabled && (
                           <div className="text-right">
-                            <p className="text-[10px] sm:text-xs font-black text-[var(--foreground)]">
+                            <p className="text-[13px] sm:text-xs font-black text-[var(--foreground)]">
                               ₹{p.sold_price?.toLocaleString("en-IN") || 0}
                             </p>
                           </div>
@@ -489,7 +489,7 @@ export default function TeamsPage({
         ))}
 
         {teams.length === 0 && (
-          <div className="col-span-full text-center py-20 text-[var(--text-muted)] font-bold border-2 border-dashed border-[var(--border-1)] bg-[var(--surface-1)]/50 backdrop-blur-sm rounded-[2rem]">
+          <div className="col-span-full text-center py-20 text-[var(--text-muted)] font-bold border-2 border-dashed border-[var(--border-1)] bg-[var(--surface-1)]/50 backdrop-blur-sm rounded-xl">
             No franchises created yet.
           </div>
         )}
@@ -498,7 +498,7 @@ export default function TeamsPage({
       {/* 2. RESPONSIVE EDIT TEAM MODAL */}
       {editingTeam && (
         <div className="fixed inset-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-[var(--surface-1)] w-full sm:rounded-[2rem] rounded-t-[2rem] max-w-md border border-[var(--border-1)] flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
+          <div className="bg-[var(--surface-1)] w-full sm:rounded-xl rounded-t-[2rem] max-w-md border border-[var(--border-1)] flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
             <div className="p-5 sm:p-6 border-b border-[var(--border-1)] flex justify-between items-center">
               <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest text-[var(--foreground)]">
                 Edit Franchise
@@ -549,7 +549,7 @@ export default function TeamsPage({
               {/* Edit Logo & Color Section */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-center gap-3 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-3">
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase flex-1">
+                  <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase flex-1">
                     Brand Color
                   </label>
                   <input
@@ -656,14 +656,14 @@ export default function TeamsPage({
       {/* 3. RESPONSIVE SQUAD MANAGER MODAL */}
       {addingToTeam && (
         <div className="fixed inset-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-[var(--surface-1)] w-full sm:rounded-[2rem] rounded-t-[2rem] max-w-md flex flex-col max-h-[90vh] border border-[var(--border-1)] animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
+          <div className="bg-[var(--surface-1)] w-full sm:rounded-xl rounded-t-[2rem] max-w-md flex flex-col max-h-[90vh] border border-[var(--border-1)] animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)] shrink-0 sm:rounded-t-[2rem]">
               <div>
                 <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest text-[var(--foreground)]">
                   Manage {addingToTeam.short_name}
                 </h2>
-                <p className="text-[10px] font-bold text-[var(--accent)] uppercase mt-1">
+                <p className="text-[13px] font-bold text-[var(--accent)] uppercase mt-1">
                   Squad Builder
                 </p>
               </div>
@@ -688,10 +688,10 @@ export default function TeamsPage({
                 return (
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-end mb-1">
-                      <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                      <h3 className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest">
                         Current Squad
                       </h3>
-                      <span className="text-[10px] font-bold text-[var(--text-muted)]">
+                      <span className="text-[13px] font-bold text-[var(--text-muted)]">
                         {activeModalTeam?.players?.length || 0} / {squadLimit}
                       </span>
                     </div>
@@ -713,7 +713,7 @@ export default function TeamsPage({
                                 }}
                               />
                               <div className="truncate">
-                                <p className="text-[11px] sm:text-xs font-black text-[var(--foreground)] truncate">
+                                <p className="text-[14px] sm:text-xs font-black text-[var(--foreground)] truncate">
                                   {p.full_name}
                                 </p>
                                 <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest truncate">
@@ -746,7 +746,7 @@ export default function TeamsPage({
 
               {/* ADD NEW PLAYER SECTION */}
               <div>
-                <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">
+                <h3 className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">
                   Add New Players
                 </h3>
 
@@ -779,12 +779,12 @@ export default function TeamsPage({
                               <span className="font-bold text-xs sm:text-sm text-[var(--foreground)] truncate block">
                                 {p.full_name}
                               </span>
-                              <span className="text-[10px] text-[var(--text-muted)] font-normal uppercase tracking-widest">
+                              <span className="text-[13px] text-[var(--text-muted)] font-normal uppercase tracking-widest">
                                 {p.player_role}
                               </span>
                             </div>
                           </div>
-                          <span className="text-[10px] font-black text-[var(--accent)] uppercase shrink-0 bg-[var(--accent)]/10 px-3 py-1.5 rounded-lg">
+                          <span className="text-[13px] font-black text-[var(--accent)] uppercase shrink-0 bg-[var(--accent)]/10 px-3 py-1.5 rounded-lg">
                             Add
                           </span>
                         </button>

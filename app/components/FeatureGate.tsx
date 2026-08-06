@@ -114,7 +114,7 @@ export default function FeatureGate({
           {/* DYANMIC PLAN RECOMMENDATION BADGE */}
           <div className="relative z-10 flex justify-center mb-4">
             <span
-              className={`px-4 py-1.5 rounded-full font-black uppercase tracking-widest text-[10px] border ${badgeColor}`}
+              className={`px-4 py-1.5 rounded-full font-black uppercase tracking-widest text-[13px] border ${badgeColor}`}
             >
               Requires {recommendedPlanName}
             </span>
@@ -130,7 +130,7 @@ export default function FeatureGate({
 
           <Link
             href={`/t/${tournamentId}/billing`}
-            className="inline-flex items-center gap-2 bg-[var(--foreground)] text-[var(--background)] px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 relative z-10"
+            className="inline-flex items-center gap-2 bg-[var(--foreground)] text-[var(--background)] px-8 py-4 rounded-xl font-black uppercase tracking-widest text-sm hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 relative z-10"
           >
             <Star size={18} /> View Upgrade Plans
           </Link>

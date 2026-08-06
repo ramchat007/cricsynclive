@@ -172,20 +172,23 @@ export default function DashboardHub() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 font-sans w-full">
       {/* TOP NAVIGATION TABS */}
-      <div className="flex items-center gap-1.5 sm:gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto custom-scrollbar">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-8 bg-slate-100 p-1.5 rounded-xl w-full sm:w-fit overflow-x-auto custom-scrollbar">
         <Link
           href="/dashboard"
-          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none">
+          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[13px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none"
+        >
           <Trophy size={14} className="text-amber-500 shrink-0" /> Tournaments
         </Link>
         <Link
           href="/my-matches"
-          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none">
+          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[13px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none"
+        >
           <Swords size={14} className="shrink-0" /> My Matches
         </Link>
         <Link
           href="/profile/edit"
-          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none">
+          className="flex items-center justify-center gap-1.5 sm:gap-2 text-[13px] sm:text-xs font-black uppercase tracking-wider px-4 sm:px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap shrink-0 flex-1 sm:flex-none"
+        >
           <User size={14} className="shrink-0" /> Edit Profile
         </Link>
       </div>
@@ -204,13 +207,15 @@ export default function DashboardHub() {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Link
             href="/quick-match"
-            className="flex-1 md:flex-none bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+            className="flex-1 md:flex-none bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+          >
             <Zap size={16} /> Quick Match
           </Link>
 
           <button
             onClick={handleOpenCreateModal}
-            className="flex-1 md:flex-none bg-slate-900 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-95 transition-all shadow-lg">
+            className="flex-1 md:flex-none bg-slate-900 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-95 transition-all shadow-lg"
+          >
             <PlusCircle size={16} /> Create New
           </button>
         </div>
@@ -221,12 +226,14 @@ export default function DashboardHub() {
         {tournaments.map((t) => (
           <div
             key={t.id}
-            className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col group">
+            className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col group"
+          >
             <div
               className="h-32 bg-slate-100 bg-cover bg-center shrink-0 relative"
               style={{
                 backgroundImage: `url(${t.banner_url || "https://placehold.co/400x200/e2e8f0/64748b?text=No+Banner"})`,
-              }}>
+              }}
+            >
               {t.subscription_tier === "pro" && (
                 <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shadow-lg">
                   PRO
@@ -260,7 +267,7 @@ export default function DashboardHub() {
               </div>
 
               <Link href={`/t/${t.id}/matches`} className="mt-6 block">
-                <button className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-black uppercase tracking-widest text-[10px] py-4 rounded-xl transition-colors active:scale-95">
+                <button className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-black uppercase tracking-widest text-[13px] py-4 rounded-xl transition-colors active:scale-95">
                   Manage Console ➔
                 </button>
               </Link>
@@ -270,7 +277,7 @@ export default function DashboardHub() {
 
         {/* EMPTY STATE */}
         {tournaments.length === 0 && (
-          <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50">
+          <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
             <Activity size={40} className="mx-auto text-slate-300 mb-4" />
             <h3 className="text-xl font-black uppercase tracking-widest text-slate-900">
               No Tournaments Yet
@@ -285,12 +292,12 @@ export default function DashboardHub() {
       {/* CREATE TOURNAMENT MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white max-w-lg w-full rounded-[2rem] p-8 border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-white max-w-lg w-full rounded-xl p-8 border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-slate-900">
               New <span className="text-red-500">Tournament</span>
             </h2>
 
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+            <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
               Tournament Name
             </label>
             <input
@@ -302,13 +309,14 @@ export default function DashboardHub() {
 
             <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+                <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
                   Format
                 </label>
                 <select
                   value={newFormat}
                   onChange={(e) => setNewFormat(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-red-500 transition-colors text-slate-900">
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-red-500 transition-colors text-slate-900"
+                >
                   <option value="T10">T10</option>
                   <option value="T20">T20</option>
                   <option value="ODI">ODI (50 Over)</option>
@@ -317,7 +325,7 @@ export default function DashboardHub() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+                <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
                   Max Squad Size
                 </label>
                 <input
@@ -331,7 +339,7 @@ export default function DashboardHub() {
               </div>
             </div>
 
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+            <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
               Location / Ground
             </label>
             <input
@@ -343,7 +351,7 @@ export default function DashboardHub() {
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+                <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
                   Start Date
                 </label>
                 <input
@@ -354,7 +362,7 @@ export default function DashboardHub() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+                <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
                   End Date
                 </label>
                 <input
@@ -366,7 +374,7 @@ export default function DashboardHub() {
               </div>
             </div>
 
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+            <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
               Cover Banner
             </label>
             <div className="mb-8">
@@ -390,12 +398,14 @@ export default function DashboardHub() {
                     url = url.replace("/upload/", "/upload/c_crop,g_custom/");
                   }
                   setBannerUrl(url);
-                }}>
+                }}
+              >
                 {({ open }) => (
                   <button
                     type="button"
                     onClick={() => open()}
-                    className="w-full bg-slate-50 border-2 border-dashed border-slate-200 hover:border-red-500 text-slate-500 py-6 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors focus:outline-none">
+                    className="w-full bg-slate-50 border-2 border-dashed border-slate-200 hover:border-red-500 text-slate-500 py-6 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors focus:outline-none"
+                  >
                     {bannerUrl ? (
                       <span className="text-red-500 flex flex-col items-center gap-1">
                         <CheckCircle2 size={24} /> Banner Uploaded! Click to
@@ -404,7 +414,7 @@ export default function DashboardHub() {
                     ) : (
                       <>
                         <ImageIcon size={24} className="opacity-50" />
-                        <span className="text-[11px] uppercase tracking-widest">
+                        <span className="text-[14px] uppercase tracking-widest">
                           Upload Custom Banner
                         </span>
                       </>
@@ -418,13 +428,15 @@ export default function DashboardHub() {
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black uppercase tracking-widest text-[10px] py-4 rounded-xl transition-colors active:scale-95">
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black uppercase tracking-widest text-[13px] py-4 rounded-xl transition-colors active:scale-95"
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={createTournament}
-                className="flex-1 bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95">
+                className="flex-1 bg-slate-900 text-white font-black uppercase tracking-widest text-[13px] py-4 rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95"
+              >
                 Launch Setup
               </button>
             </div>

@@ -449,12 +449,14 @@ export default function ScoreTicker({
         {/* ---------------------------------------------------- */}
         <div
           className={`event-overlay-layer backdrop-blur-md ${eventTrigger ? "active" : ""}`}
-          style={{ ...eventBgStyle, ...eventBorderStyle }}>
+          style={{ ...eventBgStyle, ...eventBorderStyle }}
+        >
           <div className="glass-glare" />
           <div className="relative z-10 flex items-center gap-6">
             <span
               className="text-[56px] text-white italic tracking-[2px] font-black uppercase"
-              style={{ textShadow: "0 3px 6px rgba(0,0,0,0.5)" }}>
+              style={{ textShadow: "0 3px 6px rgba(0,0,0,0.5)" }}
+            >
               {eventTrigger === "WICKET"
                 ? "WICKET!"
                 : eventTrigger === "SIX"
@@ -463,7 +465,8 @@ export default function ScoreTicker({
             </span>
             <span
               className="text-[20px] tracking-[6px] font-black uppercase"
-              style={subtextStyle}>
+              style={subtextStyle}
+            >
               {subtextContent}
             </span>
           </div>
@@ -485,10 +488,12 @@ export default function ScoreTicker({
             style={{
               backgroundColor: selectedTheme.tokens.panelBg,
               borderColor: selectedTheme.tokens.panelBorder,
-            }}>
+            }}
+          >
             <span
               className="shrink-0"
-              style={{ color: selectedTheme.tokens.warning }}>
+              style={{ color: selectedTheme.tokens.warning }}
+            >
               {isFirstInnings ? "1st Innings" : "2nd Innings"}
             </span>
             <span className="text-white/40 shrink-0">|</span>
@@ -498,7 +503,8 @@ export default function ScoreTicker({
             <span className="text-white/40 shrink-0">|</span>
             <span
               className="drop-shadow-md min-w-0"
-              style={{ color: selectedTheme.tokens.accent }}>
+              style={{ color: selectedTheme.tokens.accent }}
+            >
               {calculatedTarget
                 ? `${battingName} - ${equationStr}`
                 : tossWinnerName
@@ -519,7 +525,8 @@ export default function ScoreTicker({
           className="relative z-10 w-full h-full flex overflow-hidden border-t-[3px] border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.9)]"
           style={{
             background: `linear-gradient(90deg, ${battingColor} 0%, ${battingColor} 18%, rgba(10, 10, 15, 0.98) 40%, rgba(10, 10, 15, 0.98) 60%, ${bowlingColor} 82%, ${bowlingColor} 100%)`,
-          }}>
+          }}
+        >
           <div
             className={`full-bar-flash ${eventTrigger ? "active" : ""}`}
             style={flashBgStyle}
@@ -555,13 +562,14 @@ export default function ScoreTicker({
             <div className="w-[430px] h-full flex flex-col justify-center shrink-0 relative border-r border-white/10">
               <div className="text-white text-[15px] font-black tracking-[0.25em] uppercase drop-shadow-md absolute top-2 left-8 right-8 opacity-90 ">
                 {battingInitials}{" "}
-                <span className="text-white/40 mx-2 text-[11px]">VS</span>{" "}
+                <span className="text-white/40 mx-2 text-[14px]">VS</span>{" "}
                 {bowlingInitials}
               </div>
 
               <div className="flex items-end gap-5 px-8 pt-6">
                 <span
-                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}>
+                  className={`text-white min-w-[210px] flex items-end whitespace-nowrap font-mono text-[4.5rem] font-black leading-none drop-shadow-lg tracking-tighter origin-left ${scoreAnim ? "animate-scorePop" : ""}`}
+                >
                   <span>{score}</span>
                   <span className="text-[2.5rem] text-white/80">
                     /{wickets}
@@ -615,7 +623,7 @@ export default function ScoreTicker({
               {calculatedTarget ? (
                 <div className="flex w-full justify-between items-center px-6 mb-2">
                   <div className="text-center">
-                    <div className="text-[11px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
+                    <div className="text-[14px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
                       Target
                     </div>
                     <div className="text-[26px] font-black text-white leading-none">
@@ -624,7 +632,7 @@ export default function ScoreTicker({
                   </div>
                   <div className="h-6 w-px bg-white/20"></div>
                   <div className="text-center">
-                    <div className="text-[11px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
+                    <div className="text-[14px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
                       CRR
                     </div>
                     <div className="text-[26px] font-black text-white leading-none">
@@ -633,7 +641,7 @@ export default function ScoreTicker({
                   </div>
                   <div className="h-6 w-px bg-white/20"></div>
                   <div className="text-center">
-                    <div className="text-[11px] font-black text-amber-500 tracking-[2px] uppercase mb-1">
+                    <div className="text-[14px] font-black text-amber-500 tracking-[2px] uppercase mb-1">
                       RRR
                     </div>
                     <div className="text-[26px] font-black text-amber-400 leading-none">
@@ -644,7 +652,7 @@ export default function ScoreTicker({
               ) : (
                 <div className="flex w-full justify-center gap-12 items-center">
                   <div className="text-center">
-                    <div className="text-[11px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
+                    <div className="text-[14px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
                       CRR
                     </div>
                     <div className="text-[26px] font-black text-white drop-shadow-md leading-none">
@@ -653,7 +661,7 @@ export default function ScoreTicker({
                   </div>
                   <div className="h-10 w-px bg-white/20"></div>
                   <div className="text-center">
-                    <div className="text-[11px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
+                    <div className="text-[14px] font-black text-[#38bdf8] tracking-[2px] uppercase mb-1">
                       Projected
                     </div>
                     <div className="text-[26px] font-black text-white drop-shadow-md leading-none">
@@ -718,7 +726,8 @@ export default function ScoreTicker({
                       style={{
                         animation: `shootIn 0.35s ease-out forwards`,
                         animationDelay: `${i * 0.08}s`,
-                      }}>
+                      }}
+                    >
                       {bText}
                     </div>
                   );

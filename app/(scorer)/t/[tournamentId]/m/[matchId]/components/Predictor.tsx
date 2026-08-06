@@ -145,11 +145,11 @@ export default function Predictor({ match, stats }: any) {
         {/* LEFT COLUMN: WIN PREDICTOR (Hidden if match is completed) */}
         {!isMatchCompleted && (
           <div className="flex-1 min-w-0 space-y-6">
-            <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
+            <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
               Live Win Probability
             </h3>
 
-            <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 transition-colors">
+            <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 transition-colors">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center">
                   <TrendingUp size={20} />
@@ -221,8 +221,8 @@ export default function Predictor({ match, stats }: any) {
               <hr className="border-[var(--border-1)] my-6" />
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                <div className="bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border-1)]">
+                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                     Current RR
                   </p>
                   <p className="text-2xl font-black text-[var(--foreground)] flex items-center gap-2">
@@ -230,8 +230,8 @@ export default function Predictor({ match, stats }: any) {
                     <Activity size={16} className="text-[var(--text-muted)]" />
                   </p>
                 </div>
-                <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                <div className="bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border-1)]">
+                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                     Required RR
                   </p>
                   <p className="text-2xl font-black text-amber-500 flex items-center gap-2">
@@ -255,17 +255,17 @@ export default function Predictor({ match, stats }: any) {
         <div
           className={`flex-[1.2] min-w-0 space-y-6 ${isMatchCompleted ? "w-full" : ""}`}
         >
-          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
+          <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
             Tournament Standings
           </h3>
 
-          <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors w-full">
+          <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors w-full">
             <div className="p-4 sm:p-5 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
                   <Award size={16} />
                 </div>
-                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
+                <span className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
                   Group Stage
                 </span>
               </div>
@@ -294,7 +294,7 @@ export default function Predictor({ match, stats }: any) {
               ) : (
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
-                    <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[10px] uppercase font-black text-[var(--text-muted)] border-b border-[var(--border-1)]">
+                    <tr className="bg-[var(--surface-2)] text-[9px] sm:text-[13px] uppercase font-black text-[var(--text-muted)] border-b border-[var(--border-1)]">
                       <th className="p-3 sm:p-4 w-12 text-center">#</th>
                       <th className="p-3 sm:p-4">Team</th>
                       <th className="p-3 sm:p-4 text-center">P</th>
@@ -368,18 +368,18 @@ export default function Predictor({ match, stats }: any) {
 
       {/* BOTTOM ROW: PRO MATCH ANALYSIS */}
       <div className="w-full mt-2">
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2 mb-3">
+        <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2 mb-3">
           {isMatchCompleted ? "Post-Match Analysis" : "Tournament Impact"}
         </h3>
-        <div className="w-full bg-gradient-to-br from-indigo-900 via-indigo-950 to-indigo-900 rounded-[2rem] p-6 sm:p-8 shadow-xl relative overflow-hidden border border-indigo-500/30">
+        <div className="w-full bg-gradient-to-br from-indigo-900 via-indigo-950 to-indigo-900 rounded-xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-indigo-500/30">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full pointer-events-none"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">
-            <div className="w-16 h-16 shrink-0 bg-indigo-500/20 rounded-2xl flex items-center justify-center border border-indigo-400/30">
+            <div className="w-16 h-16 shrink-0 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-400/30">
               <Sparkles className="text-indigo-400 w-8 h-8" />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">
+              <h4 className="text-[13px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">
                 Gemini Pro Insights
               </h4>
               {isAnalyzing ? (

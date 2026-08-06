@@ -254,7 +254,8 @@ export default function GlobalStatsPage() {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-600 uppercase tracking-widest mb-4 transition-colors">
+              className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-600 uppercase tracking-widest mb-4 transition-colors"
+            >
               <Home size={14} /> Back to Hub
             </Link>
             <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-slate-900 leading-none">
@@ -272,18 +273,20 @@ export default function GlobalStatsPage() {
             {topBatter && (
               <div
                 onClick={() => openPlayerProfile(topBatter)}
-                className="bg-orange-50 border border-orange-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-orange-500/10 transition-all group">
+                className="bg-orange-50 border border-orange-200 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-orange-500/10 transition-all group"
+              >
                 <div
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 border-orange-500 shadow-lg bg-cover bg-center shrink-0 flex items-center justify-center text-orange-200"
                   style={{
                     backgroundImage: topBatter.photo_url
                       ? `url(${topBatter.photo_url})`
                       : "none",
-                  }}>
+                  }}
+                >
                   {!topBatter.photo_url && <User size={32} />}
                 </div>
                 <div className="flex-1 w-full min-w-0">
-                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1">
+                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-[13px] font-black uppercase tracking-widest text-orange-600 mb-1">
                     <Trophy size={14} /> Orange Cap
                   </span>
                   <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-orange-600 transition-colors truncate">
@@ -300,18 +303,20 @@ export default function GlobalStatsPage() {
             {topBowler && (
               <div
                 onClick={() => openPlayerProfile(topBowler)}
-                className="bg-purple-50 border border-purple-200 rounded-[2rem] p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-purple-500/10 transition-all group">
+                className="bg-purple-50 border border-purple-200 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 cursor-pointer hover:shadow-xl hover:shadow-purple-500/10 transition-all group"
+              >
                 <div
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 border-purple-500 shadow-lg bg-cover bg-center shrink-0 flex items-center justify-center text-purple-200"
                   style={{
                     backgroundImage: topBowler.photo_url
                       ? `url(${topBowler.photo_url})`
                       : "none",
-                  }}>
+                  }}
+                >
                   {!topBowler.photo_url && <User size={32} />}
                 </div>
                 <div className="flex-1 w-full min-w-0">
-                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] font-black uppercase tracking-widest text-purple-600 mb-1">
+                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-[13px] font-black uppercase tracking-widest text-purple-600 mb-1">
                     <Target size={14} /> Purple Cap
                   </span>
                   <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-purple-600 transition-colors truncate">
@@ -329,7 +334,7 @@ export default function GlobalStatsPage() {
         )}
 
         {/* SEARCH, FILTER & SORT BAR */}
-        <div className="bg-white p-4 rounded-[2rem] sm:rounded-3xl border border-slate-200 shadow-sm mb-6">
+        <div className="bg-white p-4 rounded-xl sm:rounded-xl border border-slate-200 shadow-sm mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1">
               <Search
@@ -341,7 +346,7 @@ export default function GlobalStatsPage() {
                 placeholder="Search athletes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold outline-none focus:border-teal-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-sm font-bold outline-none focus:border-teal-500 transition-colors"
               />
             </div>
 
@@ -354,7 +359,8 @@ export default function GlobalStatsPage() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer"
+                >
                   <option value="All">All Roles</option>
                   <option value="Batsman">Batsmen</option>
                   <option value="Bowler">Bowlers</option>
@@ -371,7 +377,8 @@ export default function GlobalStatsPage() {
                 <select
                   value={tournamentFilter}
                   onChange={(e) => setTournamentFilter(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer"
+                >
                   <option value="All">All Tournaments</option>
                   {tournamentsList.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -389,7 +396,8 @@ export default function GlobalStatsPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full bg-teal-50 border border-teal-200 text-teal-700 rounded-2xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer">
+                  className="w-full bg-teal-50 border border-teal-200 text-teal-700 rounded-xl py-3.5 pl-10 pr-10 text-sm font-bold outline-none focus:border-teal-500 transition-colors appearance-none cursor-pointer"
+                >
                   <option value="total_runs">Sort: Most Runs</option>
                   <option value="total_wickets">Sort: Most Wickets</option>
                   <option value="career_strike_rate">Sort: Highest SR</option>
@@ -401,11 +409,11 @@ export default function GlobalStatsPage() {
         </div>
 
         {/* COMPREHENSIVE LEADERBOARD TABLE */}
-        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden w-full">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full">
           <div className="overflow-x-auto custom-scrollbar w-full">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <tr className="bg-slate-50 border-b border-slate-200 text-[13px] font-black uppercase tracking-widest text-slate-500">
                   <th className="p-4 md:p-5 w-16 text-center">Rank</th>
                   <th className="p-4 md:p-5">Player Name</th>
                   <th className="p-4 md:p-5 text-right">Runs</th>
@@ -420,7 +428,8 @@ export default function GlobalStatsPage() {
                   <tr>
                     <td
                       colSpan={8}
-                      className="p-10 text-center text-slate-400 font-bold">
+                      className="p-10 text-center text-slate-400 font-bold"
+                    >
                       No athletes match your filters.
                     </td>
                   </tr>
@@ -429,7 +438,8 @@ export default function GlobalStatsPage() {
                     <tr
                       key={player.player_id || player.full_name || index}
                       onClick={() => openPlayerProfile(player)}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer group">
+                      className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                    >
                       <td className="p-4 md:p-5 text-center font-black text-slate-400 group-hover:text-teal-500">
                         #{index + 1}
                       </td>
@@ -441,7 +451,8 @@ export default function GlobalStatsPage() {
                               backgroundImage: player.photo_url
                                 ? `url(${player.photo_url})`
                                 : "none",
-                            }}>
+                            }}
+                          >
                             {!player.photo_url && (
                               <User
                                 size={16}
@@ -453,7 +464,7 @@ export default function GlobalStatsPage() {
                             <p className="font-black text-slate-900 group-hover:text-teal-600 transition-colors uppercase">
                               {player.full_name}
                             </p>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[150px]">
+                            <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[150px]">
                               {player.franchiseHistory
                                 ?.map((t: any) => t.short_name)
                                 .join(", ") || "Unassigned"}
@@ -462,19 +473,23 @@ export default function GlobalStatsPage() {
                         </div>
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_runs" ? "text-orange-600 text-lg" : "text-slate-700"}`}>
+                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_runs" ? "text-orange-600 text-lg" : "text-slate-700"}`}
+                      >
                         {player.total_runs}
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "career_strike_rate" ? "text-teal-600 text-lg" : "text-slate-500"}`}>
+                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "career_strike_rate" ? "text-teal-600 text-lg" : "text-slate-500"}`}
+                      >
                         {player.career_strike_rate}
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "total_sixes" ? "text-blue-600 text-lg" : "text-slate-500"}`}>
+                        className={`p-4 md:p-5 text-right font-bold ${sortBy === "total_sixes" ? "text-blue-600 text-lg" : "text-slate-500"}`}
+                      >
                         {player.total_sixes}
                       </td>
                       <td
-                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_wickets" ? "text-purple-600 text-lg" : "text-slate-700"}`}>
+                        className={`p-4 md:p-5 text-right font-black ${sortBy === "total_wickets" ? "text-purple-600 text-lg" : "text-slate-700"}`}
+                      >
                         {player.total_wickets}
                       </td>
                       <td className="p-4 md:p-5 text-right font-bold text-slate-500">
@@ -493,10 +508,11 @@ export default function GlobalStatsPage() {
         {/* ----------------------------------------------------------- */}
         {selectedPlayer && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in">
-            <div className="bg-white w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden custom-scrollbar animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-slate-200 relative">
+            <div className="bg-white w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden custom-scrollbar animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-slate-200 relative">
               <button
                 onClick={() => setSelectedPlayer(null)}
-                className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50 shadow-lg">
+                className="absolute top-4 right-4 md:hidden w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center z-50 shadow-lg"
+              >
                 <X size={20} />
               </button>
 
@@ -508,7 +524,8 @@ export default function GlobalStatsPage() {
                     backgroundImage: selectedPlayer.photo_url
                       ? `url(${selectedPlayer.photo_url})`
                       : "none",
-                  }}>
+                  }}
+                >
                   {!selectedPlayer.photo_url && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <User size={64} className="text-slate-400" />
@@ -517,7 +534,7 @@ export default function GlobalStatsPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80" />
 
                   <div className="absolute bottom-6 left-6 text-white">
-                    <span className="bg-teal-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg mb-2 inline-block">
+                    <span className="bg-teal-500 text-white text-[13px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg mb-2 inline-block">
                       {selectedPlayer.player_role}
                     </span>
                     <h2 className="text-3xl font-black uppercase tracking-tighter leading-none drop-shadow-md">
@@ -533,9 +550,9 @@ export default function GlobalStatsPage() {
 
                   <div className="space-y-4">
                     {/* --- BATTING STATS (Orange) --- */}
-                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex justify-between items-center">
+                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl flex justify-between items-center">
                       <div>
-                        <p className="text-[10px] font-black text-orange-600/70 uppercase tracking-widest">
+                        <p className="text-[13px] font-black text-orange-600/70 uppercase tracking-widest">
                           Total Runs
                         </p>
                         <p className="text-3xl font-black text-orange-600 leading-none">
@@ -543,10 +560,10 @@ export default function GlobalStatsPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest">
                           SR: {selectedPlayer.career_strike_rate}
                         </p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                        <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                           {selectedPlayer.total_fours} (4s) •{" "}
                           {selectedPlayer.total_sixes} (6s)
                         </p>
@@ -554,9 +571,9 @@ export default function GlobalStatsPage() {
                     </div>
 
                     {/* --- BOWLING STATS (Purple) --- */}
-                    <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl flex justify-between items-center">
+                    <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl flex justify-between items-center">
                       <div>
-                        <p className="text-[10px] font-black text-purple-600/70 uppercase tracking-widest">
+                        <p className="text-[13px] font-black text-purple-600/70 uppercase tracking-widest">
                           Total Wickets
                         </p>
                         <p className="text-3xl font-black text-purple-600 leading-none">
@@ -565,13 +582,13 @@ export default function GlobalStatsPage() {
                       </div>
                       <div className="text-right">
                         {/* Added Runs Conceded here to provide context for the Economy Rate */}
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest">
                           Runs Conceded: {selectedPlayer.runs_conceded || 0}
                         </p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                        <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                           Econ: {selectedPlayer.career_economy}
                         </p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                        <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                           {selectedPlayer.legal_balls_bowled} Balls
                         </p>
                       </div>
@@ -589,7 +606,8 @@ export default function GlobalStatsPage() {
                   </h2>
                   <button
                     onClick={() => setSelectedPlayer(null)}
-                    className="hidden md:flex text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-colors">
+                    className="hidden md:flex text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-colors"
+                  >
                     <X size={20} />
                   </button>
                 </div>
@@ -611,16 +629,18 @@ export default function GlobalStatsPage() {
                         <Link
                           key={match.id}
                           href={`/match/${match.id}`}
-                          className="block bg-white border border-slate-200 rounded-2xl p-4 hover:border-teal-500 hover:shadow-md transition-all group">
+                          className="block bg-white border border-slate-200 rounded-xl p-4 hover:border-teal-500 hover:shadow-md transition-all group"
+                        >
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate pr-4">
+                            <span className="text-[13px] font-black uppercase tracking-widest text-slate-400 truncate pr-4">
                               {(Array.isArray(match.tournaments)
                                 ? match.tournaments[0]?.name
                                 : match.tournaments?.name) ||
                                 "Tournament Match"}
                             </span>
                             <span
-                              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shrink-0 ${match.status?.toLowerCase() === "completed" ? "bg-teal-50 text-teal-600 border-teal-200" : match.status?.toLowerCase() === "live" ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-slate-50 text-slate-600 border-slate-200"}`}>
+                              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border shrink-0 ${match.status?.toLowerCase() === "completed" ? "bg-teal-50 text-teal-600 border-teal-200" : match.status?.toLowerCase() === "live" ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-slate-50 text-slate-600 border-slate-200"}`}
+                            >
                               {match.status || "Scheduled"}
                             </span>
                           </div>
@@ -638,7 +658,7 @@ export default function GlobalStatsPage() {
                               <div className="flex items-center gap-2 mt-1">
                                 {match.created_at && (
                                   <>
-                                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-widest">
+                                    <p className="text-[13px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-widest">
                                       <Calendar size={10} />
                                       {new Date(
                                         match.created_at,
@@ -651,7 +671,7 @@ export default function GlobalStatsPage() {
                                     <span className="text-slate-300">•</span>
                                   </>
                                 )}
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <p className="text-[13px] font-bold text-slate-400 uppercase tracking-widest">
                                   View Scorecard
                                 </p>
                               </div>
@@ -664,7 +684,7 @@ export default function GlobalStatsPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="h-40 md:h-full flex flex-col items-center justify-center text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl">
+                    <div className="h-40 md:h-full flex flex-col items-center justify-center text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
                       <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                         <Activity size={20} className="text-slate-400" />
                       </div>

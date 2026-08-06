@@ -480,7 +480,7 @@ export default function MatchesPage({
 
   // THEME VARIABLES FOR REUSABILITY
   const labelClass =
-    "block text-[10px] font-black uppercase tracking-widest mb-2 text-[var(--text-muted)]";
+    "block text-[13px] font-black uppercase tracking-widest mb-2 text-[var(--text-muted)]";
   const inputClass =
     "w-full rounded-xl px-4 py-3 border border-[var(--border-1)] bg-[var(--surface-1)] text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 outline-none text-sm font-bold transition-all";
 
@@ -502,7 +502,7 @@ export default function MatchesPage({
             /{wickets || 0}
           </span>
         </span>
-        <span className="text-[9px] md:text-[10px] font-bold text-[var(--text-muted)] mt-0.5">
+        <span className="text-[9px] md:text-[13px] font-bold text-[var(--text-muted)] mt-0.5">
           ({overs || 0} OV)
         </span>
       </div>
@@ -558,7 +558,7 @@ export default function MatchesPage({
 
       {/* --- MASTER SCHEDULER CONFIGURATOR --- */}
       {showScheduler && isAdmin && (
-        <div className="bg-[var(--surface-2)] border border-[var(--border-1)] p-6 rounded-[2rem] mb-8 shadow-inner animate-in slide-in-from-top-4">
+        <div className="bg-[var(--surface-2)] border border-[var(--border-1)] p-6 rounded-xl mb-8 shadow-inner animate-in slide-in-from-top-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="flex bg-[var(--surface-1)] p-1 rounded-xl border border-[var(--border-1)] shadow-sm">
               <button
@@ -579,7 +579,7 @@ export default function MatchesPage({
               <button
                 onClick={handleResetSchedule}
                 disabled={isSubmitting}
-                className="text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors"
+                className="text-[13px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors"
               >
                 🗑 Reset Upcoming
               </button>
@@ -588,7 +588,7 @@ export default function MatchesPage({
 
           {scheduleMode === "single" ? (
             /* --- SINGLE MATCH FORM --- */
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 bg-[var(--surface-1)] p-6 rounded-2xl border border-[var(--border-1)] shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] shadow-sm">
               <div>
                 <label className={labelClass}>Team 1</label>
                 <select
@@ -680,7 +680,7 @@ export default function MatchesPage({
             </div>
           ) : (
             /* --- WIZARD AUTO ENGINE --- */
-            <div className="space-y-6 bg-[var(--surface-1)] p-6 rounded-2xl border border-[var(--border-1)] shadow-sm">
+            <div className="space-y-6 bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] shadow-sm">
               <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-[var(--border-1)] pb-6">
                 <div>
                   <h3 className="font-black uppercase tracking-widest text-[var(--foreground)]">
@@ -767,19 +767,19 @@ export default function MatchesPage({
                 <div className="flex gap-2 mb-6 bg-[var(--surface-2)] p-1 rounded-xl border border-[var(--border-1)]">
                   <button
                     onClick={() => setWizardMode("round_robin")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "round_robin" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-[13px] uppercase tracking-wider transition-all ${wizardMode === "round_robin" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
                   >
                     Round Robin + KO
                   </button>
                   <button
                     onClick={() => setWizardMode("groups_knockout")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "groups_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-[13px] uppercase tracking-wider transition-all ${wizardMode === "groups_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
                   >
                     Groups + KO
                   </button>
                   <button
                     onClick={() => setWizardMode("pure_knockout")}
-                    className={`flex-1 py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${wizardMode === "pure_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
+                    className={`flex-1 py-2.5 rounded-lg font-bold text-[13px] uppercase tracking-wider transition-all ${wizardMode === "pure_knockout" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-1)]"}`}
                   >
                     Pure Knockout
                   </button>
@@ -845,7 +845,7 @@ export default function MatchesPage({
                       />
                       <label
                         htmlFor="interleave"
-                        className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]"
+                        className="text-[13px] font-bold uppercase tracking-widest text-[var(--text-muted)]"
                       >
                         Interleave Matches
                       </label>
@@ -882,7 +882,7 @@ export default function MatchesPage({
                   />
                   <label
                     htmlFor="thirdPlace"
-                    className="text-[10px] font-bold uppercase tracking-widest text-[var(--foreground)]"
+                    className="text-[13px] font-bold uppercase tracking-widest text-[var(--foreground)]"
                   >
                     Generate 3rd Place Playoff Match
                   </label>
@@ -904,7 +904,7 @@ export default function MatchesPage({
                             : teams.map((t) => t.id),
                         )
                       }
-                      className="text-[10px] font-bold text-[var(--accent)] uppercase hover:underline"
+                      className="text-[13px] font-bold text-[var(--accent)] uppercase hover:underline"
                     >
                       {selectedTeamIds.length === teams.length
                         ? "Deselect All"
@@ -930,7 +930,7 @@ export default function MatchesPage({
                             className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border-1)]"}`}
                           >
                             {isSelected && (
-                              <span className="text-[var(--background)] text-[10px]">
+                              <span className="text-[var(--background)] text-[13px]">
                                 ✓
                               </span>
                             )}
@@ -960,7 +960,7 @@ export default function MatchesPage({
       {/* --- MATCH LIST RENDERING --- */}
 
       {filteredMatches.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-[2rem] bg-[var(--surface-1)]">
+        <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-xl bg-[var(--surface-1)]">
           <CalendarClock
             size={32}
             className="mx-auto text-[var(--text-muted)] mb-4"
@@ -986,7 +986,7 @@ export default function MatchesPage({
           ))}
           {/* <div
               key={match.id}
-              className="bg-[var(--surface-1)] rounded-[2rem] p-1 flex flex-col md:flex-row items-center border border-[var(--border-1)] relative group transition-all hover:border-[var(--accent)]/50 hover:shadow-lg"
+              className="bg-[var(--surface-1)] rounded-xl p-1 flex flex-col md:flex-row items-center border border-[var(--border-1)] relative group transition-all hover:border-[var(--accent)]/50 hover:shadow-lg"
             >
               // THE MOBILE-READY DELETE BUTTON FIX
               {isAdmin && (
@@ -1002,7 +1002,7 @@ export default function MatchesPage({
 
               // DATE / TIME 
               <div className="px-6 py-4 text-center md:border-r border-[var(--border-1)] w-full md:w-36 shrink-0">
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                   {match.match_date
                     ? new Date(match.match_date).toLocaleDateString("en-GB", {
                         day: "numeric",
@@ -1034,7 +1034,7 @@ export default function MatchesPage({
                   </span>
                 </div>
 
-                <div className="relative flex items-stretch justify-between mt-4 bg-[var(--surface-2)]/50 border border-[var(--border-1)] rounded-2xl p-3 md:p-5 shadow-sm overflow-hidden">
+                <div className="relative flex items-stretch justify-between mt-4 bg-[var(--surface-2)]/50 border border-[var(--border-1)] rounded-xl p-3 md:p-5 shadow-sm overflow-hidden">
                   //Optional: Subtle background glow based on LIVE status
                   {match.status === "live" && (
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-red-500/20 blur-xl rounded-full" />
@@ -1043,7 +1043,7 @@ export default function MatchesPage({
                   // TEAM 1
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 flex-1 text-center md:text-left min-w-0">
                     <div
-                      className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px]"
+                      className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[13px]"
                       style={{
                         backgroundImage: match.team1?.logo_url
                           ? `url(${match.team1?.logo_url})`
@@ -1073,15 +1073,15 @@ export default function MatchesPage({
                   // VS / RESULT BANNER (Center)  
                   <div className="flex flex-col items-center justify-center shrink-0 px-2 md:px-4 z-10 w-[80px] md:w-[120px]">
                     {match.status === "completed" ? (
-                      <div className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 px-2 md:px-3 py-1.5 md:py-2 rounded-xl border border-yellow-500/20 text-center w-full leading-tight shadow-sm">
+                      <div className="text-[9px] md:text-[14px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 px-2 md:px-3 py-1.5 md:py-2 rounded-xl border border-yellow-500/20 text-center w-full leading-tight shadow-sm">
                         {match.result_margin || "Ended"}
                       </div>
                     ) : match.status === "live" ? (
-                      <div className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] md:text-xs font-black text-red-500 animate-pulse tracking-widest shadow-sm">
+                      <div className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-[13px] md:text-xs font-black text-red-500 animate-pulse tracking-widest shadow-sm">
                         LIVE
                       </div>
                     ) : (
-                      <div className="px-3 md:px-4 py-1.5 bg-[var(--surface-3)] border border-[var(--border-1)] rounded-full text-[10px] md:text-xs font-black text-[var(--text-muted)] tracking-widest shadow-inner">
+                      <div className="px-3 md:px-4 py-1.5 bg-[var(--surface-3)] border border-[var(--border-1)] rounded-full text-[13px] md:text-xs font-black text-[var(--text-muted)] tracking-widest shadow-inner">
                         VS
                       </div>
                     )}
@@ -1090,7 +1090,7 @@ export default function MatchesPage({
                   // TEAM 2
                   <div className="flex flex-col md:flex-row-reverse items-center md:items-start gap-2 md:gap-4 flex-1 text-center md:text-right min-w-0">
                     <div
-                      className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px]"
+                      className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[13px]"
                       style={{
                         backgroundImage: match.team2?.logo_url
                           ? `url(${match.team2?.logo_url})`
@@ -1124,7 +1124,7 @@ export default function MatchesPage({
                 {isAdmin ? (
                   <Link
                     href={`/t/${tournamentId}/m/${match.id}`}
-                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm"
+                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[13px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm"
                   >
                     {match.status === "scheduled"
                       ? "Start Match"
@@ -1135,7 +1135,7 @@ export default function MatchesPage({
                 ) : (
                   <Link
                     href={`/t/${tournamentId}/m/${match.id}`}
-                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[10px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm"
+                    className="w-full block bg-[var(--accent)]/10 text-[var(--accent)] font-black py-4 rounded-xl text-[13px] uppercase tracking-widest text-center hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all shadow-sm"
                   >
                     View Scorecard
                   </Link>

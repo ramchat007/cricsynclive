@@ -212,7 +212,7 @@ export default function AdminManagementPage({
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div className="md:col-span-5">
-            <div className="bg-[var(--surface-1)] rounded-[2rem] p-8 border border-[var(--border-1)] sticky top-6">
+            <div className="bg-[var(--surface-1)] rounded-xl p-8 border border-[var(--border-1)] sticky top-6">
               {canManageAccess ? (
                 <>
                   <h2 className="text-xl font-black uppercase mb-6">
@@ -220,7 +220,7 @@ export default function AdminManagementPage({
                   </h2>
                   <form onSubmit={handleAddMember} className="space-y-5">
                     <div>
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
+                      <label className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
                         User Email
                       </label>
                       <input
@@ -233,7 +233,7 @@ export default function AdminManagementPage({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
+                      <label className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">
                         Role
                       </label>
                       <select
@@ -264,7 +264,7 @@ export default function AdminManagementPage({
 
                     {activeInviteLink && (
                       <div className="mt-6 space-y-3 animate-in zoom-in-95">
-                        <p className="text-[10px] font-black text-[var(--accent)] uppercase">
+                        <p className="text-[13px] font-black text-[var(--accent)] uppercase">
                           Share Invite via:
                         </p>
                         <div className="flex gap-2">
@@ -306,14 +306,14 @@ export default function AdminManagementPage({
 
           <div className="md:col-span-7 space-y-8">
             <section>
-              <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <h3 className="text-[13px] font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <Crown size={14} /> Owner
               </h3>
               <div className="space-y-3">
                 {owners.map((m) => (
                   <div
                     key={m.id}
-                    className="bg-[var(--surface-1)] p-5 rounded-3xl border border-[var(--border-1)] flex items-center justify-between shadow-sm"
+                    className="bg-[var(--surface-1)] p-5 rounded-xl border border-[var(--border-1)] flex items-center justify-between shadow-sm"
                   >
                     <div className="min-w-0">
                       <h4 className="font-black text-sm capitalize truncate">
@@ -331,14 +331,14 @@ export default function AdminManagementPage({
 
             {(admins.length > 0 || scorers.length > 0) && (
               <section>
-                <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">
+                <h3 className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">
                   Members
                 </h3>
                 <div className="space-y-3">
                   {[...admins, ...scorers].map((m) => (
                     <div
                       key={m.id}
-                      className="bg-[var(--surface-1)] p-5 rounded-3xl border border-[var(--border-1)] flex items-center justify-between shadow-sm"
+                      className="bg-[var(--surface-1)] p-5 rounded-xl border border-[var(--border-1)] flex items-center justify-between shadow-sm"
                     >
                       <div className="min-w-0">
                         <h4 className="font-black text-sm capitalize truncate">

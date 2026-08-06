@@ -230,7 +230,8 @@ export default function PlayerProfilePage({
         </p>
         <Link
           href="/search"
-          className="bg-[var(--surface-1)] border border-[var(--border-1)] px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:text-[var(--accent)] transition-colors">
+          className="bg-[var(--surface-1)] border border-[var(--border-1)] px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:text-[var(--accent)] transition-colors"
+        >
           Go Back
         </Link>
       </div>
@@ -274,7 +275,8 @@ export default function PlayerProfilePage({
         <div className="max-w-6xl mx-auto relative z-10">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max transition-colors">
+            className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max transition-colors"
+          >
             <ArrowLeft size={16} /> Back
           </button>
 
@@ -286,12 +288,13 @@ export default function PlayerProfilePage({
                   backgroundImage: player.photo_url
                     ? `url(${player.photo_url})`
                     : "none",
-                }}>
+                }}
+              >
                 {!player.photo_url && (
                   <User className="w-full h-full text-[var(--text-muted)] p-6 opacity-30" />
                 )}
               </div>
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--accent)] text-[var(--background)] px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg whitespace-nowrap border-2 border-[var(--surface-1)]">
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--accent)] text-[var(--background)] px-4 py-1.5 rounded-full font-black text-[13px] uppercase tracking-widest shadow-lg whitespace-nowrap border-2 border-[var(--surface-1)]">
                 {player.player_role || "Athlete"}
               </div>
             </div>
@@ -305,22 +308,24 @@ export default function PlayerProfilePage({
                 {player.teams && (
                   <Link
                     href={`/t/${player.tournament_id}/teams`}
-                    className="inline-flex items-center justify-center md:justify-start gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] px-3 py-1.5 rounded-xl hover:border-[var(--accent)] transition-colors mx-auto md:mx-0 w-max">
+                    className="inline-flex items-center justify-center md:justify-start gap-2 bg-[var(--surface-2)] border border-[var(--border-1)] px-3 py-1.5 rounded-xl hover:border-[var(--accent)] transition-colors mx-auto md:mx-0 w-max"
+                  >
                     <div
                       className="w-5 h-5 bg-contain bg-center bg-no-repeat rounded"
                       style={{
                         backgroundImage: player.teams.logo_url
                           ? `url(${player.teams.logo_url})`
                           : "none",
-                      }}></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                      }}
+                    ></div>
+                    <span className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                       {player.teams.short_name}
                     </span>
                   </Link>
                 )}
               </div>
 
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-6 flex items-center justify-center md:justify-start gap-1">
+              <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-6 flex items-center justify-center md:justify-start gap-1">
                 <Trophy size={14} className="text-[var(--accent)]" />{" "}
                 {player.tournaments?.name || "Global Database"}
               </p>
@@ -349,7 +354,7 @@ export default function PlayerProfilePage({
       {/* 2. MAIN CONTENT AREA */}
       <div className="max-w-6xl mx-auto px-4 md:px-8 mt-10 animate-in fade-in slide-in-from-bottom-4">
         {stats.matches === 0 ? (
-          <div className="text-center py-20 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem]">
+          <div className="text-center py-20 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl">
             <Activity
               size={40}
               className="mx-auto text-[var(--text-muted)] opacity-50 mb-4"
@@ -365,30 +370,30 @@ export default function PlayerProfilePage({
           <div className="space-y-12">
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-[var(--surface-1)] p-6 rounded-[2rem] border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <div className="bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
                   Matches
                 </p>
                 <p className="text-4xl font-black">{stats.matches}</p>
               </div>
-              <div className="bg-[var(--surface-1)] p-6 rounded-[2rem] border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <div className="bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
                   Total Runs
                 </p>
                 <p className="text-4xl font-black text-[var(--accent)]">
                   {stats.batting.runs}
                 </p>
               </div>
-              <div className="bg-[var(--surface-1)] p-6 rounded-[2rem] border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <div className="bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
                   Total Wickets
                 </p>
                 <p className="text-4xl font-black text-red-500">
                   {stats.bowling.wickets}
                 </p>
               </div>
-              <div className="bg-[var(--surface-1)] p-6 rounded-[2rem] border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <div className="bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
                   Highest Score
                 </p>
                 <p className="text-4xl font-black">{stats.batting.highest}</p>
@@ -397,7 +402,7 @@ export default function PlayerProfilePage({
 
             {/* BATTING & BOWLING STATS GRID */}
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] overflow-hidden shadow-sm">
+              <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] overflow-hidden shadow-sm">
                 <div className="p-6 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex items-center gap-3">
                   <BarChart2 className="text-[var(--accent)]" size={20} />
                   <h3 className="font-black uppercase tracking-widest">
@@ -406,19 +411,19 @@ export default function PlayerProfilePage({
                 </div>
                 <div className="p-6 grid grid-cols-2 gap-y-8 gap-x-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Innings
                     </p>
                     <p className="text-2xl font-black">{stats.matches}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Average
                     </p>
                     <p className="text-2xl font-black">{batAvg}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Strike Rate
                     </p>
                     <p className="text-2xl font-black text-[var(--accent)]">
@@ -426,7 +431,7 @@ export default function PlayerProfilePage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Boundaries (4s/6s)
                     </p>
                     <p className="text-2xl font-black">
@@ -440,7 +445,7 @@ export default function PlayerProfilePage({
                 </div>
               </div>
 
-              <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] overflow-hidden shadow-sm">
+              <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] overflow-hidden shadow-sm">
                 <div className="p-6 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex items-center gap-3">
                   <Medal className="text-red-500" size={20} />
                   <h3 className="font-black uppercase tracking-widest">
@@ -449,7 +454,7 @@ export default function PlayerProfilePage({
                 </div>
                 <div className="p-6 grid grid-cols-2 gap-y-8 gap-x-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Overs
                     </p>
                     <p className="text-2xl font-black">
@@ -458,7 +463,7 @@ export default function PlayerProfilePage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Economy
                     </p>
                     <p className="text-2xl font-black text-[var(--accent)]">
@@ -466,13 +471,13 @@ export default function PlayerProfilePage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Strike Rate
                     </p>
                     <p className="text-2xl font-black">{bowlSR}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                    <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                       Best Bowling
                     </p>
                     <p className="text-2xl font-black">
@@ -497,7 +502,8 @@ export default function PlayerProfilePage({
                     <Link
                       key={m.id}
                       href={`/t/${m.tournament_id}/match/${m.id}`}
-                      className="bg-[var(--surface-1)] p-5 rounded-[2rem] border border-[var(--border-1)] hover:border-[var(--accent)] transition-all group flex flex-col justify-between shadow-sm">
+                      className="bg-[var(--surface-1)] p-5 rounded-xl border border-[var(--border-1)] hover:border-[var(--accent)] transition-all group flex flex-col justify-between shadow-sm"
+                    >
                       {/* Top Context Row */}
                       <div className="flex justify-between items-start mb-4">
                         <span className="text-[9px] font-black uppercase tracking-widest bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded border border-[var(--border-1)] max-w-[150px] truncate">
@@ -526,7 +532,7 @@ export default function PlayerProfilePage({
                             {m.team1?.short_name || "T1"}
                           </p>
                         </div>
-                        <span className="text-[10px] font-black text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-1 rounded-full">
+                        <span className="text-[13px] font-black text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-1 rounded-full">
                           VS
                         </span>
                         <div className="text-center w-20">
@@ -547,7 +553,8 @@ export default function PlayerProfilePage({
                       {/* Footer */}
                       <div className="mt-4 pt-4 border-t border-[var(--border-1)] flex justify-between items-center">
                         <p
-                          className={`text-[10px] font-black uppercase tracking-widest truncate max-w-[180px] ${m.status === "completed" ? "text-[var(--accent)]" : "text-amber-500 animate-pulse"}`}>
+                          className={`text-[13px] font-black uppercase tracking-widest truncate max-w-[180px] ${m.status === "completed" ? "text-[var(--accent)]" : "text-amber-500 animate-pulse"}`}
+                        >
                           {m.status === "completed"
                             ? m.result_margin || "Match Ended"
                             : "Live Now"}

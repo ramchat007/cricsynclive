@@ -31,7 +31,10 @@ import Predictor from "./components/Predictor";
 import Info from "./components/Info";
 
 import { Mic, MicOff } from "lucide-react";
-import { useVoiceScorer, VoiceCommand } from "../../../../../hooks/useVoiceScorer";
+import {
+  useVoiceScorer,
+  VoiceCommand,
+} from "../../../../../hooks/useVoiceScorer";
 import VoiceConfirmationToast from "./components/VoiceConfirmationToast";
 
 // IMPORT ENGINE & MATH
@@ -104,7 +107,7 @@ export default function UnifiedLiveMatchPage({
   const [activeTab, setActiveTab] = useState("summary");
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
-  const minSwipeDistance = 50; 
+  const minSwipeDistance = 50;
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEndX(null);
@@ -132,20 +135,31 @@ export default function UnifiedLiveMatchPage({
     }
   };
 
-  const [pendingVoice, setPendingVoice] = useState<{ command: VoiceCommand, text: string } | null>(null);
+  const [pendingVoice, setPendingVoice] = useState<{
+    command: VoiceCommand;
+    text: string;
+  } | null>(null);
 
-  const { isListening, toggleListening } = useVoiceScorer((command, rawText) => {
-    // Added showMoreModal and showSettingsModal so it doesn't trigger if they are fixing a penalty!
-    if (!engine.isSubmittingBall && !showExtrasModal && !showWicketModal && !showMoreModal && !showSettingsModal) {
-      setPendingVoice({ command, text: rawText });
-    }
-  });
+  const { isListening, toggleListening } = useVoiceScorer(
+    (command, rawText) => {
+      // Added showMoreModal and showSettingsModal so it doesn't trigger if they are fixing a penalty!
+      if (
+        !engine.isSubmittingBall &&
+        !showExtrasModal &&
+        !showWicketModal &&
+        !showMoreModal &&
+        !showSettingsModal
+      ) {
+        setPendingVoice({ command, text: rawText });
+      }
+    },
+  );
 
   const handleVoiceAccept = async () => {
     if (!pendingVoice) return;
-    
+
     const { command } = pendingVoice;
-    
+
     // Act exactly like a manual button click
     if (command.type === "runs") {
       handleRecordBall(command.value);
@@ -158,14 +172,14 @@ export default function UnifiedLiveMatchPage({
     } else if (command.type === "undo") {
       // 🔥 FIX: Grab the last delivery ID to delete
       const lastDelivery = engine.deliveries[engine.deliveries.length - 1];
-      
+
       if (!lastDelivery) {
         alert("No deliveries to undo.");
       } else if (window.confirm("Undo the last delivery?")) {
         await engine.deleteLastBall(lastDelivery.id); // Pass the ID here!
       }
     }
-    
+
     setPendingVoice(null); // Clear the toast
   };
 
@@ -268,12 +282,25 @@ export default function UnifiedLiveMatchPage({
   // 🔗 --- SHARE SCORECARD LOGIC --- 🔗
   const handleShareMatch = async () => {
     setIsSharing(true);
-    const { team1_name, team2_name } = engine.match || {};
-    const shareText = `🔥 LIVE Cricket on CricSync!\n\n${team1_name} vs ${team2_name}\n\n👉 To view the Live Scoreboard click here!`;
+
+    // 1. Safely extract names using ctx (preferred) or the nested engine relationships
+    const t1Name =
+      ctx?.team1Name ||
+      engine.match?.team1?.name ||
+      engine.match?.team1?.short_name ||
+      "Team 1";
+    const t2Name =
+      ctx?.team2Name ||
+      engine.match?.team2?.name ||
+      engine.match?.team2?.short_name ||
+      "Team 2";
+
+    // 2. Build the dynamic share text
+    const shareText = `🔥 LIVE Cricket on CricSyncLive!\n\n${t1Name} vs ${t2Name}\n\n👉 To view the Live Scoreboard click here!`;
     const url = window.location.href;
 
     const shareData = {
-      title: "CricSync Live Score",
+      title: "CricSyncLive Match Update",
       text: shareText,
       url: url,
     };
@@ -905,7 +932,7 @@ export default function UnifiedLiveMatchPage({
     subtitle: string;
   }) => (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 flex flex-col items-center justify-center font-sans">
-      <div className="bg-[var(--surface-1)] p-10 rounded-[2.5rem] border border-[var(--border-1)] text-center max-w-md w-full shadow-2xl animate-in zoom-in-95">
+      <div className="bg-[var(--surface-1)] p-10 rounded-2xl border border-[var(--border-1)] text-center max-w-md w-full shadow-2xl animate-in zoom-in-95">
         <Radio
           className="animate-pulse text-[var(--accent)] mx-auto mb-6"
           size={48}
@@ -916,7 +943,8 @@ export default function UnifiedLiveMatchPage({
         <p className="text-[var(--text-muted)] font-bold mb-8">{subtitle}</p>
         <Link
           href={`/t/${tournamentId}/matches`}
-          className="block w-full bg-[var(--surface-2)] py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--border-1)] transition-colors text-[var(--foreground)]">
+          className="block w-full bg-[var(--surface-2)] py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--border-1)] transition-colors text-[var(--foreground)]"
+        >
           Return to Matches
         </Link>
       </div>
@@ -940,11 +968,12 @@ export default function UnifiedLiveMatchPage({
           href={
             tournamentId === "QUICK_MATCH" ? "/" : `/t/${tournamentId}/matches`
           }
-          className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max">
+          className="flex items-center gap-2 text-[var(--text-muted)] font-bold mb-8 hover:text-[var(--accent)] w-max"
+        >
           <ArrowLeft size={16} />{" "}
           {tournamentId === "QUICK_MATCH" ? "Exit Match" : "Back to Schedule"}
         </Link>
-        <div className="max-w-2xl mx-auto bg-[var(--surface-1)] rounded-[2rem] p-8 shadow-sm border border-[var(--border-1)] animate-in zoom-in-95">
+        <div className="max-w-2xl mx-auto bg-[var(--surface-1)] rounded-sm p-8 shadow-sm border border-[var(--border-1)] animate-in zoom-in-95">
           <div className="flex flex-col items-center justify-center mb-10 text-center">
             <div className="w-16 h-16 bg-[var(--accent)]/10 text-[var(--accent)] rounded-full flex items-center justify-center mb-4">
               <Coins size={32} />
@@ -956,7 +985,7 @@ export default function UnifiedLiveMatchPage({
           <div className="flex items-center justify-center gap-2 sm:gap-4 mb-10">
             <div className="text-center w-28 sm:w-32">
               <div
-                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-[var(--surface-2)] bg-contain bg-center bg-no-repeat p-2 mb-2 border border-[var(--border-1)]"
+                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-[var(--surface-2)] bg-contain bg-center bg-no-repeat p-2 mb-2 border border-[var(--border-1)]"
                 style={{
                   backgroundImage: engine.match.team1?.logo_url
                     ? `url(${engine.match.team1.logo_url})`
@@ -967,12 +996,12 @@ export default function UnifiedLiveMatchPage({
                 {engine.match.team1?.short_name}
               </p>
             </div>
-            <span className="text-[10px] sm:text-xs font-black text-[var(--text-muted)] bg-[var(--surface-2)] px-2 sm:px-3 py-1 rounded-full border border-[var(--border-1)]">
+            <span className="text-[13px] sm:text-xs font-black text-[var(--text-muted)] bg-[var(--surface-2)] px-2 sm:px-3 py-1 rounded-full border border-[var(--border-1)]">
               VS
             </span>
             <div className="text-center w-28 sm:w-32">
               <div
-                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-[var(--surface-2)] bg-contain bg-center bg-no-repeat p-2 mb-2 border border-[var(--border-1)]"
+                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-[var(--surface-2)] bg-contain bg-center bg-no-repeat p-2 mb-2 border border-[var(--border-1)]"
                 style={{
                   backgroundImage: engine.match.team2?.logo_url
                     ? `url(${engine.match.team2.logo_url})`
@@ -992,12 +1021,14 @@ export default function UnifiedLiveMatchPage({
               <div className="flex gap-4">
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team1_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team1_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                >
                   {engine.match.team1?.name}
                 </button>
                 <button
                   onClick={() => setTossWinnerId(engine.match!.team2_id)}
-                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                  className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossWinnerId === engine.match!.team2_id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                >
                   {engine.match.team2?.name}
                 </button>
               </div>
@@ -1010,12 +1041,14 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setTossDecision("bat")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bat" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bat" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                  >
                     Elected to Bat
                   </button>
                   <button
                     onClick={() => setTossDecision("bowl")}
-                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bowl" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                    className={`flex-1 py-4 rounded-xl font-bold border-2 transition-colors ${tossDecision === "bowl" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--background)]" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                  >
                     Elected to Bowl
                   </button>
                 </div>
@@ -1026,7 +1059,8 @@ export default function UnifiedLiveMatchPage({
                 engine.saveTossAndStart(tossWinnerId, tossDecision)
               }
               disabled={!tossWinnerId}
-              className="w-full mt-8 bg-[var(--foreground)] text-[var(--background)] disabled:opacity-50 font-black uppercase py-4 rounded-xl transition-opacity hover:opacity-90">
+              className="w-full mt-8 bg-[var(--foreground)] text-[var(--background)] disabled:opacity-50 font-black uppercase py-4 rounded-xl transition-opacity hover:opacity-90"
+            >
               Start Match
             </button>
           </div>
@@ -1048,7 +1082,7 @@ export default function UnifiedLiveMatchPage({
 
     return (
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 md:p-8 font-sans transition-colors duration-300">
-        <div className="max-w-2xl mx-auto bg-[var(--surface-1)] rounded-[2rem] p-8 shadow-sm border border-[var(--border-1)] mt-10 animate-in zoom-in-95">
+        <div className="max-w-2xl mx-auto bg-[var(--surface-1)] rounded-sm p-8 shadow-sm border border-[var(--border-1)] mt-10 animate-in zoom-in-95">
           <h2 className="text-2xl font-black uppercase tracking-widest text-center mb-2">
             {engine.match.current_innings === 1
               ? "First Innings Setup"
@@ -1058,19 +1092,20 @@ export default function UnifiedLiveMatchPage({
             {stats.battingTeam?.name} is Batting
           </p>
           <div className="space-y-6">
-            <div className="bg-[var(--surface-2)] p-6 rounded-2xl border border-[var(--border-1)]">
+            <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-[var(--border-1)]">
               <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                 Select Batsmen
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
+                  <label className="text-[13px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
                     Striker
                   </label>
                   <select
                     value={setupStriker}
                     onChange={(e) => setSetupStriker(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+                  >
                     <option value="">Select...</option>
                     {stats.battingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -1080,13 +1115,14 @@ export default function UnifiedLiveMatchPage({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
+                  <label className="text-[13px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-2">
                     Non-Striker
                   </label>
                   <select
                     value={setupNonStriker}
                     onChange={(e) => setSetupNonStriker(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+                  >
                     <option value="">Select...</option>
                     {stats.battingSquad.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -1102,19 +1138,21 @@ export default function UnifiedLiveMatchPage({
                     setQuickAddRole("batter");
                     setShowQuickAddPlayer(true);
                   }}
-                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
+                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
+                >
                   + Add Extra Batter to Squad
                 </button>
               </div>
             </div>
-            <div className="bg-[var(--surface-2)] p-6 rounded-2xl border border-[var(--border-1)]">
+            <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-[var(--border-1)]">
               <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                 Select Bowler
               </h3>
               <select
                 value={setupBowler}
                 onChange={(e) => setSetupBowler(e.target.value)}
-                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]">
+                className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl p-4 text-base font-bold outline-none focus:border-[var(--accent)]"
+              >
                 <option value="">Select...</option>
                 {stats.bowlingSquad.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -1128,7 +1166,8 @@ export default function UnifiedLiveMatchPage({
                     setQuickAddRole("bowler");
                     setShowQuickAddPlayer(true);
                   }}
-                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
+                  className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
+                >
                   + Add Extra Bowler to Squad
                 </button>
               </div>
@@ -1137,7 +1176,8 @@ export default function UnifiedLiveMatchPage({
               onClick={() =>
                 engine.saveOpeners(setupStriker, setupNonStriker, setupBowler)
               }
-              className="w-full bg-[var(--accent)] text-[var(--background)] font-black text-lg uppercase tracking-widest py-5 rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg">
+              className="w-full bg-[var(--accent)] text-[var(--background)] font-black text-lg uppercase tracking-widest py-5 rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg"
+            >
               Play Ball
             </button>
           </div>
@@ -1145,12 +1185,12 @@ export default function UnifiedLiveMatchPage({
           {/* 🔍 QUICK ADD MODAL WITH LIVE SEARCH (INJECTED FOR PRE-MATCH ACCESSIBILITY) 🔍 */}
           {showQuickAddPlayer && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-2xl h-[50vh] p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95 flex flex-col">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-2xl h-[50vh] p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95 flex flex-col">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-2 flex items-center gap-2">
                   <Search className="text-[var(--accent)]" size={20} /> Quick
                   Add Player
                 </h2>
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-6">
+                <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-6">
                   Search Global Database
                 </p>
 
@@ -1160,7 +1200,7 @@ export default function UnifiedLiveMatchPage({
                     value={newPlayerName}
                     onChange={(e) => setNewPlayerName(e.target.value)}
                     placeholder="Type a name (e.g. Virat...)"
-                    className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-2xl p-4 text-lg font-bold outline-none focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
+                    className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-xl p-4 text-lg font-bold outline-none focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
                   />
 
                   {/* LIVE SEARCH RESULTS DROPDOWN */}
@@ -1176,11 +1216,12 @@ export default function UnifiedLiveMatchPage({
                             <button
                               key={idx}
                               onClick={() => handleQuickAddPlayer(p.full_name)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer">
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
+                            >
                               <span className="font-bold text-[var(--foreground)] text-left">
                                 {p.full_name}
                               </span>
-                              <span className="bg-[var(--accent)] text-[var(--background)] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm whitespace-nowrap">
+                              <span className="bg-[var(--accent)] text-[var(--background)] px-3 py-1.5 rounded-lg text-[13px] font-black uppercase shadow-sm whitespace-nowrap">
                                 + Select
                               </span>
                             </button>
@@ -1202,13 +1243,15 @@ export default function UnifiedLiveMatchPage({
                       setNewPlayerName("");
                       setGlobalSearchResults([]);
                     }}
-                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl">
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-xl"
+                  >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg">
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-xl shadow-lg"
+                  >
                     Create New
                   </button>
                 </div>
@@ -1233,167 +1276,208 @@ export default function UnifiedLiveMatchPage({
   return (
     <div
       className={`min-h-screen bg-[var(--background)] text-[var(--foreground)] p-2 md:p-6 font-sans relative overflow-hidden lg:overflow-visible transition-colors duration-300 ${
-        /* Only apply heavy bottom padding on Mobile when Keypad is active */
-        isAuthorized && !isCompleted ? "pb-[200px] lg:pb-10" : "pb-10"
-      }`}>
-      {/* HEADER & TOP NAVIGATION */}
-      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-6 px-3 md:px-2 mt-2 animate-in fade-in">
-        
-        {/* LEFT: BACK BUTTON & MATCH DETAILS */}
-        <div className="flex items-start md:items-center gap-3 md:gap-4 w-full md:w-auto">
-          <button
-            onClick={() => (window.location.href = `/t/${tournamentId}/matches`)}
-            className="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:scale-105 transition-all hover:bg-[var(--surface-2)] text-[var(--foreground)] mt-1 md:mt-0"
-          >
-            <ArrowLeft size={18} className="md:w-5 md:h-5" />
-          </button>
-          
-          <div className="flex-1">
-            <span className="text-[10px] md:text-xs uppercase font-black text-teal-500 tracking-wider block mb-0.5">
-              {ctx.tournamentName}
-            </span>
-            
-            <h1 className="text-lg md:text-2xl font-black leading-tight">
-              {ctx.team1Name} <span className="text-[var(--text-muted)] text-sm md:text-xl font-bold mx-0.5 md:mx-1">vs</span> {ctx.team2Name}
-            </h1>
-            
-            <p className="text-[10px] md:text-xs text-[var(--text-muted)] mt-1 flex flex-wrap items-center gap-x-1.5">
-              <span>📍 {ctx.venue}</span> 
-              <span className="hidden md:inline">|</span> 
-              <span className="md:hidden">•</span>
-              <span className="text-xs md:text-[15px] font-bold">{ctx.oversCount} Overs</span>
-            </p>
-            
-            <p className="text-[10px] md:text-sm font-bold text-[var(--accent)] uppercase tracking-widest mt-1">
-              {isCompleted
-                ? "Match Completed"
-                : engine.match?.current_innings === 1
-                  ? "1st Innings"
-                  : "2nd Innings Chase"}
-            </p>
-          </div>
-        </div>
-
-        {/* RIGHT: ACTION BUTTONS */}
-        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end border-t border-[var(--border-1)] md:border-none pt-3 md:pt-0 mt-1 md:mt-0">
-          {isAuthorized && !isCompleted && (
-            <div className="flex items-center gap-2 mr-2 border-r border-[var(--border-1)] pr-3 md:pr-4">
-              <button 
-                onClick={toggleListening}
-                className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-all shadow-sm ${
-                  isListening 
-                    ? "bg-red-500 text-white animate-pulse shadow-red-500/40" 
-                    : "bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--accent)]"
-                }`}
-              >
-                {isListening ? <Mic size={18} /> : <MicOff size={18} />}
-              </button>
-              
-              <VoiceManualModal /> 
-            </div>
-          )}
-          {isAuthorized && tournamentId === "QUICK_MATCH" && (
+        /* Apply heavy bottom padding on Mobile when Keypad is active */
+        isAuthorized && !isCompleted ? "pb-[250px] lg:pb-10" : "pb-10"
+      }`}
+    >
+      {/* HEADER & TOP NAVIGATION - "THE COMMAND STRIP" */}
+      <div className="max-w-[1400px] mx-auto mb-4 md:mb-6 mt-1 md:mt-2 animate-in fade-in">
+        <div className="bg-[var(--surface-1)]/90 backdrop-blur-md border border-[var(--border-1)] rounded-xl p-3 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm">
+          {/* LEFT: BACK BUTTON & MATCH DETAILS */}
+          <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto min-w-0">
             <button
-              onClick={handleDeleteMatch}
-              className="flex items-center justify-center gap-1.5 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm flex-1 md:flex-none"
+              onClick={() =>
+                (window.location.href = `/t/${tournamentId}/matches`)
+              }
+              className="w-10 h-10 md:w-11 md:h-11 shrink-0 bg-[var(--surface-2)] rounded-full flex items-center justify-center shadow-inner border border-[var(--border-1)] hover:scale-105 active:scale-95 transition-all hover:bg-[var(--border-1)] text-[var(--foreground)]"
+              aria-label="Back to matches"
             >
-              <Trash2 size={14} className="shrink-0" /> 
-              <span>Delete</span>
+              <ArrowLeft size={18} className="md:w-5 md:h-5" />
             </button>
-          )}
-          
-          <button
-            onClick={handleShareMatch}
-            className="flex items-center justify-center gap-1.5 bg-[var(--surface-1)] border border-[var(--border-1)] px-4 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all shadow-sm flex-1 md:flex-none"
-          >
-            {isSharing ? (
-              <Check size={14} className="text-emerald-500 shrink-0" />
-            ) : (
-              <Share2 size={14} className="shrink-0" />
+
+            <div className="flex-1 min-w-0">
+              {/* Broadcast-style Badges */}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] md:text-[13px] uppercase font-black text-[var(--accent)] tracking-widest bg-[var(--accent)]/10 px-2 py-0.5 rounded-md truncate max-w-[250px] md:max-w-[200px] border border-[var(--accent)]/20">
+                  {ctx.tournamentName}
+                </span>
+                <span className="text-[9px] md:text-[13px] uppercase font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md border border-[var(--border-1)] shrink-0">
+                  {isCompleted
+                    ? "Ended"
+                    : engine.match?.current_innings === 1
+                      ? "1st Innings"
+                      : "2nd Innings"}
+                </span>
+              </div>
+
+              <h1 className="text-base md:text-2xl font-black leading-tight truncate">
+                {ctx.team1Name}{" "}
+                <span className="text-[var(--text-muted)] text-sm md:text-xl font-bold mx-0.5 md:mx-1">
+                  vs
+                </span>{" "}
+                {ctx.team2Name}
+              </h1>
+
+              <p className="text-[13px] md:text-xs text-[var(--text-muted)] mt-0.5 md:mt-1 truncate flex items-center gap-1.5 font-bold">
+                <span className="text-red-400">📍</span> {ctx.venue}
+                <span className="text-[var(--border-1)]">|</span>
+                {ctx.oversCount} Overs
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT: ACTION BUTTONS */}
+          <div className="flex items-center gap-2 w-full md:w-auto pt-3 md:pt-0 border-t border-[var(--border-1)] md:border-none shrink-0 justify-between md:justify-end">
+            <div className="flex items-center gap-2">
+              {isAuthorized && (
+                <span className="hidden md:flex bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-3 py-2 rounded-xl text-[13px] font-black uppercase tracking-widest items-center gap-1.5 shadow-sm">
+                  <Settings size={14} /> Admin
+                </span>
+              )}
+
+              {isAuthorized && tournamentId === "QUICK_MATCH" && (
+                <button
+                  onClick={handleDeleteMatch}
+                  className="flex items-center justify-center gap-1.5 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[13px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
+                >
+                  <Trash2 size={14} />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
+              )}
+
+              <button
+                onClick={handleShareMatch}
+                className="flex items-center justify-center gap-1.5 bg-[var(--surface-2)] border border-[var(--border-1)] px-3 py-2 rounded-xl text-[13px] font-black uppercase tracking-widest hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all shadow-sm active:scale-95"
+              >
+                {isSharing ? (
+                  <Check size={14} className="text-emerald-500" />
+                ) : (
+                  <Share2 size={14} />
+                )}
+                <span>{isSharing ? "Copied" : "Share"}</span>
+              </button>
+            </div>
+
+            {/* Voice Scoring Toggle (Separated slightly for focus) */}
+            {isAuthorized && !isCompleted && (
+              <div className="flex items-center gap-2 pl-2 md:pl-3 border-l border-[var(--border-1)]">
+                <button
+                  onClick={toggleListening}
+                  title={
+                    isListening ? "Stop Voice Scoring" : "Start Voice Scoring"
+                  }
+                  className={`flex items-center justify-center gap-2 px-3 py-2 md:w-auto md:h-auto rounded-xl font-black text-[13px] uppercase tracking-widest transition-all shadow-sm active:scale-95 ${
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.5)] border border-red-600"
+                      : "bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40"
+                  }`}
+                >
+                  {isListening ? <Mic size={14} /> : <MicOff size={14} />}
+                  <span className="hidden sm:inline">
+                    {isListening ? "Listening" : "Voice"}
+                  </span>
+                </button>
+                <VoiceManualModal />
+              </div>
             )}
-            <span>{isSharing ? "Copied" : "Share"}</span>
-            {/* Hide "Scorecard" text on mobile to save space */}
-            <span className="hidden md:inline">{isSharing ? "" : " Scorecard"}</span>
-          </button>
-          
-          {isAuthorized && (
-            <span className="hidden md:flex bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest items-center gap-2">
-              <Settings size={12} /> Admin Mode
-            </span>
-          )}
+          </div>
         </div>
       </div>
 
       {/* --- MASTER GRID CONTAINER --- */}
       <div
-        className={`max-w-[1400px] mx-auto flex gap-6 relative animate-in fade-in ${
+        className={`max-w-[1400px] mx-auto flex gap-6 lg:gap-8 relative animate-in fade-in ${
           isCompleted ? "flex-col lg:flex-row" : "flex-col-reverse lg:flex-row"
-        }`}>
+        }`}
+      >
         {/* --- LEFT COLUMN: DYNAMIC CONTEXT (AWARDS OR SCORING KEYPAD) --- */}
-        <div className="flex-1 flex flex-col gap-6 lg:max-w-[350px] xl:max-w-[400px] w-full shrink-0">
+        <div className="flex-1 flex flex-col gap-6 lg:max-w-[360px] xl:max-w-[420px] w-full shrink-0">
           {isCompleted ? (
-            /* COMPLETED: MATCH RESULT & AWARDS WIDGET */
-            <div className="bg-gradient-to-br from-yellow-500/10 to-transparent rounded-[2.5rem] p-6 sm:p-8 border border-yellow-500/20 text-center relative overflow-hidden lg:sticky lg:top-6 shadow-sm">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 blur-3xl rounded-full"></div>
-              <div className="w-20 h-20 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl border border-yellow-500/30">
-                🏆
-              </div>
-              <h2 className="text-3xl font-black uppercase tracking-tighter mb-2 text-[var(--foreground)] relative z-10">
-                Match Result
-              </h2>
-              <p className="text-xl font-bold text-yellow-500 uppercase tracking-widest mb-8 relative z-10">
-                {engine.match.result_margin || "Processing..."}
-              </p>
+            /* 🏆 COMPLETED: MATCH RESULT & AWARDS WIDGET 🏆 */
+            <div className="bg-gradient-to-b from-yellow-500/15 via-[var(--surface-1)] to-[var(--surface-1)] rounded-sm p-1 border border-yellow-500/30 text-center relative shadow-lg lg:sticky lg:top-24">
+              <div className="bg-[var(--surface-1)]/50 rounded-[1.8rem] p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/20 blur-3xl rounded-full mix-blend-screen" />
 
-              <div className="flex flex-col gap-4 text-left mb-8 relative z-10">
-                <div className="bg-[var(--surface-1)] p-5 rounded-2xl border border-[var(--border-1)] shadow-sm">
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
-                    Player of the Match
-                  </p>
-                  <p className="font-black text-lg text-[var(--foreground)]">
-                    {engine.team1Players
-                      .concat(engine.team2Players)
-                      .find((p) => p.id === engine.match!.player_of_match_id)
-                      ?.full_name || "TBD"}
-                  </p>
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 text-[var(--background)] rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-[0_0_30px_rgba(234,179,8,0.3)] border-4 border-[var(--surface-1)] relative z-10">
+                  🏆
                 </div>
-                <div className="bg-[var(--surface-1)] p-5 rounded-2xl border border-[var(--border-1)] shadow-sm">
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
-                    Best Batsman
-                  </p>
-                  <p className="font-black text-lg text-[var(--foreground)]">
-                    {engine.team1Players
-                      .concat(engine.team2Players)
-                      .find((p) => p.id === engine.match!.best_batsman_id)
-                      ?.full_name || "TBD"}
-                  </p>
-                </div>
-                <div className="bg-[var(--surface-1)] p-5 rounded-2xl border border-[var(--border-1)] shadow-sm">
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
-                    Best Bowler
-                  </p>
-                  <p className="font-black text-lg text-[var(--foreground)]">
-                    {engine.team1Players
-                      .concat(engine.team2Players)
-                      .find((p) => p.id === engine.match!.best_bowler_id)
-                      ?.full_name || "TBD"}
-                  </p>
-                </div>
-              </div>
 
-              {isAuthorized && (
-                <button
-                  onClick={() => setShowPostMatchModal(true)}
-                  className="w-full relative z-10 bg-yellow-500 text-[var(--background)] font-black uppercase tracking-widest text-xs py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20">
-                  Edit Awards 🏆
-                </button>
-              )}
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-1 text-[var(--foreground)] relative z-10">
+                  Match Result
+                </h2>
+                <p className="text-sm md:text-base font-black text-yellow-500 uppercase tracking-widest mb-8 relative z-10 leading-snug">
+                  {engine.match.result_margin || "Processing..."}
+                </p>
+
+                <div className="flex flex-col gap-3 text-left mb-6 relative z-10">
+                  {/* Hero Stat Strip */}
+                  <div className="flex items-center gap-4 bg-[var(--surface-2)] p-3.5 rounded-xl border border-[var(--border-1)] hover:border-yellow-500/40 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">
+                      ⭐
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                        Player of the Match
+                      </p>
+                      <p className="font-bold text-[var(--foreground)] truncate">
+                        {engine.team1Players
+                          .concat(engine.team2Players)
+                          .find(
+                            (p) => p.id === engine.match!.player_of_match_id,
+                          )?.full_name || "TBD"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 bg-[var(--surface-2)] p-3.5 rounded-xl border border-[var(--border-1)] hover:border-[var(--accent)]/40 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)] shrink-0">
+                      🏏
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                        Best Batsman
+                      </p>
+                      <p className="font-bold text-[var(--foreground)] truncate">
+                        {engine.team1Players
+                          .concat(engine.team2Players)
+                          .find((p) => p.id === engine.match!.best_batsman_id)
+                          ?.full_name || "TBD"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 bg-[var(--surface-2)] p-3.5 rounded-xl border border-[var(--border-1)] hover:border-[var(--accent)]/40 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)] shrink-0">
+                      ⚾
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                        Best Bowler
+                      </p>
+                      <p className="font-bold text-[var(--foreground)] truncate">
+                        {engine.team1Players
+                          .concat(engine.team2Players)
+                          .find((p) => p.id === engine.match!.best_bowler_id)
+                          ?.full_name || "TBD"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {isAuthorized && (
+                  <button
+                    onClick={() => setShowPostMatchModal(true)}
+                    className="w-full relative z-10 bg-yellow-500 text-[var(--background)] font-black uppercase tracking-widest text-xs py-3.5 rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-md"
+                  >
+                    Edit Awards
+                  </button>
+                )}
+              </div>
             </div>
           ) : isAuthorized ? (
-            /* LIVE (ADMIN): SCORING KEYPAD PANEL */
-            <div className="flex flex-col gap-6 w-full lg:max-w-[100%]">
-              {/* Admin Recent Balls (Sits BEHIND the keypad on mobile, BELOW it on desktop) */}
-              <div className="order-2 lg:order-2">
+            /* 🔴 LIVE (ADMIN): SCORING KEYPAD PANEL 🔴 */
+            <div className="flex flex-col gap-4 md:gap-6 w-full">
+              <div className="order-2 lg:order-1">
                 <RecentBalls
                   deliveries={engine.deliveries}
                   currentOvers={stats.currentOvers}
@@ -1402,8 +1486,7 @@ export default function UnifiedLiveMatchPage({
                   isAuthorized={isAuthorized}
                 />
               </div>
-              {/* Responsive Keypad wrapper (Fixed bottom sheet on mobile, static on desktop) */}
-              <Keypad 
+              <Keypad
                 engine={engine}
                 handleRecordBall={handleRecordBall}
                 setMoreActionType={(type) => setMoreActionType(type as any)}
@@ -1412,220 +1495,182 @@ export default function UnifiedLiveMatchPage({
                 setShowExtrasModal={setShowExtrasModal}
                 setPlayerOutId={setPlayerOutId}
                 setShowWicketModal={setShowWicketModal}
-                onManualInteraction={handleManualAction} 
+                onManualInteraction={handleManualAction}
               />
             </div>
           ) : (
-            /* LIVE (PUBLIC): FAN WIDGET & AD SPACE */
-            <div className="flex flex-col gap-6 w-full lg:sticky lg:top-6">
-              {/* Match Context Card */}
-              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2.5rem] p-6 sm:p-8 shadow-sm">
-                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-6 ml-1">
-                  Match Context
-                </h3>
-
-                {/* Toss Info */}
-                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-[var(--border-1)]">
-                  <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-2xl shrink-0 border border-[var(--border-1)]">
-                    🪙
+            /* 📺 LIVE (PUBLIC): BROADCAST WIDGET 📺 */
+            <div className="flex flex-col gap-6 w-full lg:sticky lg:top-24">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-sm p-5 shadow-sm">
+                {/* Sleek Toss Indicator */}
+                <div className="flex items-center justify-between mb-5 pb-5 border-b border-[var(--border-1)]">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">
+                      Toss Result
+                    </span>
+                    <span className="font-bold text-[var(--foreground)] text-sm">
+                      {ctx.tossWinnerName || "TBD"}
+                    </span>
                   </div>
-                  <div>
-                    <p className="font-bold text-[var(--foreground)] text-sm">
-                      {ctx.tossWinnerName || "Toss Details"} won the toss
-                    </p>
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">
-                      Elected to {engine.match.toss_decision || "TBA"}
-                    </p>
+                  <div className="bg-[var(--surface-2)] px-3 py-1.5 rounded-lg border border-[var(--border-1)] text-xs font-black uppercase tracking-wider text-[var(--text-muted)]">
+                    Elected to {engine.match.toss_decision || "..."}
                   </div>
                 </div>
 
-                {/* Run Rates */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-[var(--surface-2)] rounded-2xl p-4 text-center border border-[var(--border-1)]">
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
-                      CRR
+                {/* Broadcast Run Rates Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[var(--surface-2)] rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <p className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">
+                      Current RR
                     </p>
-                    <p className="text-xl font-black text-[var(--foreground)]">
+                    <p className="text-2xl font-black text-[var(--foreground)]">
                       {ctx.crr || "0.00"}
                     </p>
                   </div>
-                  <div className="bg-[var(--surface-2)] rounded-2xl p-4 text-center border border-[var(--border-1)]">
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">
+
+                  <div
+                    className={`rounded-xl p-4 flex flex-col items-center justify-center text-center ${engine.match.current_innings === 2 && parseFloat(ctx.rrr) > 10 ? "bg-red-500/10 border border-red-500/20" : "bg-[var(--surface-2)]"}`}
+                  >
+                    <p
+                      className={`text-[13px] font-black uppercase tracking-widest mb-0.5 ${engine.match.current_innings === 2 && parseFloat(ctx.rrr) > 10 ? "text-red-500" : "text-[var(--text-muted)]"}`}
+                    >
                       {engine.match.current_innings === 2
-                        ? "Req. RR"
+                        ? "Required RR"
                         : "Proj. Score"}
                     </p>
-                    <p className="text-xl font-black text-[var(--accent)]">
+                    <p
+                      className={`text-2xl font-black ${engine.match.current_innings === 2 && parseFloat(ctx.rrr) > 10 ? "text-red-500" : "text-[var(--accent)]"}`}
+                    >
                       {ctx.isChasing ? `${ctx.rrr}` : `${ctx.proj}`}
                     </p>
                   </div>
                 </div>
-
-                {/* Venue Details */}
-                <div className="text-center bg-[var(--surface-2)] rounded-2xl p-4 border border-[var(--border-1)]">
-                  <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                    📍 {engine.match.venue || "Venue TBD"}
-                  </p>
-                </div>
               </div>
-
-              {/* Revenue Generation: Free Tier Ad Placement */}
-              {/* {tournament?.subscription_tier === "free" && (
-                <div className="bg-[var(--surface-1)] rounded-[2.5rem] border border-[var(--border-1)] p-4 shadow-sm overflow-hidden flex items-center justify-center">
-                  <AdBanner
-                    dataAdSlot="3688504113"
-                    dataAdFormat="rectangle"
-                    dataFullWidthResponsive={true}
-                  />
-                </div>
-              )} */}
             </div>
           )}
         </div>
 
-        {/* --- RIGHT COLUMN: MAIN CONTENT --- */}
-        <div className="flex-1 w-full z-10 relative flex flex-col gap-6 min-w-0">
-          
-          <div className="bg-[var(--surface-1)] overflow-hidden flex flex-col">
-            
-            {/* SWIPEABLE TAB BAR */}
-            <div className="flex overflow-x-auto border-b border-[var(--border-1)] p-1 md:p-1 gap-1 md:gap-1 no-scrollbar snap-x snap-mandatory touch-pan-x">
+        {/* --- RIGHT COLUMN: MAIN CONTENT (De-boxed & Clean) --- */}
+        <div className="flex-1 w-full z-10 relative flex flex-col min-w-0">
+          {/* ✨ STICKY SWIPEABLE TAB BAR ✨ */}
+          <div className="sticky top-[60px] md:top-[76px] z-30 bg-[var(--background)]/90 backdrop-blur-md pb-4 pt-2 -mx-2 px-2 sm:mx-0 sm:px-0">
+            <div className="flex overflow-x-auto gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory touch-pan-x">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)} 
-                  className={`flex items-center gap-1 md:gap-1 px-3 py-1 md:px-3 md:py-2 rounded-md md:rounded-lg text-[13px] sm:text-sm md:text-sm font-bold uppercase whitespace-nowrap transition-all shrink-0 snap-start touch-manipulation ${
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`px-4 py-2 rounded-full text-[12px] sm:text-xs md:text-sm font-black uppercase tracking-wider whitespace-nowrap transition-all shrink-0 snap-start touch-manipulation border ${
                     activeTab === tab.id
-                      ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-                      : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"
-                  }`}>
+                      ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md"
+                      : "bg-[var(--surface-1)] text-[var(--text-muted)] border-[var(--border-1)] hover:border-[var(--text-muted)] hover:text-[var(--foreground)]"
+                  }`}
+                >
                   {tab.label}
-                  {activeTab === tab.id ? (
-                    <ChevronUp size={12} className="md:w-3.5 md:h-3.5" />
-                  ) : (
-                    <ChevronDown size={12} className="opacity-50 md:w-3.5 md:h-3.5" />
-                  )}
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* TAB CONTENT (With Swipe Listeners attached) */}
-            {activeTab && (
-              <div 
-                className="min-h-[60vh] md:min-h-[500px] w-full overflow-hidden"
-                // onTouchStart={onTouchStart}
-                // onTouchMove={onTouchMove}
-                // onTouchEnd={onTouchEnd}
-              >
-                {/* Visual swipe hint for mobile users */}
-                <div className="md:hidden flex justify-center mb-4">
-                  <div className="w-10 h-1 rounded-full bg-[var(--border-1)] opacity-50"></div>
-                </div>
-
-                <div className="animate-in slide-in-from-right-4 fade-in duration-200 mt-5">
-                  {/* SUMMARY TAB */}
-                  {activeTab === "summary" && (
-                    <div className="flex flex-col gap-3 md:gap-4">
-                      <Scoreboard
-                        battingTeam={stats.battingTeam}
-                        currentScore={stats.currentScore}
-                        currentWickets={stats.currentWickets}
-                        currentOvers={stats.currentOvers}
-                        match={engine.match}
-                        runRate={stats.runRate}
-                        targetScore={stats.targetScore}
-                        rrr={stats.rrr}
-                        remainingRuns={stats.remainingRuns}
-                        remainingBalls={stats.remainingBalls}
-                        isAuthorized={isAuthorized}
-                        openSettings={
-                          isAuthorized && !isCompleted
-                            ? () => setShowSettingsModal(true)
-                            : undefined
-                        }
-                        extras={stats.extrasBreakdown}
-                        deliveries={engine.deliveries}
-                        team1Players={engine.team1Players}
-                        team2Players={engine.team2Players}
-                        currentOverDeliveries={stats.currentOverDeliveries}
-                      />
-
-                      {!isCompleted && (
-                        <ActivePlayers
-                          battingSquad={stats.battingSquad}
-                          bowlingSquad={stats.bowlingSquad}
-                          match={engine.match}
-                          manualSwapStrike={
-                            isAuthorized ? engine.manualSwapStrike : undefined
-                          }
-                          strikerRuns={stats.strikerRuns}
-                          strikerBalls={stats.strikerBalls}
-                          nonStrikerRuns={stats.nonStrikerRuns}
-                          nonStrikerBalls={stats.nonStrikerBalls}
-                          bowlerOvers={stats.bowlerOvers}
-                          bowlerRuns={stats.bowlerRuns}
-                          bowlerWickets={stats.bowlerWickets}
-                          setShowEditPlayersModal={
-                            isAuthorized ? setShowEditPlayersModal : undefined
-                          }
-                          currentOverDeliveries={stats.currentOverDeliveries}
-                          isAuthorized={isAuthorized}
-                        />
-                      )}
-
-                      {!isCompleted && !isAuthorized && (
-                        <RecentBalls
-                          deliveries={engine.deliveries}
-                          currentOvers={stats.currentOvers}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* SCORECARD TAB */}
-                  {activeTab === "scorecard" && (
-                    <FullScorecard
+          {/* TAB CONTENT */}
+          {activeTab && (
+            <div className="min-h-[60vh] md:min-h-[500px] w-full overflow-hidden pt-2">
+              <div className="animate-in slide-in-from-right-4 fade-in duration-300">
+                {/* SUMMARY TAB */}
+                {activeTab === "summary" && (
+                  <div className="flex flex-col md:flex-row gap-4 flex-wrap">
+                    <Scoreboard
+                      battingTeam={stats.battingTeam}
+                      currentScore={stats.currentScore}
+                      currentWickets={stats.currentWickets}
+                      currentOvers={stats.currentOvers}
+                      match={engine.match}
+                      runRate={stats.runRate}
+                      targetScore={stats.targetScore}
+                      rrr={stats.rrr}
+                      remainingRuns={stats.remainingRuns}
+                      remainingBalls={stats.remainingBalls}
+                      isAuthorized={isAuthorized}
+                      openSettings={
+                        isAuthorized && !isCompleted
+                          ? () => setShowSettingsModal(true)
+                          : undefined
+                      }
+                      extras={stats.extrasBreakdown}
                       deliveries={engine.deliveries}
-                      battingSquad={stats.battingSquad}
-                      bowlingSquad={stats.bowlingSquad}
-                      match={engine.match}
-                    />
-                  )}
-
-                  {/* COMMENTARY TAB */}
-                  {activeTab === "commentary" && (
-                    <Commentary
-                      match={engine.match}
-                      deliveries={engine.deliveries}
-                      battingSquad={stats.battingSquad}
-                      bowlingSquad={stats.bowlingSquad}
-                    />
-                  )}
-
-                  {/* PREDICTOR TAB */}
-                  {activeTab === "predictor" && (
-                    <Predictor match={engine.match} stats={stats} />
-                  )}
-
-                  {/* INFO TAB */}
-                  {activeTab === "info" && (
-                    <Info
-                      match={engine.match}
                       team1Players={engine.team1Players}
                       team2Players={engine.team2Players}
+                      currentOverDeliveries={stats.currentOverDeliveries}
                     />
-                  )}
-                </div>
+
+                    {!isCompleted && (
+                      <ActivePlayers
+                        battingSquad={stats.battingSquad}
+                        bowlingSquad={stats.bowlingSquad}
+                        match={engine.match}
+                        manualSwapStrike={
+                          isAuthorized ? engine.manualSwapStrike : undefined
+                        }
+                        strikerRuns={stats.strikerRuns}
+                        strikerBalls={stats.strikerBalls}
+                        nonStrikerRuns={stats.nonStrikerRuns}
+                        nonStrikerBalls={stats.nonStrikerBalls}
+                        bowlerOvers={stats.bowlerOvers}
+                        bowlerRuns={stats.bowlerRuns}
+                        bowlerWickets={stats.bowlerWickets}
+                        setShowEditPlayersModal={
+                          isAuthorized ? setShowEditPlayersModal : undefined
+                        }
+                        currentOverDeliveries={stats.currentOverDeliveries}
+                        isAuthorized={isAuthorized}
+                      />
+                    )}
+
+                    {!isCompleted && !isAuthorized && (
+                      <RecentBalls
+                        deliveries={engine.deliveries}
+                        currentOvers={stats.currentOvers}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* OTHER TABS */}
+                {activeTab === "scorecard" && (
+                  <FullScorecard
+                    deliveries={engine.deliveries}
+                    battingSquad={stats.battingSquad}
+                    bowlingSquad={stats.bowlingSquad}
+                    match={engine.match}
+                  />
+                )}
+                {activeTab === "commentary" && (
+                  <Commentary
+                    match={engine.match}
+                    deliveries={engine.deliveries}
+                    battingSquad={stats.battingSquad}
+                    bowlingSquad={stats.bowlingSquad}
+                  />
+                )}
+                {activeTab === "predictor" && (
+                  <Predictor match={engine.match} stats={stats} />
+                )}
+                {activeTab === "info" && (
+                  <Info
+                    match={engine.match}
+                    team1Players={engine.team1Players}
+                    team2Players={engine.team2Players}
+                  />
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Dynamic SEO Paragraph for AdSense */}
       <div className="max-w-[1400px] m-auto">
         {/* Clean AdSense Text Block pulling straight from the context */}
-        <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 mt-4 rounded-2xl mb-6 text-[var(--text-muted)] text-sm leading-relaxed">
+        <div className="bg-[var(--surface-1)] border border-[var(--border-1)] p-5 mt-4 rounded-xl mb-6 text-[var(--text-muted)] text-sm leading-relaxed">
           <h2 className="sr-only">Live Match Details and Updates</h2>
           <p>
             Welcome to the live digital scorecard for the highly anticipated
@@ -1648,7 +1693,7 @@ export default function UnifiedLiveMatchPage({
         <>
           {showBowlerModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8 text-[var(--foreground)]">
                   Over Completed!
                 </h2>
@@ -1663,7 +1708,8 @@ export default function UnifiedLiveMatchPage({
                         <button
                           key={p.id}
                           onClick={() => setSelectedNewBowlerId(p.id)}
-                          className={`flex items-center justify-between p-5 rounded-2xl border-2 font-bold text-lg transition-colors ${selectedNewBowlerId === p.id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}>
+                          className={`flex items-center justify-between p-5 rounded-xl border-2 font-bold text-lg transition-colors ${selectedNewBowlerId === p.id ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]" : "border-[var(--border-1)] text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
+                        >
                           <span>{p.full_name}</span>
                         </button>
                       ))}
@@ -1675,7 +1721,8 @@ export default function UnifiedLiveMatchPage({
                       setSelectedNewBowlerId("");
                     }}
                     disabled={!selectedNewBowlerId}
-                    className="w-full mt-6 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-2xl disabled:opacity-30 text-lg hover:opacity-90 transition-opacity">
+                    className="w-full mt-6 bg-[var(--foreground)] text-[var(--background)] font-black py-5 rounded-xl disabled:opacity-30 text-lg hover:opacity-90 transition-opacity"
+                  >
                     Confirm Bowler
                   </button>
                   <button
@@ -1683,7 +1730,8 @@ export default function UnifiedLiveMatchPage({
                       setQuickAddRole("bowler");
                       setShowQuickAddPlayer(true);
                     }}
-                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 border-dashed rounded-xl py-3 font-bold transition-colors">
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 border-dashed rounded-xl py-3 font-bold transition-colors"
+                  >
                     <UserPlus size={18} /> Quick Add Bowler
                   </button>
                 </div>
@@ -1693,7 +1741,7 @@ export default function UnifiedLiveMatchPage({
 
           {showWicketModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[70] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-red-500/30 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-red-500/30 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <h2 className="text-3xl font-black uppercase tracking-tighter text-center mb-6 text-red-500">
                   Wicket Fall!
                 </h2>
@@ -1710,7 +1758,8 @@ export default function UnifiedLiveMatchPage({
                         <button
                           key={id}
                           onClick={() => setPlayerOutId(id)}
-                          className={`flex-1 p-4 rounded-2xl border-2 font-bold text-sm transition-colors ${playerOutId === id ? "border-red-500 bg-red-500/10 text-red-500" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                          className={`flex-1 p-4 rounded-xl border-2 font-bold text-sm transition-colors ${playerOutId === id ? "border-red-500 bg-red-500/10 text-red-500" : "border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                        >
                           {
                             stats.battingSquad.find((p) => p.id === id)
                               ?.full_name
@@ -1726,7 +1775,8 @@ export default function UnifiedLiveMatchPage({
                     <select
                       value={wicketType}
                       onChange={(e) => setWicketType(e.target.value)}
-                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
+                      className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                    >
                       <option className="bg-[var(--surface-1)]" value="bowled">
                         Bowled
                       </option>
@@ -1752,7 +1802,8 @@ export default function UnifiedLiveMatchPage({
                       <select
                         value={fielderId}
                         onChange={(e) => setFielderId(e.target.value)}
-                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                      >
                         <option className="bg-[var(--surface-1)]" value="">
                           Select Fielder...
                         </option>
@@ -1760,7 +1811,8 @@ export default function UnifiedLiveMatchPage({
                           <option
                             className="bg-[var(--surface-1)]"
                             key={p.id}
-                            value={p.id}>
+                            value={p.id}
+                          >
                             {p.full_name}
                           </option>
                         ))}
@@ -1782,7 +1834,8 @@ export default function UnifiedLiveMatchPage({
                               completedRuns === runs
                                 ? "bg-[var(--accent)] text-[var(--background)] shadow-md border-[var(--accent)] border"
                                 : "bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"
-                            }`}>
+                            }`}
+                          >
                             {runs}
                           </button>
                         ))}
@@ -1795,7 +1848,7 @@ export default function UnifiedLiveMatchPage({
                       p.id !== engine.match!.live_non_striker_id &&
                       !stats.dismissedPlayerIds.includes(p.id),
                   ).length === 0 ? (
-                    <div className="mt-6 bg-red-500/10 p-5 rounded-2xl border border-red-500/30 text-center animate-in zoom-in-95">
+                    <div className="mt-6 bg-red-500/10 p-5 rounded-xl border border-red-500/30 text-center animate-in zoom-in-95">
                       <p className="text-red-500 font-black uppercase tracking-widest text-lg">
                         ⚠️ All Out!
                       </p>
@@ -1808,7 +1861,8 @@ export default function UnifiedLiveMatchPage({
                             setQuickAddRole("batter");
                             setShowQuickAddPlayer(true);
                           }}
-                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
+                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
+                        >
                           + Add Extra Player to Squad
                         </button>
                       </div>
@@ -1821,7 +1875,8 @@ export default function UnifiedLiveMatchPage({
                       <select
                         value={newBatsmanId}
                         onChange={(e) => setNewBatsmanId(e.target.value)}
-                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
+                        className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                      >
                         <option className="bg-[var(--surface-1)]" value="">
                           Select New Batsman...
                         </option>
@@ -1836,7 +1891,8 @@ export default function UnifiedLiveMatchPage({
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}>
+                              value={p.id}
+                            >
                               {p.full_name}
                             </option>
                           ))}
@@ -1847,14 +1903,15 @@ export default function UnifiedLiveMatchPage({
                             setQuickAddRole("batter");
                             setShowQuickAddPlayer(true);
                           }}
-                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors">
+                          className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-xs font-black uppercase transition-colors"
+                        >
                           + Add Extra Player to Squad
                         </button>
                       </div>
                     </div>
                   )}
                   <hr className="border-[var(--border-1)]" />
-                  <div className="bg-orange-500/10 p-5 rounded-2xl border border-orange-500/30">
+                  <div className="bg-orange-500/10 p-5 rounded-xl border border-orange-500/30">
                     <div className="flex items-center gap-3 mb-2">
                       <input
                         type="checkbox"
@@ -1872,7 +1929,8 @@ export default function UnifiedLiveMatchPage({
                       />
                       <label
                         htmlFor="wicketExtra"
-                        className="text-sm font-black text-orange-500 uppercase cursor-pointer">
+                        className="text-sm font-black text-orange-500 uppercase cursor-pointer"
+                      >
                         Wicket on an Extra?
                       </label>
                     </div>
@@ -1886,7 +1944,8 @@ export default function UnifiedLiveMatchPage({
                                 setWicketExtraType(ext as any);
                                 setForceLegalBall(false);
                               }}
-                              className={`flex-1 py-3 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                              className={`flex-1 py-3 text-[13px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${wicketExtraType === ext ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                            >
                               {ext.replace("-", " ")}
                             </button>
                           ))}
@@ -1905,7 +1964,8 @@ export default function UnifiedLiveMatchPage({
                             />
                             <label
                               htmlFor="forceLegal"
-                              className="text-sm font-bold text-[var(--text-muted)] cursor-pointer">
+                              className="text-sm font-bold text-[var(--text-muted)] cursor-pointer"
+                            >
                               Count this as a legal delivery?
                             </label>
                           </div>
@@ -1919,7 +1979,8 @@ export default function UnifiedLiveMatchPage({
                               <button
                                 key={num}
                                 onClick={() => setWicketExtraRuns(num)}
-                                className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}>
+                                className={`flex-1 py-3 text-sm font-bold rounded-xl border-2 transition-colors ${wicketExtraRuns === num ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--surface-1)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"}`}
+                              >
                                 +{num}
                               </button>
                             ))}
@@ -1931,7 +1992,8 @@ export default function UnifiedLiveMatchPage({
                   <div className="flex gap-4 pt-4">
                     <button
                       onClick={() => setShowWicketModal(false)}
-                      className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl text-lg transition-colors">
+                      className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-xl text-lg transition-colors"
+                    >
                       Cancel
                     </button>
                     <button
@@ -1947,7 +2009,8 @@ export default function UnifiedLiveMatchPage({
                         ).length > 0 &&
                           !newBatsmanId)
                       }
-                      className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-2xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20">
+                      className="flex-[2] bg-red-500 hover:bg-red-600 text-white font-black uppercase py-5 rounded-xl disabled:opacity-50 text-lg tracking-widest transition-colors shadow-lg shadow-red-500/20"
+                    >
                       {stats.battingSquad.filter(
                         (p) =>
                           p.id !== engine.match!.live_striker_id &&
@@ -1965,7 +2028,7 @@ export default function UnifiedLiveMatchPage({
 
           {showExtrasModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[80] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-orange-500/30 shadow-2xl animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-orange-500/30 shadow-2xl animate-in zoom-in-95">
                 <h2 className="text-3xl font-black uppercase text-center mb-6 text-[var(--foreground)]">
                   Record {pendingExtraType}
                 </h2>
@@ -1977,7 +2040,8 @@ export default function UnifiedLiveMatchPage({
                     <button
                       key={num}
                       onClick={() => setExtraAdditionalRuns(num)}
-                      className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"}`}>
+                      className={`py-5 rounded-xl font-black text-2xl transition-all ${extraAdditionalRuns === num ? "bg-orange-500 text-white shadow-lg" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)]"}`}
+                    >
                       {num}
                     </button>
                   ))}
@@ -1985,12 +2049,14 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowExtrasModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors">
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-xl text-lg transition-colors"
+                  >
                     Cancel
                   </button>
                   <button
                     onClick={submitExtra}
-                    className="flex-[2] bg-[var(--foreground)] hover:opacity-80 transition-opacity text-[var(--background)] font-black uppercase py-5 rounded-2xl px-6 text-lg tracking-widest">
+                    className="flex-[2] bg-[var(--foreground)] hover:opacity-80 transition-opacity text-[var(--background)] font-black uppercase py-5 rounded-xl px-6 text-lg tracking-widest"
+                  >
                     Confirm
                   </button>
                 </div>
@@ -2000,14 +2066,15 @@ export default function UnifiedLiveMatchPage({
 
           {editingBall && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl">
                 <h2 className="text-2xl font-black uppercase mb-6 text-center text-[var(--foreground)]">
                   Correct Delivery
                 </h2>
                 <div className="space-y-8">
                   <button
                     onClick={() => setEditingBall(null)}
-                    className="w-full py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-2xl text-lg transition-colors">
+                    className="w-full py-5 font-bold text-[var(--text-muted)] bg-[var(--surface-2)] hover:text-[var(--foreground)] rounded-xl text-lg transition-colors"
+                  >
                     Cancel
                   </button>
                 </div>
@@ -2037,7 +2104,7 @@ export default function UnifiedLiveMatchPage({
                 </p>
                 {engine.match!.current_innings === 2 &&
                   !stats.isTargetReached && (
-                    <p className="text-red-400 font-bold text-lg mb-10 bg-red-500/10 p-4 rounded-2xl border border-red-500/20">
+                    <p className="text-red-400 font-bold text-lg mb-10 bg-red-500/10 p-4 rounded-xl border border-red-500/20">
                       Target was {stats.targetScore}.{" "}
                       {stats.battingTeam?.short_name} lost by{" "}
                       {stats.targetScore! - 1 - stats.currentScore} runs.
@@ -2046,13 +2113,15 @@ export default function UnifiedLiveMatchPage({
                 {engine.match!.current_innings === 1 ? (
                   <button
                     onClick={engine.startSecondInnings}
-                    className="w-full bg-[var(--accent)] text-[var(--background)] font-black py-6 rounded-2xl text-2xl mt-4 hover:opacity-90 transition-opacity shadow-lg">
+                    className="w-full bg-[var(--accent)] text-[var(--background)] font-black py-6 rounded-xl text-2xl mt-4 hover:opacity-90 transition-opacity shadow-lg"
+                  >
                     START 2ND INNINGS
                   </button>
                 ) : (
                   <button
                     onClick={() => setShowPostMatchModal(true)}
-                    className="w-full bg-yellow-500 text-white font-black py-6 rounded-2xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20">
+                    className="w-full bg-yellow-500 text-white font-black py-6 rounded-xl text-2xl mt-4 hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
+                  >
                     POST-MATCH AWARDS 🏆
                   </button>
                 )}
@@ -2063,20 +2132,20 @@ export default function UnifiedLiveMatchPage({
           {/* --- EDIT LIVE PLAYERS MODAL --- */}
           {showEditPlayersModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-[var(--foreground)] text-center mb-8">
                   Edit Live Players
                 </h2>
 
                 <div className="space-y-8 mb-8">
                   {/* --- BATSMEN SECTION --- */}
-                  <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
-                    <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
+                  <div className="bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border-1)]">
+                    <h3 className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                       Current Batsmen
                     </h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-2 block">
+                        <label className="text-[13px] font-black text-[var(--text-muted)] uppercase mb-2 block">
                           Striker
                         </label>
                         <select
@@ -2087,13 +2156,15 @@ export default function UnifiedLiveMatchPage({
                               live_striker_id: e.target.value,
                             })
                           }
-                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]">
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
+                        >
                           <option value="">Select...</option>
                           {stats.battingSquad.map((p) => (
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}>
+                              value={p.id}
+                            >
                               {p.full_name}
                             </option>
                           ))}
@@ -2101,7 +2172,7 @@ export default function UnifiedLiveMatchPage({
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-2 block">
+                        <label className="text-[13px] font-black text-[var(--text-muted)] uppercase mb-2 block">
                           Non-Striker
                         </label>
                         <select
@@ -2112,13 +2183,15 @@ export default function UnifiedLiveMatchPage({
                               live_non_striker_id: e.target.value,
                             })
                           }
-                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]">
+                          className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)]"
+                        >
                           <option value="">Select...</option>
                           {stats.battingSquad.map((p) => (
                             <option
                               className="bg-[var(--surface-1)]"
                               key={p.id}
-                              value={p.id}>
+                              value={p.id}
+                            >
                               {p.full_name}
                             </option>
                           ))}
@@ -2131,15 +2204,16 @@ export default function UnifiedLiveMatchPage({
                           setQuickAddRole("batter");
                           setShowQuickAddPlayer(true);
                         }}
-                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2">
+                        className="w-full py-3 mt-2 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[13px] font-black uppercase transition-colors flex items-center justify-center gap-2"
+                      >
                         <UserPlus size={14} /> Add Extra Batter
                       </button>
                     </div>
                   </div>
 
                   {/* --- BOWLER SECTION --- */}
-                  <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)]">
-                    <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
+                  <div className="bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border-1)]">
+                    <h3 className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
                       Current Bowler
                     </h3>
                     <select
@@ -2150,13 +2224,15 @@ export default function UnifiedLiveMatchPage({
                           live_bowler_id: e.target.value,
                         })
                       }
-                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4">
+                      className="w-full p-3.5 bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] rounded-xl font-bold text-sm outline-none focus:border-[var(--accent)] mb-4"
+                    >
                       <option value="">Select...</option>
                       {stats.bowlingSquad.map((p) => (
                         <option
                           className="bg-[var(--surface-1)]"
                           key={p.id}
-                          value={p.id}>
+                          value={p.id}
+                        >
                           {p.full_name}
                         </option>
                       ))}
@@ -2168,7 +2244,8 @@ export default function UnifiedLiveMatchPage({
                         setQuickAddRole("bowler");
                         setShowQuickAddPlayer(true);
                       }}
-                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[10px] font-black uppercase transition-colors flex items-center justify-center gap-2">
+                      className="w-full py-3 border-2 border-dashed border-[var(--border-1)] hover:border-[var(--accent)] text-[var(--text-muted)] hover:text-[var(--accent)] rounded-xl text-[13px] font-black uppercase transition-colors flex items-center justify-center gap-2"
+                    >
                       <UserPlus size={14} /> Add Extra Bowler
                     </button>
                   </div>
@@ -2180,7 +2257,8 @@ export default function UnifiedLiveMatchPage({
                       setShowEditPlayersModal(false);
                       engine.fetchMatchData();
                     }}
-                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-2xl text-base transition-colors">
+                    className="flex-1 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] py-5 rounded-xl text-base transition-colors"
+                  >
                     Cancel
                   </button>
                   <button
@@ -2192,7 +2270,8 @@ export default function UnifiedLiveMatchPage({
                       );
                       setShowEditPlayersModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-2xl text-base transition-opacity shadow-lg">
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase tracking-widest py-5 rounded-xl text-base transition-opacity shadow-lg"
+                  >
                     Save Changes
                   </button>
                 </div>
@@ -2202,7 +2281,7 @@ export default function UnifiedLiveMatchPage({
 
           {showSettingsModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8 text-[var(--foreground)]">
                   Match Settings
                 </h2>
@@ -2216,7 +2295,8 @@ export default function UnifiedLiveMatchPage({
                         onClick={() =>
                           setTempOversLimit(Math.max(1, tempOversLimit - 1))
                         }
-                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
+                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
+                      >
                         -
                       </button>
                       <span className="text-5xl font-black w-24 text-center text-[var(--foreground)]">
@@ -2224,7 +2304,8 @@ export default function UnifiedLiveMatchPage({
                       </span>
                       <button
                         onClick={() => setTempOversLimit(tempOversLimit + 1)}
-                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
+                        className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
+                      >
                         +
                       </button>
                     </div>
@@ -2240,7 +2321,8 @@ export default function UnifiedLiveMatchPage({
                             Math.max(1, tempMaxOversPerBowler - 1),
                           )
                         }
-                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors">
+                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors"
+                      >
                         -
                       </button>
                       <span className="text-3xl font-black w-16 text-center text-[var(--foreground)]">
@@ -2250,7 +2332,8 @@ export default function UnifiedLiveMatchPage({
                         onClick={() =>
                           setTempMaxOversPerBowler(tempMaxOversPerBowler + 1)
                         }
-                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors">
+                        className="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-xl hover:bg-[var(--border-1)] transition-colors"
+                      >
                         +
                       </button>
                     </div>
@@ -2265,7 +2348,8 @@ export default function UnifiedLiveMatchPage({
                           onClick={() =>
                             setTempTargetScore((tempTargetScore || 0) - 1)
                           }
-                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl">
+                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl"
+                        >
                           -
                         </button>
                         <span className="text-4xl font-black w-24 text-center text-orange-500">
@@ -2275,11 +2359,12 @@ export default function UnifiedLiveMatchPage({
                           onClick={() =>
                             setTempTargetScore((tempTargetScore || 0) + 1)
                           }
-                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl">
+                          className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 font-black text-2xl"
+                        >
                           +
                         </button>
                       </div>
-                      <p className="text-[10px] text-center font-bold text-[var(--text-muted)] mt-4 uppercase">
+                      <p className="text-[13px] text-center font-bold text-[var(--text-muted)] mt-4 uppercase">
                         Adjust target based on DLS or Local Rules
                       </p>
                     </div>
@@ -2288,7 +2373,8 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowSettingsModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg">
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-xl transition-colors text-lg"
+                  >
                     Cancel
                   </button>
                   <button
@@ -2301,7 +2387,8 @@ export default function UnifiedLiveMatchPage({
                       );
                       setShowSettingsModal(false);
                     }}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase py-5 rounded-2xl text-lg tracking-widest transition-opacity shadow-lg">
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 font-black uppercase py-5 rounded-xl text-lg tracking-widest transition-opacity shadow-lg"
+                  >
                     Save
                   </button>
                 </div>
@@ -2312,7 +2399,7 @@ export default function UnifiedLiveMatchPage({
           {/* --- MORE ACTIONS MODAL --- */}
           {showMoreModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[80] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8 text-[var(--foreground)]">
                   More Actions
                 </h2>
@@ -2331,7 +2418,8 @@ export default function UnifiedLiveMatchPage({
                             setMoreActionType("penalty-add");
                             setCustomRuns(1);
                           }}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
+                          className={`py-3 px-4 text-[13px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-add" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
                           Penalty (+)
                         </button>
                         <button
@@ -2339,7 +2427,8 @@ export default function UnifiedLiveMatchPage({
                             setMoreActionType("penalty-minus");
                             setCustomRuns(1);
                           }}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
+                          className={`py-3 px-4 text-[13px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "penalty-minus" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
                           Penalty (-)
                         </button>
                       </div>
@@ -2348,19 +2437,22 @@ export default function UnifiedLiveMatchPage({
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setMoreActionType("dead-ball")}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
+                          className={`py-3 px-4 text-[13px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "dead-ball" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
                           Dead Ball
                         </button>
                         <button
                           onClick={() => setMoreActionType("end-innings")}
-                          className={`py-3 px-4 text-[10px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}>
+                          className={`py-3 px-4 text-[13px] sm:text-xs font-bold rounded-xl border-2 uppercase transition-colors ${moreActionType === "end-innings" ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-md" : "bg-[var(--surface-2)] border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--border-1)]"}`}
+                        >
                           End Innings ⏹️
                         </button>
                         {engine.match?.current_innings === 2 && (
                           <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
                             <button
                               onClick={handleUndoEndInnings}
-                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm">
+                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm"
+                            >
                               ⚠️ Revert to 1st Innings
                             </button>
                           </div>
@@ -2381,7 +2473,8 @@ export default function UnifiedLiveMatchPage({
                           onClick={() =>
                             setCustomRuns(Math.max(1, customRuns - 1))
                           }
-                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
+                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
+                        >
                           -
                         </button>
                         <input
@@ -2396,7 +2489,8 @@ export default function UnifiedLiveMatchPage({
                         />
                         <button
                           onClick={() => setCustomRuns(customRuns + 1)}
-                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors">
+                          className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
+                        >
                           +
                         </button>
                       </div>
@@ -2405,7 +2499,7 @@ export default function UnifiedLiveMatchPage({
 
                   {/* 2. END INNINGS UI */}
                   {moreActionType === "end-innings" && (
-                    <div className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-2xl animate-in fade-in slide-in-from-top-2 text-center">
+                    <div className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-xl animate-in fade-in slide-in-from-top-2 text-center">
                       <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest mb-2">
                         {engine.match!.current_innings === 1
                           ? "Start 2nd Innings"
@@ -2413,12 +2507,12 @@ export default function UnifiedLiveMatchPage({
                       </h3>
 
                       {engine.match!.current_innings === 1 ? (
-                        <p className="text-[10px] text-[var(--text-muted)] font-bold">
+                        <p className="text-[13px] text-[var(--text-muted)] font-bold">
                           The target will be automatically calculated based on
                           the 1st innings score plus any penalty runs.
                         </p>
                       ) : (
-                        <p className="text-[10px] sm:text-xs text-[var(--text-muted)] font-bold">
+                        <p className="text-[13px] sm:text-xs text-[var(--text-muted)] font-bold">
                           This will finalize the match and take you to the
                           awards screen.
                         </p>
@@ -2431,7 +2525,8 @@ export default function UnifiedLiveMatchPage({
                 <div className="flex gap-4">
                   <button
                     onClick={() => setShowMoreModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors text-lg">
+                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-xl transition-colors text-lg"
+                  >
                     Cancel
                   </button>
                   <button
@@ -2441,7 +2536,8 @@ export default function UnifiedLiveMatchPage({
                         : submitMoreAction
                     }
                     disabled={engine.isSubmittingBall}
-                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-2xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}>
+                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}
+                  >
                     {moreActionType === "end-innings"
                       ? "Confirm End"
                       : "Submit Action"}
@@ -2454,12 +2550,12 @@ export default function UnifiedLiveMatchPage({
           {/* 🔍 QUICK ADD MODAL WITH LIVE SEARCH (NOW PLACED AT THE VERY BOTTOM OF THE ADMIN BLOCK) 🔍 */}
           {showQuickAddPlayer && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-2xl h-[50vh] p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95 flex flex-col">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-2xl h-[50vh] p-8 shadow-2xl border border-[var(--border-1)] animate-in zoom-in-95 flex flex-col">
                 <h2 className="text-xl font-black uppercase tracking-tight mb-2 flex items-center gap-2">
                   <Search className="text-[var(--accent)]" size={20} /> Quick
                   Add Player
                 </h2>
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-6">
+                <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-6">
                   Search Global Database
                 </p>
 
@@ -2469,7 +2565,7 @@ export default function UnifiedLiveMatchPage({
                     value={newPlayerName}
                     onChange={(e) => setNewPlayerName(e.target.value)}
                     placeholder="Type a name (e.g. Virat...)"
-                    className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-2xl p-4 text-lg font-bold outline-none focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
+                    className="w-full bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border-1)] rounded-xl p-4 text-lg font-bold outline-none focus:border-[var(--accent)] transition-colors placeholder-[var(--text-muted)]"
                   />
 
                   {/* LIVE SEARCH RESULTS DROPDOWN */}
@@ -2485,11 +2581,12 @@ export default function UnifiedLiveMatchPage({
                             <button
                               key={idx}
                               onClick={() => handleQuickAddPlayer(p.full_name)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer">
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] border-b border-[var(--border-1)] last:border-0 transition-colors cursor-pointer"
+                            >
                               <span className="font-bold text-[var(--foreground)] text-left">
                                 {p.full_name}
                               </span>
-                              <span className="bg-[var(--accent)] text-[var(--background)] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-sm whitespace-nowrap">
+                              <span className="bg-[var(--accent)] text-[var(--background)] px-3 py-1.5 rounded-lg text-[13px] font-black uppercase shadow-sm whitespace-nowrap">
                                 + Select
                               </span>
                             </button>
@@ -2511,13 +2608,15 @@ export default function UnifiedLiveMatchPage({
                       setNewPlayerName("");
                       setGlobalSearchResults([]);
                     }}
-                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-2xl">
+                    className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] transition-colors rounded-xl"
+                  >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleQuickAddPlayer()}
                     disabled={!newPlayerName.trim()}
-                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-2xl shadow-lg">
+                    className="flex-[2] bg-[var(--accent)] text-[var(--background)] hover:opacity-90 disabled:opacity-50 transition-opacity font-black uppercase py-4 rounded-xl shadow-lg"
+                  >
                     Create New
                   </button>
                 </div>
@@ -2530,12 +2629,12 @@ export default function UnifiedLiveMatchPage({
       {/* 🔥 MOVED OUTSIDE: Post-Match Awards Modal (Must render even if match is completed!) 🔥 */}
       {isAuthorized && showPostMatchModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <div className="bg-[var(--surface-1)] rounded-[2.5rem] w-full max-w-md p-8 border border-yellow-500/30 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-in zoom-in-95">
+          <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-yellow-500/30 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-in zoom-in-95">
             <h2 className="text-3xl font-black uppercase tracking-tighter text-[var(--foreground)] text-center mb-2">
               Final Details
             </h2>
 
-            <div className="bg-[var(--surface-2)] p-4 rounded-2xl text-center mb-6 border border-[var(--border-1)]">
+            <div className="bg-[var(--surface-2)] p-4 rounded-xl text-center mb-6 border border-[var(--border-1)]">
               <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">
                 Match Result
               </p>
@@ -2546,7 +2645,7 @@ export default function UnifiedLiveMatchPage({
               </p>
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/30 mb-6">
+            <div className="flex items-center gap-3 p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/30 mb-6">
               <input
                 type="checkbox"
                 id="strictMom"
@@ -2556,7 +2655,8 @@ export default function UnifiedLiveMatchPage({
               />
               <label
                 htmlFor="strictMom"
-                className="text-xs font-black text-yellow-500 uppercase tracking-widest leading-tight cursor-pointer">
+                className="text-xs font-black text-yellow-500 uppercase tracking-widest leading-tight cursor-pointer"
+              >
                 MOM must be from the winning team
               </label>
             </div>
@@ -2569,7 +2669,8 @@ export default function UnifiedLiveMatchPage({
                 <select
                   value={momId}
                   onChange={(e) => setMomId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                >
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2577,7 +2678,8 @@ export default function UnifiedLiveMatchPage({
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}>
+                      value={p.id}
+                    >
                       {p.full_name} (
                       {p.team_id === engine.match!.team1_id
                         ? engine.match!.team1?.short_name
@@ -2595,7 +2697,8 @@ export default function UnifiedLiveMatchPage({
                 <select
                   value={bestBatsmanId}
                   onChange={(e) => setBestBatsmanId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                >
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2603,7 +2706,8 @@ export default function UnifiedLiveMatchPage({
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}>
+                      value={p.id}
+                    >
                       {p.full_name}
                     </option>
                   ))}
@@ -2617,7 +2721,8 @@ export default function UnifiedLiveMatchPage({
                 <select
                   value={bestBowlerId}
                   onChange={(e) => setBestBowlerId(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-4 text-base font-bold text-[var(--foreground)] outline-none">
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-4 text-base font-bold text-[var(--foreground)] outline-none"
+                >
                   <option className="bg-[var(--surface-1)]" value="">
                     Select Player...
                   </option>
@@ -2625,7 +2730,8 @@ export default function UnifiedLiveMatchPage({
                     <option
                       className="bg-[var(--surface-1)]"
                       key={p.id}
-                      value={p.id}>
+                      value={p.id}
+                    >
                       {p.full_name}
                     </option>
                   ))}
@@ -2635,7 +2741,8 @@ export default function UnifiedLiveMatchPage({
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setShowPostMatchModal(false)}
-                  className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-2xl transition-colors">
+                  className="flex-1 py-4 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-xl transition-colors"
+                >
                   Cancel
                 </button>
                 {/* <button
@@ -2647,7 +2754,7 @@ export default function UnifiedLiveMatchPage({
                     );
                     setShowPostMatchModal(false);
                   }}
-                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors"
+                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-yellow-500/20 transition-colors"
                 >
                   Save Awards
                 </button> */}
@@ -2674,7 +2781,8 @@ export default function UnifiedLiveMatchPage({
 
                     setShowPostMatchModal(false);
                   }}
-                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-yellow-500/20 transition-colors">
+                  className="flex-[2] bg-yellow-500 hover:bg-yellow-400 text-[var(--background)] font-black uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-yellow-500/20 transition-colors"
+                >
                   Finish Match & Save
                 </button>
               </div>
@@ -2687,7 +2795,7 @@ export default function UnifiedLiveMatchPage({
           commandText={pendingVoice.text}
           onAccept={handleVoiceAccept}
           onCancel={() => setPendingVoice(null)}
-          durationMs={3000} 
+          durationMs={3000}
         />
       )}
     </div>

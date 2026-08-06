@@ -720,14 +720,15 @@ export default function GenericBroadcaster() {
           </p>
           <button
             onClick={() => setIsOledSleep(false)}
-            className="mt-10 px-8 py-4 border-2 border-gray-800 text-gray-400 rounded-2xl hover:bg-gray-900 transition-colors uppercase text-sm font-black">
+            className="mt-10 px-8 py-4 border-2 border-gray-800 text-gray-400 rounded-xl hover:bg-gray-900 transition-colors uppercase text-sm font-black"
+          >
             Wake Screen
           </button>
         </div>
       )}
 
       {error && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center gap-2 backdrop-blur-md text-xs sm:text-sm font-bold shadow-2xl w-[90%] sm:w-auto border border-red-500">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white px-5 py-3 rounded-xl flex flex-col sm:flex-row items-center gap-2 backdrop-blur-md text-xs sm:text-sm font-bold shadow-2xl w-[90%] sm:w-auto border border-red-500">
           <AlertCircle size={20} className="shrink-0" /> {error}
         </div>
       )}
@@ -754,7 +755,7 @@ export default function GenericBroadcaster() {
                   Live Broadcast
                 </span>
               </div>
-              <div className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full w-max flex items-center gap-1 shadow-sm">
+              <div className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[13px] font-bold px-3 py-1.5 rounded-full w-max flex items-center gap-1 shadow-sm">
                 {selectedRes.label} @ {selectedFps.label}
               </div>
 
@@ -786,7 +787,8 @@ export default function GenericBroadcaster() {
         <div className="flex gap-2 sm:gap-3 mr-15">
           <button
             onClick={() => setShowSettings(true)}
-            className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95">
+            className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95"
+          >
             <Settings2 size={18} />
           </button>
           <button
@@ -795,7 +797,8 @@ export default function GenericBroadcaster() {
                 document.documentElement.requestFullscreen().catch(() => {});
               else document.exitFullscreen().catch(() => {});
             }}
-            className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95">
+            className="w-10 h-10 sm:w-12 sm:h-12 bg-black/50 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all hover:bg-white/20 shadow-lg active:scale-95"
+          >
             {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
         </div>
@@ -803,8 +806,8 @@ export default function GenericBroadcaster() {
 
       {!isStreaming && !isOledSleep && (
         <div className="absolute inset-0 flex items-center justify-center z-30 p-4 sm:p-6 overflow-y-auto landscape:items-start bg-black/40 backdrop-blur-sm">
-          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-sm sm:max-w-md landscape:max-w-xl shadow-2xl flex flex-col items-center text-center my-auto">
-            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-blue-100">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 w-full max-w-sm sm:max-w-md landscape:max-w-xl shadow-2xl flex flex-col items-center text-center my-auto">
+            <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
               <Camera size={32} className="text-blue-600" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
@@ -815,14 +818,15 @@ export default function GenericBroadcaster() {
               and use the remote.
             </p>
 
-            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6 shadow-inner">
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 shadow-inner">
               <div className="flex justify-between items-center mb-3">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <span className="text-[13px] font-black text-slate-500 uppercase tracking-widest">
                   Device ID
                 </span>
                 <button
                   onClick={regenerateId}
-                  className="text-blue-600 flex items-center gap-1 text-[10px] font-bold uppercase hover:bg-blue-100 bg-blue-50 px-2 py-1 rounded-md transition-colors">
+                  className="text-blue-600 flex items-center gap-1 text-[13px] font-bold uppercase hover:bg-blue-100 bg-blue-50 px-2 py-1 rounded-md transition-colors"
+                >
                   <RefreshCw size={12} /> Regenerate
                 </button>
               </div>
@@ -834,7 +838,8 @@ export default function GenericBroadcaster() {
             <div className="flex flex-col sm:flex-row gap-3 w-full mb-8">
               <button
                 onClick={() => copyLinkUrl("obs")}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 py-4 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95">
+                className="flex-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 py-4 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95"
+              >
                 {copiedObs ? (
                   <Check size={18} className="text-emerald-600" />
                 ) : (
@@ -846,7 +851,8 @@ export default function GenericBroadcaster() {
               </button>
               <button
                 onClick={() => copyLinkUrl("remote")}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 py-4 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95">
+                className="flex-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 py-4 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95"
+              >
                 {copiedRemote ? (
                   <Check size={18} className="text-emerald-600" />
                 ) : (
@@ -859,7 +865,8 @@ export default function GenericBroadcaster() {
             </div>
             <button
               onClick={handleStartStream}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg active:scale-95">
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg active:scale-95"
+            >
               <Play size={20} fill="currentColor" /> Start Camera
             </button>
           </div>
@@ -867,13 +874,14 @@ export default function GenericBroadcaster() {
       )}
 
       {isStreaming && zoomCap && !isOledSleep && (
-        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 h-[260px] sm:h-[320px] landscape:left-6 landscape:right-auto landscape:h-[60vh] bg-black/60 backdrop-blur-xl border border-white/20 rounded-[2rem] py-3 px-2 flex flex-col items-center justify-between z-40 shadow-2xl">
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 h-[260px] sm:h-[320px] landscape:left-6 landscape:right-auto landscape:h-[60vh] bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl py-3 px-2 flex flex-col items-center justify-between z-40 shadow-2xl">
           <button
             onClick={() => stepInstantZoom(1)}
             onPointerDown={() => startSmoothZoom(1)}
             onPointerUp={stopSmoothZoom}
             onPointerLeave={stopSmoothZoom}
-            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none">
+            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
+          >
             <Plus size={18} />
           </button>
           <div className="flex-1 flex items-center justify-center w-full relative min-h-[140px] sm:min-h-[180px] landscape:min-h-[40vh]">
@@ -893,7 +901,8 @@ export default function GenericBroadcaster() {
             onPointerDown={() => startSmoothZoom(-1)}
             onPointerUp={stopSmoothZoom}
             onPointerLeave={stopSmoothZoom}
-            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none">
+            className="text-white p-3 sm:p-4 active:scale-95 bg-white/10 rounded-full hover:bg-white/20 transition-colors touch-none"
+          >
             <Minus size={18} />
           </button>
         </div>
@@ -905,7 +914,8 @@ export default function GenericBroadcaster() {
             <div className="flex gap-4 landscape:flex-col">
               <button
                 onClick={() => setIsOledSleep(true)}
-                className="w-14 h-14 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-slate-300 transition-colors hover:text-white hover:bg-white/10 shadow-lg active:scale-95">
+                className="w-14 h-14 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-slate-300 transition-colors hover:text-white hover:bg-white/10 shadow-lg active:scale-95"
+              >
                 <Moon size={22} />
               </button>
               <button
@@ -936,20 +946,23 @@ export default function GenericBroadcaster() {
                       })
                       .catch(() => {});
                 }}
-                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${isMuted ? "bg-red-500/20 border-red-500/50 text-red-400" : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"}`}>
+                className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${isMuted ? "bg-red-500/20 border-red-500/50 text-red-400" : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"}`}
+              >
                 {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
               </button>
               {torchSupported && (
                 <button
                   onClick={toggleTorch}
-                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${torchOn ? "bg-amber-500/20 border-amber-500/50 text-amber-400" : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"}`}>
+                  className={`w-14 h-14 backdrop-blur-md border rounded-full flex items-center justify-center transition-colors shadow-lg active:scale-95 ${torchOn ? "bg-amber-500/20 border-amber-500/50 text-amber-400" : "bg-black/60 border-white/20 text-slate-300 hover:text-white hover:bg-white/10"}`}
+                >
                   {torchOn ? <Flashlight size={22} /> : <ZapOff size={22} />}
                 </button>
               )}
             </div>
             <button
               onClick={handleStopStream}
-              className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-90 shrink-0 landscape:mt-8">
+              className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-90 shrink-0 landscape:mt-8"
+            >
               <Square size={20} fill="currentColor" />
             </button>
           </div>
@@ -958,20 +971,21 @@ export default function GenericBroadcaster() {
 
       {showSettings && (
         <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full sm:w-[450px] bg-white border border-slate-200 rounded-t-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="w-full sm:w-[450px] bg-white border border-slate-200 rounded-t-[2rem] rounded-2xl p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mb-8 sticky top-0 bg-white py-2 z-10">
               <h2 className="text-slate-900 font-black uppercase tracking-widest text-base sm:text-lg flex items-center gap-2">
                 <Video size={20} className="text-blue-600" /> Settings
               </h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-2.5 rounded-full transition-colors">
+                className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-2.5 rounded-full transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
             <div className="space-y-8">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
+                <label className="text-[13px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Select Lens
                 </label>
                 <select
@@ -985,7 +999,8 @@ export default function GenericBroadcaster() {
                         selectedFps,
                       );
                   }}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-4 px-4 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors">
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl py-4 px-4 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                >
                   {cameras.map((c) => (
                     <option key={c.deviceId} value={c.deviceId}>
                       {c.label || `Camera ${c.deviceId.substring(0, 5)}`}
@@ -994,7 +1009,7 @@ export default function GenericBroadcaster() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
+                <label className="text-[13px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Video Quality (Resolution)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1002,14 +1017,15 @@ export default function GenericBroadcaster() {
                     <button
                       key={res.label}
                       onClick={() => handleQualityChange(res, selectedFps)}
-                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${selectedRes.label === res.label ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
+                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${selectedRes.label === res.label ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"}`}
+                    >
                       {res.label}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
+                <label className="text-[13px] font-black uppercase tracking-widest text-slate-500 mb-3 block">
                   Frame Rate (FPS)
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -1017,7 +1033,8 @@ export default function GenericBroadcaster() {
                     <button
                       key={fps.label}
                       onClick={() => handleQualityChange(selectedRes, fps)}
-                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${selectedFps.label === fps.label ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
+                      className={`py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${selectedFps.label === fps.label ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"}`}
+                    >
                       {fps.label}
                     </button>
                   ))}
@@ -1026,7 +1043,8 @@ export default function GenericBroadcaster() {
             </div>
             <button
               onClick={() => setShowSettings(false)}
-              className="w-full mt-8 bg-blue-600 text-white font-black uppercase tracking-widest text-sm py-5 rounded-2xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all">
+              className="w-full mt-8 bg-blue-600 text-white font-black uppercase tracking-widest text-sm py-5 rounded-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
+            >
               Apply Settings
             </button>
           </div>

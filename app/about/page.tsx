@@ -91,8 +91,9 @@ export default function AboutPage() {
           {features.map((f, i) => (
             <div
               key={i}
-              className="p-6 md:p-8 rounded-3xl border bg-white dark:bg-[#1C2128]/80 border-slate-200 dark:border-white/5 hover:-translate-y-1 hover:border-teal-300 dark:hover:border-teal-500/30 shadow-lg hover:shadow-teal-500/10 dark:hover:shadow-teal-500/10 transition-all duration-300 backdrop-blur-sm">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 transition-colors">
+              className="p-6 md:p-8 rounded-xl border bg-white dark:bg-[#1C2128]/80 border-slate-200 dark:border-white/5 hover:-translate-y-1 hover:border-teal-300 dark:hover:border-teal-500/30 shadow-lg hover:shadow-teal-500/10 dark:hover:shadow-teal-500/10 transition-all duration-300 backdrop-blur-sm"
+            >
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6 bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 transition-colors">
                 <f.icon size={26} />
               </div>
               <h3 className="text-xl font-black uppercase tracking-widest mb-3 leading-tight text-slate-900 dark:text-white transition-colors">
@@ -119,12 +120,12 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* LEFT BLOCK: The Team (Spans 5 cols) */}
-            <div className="lg:col-span-5 p-8 md:p-10 rounded-[2.5rem] border relative overflow-hidden flex flex-col justify-center bg-gradient-to-br from-teal-50 to-white dark:from-teal-900/20 dark:to-slate-900 border-teal-100 dark:border-white/10 shadow-xl dark:shadow-2xl transition-colors duration-500">
+            <div className="lg:col-span-5 p-8 md:p-10 rounded-2xl border relative overflow-hidden flex flex-col justify-center bg-gradient-to-br from-teal-50 to-white dark:from-teal-900/20 dark:to-slate-900 border-teal-100 dark:border-white/10 shadow-xl dark:shadow-2xl transition-colors duration-500">
               {/* Background Graphic */}
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-teal-500/20 blur-[100px] rounded-full pointer-events-none"></div>
 
               <div className="relative z-10">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg bg-white dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 transition-colors">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center mb-8 shadow-lg bg-white dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 transition-colors">
                   <Users size={32} />
                 </div>
                 <h3 className="text-3xl font-black uppercase mb-4 leading-tight text-slate-900 dark:text-white transition-colors">
@@ -140,10 +141,10 @@ export default function AboutPage() {
 
                 {/* Ethos Badges */}
                 <div className="flex flex-wrap gap-3">
-                  <span className="px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-sm transition-colors">
+                  <span className="px-4 py-2 text-[13px] font-black uppercase tracking-widest rounded-lg border bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-sm transition-colors">
                     Flawless Execution
                   </span>
-                  <span className="px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-sm transition-colors">
+                  <span className="px-4 py-2 text-[13px] font-black uppercase tracking-widest rounded-lg border bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-sm transition-colors">
                     Tournament Strategy
                   </span>
                 </div>
@@ -153,7 +154,7 @@ export default function AboutPage() {
             {/* RIGHT BLOCK: Mission & Target Strategy (Spans 7 cols) */}
             <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* Mission Card */}
-              <div className="sm:col-span-2 p-8 md:p-10 rounded-[2.5rem] border relative overflow-hidden bg-white dark:bg-[#1C2128]/80 border-slate-200 dark:border-white/5 shadow-xl dark:shadow-2xl transition-colors duration-500 backdrop-blur-sm">
+              <div className="sm:col-span-2 p-8 md:p-10 rounded-2xl border relative overflow-hidden bg-white dark:bg-[#1C2128]/80 border-slate-200 dark:border-white/5 shadow-xl dark:shadow-2xl transition-colors duration-500 backdrop-blur-sm">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none"></div>
                 <div className="relative z-10">
                   <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 transition-colors">
@@ -170,7 +171,7 @@ export default function AboutPage() {
               </div>
 
               {/* Strategy Card 1: Grassroots */}
-              <div className="p-6 md:p-8 rounded-[2rem] border flex flex-col justify-center transition-transform hover:-translate-y-1 bg-slate-50 dark:bg-[#13161a] border-slate-200 dark:border-white/5 shadow-sm dark:shadow-lg">
+              <div className="p-6 md:p-8 rounded-xl border flex flex-col justify-center transition-transform hover:-translate-y-1 bg-slate-50 dark:bg-[#13161a] border-slate-200 dark:border-white/5 shadow-sm dark:shadow-lg">
                 <Activity className="text-amber-500 mb-5" size={28} />
                 <h4 className="text-sm font-black uppercase tracking-widest mb-3 text-slate-900 dark:text-white transition-colors">
                   Fostering Local Communities
@@ -184,7 +185,7 @@ export default function AboutPage() {
               </div>
 
               {/* Strategy Card 2: Big Leagues */}
-              <div className="p-6 md:p-8 rounded-[2rem] border flex flex-col justify-center transition-transform hover:-translate-y-1 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-500/20 shadow-sm dark:shadow-lg">
+              <div className="p-6 md:p-8 rounded-xl border flex flex-col justify-center transition-transform hover:-translate-y-1 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-500/20 shadow-sm dark:shadow-lg">
                 <GitMerge
                   className="text-indigo-600 dark:text-indigo-500 mb-5"
                   size={28}
@@ -203,7 +204,7 @@ export default function AboutPage() {
         </div>
 
         {/* --- CALL TO ACTION SECTION --- */}
-        <div className="mt-12 bg-[var(--surface-1)] dark:bg-teal-900/20 rounded-[2.5rem] p-8 md:p-12 text-center border border-[var(--border-1)] dark:border-teal-500/20 shadow-2xl relative overflow-hidden transition-colors duration-500">
+        <div className="mt-12 bg-[var(--surface-1)] dark:bg-teal-900/20 rounded-2xl p-8 md:p-12 text-center border border-[var(--border-1)] dark:border-teal-500/20 shadow-2xl relative overflow-hidden transition-colors duration-500">
           <div className="absolute inset-0 opacity-10 dark:opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-500 via-transparent to-transparent"></div>
 
           <div className="relative z-10">
@@ -223,13 +224,15 @@ export default function AboutPage() {
                 href="https://wa.me/919702485146"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto hover:shadow-lg hover:shadow-teal-500/20 hover:-translate-y-1">
+                className="flex items-center gap-3 bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto hover:shadow-lg hover:shadow-teal-500/20 hover:-translate-y-1"
+              >
                 <Phone size={20} />
                 Book a Broadcast
               </a>
               <a
                 href="/contact"
-                className="flex items-center gap-3 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/70 text-[var(--foreground)] font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto border border-[var(--border-1)] hover:-translate-y-1">
+                className="flex items-center gap-3 bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/70 text-[var(--foreground)] font-bold py-4 px-8 rounded-full transition-all w-full sm:w-auto border border-[var(--border-1)] hover:-translate-y-1"
+              >
                 <Mail size={20} />
                 Contact Us
               </a>

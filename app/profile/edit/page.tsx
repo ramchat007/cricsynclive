@@ -157,20 +157,23 @@ export default function EditProfilePage() {
   return (
     <div className="max-w-4xl mx-auto p-6 font-sans pb-24">
       {/* TOP NAVIGATION TABS */}
-      <div className="flex items-center gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-fit">
+      <div className="flex items-center gap-2 mb-8 bg-slate-100 p-1.5 rounded-xl w-fit">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all">
+          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all"
+        >
           <Trophy size={15} /> Tournaments
         </Link>
         <Link
           href="/my-matches"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all">
+          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all"
+        >
           <Swords size={15} /> My Matches
         </Link>
         <Link
           href="/profile/edit"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all">
+          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all"
+        >
           <User size={15} className="text-blue-500" /> Edit Profile
         </Link>
       </div>
@@ -187,13 +190,14 @@ export default function EditProfilePage() {
 
       <form onSubmit={handleSaveProfile} className="space-y-8">
         {/* AVATAR SECTION */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+        <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
             <div
               className="w-24 h-24 rounded-full bg-slate-100 bg-cover bg-center border-4 border-white shadow-md flex items-center justify-center overflow-hidden"
               style={{
                 backgroundImage: avatarUrl ? `url('${avatarUrl}')` : "none", // <-- Single quotes added here!
-              }}>
+              }}
+            >
               {!avatarUrl && <User size={40} className="text-slate-300" />}
             </div>
           </div>
@@ -223,12 +227,14 @@ export default function EditProfilePage() {
                 }
                 console.log("📸 New Image Uploaded to Cloudinary:", url);
                 setAvatarUrl(url);
-              }}>
+              }}
+            >
               {({ open }) => (
                 <button
                   type="button"
                   onClick={() => open()}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-900 font-black uppercase tracking-widest text-[10px] py-3 px-5 rounded-xl transition-all inline-flex items-center gap-2">
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-900 font-black uppercase tracking-widest text-[13px] py-3 px-5 rounded-xl transition-all inline-flex items-center gap-2"
+                >
                   <Camera size={14} /> Change Avatar
                 </button>
               )}
@@ -237,14 +243,14 @@ export default function EditProfilePage() {
         </div>
 
         {/* DETAILS SECTION */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+        <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-6">
           <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs border-b border-slate-100 pb-3">
             Account Details
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+              <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                 Full Name
               </label>
               <input
@@ -258,7 +264,7 @@ export default function EditProfilePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+              <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                 Email Address (Read-only)
               </label>
               <input
@@ -270,7 +276,7 @@ export default function EditProfilePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+              <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                 Phone Number
               </label>
               <input
@@ -283,7 +289,7 @@ export default function EditProfilePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+              <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                 City / Location
               </label>
               <input
@@ -302,7 +308,8 @@ export default function EditProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-xs py-4 px-8 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50">
+            className="bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-xs py-4 px-8 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+          >
             {saving ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (

@@ -104,12 +104,13 @@ export default function GlobalSearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tournaments, teams, or players..."
-              className="w-full bg-[var(--surface-2)] border-2 border-[var(--border-1)] rounded-[2rem] py-5 pl-14 pr-12 text-lg sm:text-xl font-black outline-none focus:border-[var(--accent)] transition-all placeholder:text-[var(--text-muted)]/50 placeholder:font-bold"
+              className="w-full bg-[var(--surface-2)] border-2 border-[var(--border-1)] rounded-xl py-5 pl-14 pr-12 text-lg sm:text-xl font-black outline-none focus:border-[var(--accent)] transition-all placeholder:text-[var(--text-muted)]/50 placeholder:font-bold"
             />
             {query && (
               <button
                 onClick={clearSearch}
-                className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 bg-[var(--surface-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] rounded-full border border-[var(--border-1)] transition-colors">
+                className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 bg-[var(--surface-1)] text-[var(--text-muted)] hover:text-[var(--foreground)] rounded-full border border-[var(--border-1)] transition-colors"
+              >
                 <X size={16} />
               </button>
             )}
@@ -130,7 +131,8 @@ export default function GlobalSearchPage() {
                   activeTab === tab.id
                     ? "bg-[var(--accent)] text-[var(--background)] shadow-lg shadow-[var(--accent)]/20"
                     : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border-1)] hover:text-[var(--foreground)] border border-[var(--border-1)]"
-                }`}>
+                }`}
+              >
                 <tab.icon size={14} />
                 {tab.label}
               </button>
@@ -157,7 +159,7 @@ export default function GlobalSearchPage() {
         {/* Empty State / Initial Prompt */}
         {!isSearching && query.length < 2 && (
           <div className="text-center py-24 animate-in fade-in">
-            <div className="w-24 h-24 mx-auto bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] flex items-center justify-center text-[var(--text-muted)] mb-6 shadow-sm">
+            <div className="w-24 h-24 mx-auto bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl flex items-center justify-center text-[var(--text-muted)] mb-6 shadow-sm">
               <SearchIcon size={40} className="opacity-50" />
             </div>
             <h2 className="text-2xl font-black uppercase tracking-tight text-[var(--foreground)] mb-2">
@@ -191,7 +193,7 @@ export default function GlobalSearchPage() {
             {(activeTab === "all" || activeTab === "tournaments") &&
               results.tournaments.length > 0 && (
                 <section className="space-y-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
+                  <h3 className="text-[13px] font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
                     <Trophy size={14} /> Tournaments
                   </h3>
                   <div className="grid gap-3">
@@ -199,7 +201,8 @@ export default function GlobalSearchPage() {
                       <Link
                         key={t.id}
                         href={`/t/${t.id}`}
-                        className="group bg-[var(--surface-1)] p-4 sm:p-5 rounded-2xl border border-[var(--border-1)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)] transition-all flex items-center justify-between">
+                        className="group bg-[var(--surface-1)] p-4 sm:p-5 rounded-xl border border-[var(--border-1)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)] transition-all flex items-center justify-between"
+                      >
                         <div>
                           <h4 className="font-black text-lg text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">
                             {t.name}
@@ -227,7 +230,7 @@ export default function GlobalSearchPage() {
             {(activeTab === "all" || activeTab === "teams") &&
               results.teams.length > 0 && (
                 <section className="space-y-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
+                  <h3 className="text-[13px] font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
                     <Users size={14} /> Franchises
                   </h3>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -235,14 +238,16 @@ export default function GlobalSearchPage() {
                       <Link
                         key={team.id}
                         href={`/t/${team.tournament_id}`}
-                        className="group bg-[var(--surface-1)] p-4 rounded-2xl border border-[var(--border-1)] hover:border-[var(--accent)] transition-all flex items-center gap-4">
+                        className="group bg-[var(--surface-1)] p-4 rounded-xl border border-[var(--border-1)] hover:border-[var(--accent)] transition-all flex items-center gap-4"
+                      >
                         <div
                           className="w-12 h-12 rounded-xl bg-[var(--surface-2)] border border-[var(--border-1)] bg-contain bg-no-repeat bg-center p-1 shrink-0"
                           style={{
                             backgroundImage: team.logo_url
                               ? `url(${team.logo_url})`
                               : "none",
-                          }}>
+                          }}
+                        >
                           {!team.logo_url && (
                             <Users className="w-full h-full text-[var(--text-muted)] p-2 opacity-50" />
                           )}
@@ -265,7 +270,7 @@ export default function GlobalSearchPage() {
             {(activeTab === "all" || activeTab === "players") &&
               results.players.length > 0 && (
                 <section className="space-y-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
+                  <h3 className="text-[13px] font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
                     <User size={14} /> Players
                   </h3>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -274,14 +279,16 @@ export default function GlobalSearchPage() {
                         key={player.id}
                         // 🚀 UPDATED LINK ROUTE HERE
                         href={`/players/${player.id}`}
-                        className="group bg-[var(--surface-1)] p-3 rounded-2xl border border-[var(--border-1)] hover:border-[var(--accent)] transition-all flex items-center gap-3">
+                        className="group bg-[var(--surface-1)] p-3 rounded-xl border border-[var(--border-1)] hover:border-[var(--accent)] transition-all flex items-center gap-3"
+                      >
                         <div
                           className="w-10 h-10 rounded-full bg-[var(--surface-2)] border border-[var(--border-1)] bg-cover bg-center shrink-0"
                           style={{
                             backgroundImage: player.photo_url
                               ? `url(${player.photo_url})`
                               : "none",
-                          }}>
+                          }}
+                        >
                           {!player.photo_url && (
                             <User className="w-full h-full text-[var(--text-muted)] p-2 opacity-50" />
                           )}

@@ -278,7 +278,7 @@ export default function MasterAdminPage() {
   if (hasAccess === false) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center p-6">
-        <div className="bg-red-500/10 border border-red-500/30 p-10 rounded-[2.5rem] max-w-lg flex flex-col items-center shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+        <div className="bg-red-500/10 border border-red-500/30 p-10 rounded-2xl max-w-lg flex flex-col items-center shadow-[0_0_50px_rgba(239,68,68,0.2)]">
           <ShieldAlert size={80} className="text-red-500 mb-6 animate-pulse" />
           <h1 className="text-4xl font-black uppercase text-white tracking-tighter mb-4">
             Access Denied
@@ -289,7 +289,8 @@ export default function MasterAdminPage() {
           </p>
           <button
             onClick={() => router.push("/")}
-            className="bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-sm py-4 px-8 rounded-xl transition-all">
+            className="bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-sm py-4 px-8 rounded-xl transition-all"
+          >
             Return to Safety
           </button>
         </div>
@@ -312,22 +313,26 @@ export default function MasterAdminPage() {
         <div className="flex gap-4 border-b border-[var(--border-1)] mt-8 overflow-x-auto whitespace-nowrap scrollbar-hide pb-1">
           <button
             onClick={() => setActiveTab("tournaments")}
-            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "tournaments" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}>
+            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "tournaments" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}
+          >
             <LayoutDashboard size={18} /> Clients
           </button>
           <button
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "settings" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}>
+            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "settings" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}
+          >
             <Settings size={18} /> Settings
           </button>
           <button
             onClick={() => setActiveTab("coupons")}
-            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "coupons" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}>
+            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "coupons" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}
+          >
             <Tag size={18} /> Promos
           </button>
           <button
             onClick={() => setActiveTab("analytics")}
-            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "analytics" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}>
+            className={`flex items-center gap-2 px-6 py-4 font-black uppercase tracking-widest text-sm transition-colors border-b-2 ${activeTab === "analytics" ? "border-[var(--accent)] text-[var(--accent)]" : "border-transparent text-[var(--text-muted)]"}`}
+          >
             <Star size={18} /> Analytics
           </button>
         </div>
@@ -336,12 +341,12 @@ export default function MasterAdminPage() {
       <div className="max-w-6xl mx-auto">
         {/* TAB 1: TOURNAMENTS */}
         {activeTab === "tournaments" && (
-          <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] overflow-hidden animate-in fade-in">
+          <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] overflow-hidden animate-in fade-in">
             {/* 📱 UI FIX: Horizontal scroll wrapper for the table */}
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                  <tr className="bg-[var(--surface-2)] border-b border-[var(--border-1)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                  <tr className="bg-[var(--surface-2)] border-b border-[var(--border-1)] text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                     <th className="p-4 pl-6">Tournament Name</th>
                     <th className="p-4">Owner ID</th>
                     <th className="p-4 pr-6">Access Tier</th>
@@ -351,7 +356,8 @@ export default function MasterAdminPage() {
                   {tournaments.map((t) => (
                     <tr
                       key={t.id}
-                      className="border-b border-[var(--border-1)]">
+                      className="border-b border-[var(--border-1)]"
+                    >
                       <td className="p-4 pl-6 font-bold text-sm">{t.name}</td>
                       <td className="p-4 text-xs font-mono text-[var(--text-muted)]">
                         {t.owner_id?.substring(0, 10)}...
@@ -362,7 +368,8 @@ export default function MasterAdminPage() {
                           onChange={(e) =>
                             handleTierChange(t.id, e.target.value)
                           }
-                          className="bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] text-xs font-bold rounded-lg px-3 py-2 outline-none">
+                          className="bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] text-xs font-bold rounded-lg px-3 py-2 outline-none"
+                        >
                           <option value="free">Free Tier</option>
                           <option value="pro">Pro Tier</option>
                           <option value="broadcast">Broadcast</option>
@@ -380,7 +387,7 @@ export default function MasterAdminPage() {
         {activeTab === "settings" && (
           <div className="animate-in fade-in max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column: Pricing */}
-            <div className="bg-[var(--surface-1)] p-6 md:p-8 rounded-[2.5rem] border border-[var(--border-1)] shadow-sm">
+            <div className="bg-[var(--surface-1)] p-6 md:p-8 rounded-2xl border border-[var(--border-1)] shadow-sm">
               <h2 className="text-xl font-black uppercase tracking-widest mb-8 flex items-center gap-2">
                 <DollarSign className="text-emerald-500" /> Pricing Strategy
               </h2>
@@ -454,7 +461,7 @@ export default function MasterAdminPage() {
             </div>
 
             {/* Right Column: Feature Toggles */}
-            <div className="bg-[var(--surface-1)] p-6 md:p-8 rounded-[2.5rem] border border-[var(--border-1)] shadow-sm flex flex-col">
+            <div className="bg-[var(--surface-1)] p-6 md:p-8 rounded-2xl border border-[var(--border-1)] shadow-sm flex flex-col">
               <div className="flex items-center gap-3 mb-8">
                 <Settings className="text-[var(--accent)]" size={24} />
                 <h2 className="text-xl font-black uppercase tracking-widest">
@@ -474,13 +481,15 @@ export default function MasterAdminPage() {
                 ].map((item) => (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between p-4 bg-[var(--surface-2)] rounded-2xl border border-[var(--border-1)]">
+                    className="flex items-center justify-between p-4 bg-[var(--surface-2)] rounded-xl border border-[var(--border-1)]"
+                  >
                     <span className="font-bold text-sm">{item.label}</span>
                     <button
                       onClick={() =>
                         toggleFeature(item.key as keyof typeof features)
                       }
-                      className="transition-transform active:scale-95">
+                      className="transition-transform active:scale-95"
+                    >
                       {features[item.key as keyof typeof features] ? (
                         <ToggleRight className="text-emerald-500" size={32} />
                       ) : (
@@ -493,7 +502,7 @@ export default function MasterAdminPage() {
             </div>
 
             {/* Dynamic Merchandising (Feature Lists) */}
-            <div className="bg-[var(--surface-1)] p-6 md:p-8 rounded-[2.5rem] border border-[var(--border-1)] shadow-sm col-span-1 lg:col-span-2">
+            <div className="bg-[var(--surface-1)] p-6 md:p-8 rounded-2xl border border-[var(--border-1)] shadow-sm col-span-1 lg:col-span-2">
               <h2 className="text-xl font-black uppercase tracking-widest mb-2">
                 Storefront Display Features
               </h2>
@@ -522,14 +531,16 @@ export default function MasterAdminPage() {
                         />
                         <button
                           onClick={() => removeFeatureRow("free", index)}
-                          className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors shrink-0">
+                          className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors shrink-0"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                     <button
                       onClick={() => addFeatureRow("free")}
-                      className="w-full py-3 border border-dashed border-[var(--border-1)] hover:border-zinc-400 text-zinc-500 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors">
+                      className="w-full py-3 border border-dashed border-[var(--border-1)] hover:border-zinc-400 text-zinc-500 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors"
+                    >
                       <Plus size={16} /> Add Feature
                     </button>
                   </div>
@@ -554,14 +565,16 @@ export default function MasterAdminPage() {
                         />
                         <button
                           onClick={() => removeFeatureRow("pro", index)}
-                          className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors shrink-0">
+                          className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors shrink-0"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                     <button
                       onClick={() => addFeatureRow("pro")}
-                      className="w-full py-3 border border-dashed border-[var(--border-1)] hover:border-emerald-500 text-emerald-500 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors">
+                      className="w-full py-3 border border-dashed border-[var(--border-1)] hover:border-emerald-500 text-emerald-500 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors"
+                    >
                       <Plus size={16} /> Add Feature
                     </button>
                   </div>
@@ -590,14 +603,16 @@ export default function MasterAdminPage() {
                         />
                         <button
                           onClick={() => removeFeatureRow("broadcast", index)}
-                          className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors shrink-0">
+                          className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors shrink-0"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                     <button
                       onClick={() => addFeatureRow("broadcast")}
-                      className="w-full py-3 border border-dashed border-[var(--border-1)] hover:border-purple-500 text-purple-500 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors">
+                      className="w-full py-3 border border-dashed border-[var(--border-1)] hover:border-purple-500 text-purple-500 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors"
+                    >
                       <Plus size={16} /> Add Feature
                     </button>
                   </div>
@@ -607,7 +622,8 @@ export default function MasterAdminPage() {
 
             <button
               onClick={saveSettings}
-              className="col-span-1 lg:col-span-2 mt-4 w-full bg-[var(--foreground)] text-[var(--background)] py-5 rounded-2xl font-black uppercase tracking-widest text-lg transition-transform active:scale-[0.99] shadow-xl">
+              className="col-span-1 lg:col-span-2 mt-4 w-full bg-[var(--foreground)] text-[var(--background)] py-5 rounded-xl font-black uppercase tracking-widest text-lg transition-transform active:scale-[0.99] shadow-xl"
+            >
               <Save className="inline mr-2 mb-1" size={20} /> Save Pricing &
               Features
             </button>
@@ -624,7 +640,7 @@ export default function MasterAdminPage() {
                 placeholder="e.g. SUMMER20"
                 value={newCouponCode}
                 onChange={(e) => setNewCouponCode(e.target.value)}
-                className="flex-[2] bg-[var(--surface-1)] border border-[var(--border-1)] rounded-2xl p-4 font-black text-xl uppercase outline-none focus:border-[var(--accent)] placeholder:text-[var(--text-muted)] placeholder:font-normal"
+                className="flex-[2] bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-4 font-black text-xl uppercase outline-none focus:border-[var(--accent)] placeholder:text-[var(--text-muted)] placeholder:font-normal"
               />
               <div className="flex-1 relative">
                 <input
@@ -632,7 +648,7 @@ export default function MasterAdminPage() {
                   placeholder="Discount %"
                   value={newCouponDiscount}
                   onChange={(e) => setNewCouponDiscount(Number(e.target.value))}
-                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-2xl p-4 pl-12 font-black text-xl outline-none focus:border-[var(--accent)]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-4 pl-12 font-black text-xl outline-none focus:border-[var(--accent)]"
                 />
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-[var(--text-muted)]">
                   %
@@ -643,22 +659,23 @@ export default function MasterAdminPage() {
                   type="date"
                   value={newCouponExpiry}
                   onChange={(e) => setNewCouponExpiry(e.target.value)}
-                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-2xl p-4 font-bold outline-none focus:border-[var(--accent)] text-sm text-[var(--text-muted)]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-4 font-bold outline-none focus:border-[var(--accent)] text-sm text-[var(--text-muted)]"
                 />
               </div>
               <button
                 onClick={createCoupon}
-                className="bg-[var(--accent)] text-[var(--background)] py-4 md:px-8 rounded-2xl font-black uppercase tracking-widest hover:opacity-90 flex justify-center items-center">
+                className="bg-[var(--accent)] text-[var(--background)] py-4 md:px-8 rounded-xl font-black uppercase tracking-widest hover:opacity-90 flex justify-center items-center"
+              >
                 <Plus size={24} />
               </button>
             </div>
 
             {/* 📱 UI FIX: Horizontal scroll wrapper for the table */}
-            <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] overflow-hidden shadow-sm">
+            <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] overflow-hidden shadow-sm">
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
-                    <tr className="bg-[var(--surface-2)] border-b border-[var(--border-1)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                    <tr className="bg-[var(--surface-2)] border-b border-[var(--border-1)] text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                       <th className="p-4 pl-6">Promo Code</th>
                       <th className="p-4">Discount</th>
                       <th className="p-4">Expires</th>
@@ -672,7 +689,8 @@ export default function MasterAdminPage() {
                       return (
                         <tr
                           key={c.id}
-                          className="border-b border-[var(--border-1)]">
+                          className="border-b border-[var(--border-1)]"
+                        >
                           <td className="p-4 pl-6 font-black text-lg tracking-widest text-[var(--accent)]">
                             {c.code}
                           </td>
@@ -692,7 +710,8 @@ export default function MasterAdminPage() {
                           </td>
                           <td className="p-4 pr-6 flex items-center justify-end gap-4">
                             <button
-                              onClick={() => toggleCoupon(c.id, c.is_active)}>
+                              onClick={() => toggleCoupon(c.id, c.is_active)}
+                            >
                               {c.is_active ? (
                                 <ToggleRight
                                   className="text-emerald-500"
@@ -707,7 +726,8 @@ export default function MasterAdminPage() {
                             </button>
                             <button
                               onClick={() => deleteCoupon(c.id)}
-                              className="text-red-500/50 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-500/10">
+                              className="text-red-500/50 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-500/10"
+                            >
                               <Trash2 size={18} />
                             </button>
                           </td>
@@ -718,7 +738,8 @@ export default function MasterAdminPage() {
                       <tr>
                         <td
                           colSpan={4}
-                          className="p-8 text-center text-[var(--text-muted)] font-bold">
+                          className="p-8 text-center text-[var(--text-muted)] font-bold"
+                        >
                           No coupons created yet.
                         </td>
                       </tr>
@@ -731,7 +752,6 @@ export default function MasterAdminPage() {
         )}
 
         {activeTab === "analytics" && <AnalyticsDashboard />}
-
       </div>
       <div className="max-w-6xl mx-auto mt-5">
         <AdminSyncButton />

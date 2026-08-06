@@ -20,9 +20,7 @@ export default function MyMatchesPage() {
   const router = useRouter();
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"live" | "completed">(
-    "live",
-  );
+  const [filter, setFilter] = useState<"live" | "completed">("live");
 
   useEffect(() => {
     fetchMyMatches();
@@ -69,20 +67,23 @@ export default function MyMatchesPage() {
   return (
     <div className="max-w-7xl mx-auto p-6 font-sans pb-24">
       {/* TOP NAVIGATION TABS */}
-      <div className="flex items-center gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-fit">
+      <div className="flex items-center gap-2 mb-8 bg-slate-100 p-1.5 rounded-xl w-fit">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all">
+          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all"
+        >
           <Trophy size={15} /> Tournaments
         </Link>
         <Link
           href="/my-matches"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all">
+          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl bg-white text-slate-900 shadow-sm transition-all"
+        >
           <Swords size={15} className="text-red-500" /> My Matches
         </Link>
         <Link
           href="/profile/edit"
-          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all">
+          className="flex items-center gap-2 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition-all"
+        >
           <User size={15} /> Edit Profile
         </Link>
       </div>
@@ -100,7 +101,8 @@ export default function MyMatchesPage() {
 
         <Link
           href="/quick-match"
-          className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
+          className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-black uppercase tracking-widest text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+        >
           <Zap size={16} /> Launch Quick Match
         </Link>
       </div>
@@ -118,7 +120,8 @@ export default function MyMatchesPage() {
               filter === tab.key
                 ? "bg-slate-900 shadow-md"
                 : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
-            }`}>
+            }`}
+          >
             {tab.label}
           </button>
         ))}
@@ -146,7 +149,8 @@ export default function MyMatchesPage() {
             return (
               <div
                 key={m.id}
-                className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between">
+                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
+              >
                 <div>
                   {/* BADGES */}
                   <div className="flex items-center justify-between mb-4">
@@ -173,11 +177,11 @@ export default function MyMatchesPage() {
                   </div>
 
                   {/* TEAMS VS */}
-                  <div className="my-6 text-center bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <div className="my-6 text-center bg-slate-50 rounded-xl p-4 border border-slate-100">
                     <div className="text-lg font-black text-slate-900 uppercase tracking-tight truncate">
                       {teamA}
                     </div>
-                    <div className="text-[10px] font-black text-red-500 uppercase tracking-widest my-1">
+                    <div className="text-[13px] font-black text-red-500 uppercase tracking-widest my-1">
                       VS
                     </div>
                     <div className="text-lg font-black text-slate-900 uppercase tracking-tight truncate">
@@ -186,7 +190,7 @@ export default function MyMatchesPage() {
                   </div>
 
                   {/* METADATA */}
-                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 px-1 mb-6">
+                  <div className="flex items-center justify-between text-[14px] font-bold text-slate-500 px-1 mb-6">
                     <span>Overs: {m.overs_count || 12}</span>
                     <span>Ball: {m.ball_type || "Tennis"}</span>
                   </div>
@@ -194,7 +198,7 @@ export default function MyMatchesPage() {
 
                 {/* SCORER LINK */}
                 <Link href={targetUrl} className="block">
-                  <button className="w-full bg-slate-900 hover:bg-slate-800 font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md">
+                  <button className="w-full bg-slate-900 hover:bg-slate-800 font-black uppercase tracking-widest text-[13px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md">
                     Open Scorer Pad <ArrowRight size={14} />
                   </button>
                 </Link>
@@ -204,7 +208,7 @@ export default function MyMatchesPage() {
 
           {/* EMPTY STATE */}
           {filteredMatches.length === 0 && (
-            <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50">
+            <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
               <Swords size={40} className="mx-auto text-slate-300 mb-4" />
               <h3 className="text-xl font-black uppercase tracking-widest text-slate-900">
                 No Matches Found

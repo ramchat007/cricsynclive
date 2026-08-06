@@ -47,7 +47,7 @@ export default function AuctionOverlay({
       .select("id, name, purse_balance, primary_color")
       .eq("tournament_id", tournamentId)
       .order("created_at");
-      
+
     if (tData) setTeams(tData);
   };
 
@@ -98,7 +98,8 @@ export default function AuctionOverlay({
 
     channel
       .on("broadcast", { event: "state_sync" }, ({ payload }) => {
-        const { activePlayer, currentBid, highestBidder, isDirectBuy } = payload;
+        const { activePlayer, currentBid, highestBidder, isDirectBuy } =
+          payload;
 
         // SCENARIO 1: A player is on the podium (Active Bidding)
         if (activePlayer) {
@@ -123,7 +124,6 @@ export default function AuctionOverlay({
 
         // SCENARIO 2: Admin cleared the podium (Sold / Unsold / Direct Buy)
         else if (!activePlayer && podiumStateRef.current === "active") {
-
           const isSold = !!displayBidderRef.current;
           const isDirect = isDirectBuy === true;
 
@@ -131,28 +131,29 @@ export default function AuctionOverlay({
             console.log("DIRECT BUY DETECTED");
             podiumStateRef.current = "directbuy";
             setPodiumState("directbuy");
-          }
-          else if (isSold) {
+          } else if (isSold) {
             // SOLD
             podiumStateRef.current = "sold";
             setPodiumState("sold");
-          }
-          else {
+          } else {
             // UNSOLD
             podiumStateRef.current = "unsold";
             setPodiumState("unsold");
           }
 
-          clearTimerRef.current = setTimeout(() => {
-            podiumStateRef.current = "standby";
-            setPodiumState("standby");
+          clearTimerRef.current = setTimeout(
+            () => {
+              podiumStateRef.current = "standby";
+              setPodiumState("standby");
 
-            setDisplayPlayer(null);
-            setDisplayBid(0);
-            setDisplayBidder(null);
+              setDisplayPlayer(null);
+              setDisplayBid(0);
+              setDisplayBidder(null);
 
-            displayBidderRef.current = null;
-          }, isSold || isDirect ? 10000 : 5000);
+              displayBidderRef.current = null;
+            },
+            isSold || isDirect ? 10000 : 5000,
+          );
         }
 
         setLoading(false);
@@ -194,7 +195,7 @@ export default function AuctionOverlay({
   if (loading) {
     return (
       <div className="w-screen h-screen flex items-center justify-center font-black text-white text-3xl tracking-widest animate-pulse bg-transparent">
-        <span className="bg-black/60 px-8 py-4 rounded-2xl backdrop-blur-md border border-white/10">
+        <span className="bg-black/60 px-8 py-4 rounded-xl backdrop-blur-md border border-white/10">
           SYNCING STREAM...
         </span>
       </div>
@@ -248,12 +249,21 @@ export default function AuctionOverlay({
 
       <div className="w-screen h-screen overflow-hidden bg-transparent font-sans text-white relative">
         <div className="absolute bottom-20 right-8 w-80 bg-black/60 backdrop-blur-xl border-l-4 border-amber-500 p-4 rounded-l-2xl z-40">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Live Purse Status</h3>
+          <h3 className="text-[13px] font-black uppercase tracking-widest text-slate-400 mb-3">
+            Live Purse Status
+          </h3>
           <div className="space-y-2">
             {teams.map((team) => (
-              <div key={team.id} className="flex justify-between items-center text-xs border-b border-white/5 pb-1">
-                <span className="font-bold truncate max-w-[120px]">{team.name}</span>
-                <span className={`font-black ${team.purse_balance < 10000 ? "text-red-400" : "text-emerald-400"}`}>
+              <div
+                key={team.id}
+                className="flex justify-between items-center text-xs border-b border-white/5 pb-1"
+              >
+                <span className="font-bold truncate max-w-[120px]">
+                  {team.name}
+                </span>
+                <span
+                  className={`font-black ${team.purse_balance < 10000 ? "text-red-400" : "text-emerald-400"}`}
+                >
                   ₹{(team.purse_balance || 0).toLocaleString("en-IN")}
                 </span>
               </div>
@@ -264,7 +274,7 @@ export default function AuctionOverlay({
             LEFT SIDE: FLOATING PLAYER CARD
             ========================================= */}
         <div
-          className={`absolute top-12 left-12 w-[420px] bg-slate-950/90 backdrop-blur-2xl border-[3px] rounded-[2.5rem] flex flex-col z-40 overflow-hidden transition-all duration-700 ${cardBorder}`}
+          className={`absolute top-12 left-12 w-[420px] bg-slate-950/90 backdrop-blur-2xl border-[3px] rounded-2xl flex flex-col z-40 overflow-hidden transition-all duration-700 ${cardBorder}`}
         >
           {/* Status Banner */}
           <div
@@ -278,7 +288,7 @@ export default function AuctionOverlay({
               {/* Profile Image */}
               <div className="relative shrink-0 mb-6">
                 <div
-                  className={`w-56 h-56 rounded-3xl bg-slate-800 bg-cover bg-center shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center justify-center text-7xl font-black text-slate-500 border-4 ${podiumState === "sold" ? "border-emerald-500" : podiumState === "directbuy" ? "border-yellow-500" : podiumState === "unsold" ? "border-red-500" : "border-white/10"}`}
+                  className={`w-56 h-56 rounded-xl bg-slate-800 bg-cover bg-center shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center justify-center text-7xl font-black text-slate-500 border-4 ${podiumState === "sold" ? "border-emerald-500" : podiumState === "directbuy" ? "border-yellow-500" : podiumState === "unsold" ? "border-red-500" : "border-white/10"}`}
                   style={{
                     backgroundImage: displayPlayer.photo_url
                       ? `url(${displayPlayer.photo_url})`
@@ -305,7 +315,7 @@ export default function AuctionOverlay({
 
               {/* Price Container */}
               <div
-                className={`w-full p-6 rounded-3xl border shadow-inner text-center transition-colors duration-500 ${podiumState === "sold" ? "bg-emerald-500/10 border-emerald-500/30" : podiumState === "directbuy" ? "bg-yellow-500/10 border-yellow-500/30" : podiumState === "unsold" ? "bg-red-500/10 border-red-500/30" : "bg-black/40 border-white/5"}`}
+                className={`w-full p-6 rounded-xl border shadow-inner text-center transition-colors duration-500 ${podiumState === "sold" ? "bg-emerald-500/10 border-emerald-500/30" : podiumState === "directbuy" ? "bg-yellow-500/10 border-yellow-500/30" : podiumState === "unsold" ? "bg-red-500/10 border-red-500/30" : "bg-black/40 border-white/5"}`}
               >
                 {podiumState === "unsold" ? (
                   <div className="py-4">
@@ -317,14 +327,18 @@ export default function AuctionOverlay({
                 ) : (
                   <>
                     <p className="text-xs font-black uppercase tracking-widest mb-2 text-slate-400">
-                      {podiumState === "sold" ? "Sold For" : podiumState === "directbuy" ? "Purchased For" : "Current Bid"}
+                      {podiumState === "sold"
+                        ? "Sold For"
+                        : podiumState === "directbuy"
+                          ? "Purchased For"
+                          : "Current Bid"}
                     </p>
                     <p
                       className={`text-6xl font-black tracking-tighter drop-shadow-md tabular-nums ${
-                        podiumState === "sold" 
-                          ? "text-emerald-400" 
-                          : podiumState === "directbuy" 
-                            ? "text-yellow-400" 
+                        podiumState === "sold"
+                          ? "text-emerald-400"
+                          : podiumState === "directbuy"
+                            ? "text-yellow-400"
                             : "text-amber-400"
                       }`}
                     >
@@ -345,13 +359,19 @@ export default function AuctionOverlay({
                           }
                         />
                         <div className="flex flex-col text-left overflow-hidden">
-                          <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none mb-1.5">
-                            {podiumState === "sold" ? "Bought By" : podiumState === "directbuy" ? "Direct Buy By" : "Leading Bidder"}
+                          <span className="text-[13px] uppercase font-black text-slate-400 tracking-widest leading-none mb-1.5">
+                            {podiumState === "sold"
+                              ? "Bought By"
+                              : podiumState === "directbuy"
+                                ? "Direct Buy By"
+                                : "Leading Bidder"}
                           </span>
                           <div className="flex items-center gap-2">
                             <div
                               className="w-4 h-4 rounded-full shadow-sm shrink-0"
-                              style={{ backgroundColor: displayBidder.primary_color }}
+                              style={{
+                                backgroundColor: displayBidder.primary_color,
+                              }}
                             />
                             <p className="text-xl font-black text-white truncate max-w-[200px] leading-none uppercase">
                               {displayBidder.name}
@@ -370,7 +390,7 @@ export default function AuctionOverlay({
 
               {/* Stats Footer */}
               <div className="grid grid-cols-2 gap-4 w-full mt-6">
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-3 text-center">
+                <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-center">
                   <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">
                     Batting
                   </p>
@@ -378,7 +398,7 @@ export default function AuctionOverlay({
                     {displayPlayer.batting_hand || "-"}
                   </p>
                 </div>
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-3 text-center">
+                <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-center">
                   <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">
                     Bowling
                   </p>
@@ -404,7 +424,7 @@ export default function AuctionOverlay({
         {soldPlayers.length > 0 && (
           <div className="fixed bottom-0 left-0 w-full h-12 bg-slate-950/95 border-t border-white/10 flex items-center z-50 overflow-hidden shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
             {/* Static Label on the left */}
-            <div className="bg-amber-500 text-amber-950 h-full px-6 flex items-center justify-center font-black uppercase tracking-widest text-[10px] z-20 shadow-[10px_0_20px_rgba(0,0,0,0.5)] shrink-0">
+            <div className="bg-amber-500 text-amber-950 h-full px-6 flex items-center justify-center font-black uppercase tracking-widest text-[13px] z-20 shadow-[10px_0_20px_rgba(0,0,0,0.5)] shrink-0">
               Players Sold ({soldPlayers.length})
             </div>
 
@@ -432,7 +452,7 @@ export default function AuctionOverlay({
                       className="flex items-center mx-2 whitespace-nowrap"
                     >
                       {isTopBuyForTeam && (
-                        <span className="flex items-center gap-1 bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest mr-3 border border-amber-500/30">
+                        <span className="flex items-center gap-1 bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[13px] font-black uppercase tracking-widest mr-3 border border-amber-500/30">
                           <Sparkles size={10} /> {teamName} Top Buy
                         </span>
                       )}
@@ -443,7 +463,7 @@ export default function AuctionOverlay({
                         {p.full_name}
                       </span>
 
-                      <span className="text-slate-500 text-[10px] uppercase font-black tracking-widest mx-2">
+                      <span className="text-slate-500 text-[13px] uppercase font-black tracking-widest mx-2">
                         → {teamName}
                       </span>
 

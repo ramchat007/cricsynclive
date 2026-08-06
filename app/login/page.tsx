@@ -7,11 +7,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // 🔥 GRAB THE 'next' PARAMETER FROM THE URL
   const nextParam = searchParams.get("next");
   // Security check: ensure it's a relative path (starts with /) to prevent malicious redirects, otherwise default to /dashboard
-  const nextPath = nextParam && nextParam.startsWith("/") ? nextParam : "/dashboard";
+  const nextPath =
+    nextParam && nextParam.startsWith("/") ? nextParam : "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +48,7 @@ function LoginContent() {
       });
       if (error) alert(error.message);
       // 🔥 REDIRECT TO DYNAMIC PATH
-      else router.push(nextPath); 
+      else router.push(nextPath);
     }
     setLoading(false);
   };
@@ -71,7 +72,7 @@ function LoginContent() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-2xl">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-xl p-8 border border-slate-200 dark:border-slate-800 shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2">
             {isSignUp ? "CREATE ACCOUNT" : "WELCOME BACK"}
@@ -88,8 +89,11 @@ function LoginContent() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={googleLoading || loading}
-          className="flex items-center justify-center gap-3 w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-bold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50">
-          {googleLoading ? "Connecting to Google..." : (
+          className="flex items-center justify-center gap-3 w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-bold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
+        >
+          {googleLoading ? (
+            "Connecting to Google..."
+          ) : (
             <>
               {/* SVG Icon Omitted for brevity, keep yours here! */}
               Continue with Google
@@ -100,7 +104,7 @@ function LoginContent() {
         {/* --- OR DIVIDER --- */}
         <div className="relative flex py-6 items-center">
           <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-          <span className="flex-shrink-0 mx-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+          <span className="flex-shrink-0 mx-4 text-slate-400 text-[13px] font-black uppercase tracking-widest">
             Or continue with email
           </span>
           <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
@@ -112,7 +116,9 @@ function LoginContent() {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">First Name</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     value={firstName}
@@ -122,7 +128,9 @@ function LoginContent() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Last Name</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Last Name
+                  </label>
                   <input
                     type="text"
                     value={lastName}
@@ -133,7 +141,9 @@ function LoginContent() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Phone Number</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Phone Number
+                </label>
                 <input
                   type="tel"
                   value={phone}
@@ -147,7 +157,9 @@ function LoginContent() {
 
           {/* ALWAYS SHOW EMAIL & PASSWORD */}
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Email</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Email
+            </label>
             <input
               type="email"
               value={email}
@@ -157,7 +169,9 @@ function LoginContent() {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Password</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -170,8 +184,13 @@ function LoginContent() {
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl mt-4 transition-all">
-            {loading ? "Authenticating..." : isSignUp ? "Create Account" : "Log In"}
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-4 rounded-xl mt-4 transition-all"
+          >
+            {loading
+              ? "Authenticating..."
+              : isSignUp
+                ? "Create Account"
+                : "Log In"}
           </button>
         </form>
 
@@ -179,8 +198,11 @@ function LoginContent() {
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             type="button"
-            className="text-sm font-bold text-slate-500 hover:text-teal-500 transition-colors">
-            {isSignUp ? "Already have an account? Log in." : "Need an account? Sign up."}
+            className="text-sm font-bold text-slate-500 hover:text-teal-500 transition-colors"
+          >
+            {isSignUp
+              ? "Already have an account? Log in."
+              : "Need an account? Sign up."}
           </button>
         </div>
       </div>
@@ -191,7 +213,13 @@ function LoginContent() {
 // 🔥 THIS IS REQUIRED BY NEXT.JS WHEN USING useSearchParams()
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-[80vh] items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[80vh] items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

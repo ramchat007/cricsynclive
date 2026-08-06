@@ -88,7 +88,7 @@ export default function AIUmpireOverlay() {
         <div
           className={`
             transform transition-all duration-300 animate-bounce
-            px-12 py-6 rounded-2xl border-4 bg-black/80 backdrop-blur-md
+            px-12 py-6 rounded-xl border-4 bg-black/80 backdrop-blur-md
             shadow-[0_0_40px_rgba(0,0,0,0.8)]
             ${getAlertColor(activeAlert)}
           `}

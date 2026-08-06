@@ -144,7 +144,8 @@ export default function QuickMatchStarter() {
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 h-16 flex items-center justify-between">
         <Link
           href="/"
-          className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors">
+          className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
+        >
           <ArrowLeft size={22} />
         </Link>
         <span className="font-black uppercase tracking-widest text-xs flex items-center gap-1.5 text-slate-200">
@@ -156,20 +157,21 @@ export default function QuickMatchStarter() {
 
       <form
         onSubmit={handleStartMatch}
-        className="max-w-xl mx-auto px-4 pt-6 space-y-8 animate-in fade-in duration-300">
+        className="max-w-xl mx-auto px-4 pt-6 space-y-8 animate-in fade-in duration-300"
+      >
         {/* --- SECTION 1: THE TEAMS --- */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden shadow-xl">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 relative overflow-hidden shadow-xl">
           <div className="absolute top-0 right-0 bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Step 01
           </div>
 
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">
+          <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-4">
             Playing XIs (Editable Later)
           </label>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
             <div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase ml-3 mb-1 block">
+              <span className="text-[13px] font-bold text-slate-500 uppercase ml-3 mb-1 block">
                 Team 1
               </span>
               <input
@@ -178,16 +180,16 @@ export default function QuickMatchStarter() {
                 value={teamA}
                 onChange={(e) => setTeamA(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 font-black text-center text-lg text-blue-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 font-black text-center text-lg text-blue-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all"
               />
             </div>
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden sm:flex w-9 h-9 rounded-full bg-red-600 border-4 border-slate-900 items-center justify-center font-black text-[10px] italic shadow-lg">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden sm:flex w-9 h-9 rounded-full bg-red-600 border-4 border-slate-900 items-center justify-center font-black text-[13px] italic shadow-lg">
               VS
             </div>
 
             <div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase ml-3 mb-1 block sm:text-right">
+              <span className="text-[13px] font-bold text-slate-500 uppercase ml-3 mb-1 block sm:text-right">
                 Team 2
               </span>
               <input
@@ -196,59 +198,63 @@ export default function QuickMatchStarter() {
                 value={teamB}
                 onChange={(e) => setTeamB(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 font-black text-center text-lg text-emerald-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none transition-all"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 font-black text-center text-lg text-emerald-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* --- SECTION 2: THE TOSS --- */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative shadow-xl space-y-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 relative shadow-xl space-y-6">
           <div className="absolute top-0 right-0 bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Step 02
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">
+            <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-3">
               Who won the toss?
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setTossWinner("A")}
-                className={`py-3.5 px-4 rounded-2xl font-black text-sm truncate border transition-all ${tossWinner === "A" ? "bg-blue-600/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
+                className={`py-3.5 px-4 rounded-xl font-black text-sm truncate border transition-all ${tossWinner === "A" ? "bg-blue-600/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}
+              >
                 {teamA || "Team 1"}
               </button>
               <button
                 type="button"
                 onClick={() => setTossWinner("B")}
-                className={`py-3.5 px-4 rounded-2xl font-black text-sm truncate border transition-all ${tossWinner === "B" ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
+                className={`py-3.5 px-4 rounded-xl font-black text-sm truncate border transition-all ${tossWinner === "B" ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}
+              >
                 {teamB || "Team 2"}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">
+            <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-3">
               Elected to:
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setDecision("bat")}
-                className={`py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${decision === "bat" ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
+                className={`py-3.5 rounded-xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${decision === "bat" ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}
+              >
                 🏏 Bat First
               </button>
               <button
                 type="button"
                 onClick={() => setDecision("bowl")}
-                className={`py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${decision === "bowl" ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}>
+                className={`py-3.5 rounded-xl font-black uppercase text-xs tracking-wider border flex items-center justify-center gap-2 transition-all ${decision === "bowl" ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" : "bg-slate-950 border-slate-800/80 text-slate-500 hover:border-slate-700"}`}
+              >
                 🥎 Bowl First
               </button>
             </div>
           </div>
 
-          <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-2xl flex items-center gap-2.5">
+          <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl flex items-center gap-2.5">
             <Sparkles size={16} className="text-amber-400 shrink-0" />
             <p className="text-xs text-slate-500 font-bold truncate">
               <span className="uppercase text-red-400 font-black underline decoration-red-500 underline-offset-2">
@@ -263,14 +269,14 @@ export default function QuickMatchStarter() {
         </div>
 
         {/* --- SECTION 3: RULES PRESETS --- */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl relative">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6 shadow-xl relative">
           <div className="absolute top-0 right-0 bg-slate-800 text-slate-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-2xl">
             Defaults
           </div>
 
           {/* Overs */}
           <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2.5 flex items-center justify-between">
+            <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2.5 flex items-center justify-between">
               <span>Total Overs</span>
             </label>
             <div className="flex flex-wrap gap-2">
@@ -279,7 +285,8 @@ export default function QuickMatchStarter() {
                   key={ov}
                   type="button"
                   onClick={() => setOvers(ov)}
-                  className={`flex-1 min-w-[50px] py-2.5 rounded-xl font-black text-xs border transition-all ${overs === ov ? "bg-white text-slate-950 border-white shadow-md" : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"}`}>
+                  className={`flex-1 min-w-[50px] py-2.5 rounded-xl font-black text-xs border transition-all ${overs === ov ? "bg-white text-slate-950 border-white shadow-md" : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"}`}
+                >
                   {ov}
                 </button>
               ))}
@@ -288,7 +295,8 @@ export default function QuickMatchStarter() {
               <button
                 type="button"
                 onClick={() => setOvers((prev) => Math.max(1, prev - 1))}
-                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
+                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
+              >
                 -
               </button>
               <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
@@ -297,7 +305,8 @@ export default function QuickMatchStarter() {
               <button
                 type="button"
                 onClick={() => setOvers((prev) => prev + 1)}
-                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
+                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
+              >
                 +
               </button>
             </div>
@@ -306,7 +315,7 @@ export default function QuickMatchStarter() {
           {/* Squad Size & Ball */}
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+              <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                 Players / Team
               </label>
               <div className="flex gap-1.5">
@@ -315,7 +324,8 @@ export default function QuickMatchStarter() {
                     key={sz}
                     type="button"
                     onClick={() => setSquadSize(sz)}
-                    className={`flex-1 py-2 rounded-xl font-black text-xs border transition-all ${squadSize === sz ? "bg-slate-700 text-white border-slate-500" : "bg-slate-950 border-slate-800 text-slate-500"}`}>
+                    className={`flex-1 py-2 rounded-xl font-black text-xs border transition-all ${squadSize === sz ? "bg-slate-700 text-white border-slate-500" : "bg-slate-950 border-slate-800 text-slate-500"}`}
+                  >
                     {sz}
                   </button>
                 ))}
@@ -324,7 +334,8 @@ export default function QuickMatchStarter() {
                 <button
                   type="button"
                   onClick={() => setSquadSize((prev) => Math.max(1, prev - 1))}
-                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
+                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
+                >
                   -
                 </button>
                 <span className="font-black text-slate-900 text-sm uppercase tracking-widest">
@@ -333,14 +344,15 @@ export default function QuickMatchStarter() {
                 <button
                   type="button"
                   onClick={() => setSquadSize((prev) => prev + 1)}
-                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg">
+                  className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-lg"
+                >
                   +
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+              <label className="text-[13px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                 Ball Type
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -350,7 +362,8 @@ export default function QuickMatchStarter() {
                       key={type}
                       type="button"
                       onClick={() => setBallType(type)}
-                      className={`w-full py-3.5 px-1 rounded-xl font-black uppercase text-[10px] border tracking-wider transition-all truncate ${ballType === type ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm" : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"}`}>
+                      className={`w-full py-3.5 px-1 rounded-xl font-black uppercase text-[13px] border tracking-wider transition-all truncate ${ballType === type ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm" : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"}`}
+                    >
                       {type}
                     </button>
                   ),
@@ -365,7 +378,8 @@ export default function QuickMatchStarter() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-[0_0_40px_rgba(220,38,38,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50">
+            className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black uppercase tracking-[0.2em] py-5 rounded-xl shadow-[0_0_40px_rgba(220,38,38,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50"
+          >
             {isLoading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}

@@ -106,7 +106,7 @@ export default function BracketsViewPage({
             Tournament Bracket
           </h2>
         </div>
-        <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-[2rem] bg-[var(--surface-1)] transition-colors">
+        <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-xl bg-[var(--surface-1)] transition-colors">
           <GitMerge
             size={40}
             className="mx-auto text-[var(--text-muted)] mb-4"
@@ -218,7 +218,7 @@ export default function BracketsViewPage({
           )}
         </div>
 
-        <div className="flex overflow-x-auto overflow-y-hidden p-6 gap-6 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[2rem] shadow-sm custom-scrollbar min-h-[60vh] transition-colors">
+        <div className="flex overflow-x-auto overflow-y-hidden p-6 gap-6 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-sm custom-scrollbar min-h-[60vh] transition-colors">
           {bracketData.rounds?.map((round: any) => (
             <div
               key={round.id}
@@ -251,7 +251,7 @@ export default function BracketsViewPage({
                     return (
                       <div
                         key={matchNode.id}
-                        className={`relative p-1 rounded-2xl border shadow-sm transition-all ${
+                        className={`relative p-1 rounded-xl border shadow-sm transition-all ${
                           isLive
                             ? "bg-red-500/10 border-red-500/30"
                             : "bg-[var(--surface-1)] border-[var(--border-1)]"
@@ -266,7 +266,7 @@ export default function BracketsViewPage({
 
                         <div className="p-3">
                           <div className="flex justify-between items-center border-b border-[var(--border-1)] pb-2 mb-3">
-                            <span className="bg-[var(--surface-2)] text-[var(--text-muted)] text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest transition-colors">
+                            <span className="bg-[var(--surface-2)] text-[var(--text-muted)] text-[13px] font-black px-2 py-0.5 rounded uppercase tracking-widest transition-colors">
                               {matchNode.id}
                             </span>
                             <span className="text-xs font-bold text-[var(--text-muted)] truncate w-36 text-right transition-colors">
@@ -291,7 +291,7 @@ export default function BracketsViewPage({
                         </div>
 
                         {/* Footer: Venue & Time */}
-                        <div className="bg-[var(--surface-2)] rounded-b-[1.2rem] p-3 border-t border-[var(--border-1)] flex items-center justify-between text-[10px] font-bold text-[var(--text-muted)] transition-colors">
+                        <div className="bg-[var(--surface-2)] rounded-b-[1.2rem] p-3 border-t border-[var(--border-1)] flex items-center justify-between text-[13px] font-bold text-[var(--text-muted)] transition-colors">
                           <div className="flex items-center gap-1.5 truncate max-w-[150px]">
                             <MapPin
                               size={12}

@@ -53,18 +53,18 @@ export default function Info({
     <div className="flex flex-col lg:flex-row gap-6 w-full animate-in fade-in pb-10 transition-colors duration-300">
       {/* LEFT COLUMN: MATCH DETAILS */}
       <div className="flex-1 space-y-6">
-        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
+        <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)] px-2">
           Match Details
         </h3>
 
-        <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 space-y-6 transition-colors">
+        <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] shadow-sm overflow-hidden p-6 sm:p-8 space-y-6 transition-colors">
           {/* Series / Stage */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center shrink-0 border border-[var(--accent)]/20">
+            <div className="w-12 h-12 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center shrink-0 border border-[var(--accent)]/20">
               <Trophy size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+              <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                 Stage / Format
               </p>
               <p className="font-bold text-[var(--foreground)] text-lg">
@@ -79,11 +79,11 @@ export default function Info({
 
           {/* Toss */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/20">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/20">
               <Coins size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+              <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                 Toss
               </p>
               <p className="font-bold text-[var(--foreground)] text-lg">
@@ -94,11 +94,11 @@ export default function Info({
 
           {/* Venue */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/20">
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/20">
               <MapPin size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+              <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                 Venue
               </p>
               <p className="font-bold text-[var(--foreground)] text-lg">
@@ -109,11 +109,11 @@ export default function Info({
 
           {/* Date */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0 border border-rose-500/20">
+            <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0 border border-rose-500/20">
               <Calendar size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+              <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                 Date
               </p>
               <p className="font-bold text-[var(--foreground)] text-lg">
@@ -127,15 +127,15 @@ export default function Info({
       {/* RIGHT COLUMN: SQUADS */}
       <div className="flex-1 space-y-6">
         <div className="flex justify-between items-end px-2">
-          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
+          <h3 className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
             Playing Squads
           </h3>
-          <div className="flex items-center gap-1 text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-1 text-[var(--text-muted)] text-[13px] font-black uppercase tracking-widest">
             <Users size={12} /> {activeSquad.length} Players
           </div>
         </div>
 
-        <div className="bg-[var(--surface-1)] rounded-[2rem] border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors">
+        <div className="bg-[var(--surface-1)] rounded-xl border border-[var(--border-1)] shadow-sm overflow-hidden transition-colors">
           {/* Squad Toggle Tabs */}
           <div className="flex p-2 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
             <button
@@ -180,12 +180,12 @@ export default function Info({
                       {player.full_name}
                       {player.id === match.team1_captain_id ||
                       player.id === match.team2_captain_id ? (
-                        <span className="ml-2 text-[10px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded-full font-black tracking-widest align-middle">
+                        <span className="ml-2 text-[13px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded-full font-black tracking-widest align-middle">
                           (C)
                         </span>
                       ) : null}
                     </p>
-                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5">
+                    <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5">
                       {player.role || "Player"}
                     </p>
                   </div>

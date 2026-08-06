@@ -30,7 +30,8 @@ export default async function BlogsListingPage() {
           <Link
             key={blog.id}
             href={`/blogs/${blog.slug}`}
-            className="bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-[2rem] hover:-translate-y-2 hover:shadow-xl transition-all">
+            className="bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl hover:-translate-y-2 hover:shadow-xl transition-all"
+          >
             <h2 className="text-xl font-bold mb-3">{blog.title}</h2>
             <p className="text-[var(--text-muted)] text-sm mb-4 line-clamp-3">
               {blog.excerpt}

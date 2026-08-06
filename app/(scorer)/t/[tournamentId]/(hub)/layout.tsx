@@ -274,19 +274,32 @@ export default function TournamentLayout({
 
   return (
     <div className="h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden">
-      {/* SIDEBAR */}
+      <div
+        className={`
+    fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300
+    ${isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+  `}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
+      {/* MORPHING SIDEBAR / BOTTOM SHEET */}
       <aside
         className={`
-          fixed inset-y-0 top-[65px] left-0 z-50 w-72 bg-[var(--surface-1)] border-r border-[var(--border-1)] transform transition-transform duration-300 ease-in-out 
-          lg:static lg:h-full lg:translate-x-0
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+    fixed inset-x-0 bottom-0 z-50 w-full max-h-[85vh] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
+    transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+    lg:static lg:inset-y-0 lg:top-[65px] lg:left-0 lg:h-full lg:w-72 lg:max-h-none lg:border-t-0 lg:border-r lg:rounded-none lg:shadow-none
+    ${isSidebarOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
+  `}
       >
-        <div className="h-full flex flex-col p-6">
-          <nav className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pb-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-4 px-3">
+        <div className="h-full flex flex-col p-4 md:p-6">
+          {/* Mobile-only Drag Handle */}
+          <div className="w-12 h-1.5 bg-[var(--border-1)] rounded-full mx-auto mb-6 lg:hidden shrink-0" />
+
+          <nav className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pb-4">
+            <p className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-4 px-3 hidden lg:block">
               Tournament Menu
             </p>
+
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
@@ -301,6 +314,7 @@ export default function TournamentLayout({
                 item.requiredTier === "pro"
                   ? "text-emerald-500"
                   : "text-purple-500";
+
               const hoverBorderClass =
                 item.requiredTier === "pro"
                   ? "hover:border-emerald-500/30"
@@ -312,21 +326,24 @@ export default function TournamentLayout({
                   href={isLocked ? `/t/${tournamentId}/billing` : item.href}
                   onClick={() => setIsSidebarOpen(false)}
                   className={`
-                    flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all
-                    ${isActive && !isLocked ? "bg-[var(--accent)] text-white shadow-lg shadow-[var(--accent)]/20" : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"}
-                    ${isLocked ? `opacity-80 border border-transparent ${hoverBorderClass}` : ""}
-                  `}
+              flex items-center justify-between px-4 py-3.5 lg:py-3 rounded-xl lg:rounded-xl font-bold text-sm md:text-base lg:text-sm transition-all active:scale-[0.98] lg:active:scale-100
+              ${isActive && !isLocked ? "bg-[var(--accent)] text-[var(--background)] shadow-lg shadow-[var(--accent)]/20" : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]"}
+              ${isLocked ? `opacity-80 border border-transparent ${hoverBorderClass}` : ""}
+            `}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 md:gap-4 lg:gap-3">
                     <Icon
-                      size={18}
-                      className={
-                        isActive && !isLocked
-                          ? "text-white"
-                          : isLocked
-                            ? lockColorClass
-                            : "opacity-70"
-                      }
+                      size={20}
+                      className={`
+                  lg:w-[18px] lg:h-[18px]
+                  ${
+                    isActive && !isLocked
+                      ? "text-[var(--background)]"
+                      : isLocked
+                        ? lockColorClass
+                        : "opacity-70"
+                  }
+                `}
                     />
                     <span className={isLocked ? lockColorClass : ""}>
                       {item.name}
@@ -338,23 +355,26 @@ export default function TournamentLayout({
             })}
           </nav>
 
-          <div className="shrink-0 mt-auto pt-4 border-t border-[var(--border-1)] space-y-1">
+          {/* Footer Actions */}
+          <div className="shrink-0 mt-auto pt-4 border-t border-[var(--border-1)] space-y-2 pb-safe">
             {isAdmin && (
               <button
                 onClick={() => {
                   setShowSettings(true);
                   setIsSidebarOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[var(--text-muted)] font-bold text-sm hover:text-[var(--foreground)] transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl lg:rounded-xl bg-[var(--surface-2)] lg:bg-transparent text-[var(--foreground)] lg:text-[var(--text-muted)] font-bold text-sm md:text-base lg:text-sm hover:text-[var(--foreground)] lg:hover:bg-[var(--surface-2)] transition-colors active:scale-[0.98] lg:active:scale-100"
               >
-                <Settings size={18} /> Settings
+                <Settings size={20} className="lg:w-[18px] lg:h-[18px]" />
+                Settings
               </button>
             )}
             <Link
               href="/"
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 font-bold text-sm hover:bg-red-500/5 transition-all rounded-xl"
+              className="w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 text-red-500 font-bold text-sm md:text-base lg:text-sm hover:bg-red-500/10 transition-all rounded-xl lg:rounded-xl active:scale-[0.98] lg:active:scale-100"
             >
-              <LogOut size={18} /> Exit Console
+              <LogOut size={20} className="lg:w-[18px] lg:h-[18px]" />
+              Exit Console
             </Link>
           </div>
         </div>
@@ -390,7 +410,7 @@ export default function TournamentLayout({
           <div className="relative z-10 w-full mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="animate-in fade-in slide-in-from-left-4 duration-500">
               <div className="flex flex-wrap gap-2 mb-4">
-                <span className="bg-[var(--accent)]/10 backdrop-blur-md border border-[var(--accent)]/20 text-[var(--accent)] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
+                <span className="bg-[var(--accent)]/10 backdrop-blur-md border border-[var(--accent)]/20 text-[var(--accent)] text-[13px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
                   {tournament.format || "T20"}
                 </span>
                 {tournament.live_stream_url && (
@@ -398,7 +418,7 @@ export default function TournamentLayout({
                     href={tournament.live_stream_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full flex items-center gap-1 animate-pulse shadow-lg"
+                    className="bg-red-500 text-white text-[13px] font-black uppercase px-3 py-1 rounded-full flex items-center gap-1 animate-pulse shadow-lg"
                   >
                     <Video size={12} /> YouTube
                   </a>
@@ -416,14 +436,14 @@ export default function TournamentLayout({
               {/* {tournament?.is_auction_enabled && (
                 <Link
                   href={`/t/${tournamentId}/auction`}
-                  className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2">
+                  className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-xl font-black text-[13px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2">
                   <Gavel size={14} /> Auction
                 </Link>
               )} */}
               <a
                 href={`${window.location.origin}/register/${tournamentId}/`}
                 target="_blank"
-                className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2 text-[var(--foreground)]"
+                className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-xl font-black text-[13px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2 text-[var(--foreground)]"
               >
                 <PersonStanding size={14} /> Registration
               </a>
@@ -439,7 +459,7 @@ export default function TournamentLayout({
                   {({ open }) => (
                     <button
                       onClick={() => open()}
-                      className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] p-3 rounded-2xl hover:bg-[var(--surface-1)] transition-all text-[var(--foreground)]"
+                      className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] p-3 rounded-xl hover:bg-[var(--surface-1)] transition-all text-[var(--foreground)]"
                     >
                       <Camera size={18} />
                     </button>
@@ -460,7 +480,7 @@ export default function TournamentLayout({
           </div>
         )} */}
 
-        <div className="p-6 md:p-12 w-full mx-auto animate-in fade-in duration-700">
+        <div className="p-4 pb-[320px] md:p-8 md:pb-[340px] lg:p-12 lg:pb-12 w-full mx-auto animate-in fade-in duration-700 flex-1 flex flex-col min-w-0">
           <TournamentContext.Provider value={{ isAdmin, tournament }}>
             {children}
           </TournamentContext.Provider>
@@ -477,7 +497,7 @@ export default function TournamentLayout({
       {/* TOURNAMENT SETTINGS MODAL */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-[var(--surface-1)] w-full sm:rounded-[2.5rem] rounded-t-[2.5rem] max-w-xl border border-[var(--border-1)] flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-8">
+          <div className="bg-[var(--surface-1)] w-full rounded-2xl rounded-t-[2.5rem] max-w-xl border border-[var(--border-1)] flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-8">
             <div className="p-6 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]/50">
               <h2 className="text-xl font-black uppercase text-[var(--foreground)] tracking-tight">
                 Tournament Settings
@@ -493,12 +513,12 @@ export default function TournamentLayout({
             <div className="p-8 overflow-y-auto custom-scrollbar flex-1 space-y-10">
               {/* Basic Info */}
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
+                <h3 className="text-[13px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
                   Basic Info
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                    <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                       Name
                     </label>
                     <input
@@ -510,7 +530,7 @@ export default function TournamentLayout({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                    <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                       Location
                     </label>
                     <input
@@ -523,7 +543,7 @@ export default function TournamentLayout({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                      <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                         Format
                       </label>
                       <select
@@ -540,7 +560,7 @@ export default function TournamentLayout({
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
+                      <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-1 block">
                         Squad Limit
                       </label>
                       <input
@@ -561,13 +581,13 @@ export default function TournamentLayout({
 
               {/* Rules Section */}
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
+                <h3 className="text-[13px] font-black text-[var(--accent)] uppercase tracking-widest border-b border-[var(--border-1)] pb-2">
                   Tournament Rules
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div
-                    className={`flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-5 transition-all ${!isProOrHigher ? "opacity-70" : ""}`}
+                    className={`flex items-center justify-between bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl p-5 transition-all ${!isProOrHigher ? "opacity-70" : ""}`}
                   >
                     <div>
                       <h4
@@ -575,7 +595,7 @@ export default function TournamentLayout({
                       >
                         Franchise Auction {!isProOrHigher && <Lock size={14} />}
                       </h4>
-                      <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase mt-1">
+                      <p className="text-[13px] text-[var(--text-muted)] font-medium uppercase mt-1">
                         {!isProOrHigher
                           ? "Requires Pro Tier to Unlock"
                           : "Track bidding & team budgets."}
@@ -595,12 +615,12 @@ export default function TournamentLayout({
                     />
                   </div>
 
-                  <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
+                  <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl p-5">
                     <div>
                       <h4 className="text-sm font-bold text-amber-600">
                         Strict POTM Rule
                       </h4>
-                      <p className="text-[10px] text-amber-600/70 font-medium uppercase mt-1">
+                      <p className="text-[13px] text-amber-600/70 font-medium uppercase mt-1">
                         Must be from winning team.
                       </p>
                     </div>
@@ -624,7 +644,7 @@ export default function TournamentLayout({
                 className={`space-y-4 transition-all ${!isBroadcastTier ? "opacity-70" : ""}`}
               >
                 <h3
-                  className={`text-[10px] font-black uppercase tracking-widest border-b border-[var(--border-1)] pb-2 flex items-center justify-between`}
+                  className={`text-[13px] font-black uppercase tracking-widest border-b border-[var(--border-1)] pb-2 flex items-center justify-between`}
                 >
                   <span
                     className={
@@ -663,7 +683,7 @@ export default function TournamentLayout({
                     }
                     className="w-full bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-2 text-sm font-bold text-[var(--foreground)] outline-none focus:border-red-500 transition-all disabled:cursor-not-allowed disabled:text-[var(--text-muted)]"
                   />
-                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl px-4 py-2 flex justify-between items-center">
+                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-2 flex justify-between items-center">
                     <div>
                       <p
                         className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}
@@ -683,7 +703,7 @@ export default function TournamentLayout({
                       <Copy size={18} />
                     </button>
                   </div>
-                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl px-4 py-2 flex justify-between items-center">
+                  <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-2 flex justify-between items-center">
                     <div>
                       <p
                         className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}
@@ -704,7 +724,7 @@ export default function TournamentLayout({
                     </button>
                   </div>
                   {tournament?.is_auction_enabled && (
-                    <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl px-4 py-2 flex justify-between items-center">
+                    <div className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-4 py-2 flex justify-between items-center">
                       <div>
                         <p
                           className={`text-xs font-bold ${!isBroadcastTier ? "text-[var(--text-muted)]" : "text-[var(--foreground)]"}`}
@@ -730,7 +750,7 @@ export default function TournamentLayout({
 
               {/* Danger Zone */}
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-red-500/20 pb-2">
+                <h3 className="text-[13px] font-black text-red-500 uppercase tracking-widest border-b border-red-500/20 pb-2">
                   Danger Zone
                 </h3>
                 <div className="grid grid-cols-2 gap-3">

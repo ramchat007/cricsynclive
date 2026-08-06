@@ -73,7 +73,8 @@ export default async function BlogPost({ params }: Props) {
       {/* --- TOP NAVIGATION: BACK BUTTON --- */}
       <Link
         href="/blogs"
-        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors mb-10 group">
+        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors mb-10 group"
+      >
         <ArrowLeft
           size={16}
           className="transition-transform group-hover:-translate-x-1"
@@ -107,8 +108,9 @@ export default async function BlogPost({ params }: Props) {
         {prevBlog ? (
           <Link
             href={`/blogs/${prevBlog.slug}`}
-            className="group flex flex-col items-start p-6 rounded-2xl bg-[var(--background)]/[0.7] backdrop-blur-xl border border-[var(--foreground)]/10 hover:border-[var(--accent)]/50 transition-all hover:shadow-lg">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 flex items-center gap-1">
+            className="group flex flex-col items-start p-6 rounded-xl bg-[var(--background)]/[0.7] backdrop-blur-xl border border-[var(--foreground)]/10 hover:border-[var(--accent)]/50 transition-all hover:shadow-lg"
+          >
+            <span className="text-[13px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 flex items-center gap-1">
               <ArrowLeft
                 size={12}
                 className="transition-transform group-hover:-translate-x-1"
@@ -127,8 +129,9 @@ export default async function BlogPost({ params }: Props) {
         {nextBlog ? (
           <Link
             href={`/blogs/${nextBlog.slug}`}
-            className="group flex flex-col items-end text-right p-6 rounded-2xl bg-[var(--background)]/[0.7] backdrop-blur-xl border border-[var(--foreground)]/10 hover:border-[var(--accent)]/50 transition-all hover:shadow-lg">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 flex items-center gap-1">
+            className="group flex flex-col items-end text-right p-6 rounded-xl bg-[var(--background)]/[0.7] backdrop-blur-xl border border-[var(--foreground)]/10 hover:border-[var(--accent)]/50 transition-all hover:shadow-lg"
+          >
+            <span className="text-[13px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2 flex items-center gap-1">
               Next{" "}
               <ArrowRight
                 size={12}

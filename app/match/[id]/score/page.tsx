@@ -85,7 +85,7 @@ export default function QuickScorerPage({
         {/* Big Score Board */}
         <div className="flex justify-between items-end px-1">
           <div>
-            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">
+            <p className="text-[13px] font-black uppercase text-slate-500 tracking-widest mb-1">
               {stats.battingTeam?.name || "Team A"} Batting
             </p>
             <div className="flex items-baseline gap-2">
@@ -99,7 +99,7 @@ export default function QuickScorerPage({
           </div>
 
           <div className="text-right">
-            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">
+            <p className="text-[13px] font-black uppercase text-slate-500 tracking-widest mb-1">
               CRR
             </p>
             <span className="text-2xl font-black text-emerald-400 leading-none">
@@ -114,7 +114,7 @@ export default function QuickScorerPage({
         {/* Over Timeline (Shows: 1 | W | 4 | 0) */}
         <div className="mb-4 shrink-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <span className="text-[13px] font-black uppercase tracking-widest text-slate-500">
               This Over
             </span>
           </div>
@@ -151,9 +151,9 @@ export default function QuickScorerPage({
         </div>
 
         {/* Mini Player Summary */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 grid grid-cols-2 gap-4 shrink-0 shadow-inner">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 grid grid-cols-2 gap-4 shrink-0 shadow-inner">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1">
+            <p className="text-[13px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1">
               <Users size={10} /> Striker
             </p>
             <div className="flex justify-between items-center">
@@ -165,14 +165,14 @@ export default function QuickScorerPage({
               </span>
               <span className="font-black text-sm text-amber-400">
                 {stats.strikerRuns}{" "}
-                <span className="text-[10px] text-slate-500 font-bold">
+                <span className="text-[13px] text-slate-500 font-bold">
                   ({stats.strikerBalls})
                 </span>
               </span>
             </div>
           </div>
           <div className="border-l border-slate-800 pl-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
+            <p className="text-[13px] font-black uppercase tracking-widest text-slate-500 mb-1">
               Bowler
             </p>
             <div className="flex justify-between items-center">
@@ -184,7 +184,7 @@ export default function QuickScorerPage({
               </span>
               <span className="font-black text-sm">
                 {stats.bowlerWickets}-{stats.bowlerRuns}{" "}
-                <span className="text-[10px] text-slate-500 font-bold">
+                <span className="text-[13px] text-slate-500 font-bold">
                   ({stats.bowlerOvers})
                 </span>
               </span>
@@ -202,7 +202,7 @@ export default function QuickScorerPage({
               key={runs}
               onClick={() => tapRuns(runs)}
               disabled={engine.isSubmittingBall}
-              className="col-span-1 row-span-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl flex items-center justify-center font-black text-3xl transition-colors disabled:opacity-50"
+              className="col-span-1 row-span-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl flex items-center justify-center font-black text-3xl transition-colors disabled:opacity-50"
             >
               {runs === 0 ? <span className="text-slate-400">0</span> : runs}
             </button>
@@ -212,14 +212,14 @@ export default function QuickScorerPage({
           <button
             onClick={() => tapRuns(4)}
             disabled={engine.isSubmittingBall}
-            className="col-span-2 row-span-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-2xl flex items-center justify-center font-black text-4xl shadow-[0_0_20px_rgba(37,99,235,0.2)] transition-all"
+            className="col-span-2 row-span-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-xl flex items-center justify-center font-black text-4xl shadow-[0_0_20px_rgba(37,99,235,0.2)] transition-all"
           >
             4
           </button>
           <button
             onClick={() => tapRuns(6)}
             disabled={engine.isSubmittingBall}
-            className="col-span-2 row-span-2 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white rounded-2xl flex items-center justify-center font-black text-4xl shadow-[0_0_20px_rgba(147,51,234,0.2)] transition-all"
+            className="col-span-2 row-span-2 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white rounded-xl flex items-center justify-center font-black text-4xl shadow-[0_0_20px_rgba(147,51,234,0.2)] transition-all"
           >
             6
           </button>

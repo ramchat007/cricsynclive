@@ -90,8 +90,8 @@ export default function InstallAppButton({
       {/* iOS Instructions Modal */}
       {showIOSInstructions && (
         <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in slide-in-from-bottom-10 flex flex-col gap-4 text-center">
-            <div className="w-16 h-16 bg-[var(--surface-2)] rounded-2xl flex items-center justify-center mx-auto mb-2 border border-[var(--border-1)]">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl p-6 w-full max-w-sm shadow-2xl animate-in slide-in-from-bottom-10 flex flex-col gap-4 text-center">
+            <div className="w-16 h-16 bg-[var(--surface-2)] rounded-xl flex items-center justify-center mx-auto mb-2 border border-[var(--border-1)]">
               <Download size={32} className="text-[var(--accent)]" />
             </div>
             <h3 className="text-xl font-black text-[var(--foreground)] leading-tight">
@@ -102,7 +102,7 @@ export default function InstallAppButton({
               it manually in two taps!
             </p>
 
-            <div className="bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)] text-left flex flex-col gap-3 my-2">
+            <div className="bg-[var(--surface-2)] p-4 rounded-xl border border-[var(--border-1)] text-left flex flex-col gap-3 my-2">
               <div className="flex items-center gap-3 text-sm font-bold text-[var(--foreground)]">
                 <span className="w-6 h-6 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center shrink-0">
                   1

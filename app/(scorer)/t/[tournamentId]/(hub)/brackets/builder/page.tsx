@@ -1141,7 +1141,7 @@ export default function BracketBuilder() {
 
         {slot.type === "bye" ? (
           <div className="h-10 rounded-lg border flex items-center justify-center bg-[var(--surface-2)] border-[var(--border-1)] transition-colors">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-50 text-[var(--text-muted)]">
+            <span className="text-[13px] font-black uppercase tracking-widest opacity-50 text-[var(--text-muted)]">
               BYE (Advances)
             </span>
           </div>
@@ -1162,13 +1162,13 @@ export default function BracketBuilder() {
                 </span>
                 <button
                   onClick={() => removeTeamFromSlot(match.id, slotKey)}
-                  className="absolute right-2 text-red-500 text-[10px] font-bold hover:opacity-75"
+                  className="absolute right-2 text-red-500 text-[13px] font-bold hover:opacity-75"
                 >
                   X
                 </button>
               </>
             ) : (
-              <span className="text-[10px] font-bold italic opacity-40 flex items-center gap-1 text-[var(--foreground)]">
+              <span className="text-[13px] font-bold italic opacity-40 flex items-center gap-1 text-[var(--foreground)]">
                 <Users size={12} /> Drag Team Here
               </span>
             )}
@@ -1328,7 +1328,7 @@ export default function BracketBuilder() {
                 <div key={groupName} className="space-y-2">
                   <div className="flex items-center gap-2 mb-1 border-b pb-1 border-[var(--border-1)] transition-colors">
                     <Shield size={12} className="text-[var(--accent)]" />
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--foreground)]">
+                    <h3 className="text-[13px] font-black uppercase tracking-widest text-[var(--foreground)]">
                       {groupName}
                     </h3>
                     <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)] transition-colors">
@@ -1347,7 +1347,7 @@ export default function BracketBuilder() {
                         size={14}
                         className="text-[var(--text-muted)] shrink-0"
                       />
-                      <span className="font-bold text-[11px] truncate leading-tight">
+                      <span className="font-bold text-[14px] truncate leading-tight">
                         {team.name}
                       </span>
                     </div>
@@ -1459,7 +1459,7 @@ export default function BracketBuilder() {
           <div className="w-80 shrink-0 h-full">
             <button
               onClick={addRound}
-              className="w-full h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-colors border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+              className="w-full h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-colors border-[var(--border-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
             >
               <Plus size={20} /> Add Next Round
             </button>
@@ -1470,7 +1470,7 @@ export default function BracketBuilder() {
       {/* 🔥 WIZARD MODAL */}
       {showWizard && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-[420px] p-6 rounded-3xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
+          <div className="w-full max-w-[420px] p-6 rounded-xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
             <h3 className="text-lg font-black uppercase mb-4 text-[var(--accent)] flex items-center gap-2">
               <Wand2 size={18} /> Bracket Wizard
             </h3>
@@ -1478,7 +1478,7 @@ export default function BracketBuilder() {
             <div className="flex gap-2 mb-6 border border-[var(--border-1)] bg-[var(--surface-2)] p-1 rounded-xl">
               <button
                 onClick={() => setWizardMode("standard")}
-                className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all border ${
+                className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[13px] uppercase tracking-wider transition-all border ${
                   wizardMode === "standard"
                     ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-sm"
                     : "bg-transparent text-[var(--text-muted)] border-transparent hover:text-[var(--foreground)]"
@@ -1488,7 +1488,7 @@ export default function BracketBuilder() {
               </button>
               <button
                 onClick={() => setWizardMode("groups_knockout")}
-                className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all border ${
+                className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[13px] uppercase tracking-wider transition-all border ${
                   wizardMode === "groups_knockout"
                     ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-sm"
                     : "bg-transparent text-[var(--text-muted)] border-transparent hover:text-[var(--foreground)]"
@@ -1498,7 +1498,7 @@ export default function BracketBuilder() {
               </button>
               <button
                 onClick={() => setWizardMode("round_robin")}
-                className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-wider transition-all border ${
+                className={`flex-1 py-2 rounded-lg font-bold text-[9px] sm:text-[13px] uppercase tracking-wider transition-all border ${
                   wizardMode === "round_robin"
                     ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] shadow-sm"
                     : "bg-transparent text-[var(--text-muted)] border-transparent hover:text-[var(--foreground)]"
@@ -1510,13 +1510,13 @@ export default function BracketBuilder() {
 
             {wizardMode === "round_robin" ? (
               <>
-                <p className="text-[11px] leading-relaxed mb-4 font-bold text-[var(--text-muted)]">
+                <p className="text-[14px] leading-relaxed mb-4 font-bold text-[var(--text-muted)]">
                   Generates a pure league schedule followed by Knockouts
                   (Semis/Finals).
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
+                    <label className="text-[13px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
                       Total Teams
                     </label>
                     <input
@@ -1530,7 +1530,7 @@ export default function BracketBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
+                    <label className="text-[13px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
                       Top Teams Advance
                     </label>
                     <select
@@ -1553,7 +1553,7 @@ export default function BracketBuilder() {
                   Enter the number of teams. The wizard will automatically map
                   perfect powers of 2 and place Byes where necessary.
                 </p>
-                <label className="text-[10px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
+                <label className="text-[13px] font-bold uppercase mb-2 block text-[var(--text-muted)]">
                   Total Teams
                 </label>
                 <input
@@ -1566,13 +1566,13 @@ export default function BracketBuilder() {
               </>
             ) : (
               <>
-                <p className="text-[11px] leading-relaxed mb-4 font-bold text-[var(--text-muted)]">
+                <p className="text-[14px] leading-relaxed mb-4 font-bold text-[var(--text-muted)]">
                   Generates an interleaved Round Robin Stage followed by a
                   Knockout bracket.
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                    <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                       Number of Groups
                     </label>
                     <input
@@ -1586,7 +1586,7 @@ export default function BracketBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                    <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                       Teams Per Group
                     </label>
                     <input
@@ -1601,7 +1601,7 @@ export default function BracketBuilder() {
                   </div>
                 </div>
                 <div className="mb-4">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Advancing (Per Group)
                   </label>
                   <select
@@ -1636,7 +1636,7 @@ export default function BracketBuilder() {
                   />
                   <label
                     htmlFor="interleaveToggle"
-                    className="text-[10px] font-bold uppercase tracking-widest cursor-pointer text-[var(--foreground)]"
+                    className="text-[13px] font-bold uppercase tracking-widest cursor-pointer text-[var(--foreground)]"
                   >
                     Interleave Group Matches
                   </label>
@@ -1654,7 +1654,7 @@ export default function BracketBuilder() {
               />
               <label
                 htmlFor="thirdPlaceToggle"
-                className="text-[10px] font-bold uppercase tracking-widest cursor-pointer text-[var(--foreground)]"
+                className="text-[13px] font-bold uppercase tracking-widest cursor-pointer text-[var(--foreground)]"
               >
                 Generate 3rd Place Match
               </label>
@@ -1663,13 +1663,13 @@ export default function BracketBuilder() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowWizard(false)}
-                className="flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                className="flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[13px] transition-all bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateWizard}
-                className="flex-1 py-3 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-lg"
+                className="flex-1 py-3 bg-[var(--foreground)] hover:opacity-90 text-[var(--background)] rounded-xl font-bold uppercase tracking-widest text-[13px] transition-all active:scale-95 shadow-lg"
               >
                 Generate
               </button>
@@ -1681,13 +1681,13 @@ export default function BracketBuilder() {
       {/* 🔴 MATCH-LEVEL SETTINGS MODAL */}
       {activeConfigMatch && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-sm p-6 rounded-3xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
+          <div className="w-full max-w-sm p-6 rounded-xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
             <h3 className="text-lg font-black uppercase mb-4 text-[var(--foreground)] flex items-center gap-2">
               <Calendar size={18} /> Match Settings
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                   Match ID (Code)
                 </label>
                 <input
@@ -1699,7 +1699,7 @@ export default function BracketBuilder() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Overs
                   </label>
                   <input
@@ -1727,7 +1727,7 @@ export default function BracketBuilder() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Time
                   </label>
                   <input
@@ -1756,7 +1756,7 @@ export default function BracketBuilder() {
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
+                <label className="text-[13px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                   <Calendar size={10} /> Date
                 </label>
                 <input
@@ -1781,7 +1781,7 @@ export default function BracketBuilder() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
+                <label className="text-[13px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                   <MapPin size={10} /> Venue
                 </label>
                 <input
@@ -1823,18 +1823,18 @@ export default function BracketBuilder() {
       {/* 🟢 GLOBAL SETTINGS MODAL */}
       {showGlobalConfig && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-md p-6 rounded-3xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
+          <div className="w-full max-w-md p-6 rounded-xl border shadow-2xl bg-[var(--surface-1)] border-[var(--border-1)] transition-colors">
             <h3 className="text-lg font-black uppercase mb-1 text-[var(--foreground)] flex items-center gap-2">
               <Settings size={18} /> Global Match Settings
             </h3>
-            <p className="text-[10px] uppercase font-bold mb-4 text-[var(--text-muted)]">
+            <p className="text-[13px] uppercase font-bold mb-4 text-[var(--text-muted)]">
               These defaults apply to all NEW matches and Auto-Schedules.
             </p>
 
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                     <Calendar size={10} /> Starting Date
                   </label>
                   <input
@@ -1850,7 +1850,7 @@ export default function BracketBuilder() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 flex items-center gap-1 text-[var(--text-muted)]">
                     <Clock size={10} /> Start Time
                   </label>
                   <input
@@ -1867,7 +1867,7 @@ export default function BracketBuilder() {
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                   Default Venue
                 </label>
                 <input
@@ -1885,7 +1885,7 @@ export default function BracketBuilder() {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Overs
                   </label>
                   <input
@@ -1901,7 +1901,7 @@ export default function BracketBuilder() {
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Duration (m)
                   </label>
                   <input
@@ -1917,7 +1917,7 @@ export default function BracketBuilder() {
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
+                  <label className="text-[13px] font-bold uppercase mb-1 block text-[var(--text-muted)]">
                     Gap (m)
                   </label>
                   <input
@@ -1938,13 +1938,13 @@ export default function BracketBuilder() {
             <div className="flex flex-col gap-2 mt-6">
               <button
                 onClick={handleClearEntireBracket}
-                className="w-full py-3 mb-2 rounded-xl font-black uppercase tracking-widest text-[10px] border transition-all flex justify-center items-center gap-2 shadow-sm bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
+                className="w-full py-3 mb-2 rounded-xl font-black uppercase tracking-widest text-[13px] border transition-all flex justify-center items-center gap-2 shadow-sm bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
               >
                 <Trash2 size={14} /> Clear Entire Bracket
               </button>
               <button
                 onClick={applyChronologicalSettings}
-                className="w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] border transition-all bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20 hover:bg-[var(--accent)]/20"
+                className="w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[13px] border transition-all bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20 hover:bg-[var(--accent)]/20"
               >
                 Auto-Schedule Current Matches
               </button>

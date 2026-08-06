@@ -134,7 +134,7 @@ export default function PublicPlayerRegistration({
                 setIsEditing(false);
                 setFormData({ ...formData, id: "", full_name: "" });
               }}
-              className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 px-3 py-1.5 rounded-full transition-all hover:opacity-80 flex items-center gap-1"
+              className="text-[13px] font-bold uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 px-3 py-1.5 rounded-full transition-all hover:opacity-80 flex items-center gap-1"
             >
               {lookupMode ? (
                 "New Entry"
@@ -155,7 +155,7 @@ export default function PublicPlayerRegistration({
           <div className="space-y-4">
             {!lookupMode && (
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                   Full Name
                 </label>
                 <div className="relative mt-1">
@@ -169,14 +169,14 @@ export default function PublicPlayerRegistration({
                       setFormData({ ...formData, full_name: e.target.value })
                     }
                     placeholder="Enter your name"
-                    className="w-full bg-[var(--surface-2)] border-0 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] placeholder-[var(--text-muted)] transition-all"
+                    className="w-full bg-[var(--surface-2)] border-0 rounded-xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] placeholder-[var(--text-muted)] transition-all"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+              <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                 Mobile Number
               </label>
               <div className="relative mt-1">
@@ -193,7 +193,7 @@ export default function PublicPlayerRegistration({
                     })
                   }
                   placeholder="WhatsApp Number"
-                  className="w-full bg-[var(--surface-2)] border-0 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] placeholder-[var(--text-muted)] transition-all"
+                  className="w-full bg-[var(--surface-2)] border-0 rounded-xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] placeholder-[var(--text-muted)] transition-all"
                 />
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function PublicPlayerRegistration({
               <button
                 onClick={handleLookup}
                 disabled={loading || !formData.mobile_number}
-                className="w-full bg-[var(--foreground)] text-[var(--background)] font-bold py-5 rounded-2xl mt-6 flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 active:scale-95"
+                className="w-full bg-[var(--foreground)] text-[var(--background)] font-bold py-5 rounded-xl mt-6 flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 active:scale-95"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={18} />
@@ -216,7 +216,7 @@ export default function PublicPlayerRegistration({
               <button
                 onClick={() => setStep(2)}
                 disabled={!formData.full_name || !formData.mobile_number}
-                className="w-full bg-[var(--accent)] text-[var(--background)] font-bold py-5 rounded-2xl mt-6 flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                className="w-full bg-[var(--accent)] text-[var(--background)] font-bold py-5 rounded-xl mt-6 flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50"
               >
                 Next Step <ChevronRight size={18} />
               </button>
@@ -265,7 +265,7 @@ export default function PublicPlayerRegistration({
               {({ open }) => (
                 <button
                   onClick={() => open()}
-                  className="w-full h-32 border-2 border-dashed border-[var(--border-1)] rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)] hover:border-[var(--accent)] transition-all overflow-hidden shrink-0"
+                  className="w-full h-32 border-2 border-dashed border-[var(--border-1)] rounded-xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)] hover:border-[var(--accent)] transition-all overflow-hidden shrink-0"
                 >
                   {formData.photo_url ? (
                     <img
@@ -276,7 +276,7 @@ export default function PublicPlayerRegistration({
                   ) : (
                     <>
                       <Camera size={24} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">
+                      <span className="text-[13px] font-bold uppercase tracking-widest">
                         Upload Profile Photo
                       </span>
                     </>
@@ -286,7 +286,7 @@ export default function PublicPlayerRegistration({
             </CldUploadWidget>
 
             <div className="pt-2">
-              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-2 block">
+              <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1 mb-2 block">
                 Entry Fee Payment Proof
               </label>
               <CldUploadWidget
@@ -318,7 +318,7 @@ export default function PublicPlayerRegistration({
                 {({ open }) => (
                   <button
                     onClick={() => open()}
-                    className="w-full h-20 border-2 border-dashed border-[var(--accent)]/30 bg-[var(--accent)]/5 rounded-2xl flex items-center justify-center gap-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all overflow-hidden"
+                    className="w-full h-20 border-2 border-dashed border-[var(--accent)]/30 bg-[var(--accent)]/5 rounded-xl flex items-center justify-center gap-2 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all overflow-hidden"
                   >
                     {formData.payment_url ? (
                       <span className="font-bold text-sm">
@@ -339,7 +339,7 @@ export default function PublicPlayerRegistration({
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                   Batting Hand
                 </label>
                 <select
@@ -347,14 +347,14 @@ export default function PublicPlayerRegistration({
                   onChange={(e) =>
                     setFormData({ ...formData, batting_hand: e.target.value })
                   }
-                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
+                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
                 >
                   <option className="bg-[var(--surface-1)]">Right Hand</option>
                   <option className="bg-[var(--surface-1)]">Left Hand</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                   Bowling Hand
                 </label>
                 <select
@@ -362,14 +362,14 @@ export default function PublicPlayerRegistration({
                   onChange={(e) =>
                     setFormData({ ...formData, bowling_hand: e.target.value })
                   }
-                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
+                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
                 >
                   <option className="bg-[var(--surface-1)]">Right Arm</option>
                   <option className="bg-[var(--surface-1)]">Left Arm</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                   Player Role
                 </label>
                 <select
@@ -377,7 +377,7 @@ export default function PublicPlayerRegistration({
                   onChange={(e) =>
                     setFormData({ ...formData, player_role: e.target.value })
                   }
-                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
+                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
                 >
                   <option className="bg-[var(--surface-1)]">Batsman</option>
                   <option className="bg-[var(--surface-1)]">Bowler</option>
@@ -388,7 +388,7 @@ export default function PublicPlayerRegistration({
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                   Jersey Size
                 </label>
                 <select
@@ -396,7 +396,7 @@ export default function PublicPlayerRegistration({
                   onChange={(e) =>
                     setFormData({ ...formData, tshirt_size: e.target.value })
                   }
-                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
+                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
                 >
                   <option className="bg-[var(--surface-1)]">S</option>
                   <option className="bg-[var(--surface-1)]">M</option>
@@ -406,7 +406,7 @@ export default function PublicPlayerRegistration({
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
+                <label className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">
                   Bowling Style
                 </label>
                 <select
@@ -417,7 +417,7 @@ export default function PublicPlayerRegistration({
                       bowling_style: e.target.value,
                     })
                   }
-                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
+                  className="w-full mt-1 bg-[var(--surface-2)] border-0 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none text-[var(--foreground)] appearance-none"
                 >
                   <option className="bg-[var(--surface-1)]">None</option>
                   <option className="bg-[var(--surface-1)]">Fast</option>
@@ -431,14 +431,14 @@ export default function PublicPlayerRegistration({
             <div className="flex max-w-md m-auto gap-4 pt-4 shrink-2">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 bg-[var(--surface-2)] text-[var(--text-muted)] font-bold py-4 rounded-2xl transition-all hover:bg-[var(--border-1)]"
+                className="flex-1 bg-[var(--surface-2)] text-[var(--text-muted)] font-bold py-4 rounded-xl transition-all hover:bg-[var(--border-1)]"
               >
                 Back
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 bg-[var(--foreground)] text-[var(--background)] font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                className="flex-1 bg-[var(--foreground)] text-[var(--background)] font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 disabled:opacity-50"
               >
                 {loading ? (
                   <Loader2 className="animate-spin mx-auto" size={18} />

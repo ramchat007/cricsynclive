@@ -206,124 +206,124 @@ export default function LeaderboardsPage({
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] font-sans pb-20 transition-colors duration-300">
       {/* HEADER */}
-        <div className="flex items-center gap-4 mb-8 animate-in fade-in">
-          <Link
-            href={`/t/${tournamentId}`}
-            className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:bg-[var(--surface-2)] transition-all"
-          >
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-black uppercase tracking-tight">
-              Leaderboards
-            </h1>
-            <p className="text-sm font-bold text-[var(--accent)] uppercase tracking-widest">
-              Tournament Stats
-            </p>
-          </div>
+      <div className="flex items-center gap-4 mb-8 animate-in fade-in">
+        <Link
+          href={`/t/${tournamentId}`}
+          className="w-12 h-12 bg-[var(--surface-1)] rounded-full flex items-center justify-center shadow-sm border border-[var(--border-1)] hover:bg-[var(--surface-2)] transition-all"
+        >
+          <ArrowLeft size={20} />
+        </Link>
+        <div>
+          <h1 className="text-3xl font-black uppercase tracking-tight">
+            Leaderboards
+          </h1>
+          <p className="text-sm font-bold text-[var(--accent)] uppercase tracking-widest">
+            Tournament Stats
+          </p>
         </div>
+      </div>
 
-        {/* TABS */}
-        <div className="flex bg-[var(--surface-1)] p-1.5 rounded-2xl max-w-5xl mx-auto border border-[var(--border-1)] mb-8 shadow-sm overflow-x-auto hide-scrollbar">
-          <button
-            onClick={() => setActiveTab("orange")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "orange" ? "bg-orange-500 text-white shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-          >
-            <Target size={14} /> Orange Cap
-          </button>
-          <button
-            onClick={() => setActiveTab("purple")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "purple" ? "bg-purple-600 text-white shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-          >
-            <Trophy size={14} /> Purple Cap
-          </button>
-          <button
-            onClick={() => setActiveTab("mvp")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "mvp" ? "bg-[var(--accent)] text-[var(--background)] shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-          >
-            <Star size={14} /> MVP Race
-          </button>
-        </div>
+      {/* TABS */}
+      <div className="flex bg-[var(--surface-1)] p-1.5 rounded-xl max-w-5xl mx-auto border border-[var(--border-1)] mb-8 shadow-sm overflow-x-auto hide-scrollbar">
+        <button
+          onClick={() => setActiveTab("orange")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "orange" ? "bg-orange-500 text-white shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <Target size={14} /> Orange Cap
+        </button>
+        <button
+          onClick={() => setActiveTab("purple")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "purple" ? "bg-purple-600 text-white shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <Trophy size={14} /> Purple Cap
+        </button>
+        <button
+          onClick={() => setActiveTab("mvp")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "mvp" ? "bg-[var(--accent)] text-[var(--background)] shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <Star size={14} /> MVP Race
+        </button>
+      </div>
 
-        {/* LIST RENDERER */}
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-          {(activeTab === "orange"
-            ? orangeCap
-            : activeTab === "purple"
-              ? purpleCap
-              : mvpRace
-          ).map((player, index) => (
-            <div
-              key={player.id}
-              onClick={() => setSelectedPlayer(player)}
-              className={`flex items-center justify-between p-4 sm:p-6 bg-[var(--surface-1)] rounded-3xl border shadow-sm cursor-pointer hover:border-[var(--accent)]/50 transition-all ${index === 0 ? "border-[var(--accent)]/40 bg-[var(--accent)]/5" : "border-[var(--border-1)]"}`}
-            >
-              <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-                <div
-                  className={`w-8 font-black text-xl text-center shrink-0 ${index === 0 ? "text-[var(--accent)] text-3xl" : "text-[var(--text-muted)]"}`}
-                >
-                  {index === 0 ? "👑" : `#${index + 1}`}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-black text-lg uppercase tracking-tight text-[var(--foreground)] truncate">
-                    {player.full_name}
-                  </h3>
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest truncate">
-                    {player.teamName}
-                  </p>
-                  {renderTimelineChips(player.id)}
-                </div>
+      {/* LIST RENDERER */}
+      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+        {(activeTab === "orange"
+          ? orangeCap
+          : activeTab === "purple"
+            ? purpleCap
+            : mvpRace
+        ).map((player, index) => (
+          <div
+            key={player.id}
+            onClick={() => setSelectedPlayer(player)}
+            className={`flex items-center justify-between p-4 sm:p-6 bg-[var(--surface-1)] rounded-xl border shadow-sm cursor-pointer hover:border-[var(--accent)]/50 transition-all ${index === 0 ? "border-[var(--accent)]/40 bg-[var(--accent)]/5" : "border-[var(--border-1)]"}`}
+          >
+            <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+              <div
+                className={`w-8 font-black text-xl text-center shrink-0 ${index === 0 ? "text-[var(--accent)] text-3xl" : "text-[var(--text-muted)]"}`}
+              >
+                {index === 0 ? "👑" : `#${index + 1}`}
               </div>
-              <div className="flex items-center gap-6 text-right shrink-0">
-                <div className="hidden sm:block">
-                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">
-                    {activeTab === "orange"
-                      ? "SR"
-                      : activeTab === "purple"
-                        ? "ECON"
-                        : "RUNS"}
-                  </p>
-                  <p className="font-bold text-sm">
-                    {activeTab === "orange"
-                      ? player.sr
-                      : activeTab === "purple"
-                        ? player.econ
-                        : player.runs}
-                  </p>
-                </div>
-                <div>
-                  <p
-                    className={`text-[9px] font-black uppercase mb-1 ${activeTab === "orange" ? "text-orange-500" : activeTab === "purple" ? "text-purple-500" : "text-[var(--accent)]"}`}
-                  >
-                    {activeTab === "orange"
-                      ? "Runs"
-                      : activeTab === "purple"
-                        ? "Wkts"
-                        : "Points"}
-                  </p>
-                  <p className="text-3xl font-black leading-none">
-                    {activeTab === "orange"
-                      ? player.runs
-                      : activeTab === "purple"
-                        ? player.wickets
-                        : player.points}
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <h3 className="font-black text-lg uppercase tracking-tight text-[var(--foreground)] truncate">
+                  {player.full_name}
+                </h3>
+                <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-widest truncate">
+                  {player.teamName}
+                </p>
+                {renderTimelineChips(player.id)}
               </div>
             </div>
-          ))}
-        </div>
+            <div className="flex items-center gap-6 text-right shrink-0">
+              <div className="hidden sm:block">
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">
+                  {activeTab === "orange"
+                    ? "SR"
+                    : activeTab === "purple"
+                      ? "ECON"
+                      : "RUNS"}
+                </p>
+                <p className="font-bold text-sm">
+                  {activeTab === "orange"
+                    ? player.sr
+                    : activeTab === "purple"
+                      ? player.econ
+                      : player.runs}
+                </p>
+              </div>
+              <div>
+                <p
+                  className={`text-[9px] font-black uppercase mb-1 ${activeTab === "orange" ? "text-orange-500" : activeTab === "purple" ? "text-purple-500" : "text-[var(--accent)]"}`}
+                >
+                  {activeTab === "orange"
+                    ? "Runs"
+                    : activeTab === "purple"
+                      ? "Wkts"
+                      : "Points"}
+                </p>
+                <p className="text-3xl font-black leading-none">
+                  {activeTab === "orange"
+                    ? player.runs
+                    : activeTab === "purple"
+                      ? player.wickets
+                      : player.points}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* DETAIL MODAL */}
       {selectedPlayer && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in">
-          <div className="bg-[var(--surface-1)] w-full sm:max-w-md rounded-t-[2rem] sm:rounded-[2.5rem] border border-[var(--border-1)] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+          <div className="bg-[var(--surface-1)] w-full sm:max-w-md rounded-t-[2rem] rounded-2xl border border-[var(--border-1)] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
             <div className="p-6 border-b border-[var(--border-1)] flex justify-between items-start bg-[var(--surface-2)]">
               <div>
                 <h3 className="text-xl font-black uppercase text-[var(--foreground)]">
                   {selectedPlayer.full_name}
                 </h3>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] mt-1">
+                <p className="text-[13px] font-bold uppercase tracking-widest text-[var(--accent)] mt-1">
                   {selectedPlayer.teamName}
                 </p>
               </div>
@@ -335,7 +335,7 @@ export default function LeaderboardsPage({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 bg-[var(--background)] space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
+              <h4 className="text-[13px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
                 <BarChart2 size={12} /> Recent Match Breakdown
               </h4>
               <div className="space-y-2">
@@ -343,10 +343,10 @@ export default function LeaderboardsPage({
                   <Link
                     key={i}
                     href={`/match/${m.matchId}`}
-                    className="bg-[var(--surface-1)] border border-[var(--border-1)] p-4 rounded-2xl flex justify-between items-center group hover:border-[var(--accent)]/50 hover:shadow-md transition-all cursor-pointer"
+                    className="bg-[var(--surface-1)] border border-[var(--border-1)] p-4 rounded-xl flex justify-between items-center group hover:border-[var(--accent)]/50 hover:shadow-md transition-all cursor-pointer"
                   >
                     <div className="min-w-0 pr-2">
-                      <p className="text-[11px] font-black uppercase truncate max-w-[140px] sm:max-w-[180px] group-hover:text-[var(--accent)] transition-colors">
+                      <p className="text-[14px] font-black uppercase truncate max-w-[140px] sm:max-w-[180px] group-hover:text-[var(--accent)] transition-colors">
                         {m.title}
                       </p>
                       <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5">

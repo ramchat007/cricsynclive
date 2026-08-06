@@ -157,7 +157,7 @@ function ReceiverContent() {
     <>
       {status && !isConnected && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md z-50">
-          <div className="bg-slate-900/80 border border-slate-700 p-8 rounded-3xl flex flex-col items-center shadow-2xl text-center">
+          <div className="bg-slate-900/80 border border-slate-700 p-8 rounded-xl flex flex-col items-center shadow-2xl text-center">
             {status.includes("Waiting") || status.includes("Reconnecting") ? (
               <RefreshCw
                 size={48}
@@ -178,7 +178,7 @@ function ReceiverContent() {
             <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
               {status}
             </p>
-            <p className="text-slate-600 font-mono text-[10px] mt-6">
+            <p className="text-slate-600 font-mono text-[13px] mt-6">
               ID: {camId}
             </p>
           </div>
@@ -210,10 +210,11 @@ export default function CameraReceiverPage() {
       `}</style>
       <Suspense
         fallback={
-          <div className="text-white bg-black/80 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl border border-white/10">
+          <div className="text-white bg-black/80 px-6 py-4 rounded-xl font-black uppercase tracking-widest text-sm shadow-xl border border-white/10">
             Loading Receiver Engine...
           </div>
-        }>
+        }
+      >
         <ReceiverContent />
       </Suspense>
     </div>
