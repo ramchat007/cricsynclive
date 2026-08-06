@@ -59,7 +59,7 @@ export default function TeamsPage({
 
       if (tData) {
         setSquadLimit(tData.squad_limit || 15);
-        setIsAuctionEnabled(tData.is_auction_enabled ?? true);
+        setIsAuctionEnabled(tData.is_auction_enabled ?? false);
       }
 
       const { data: pData } = await supabase
@@ -161,7 +161,8 @@ export default function TeamsPage({
           auction_status: isAuctionEnabled ? "sold" : "pending",
           sold_price: isAuctionEnabled ? 0 : null,
         })
-        .eq("id", playerData.id);
+        .eq("id", playerData.id)
+        .select();
       error = updateError;
     } else {
       const { error: insertError } = await supabase.from("players").insert({
@@ -178,6 +179,7 @@ export default function TeamsPage({
       });
       error = insertError;
     }
+    setQuickPlayer({...quickPlayer,full_name: ""})
 
     if (!error) {
       setSearchQuery("");
@@ -209,27 +211,24 @@ export default function TeamsPage({
   };
 
   const deleteTeam = async (teamId: string) => {
-  // 1. Confirm before action (best practice for deletion)
-  if (!window.confirm("Are you sure you want to remove this team?")) return;
+    // 1. Confirm before action (best practice for deletion)
+    if (!window.confirm("Are you sure you want to remove this team?")) return;
 
-  setIsProcessing(true);
+    setIsProcessing(true);
 
-  // 2. Perform the delete
-  const { error } = await supabase
-    .from("teams")
-    .delete()
-    .eq("id", teamId);
+    // 2. Perform the delete
+    const { error } = await supabase.from("teams").delete().eq("id", teamId);
 
-  // 3. Handle result
-  if (error) {
-    alert("Error removing team: " + error.message);
-  } else {
-    // Refresh the UI after successful deletion
-    checkAdminAndFetch();
-  }
+    // 3. Handle result
+    if (error) {
+      alert("Error removing team: " + error.message);
+    } else {
+      // Refresh the UI after successful deletion
+      checkAdminAndFetch();
+    }
 
-  setIsProcessing(false);
-};
+    setIsProcessing(false);
+  };
 
   return (
     <div className="animate-in fade-in space-y-6 md:space-y-8">
@@ -337,7 +336,7 @@ export default function TeamsPage({
         {teams.map((team) => (
           <div
             key={team.id}
-            className="bg-[var(--surface-1)] rounded-[2rem] p-5 sm:p-6 border border-[var(--border-1)] shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col justify-between"
+            className="bg-[var(--surface-1)] rounded-[2rem] p-5 sm:p-6 border border-[var(--border-1)] shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col "
           >
             {/* Background Glow uses dynamic team color */}
             <div
@@ -427,7 +426,7 @@ export default function TeamsPage({
                     </button>
                   )}
                 </div>
-                <div className="flex flex-col gap-2 max-h-[140px] overflow-y-auto custom-scrollbar pr-1">
+                <div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1">
                   {team.players.map((p: any) => (
                     <div
                       key={p.id}
@@ -619,9 +618,13 @@ export default function TeamsPage({
               {/* DELETE BUTTON - DANGER STYLE */}
               <button
                 onClick={() => {
-                  if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
+                  if (
+                    window.confirm(
+                      "Are you sure you want to delete this team? This action cannot be undone.",
+                    )
+                  ) {
                     deleteTeam(editingTeam.id);
-                     setEditingTeam(null)
+                    setEditingTeam(null);
                   }
                 }}
                 className="px-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-xl transition-colors flex items-center justify-center shrink-0"

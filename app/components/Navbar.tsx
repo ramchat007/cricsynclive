@@ -11,6 +11,7 @@ import InstallAppButton from "./InstallAppButton";
 
 export default function Navbar() {
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
   const [session, setSession] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -61,9 +62,10 @@ export default function Navbar() {
   }, [isOpen]);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await supabase.auth.signOut();
-    router.push("/");
-    setIsOpen(false);
+    router.refresh();
+    setIsLoggingOut(false);
   };
 
   const isActive = (path: string) => pathname === path;
@@ -160,7 +162,7 @@ export default function Navbar() {
             ) : (
               <div className="pl-2">
                 <Link
-                  href="/login"
+                  href={`/login?next=${pathname}`}
                   className="text-[11px] font-black uppercase px-6 py-2.5 rounded-full bg-[var(--foreground)] text-[var(--background)] hover:opacity-80 transition-all shadow-lg"
                 >
                   Login / Register
@@ -305,7 +307,7 @@ export default function Navbar() {
                   </div>
                 ) : (
                   <Link
-                    href="/login"
+                    href={`/login?next=${pathname}`}
                     onClick={() => setIsOpen(false)}
                     className="w-full py-5 rounded-[2rem] text-center font-black uppercase tracking-widest text-sm shadow-xl bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition-opacity"
                   >

@@ -153,7 +153,7 @@ export default function LeaderboardsPage({
 
   if (isLoading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-black text-[var(--text-muted)] bg-[var(--background)] transition-colors duration-300">
+      <div className=" flex flex-col items-center justify-center font-black text-[var(--text-muted)] bg-[var(--background)] transition-colors duration-300">
         <Activity
           className="animate-spin text-[var(--accent)] mb-4"
           size={32}
@@ -204,9 +204,8 @@ export default function LeaderboardsPage({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-4 md:p-8 font-sans pb-20 transition-colors duration-300">
-      <div className="max-w-4xl mx-auto">
-        {/* HEADER */}
+    <div className="bg-[var(--background)] text-[var(--foreground)] font-sans pb-20 transition-colors duration-300">
+      {/* HEADER */}
         <div className="flex items-center gap-4 mb-8 animate-in fade-in">
           <Link
             href={`/t/${tournamentId}`}
@@ -225,7 +224,7 @@ export default function LeaderboardsPage({
         </div>
 
         {/* TABS */}
-        <div className="flex bg-[var(--surface-1)] p-1.5 rounded-2xl border border-[var(--border-1)] mb-8 shadow-sm overflow-x-auto hide-scrollbar">
+        <div className="flex bg-[var(--surface-1)] p-1.5 rounded-2xl max-w-5xl mx-auto border border-[var(--border-1)] mb-8 shadow-sm overflow-x-auto hide-scrollbar">
           <button
             onClick={() => setActiveTab("orange")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-black uppercase text-xs transition-all ${activeTab === "orange" ? "bg-orange-500 text-white shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
@@ -314,7 +313,6 @@ export default function LeaderboardsPage({
             </div>
           ))}
         </div>
-      </div>
 
       {/* DETAIL MODAL */}
       {selectedPlayer && (

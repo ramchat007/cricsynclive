@@ -4,6 +4,7 @@ import LayoutWrapper from "./components/LayoutWrapper";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
 import type { Metadata, Viewport } from "next";
+import AuthListener from "./AuthListener";
 
 export const viewport: Viewport = {
   themeColor: "#020617", // THEME_COLORS.dark.background
@@ -89,6 +90,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <AuthListener/>
         <Providers>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>

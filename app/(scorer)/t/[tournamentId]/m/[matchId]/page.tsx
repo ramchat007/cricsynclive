@@ -633,6 +633,15 @@ export default function UnifiedLiveMatchPage({
     return () => clearTimeout(debounceTimer);
   }, [newPlayerName]);
 
+  useEffect(() => {
+    if (stats?.isInningsOver || isCompleted) {
+      setShowBowlerModal(false);
+      setShowWicketModal(false);
+      setShowExtrasModal(false);
+      setShowMoreModal(false);
+    }
+  }, [stats?.isInningsOver, isCompleted, showBowlerModal]);
+
   // 🏏 --- BULLETPROOF QUICK ADD LOGIC --- 🏏
   const handleQuickAddPlayer = async (
     nameOverride?: string | React.MouseEvent,
@@ -1635,7 +1644,7 @@ export default function UnifiedLiveMatchPage({
       </div>
 
       {/* --- ADMIN MODALS (ONLY RENDER IF AUTHORIZED) --- */}
-      {isAuthorized && !isCompleted && (
+      {isAuthorized && !isCompleted && !stats?.isInningsOver && (
         <>
           {showBowlerModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] flex items-center justify-center p-4">

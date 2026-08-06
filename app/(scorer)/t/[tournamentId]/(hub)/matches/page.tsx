@@ -2,7 +2,7 @@
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import MatchCard from "./MatchCard";
 import {
   Trash2,
   CalendarClock,
@@ -516,28 +516,6 @@ export default function MatchesPage({
           Match Schedule
         </h2>
 
-        {/* SUB-TABS */}
-        <div className="flex bg-[var(--surface-2)] border border-[var(--border-1)] p-1 rounded-xl overflow-x-auto custom-scrollbar">
-          <button
-            onClick={() => setMatchView("scheduled")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "scheduled" ? "bg-[var(--surface-1)] text-[var(--foreground)] shadow-sm border border-[var(--border-1)]" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-          >
-            <CalendarClock size={14} /> Upcoming
-          </button>
-          <button
-            onClick={() => setMatchView("live")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "live" ? "bg-red-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-          >
-            <PlayCircle size={14} /> Live
-          </button>
-          <button
-            onClick={() => setMatchView("completed")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "completed" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
-          >
-            <CheckCircle2 size={14} /> Completed
-          </button>
-        </div>
-
         {isAdmin && (
           <button
             onClick={() => setShowScheduler(!showScheduler)}
@@ -554,6 +532,28 @@ export default function MatchesPage({
             )}
           </button>
         )}
+      </div>
+
+      {/* SUB-TABS */}
+      <div className="flex bg-[var(--surface-2)] border border-[var(--border-1)] p-1 rounded-xl w-fit mb-6 gap-1 mx-auto">
+        <button
+          onClick={() => setMatchView("scheduled")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "scheduled" ? "bg-[var(--surface-1)] text-[var(--foreground)] shadow-sm border border-[var(--border-1)]" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <CalendarClock size={14} /> Upcoming
+        </button>
+        <button
+          onClick={() => setMatchView("live")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "live" ? "bg-red-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <PlayCircle size={14} /> Live
+        </button>
+        <button
+          onClick={() => setMatchView("completed")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${matchView === "completed" ? "bg-[var(--accent)] text-[var(--background)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--foreground)]"}`}
+        >
+          <CheckCircle2 size={14} /> Completed
+        </button>
       </div>
 
       {/* --- MASTER SCHEDULER CONFIGURATOR --- */}
@@ -958,29 +958,37 @@ export default function MatchesPage({
       )}
 
       {/* --- MATCH LIST RENDERING --- */}
-      <div className="space-y-4">
-        {filteredMatches.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-[2rem] bg-[var(--surface-1)]">
-            <CalendarClock
-              size={32}
-              className="mx-auto text-[var(--text-muted)] mb-4"
+
+      {filteredMatches.length === 0 ? (
+        <div className="text-center py-20 border-2 border-dashed border-[var(--border-1)] rounded-[2rem] bg-[var(--surface-1)]">
+          <CalendarClock
+            size={32}
+            className="mx-auto text-[var(--text-muted)] mb-4"
+          />
+          <h3 className="text-lg font-black text-[var(--foreground)] uppercase tracking-widest mb-1">
+            No {matchView} matches
+          </h3>
+          <p className="text-sm font-bold text-[var(--text-muted)]">
+            {isAdmin && matchView === "scheduled"
+              ? "Open the Configurator to auto-generate schedules."
+              : "Check back later."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredMatches.map((match) => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              isAdmin={isAdmin}
+              deleteMatch={deleteMatch}
             />
-            <h3 className="text-lg font-black text-[var(--foreground)] uppercase tracking-widest mb-1">
-              No {matchView} matches
-            </h3>
-            <p className="text-sm font-bold text-[var(--text-muted)]">
-              {isAdmin && matchView === "scheduled"
-                ? "Open the Configurator to auto-generate schedules."
-                : "Check back later."}
-            </p>
-          </div>
-        ) : (
-          filteredMatches.map((match) => (
-            <div
+          ))}
+          {/* <div
               key={match.id}
               className="bg-[var(--surface-1)] rounded-[2rem] p-1 flex flex-col md:flex-row items-center border border-[var(--border-1)] relative group transition-all hover:border-[var(--accent)]/50 hover:shadow-lg"
             >
-              {/* THE MOBILE-READY DELETE BUTTON FIX */}
+              // THE MOBILE-READY DELETE BUTTON FIX
               {isAdmin && (
                 <div className="absolute top-4 right-4 md:-top-3 md:-right-3 flex md:hidden group-hover:flex gap-1 z-20">
                   <button
@@ -992,7 +1000,7 @@ export default function MatchesPage({
                 </div>
               )}
 
-              {/* DATE / TIME */}
+              // DATE / TIME 
               <div className="px-6 py-4 text-center md:border-r border-[var(--border-1)] w-full md:w-36 shrink-0">
                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                   {match.match_date
@@ -1014,9 +1022,9 @@ export default function MatchesPage({
                 </div>
               </div>
 
-              {/* TEAMS & SCORES */}
+              // TEAMS & SCORES
               <div className="flex-1 flex flex-col justify-center px-4 md:px-8 py-6 w-full relative mt-4 md:mt-0">
-                {/* MATCH NUMBER AND STAGE CHIP */}
+                // MATCH NUMBER AND STAGE CHIP
                 <div className="absolute -top-1 md:top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 whitespace-nowrap">
                   <span className="text-[9px] font-black uppercase tracking-widest text-[var(--accent)] bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-3 py-1 rounded-full shadow-sm">
                     Match {match.match_no || "TBA"}
@@ -1027,12 +1035,12 @@ export default function MatchesPage({
                 </div>
 
                 <div className="relative flex items-stretch justify-between mt-4 bg-[var(--surface-2)]/50 border border-[var(--border-1)] rounded-2xl p-3 md:p-5 shadow-sm overflow-hidden">
-                  {/* Optional: Subtle background glow based on LIVE status */}
+                  //Optional: Subtle background glow based on LIVE status
                   {match.status === "live" && (
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-red-500/20 blur-xl rounded-full" />
                   )}
 
-                  {/* TEAM 1 */}
+                  // TEAM 1
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 flex-1 text-center md:text-left min-w-0">
                     <div
                       className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px]"
@@ -1062,7 +1070,7 @@ export default function MatchesPage({
                     </div>
                   </div>
 
-                  {/* VS / RESULT BANNER (Center) */}
+                  // VS / RESULT BANNER (Center)  
                   <div className="flex flex-col items-center justify-center shrink-0 px-2 md:px-4 z-10 w-[80px] md:w-[120px]">
                     {match.status === "completed" ? (
                       <div className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 px-2 md:px-3 py-1.5 md:py-2 rounded-xl border border-yellow-500/20 text-center w-full leading-tight shadow-sm">
@@ -1079,7 +1087,7 @@ export default function MatchesPage({
                     )}
                   </div>
 
-                  {/* TEAM 2 */}
+                  // TEAM 2
                   <div className="flex flex-col md:flex-row-reverse items-center md:items-start gap-2 md:gap-4 flex-1 text-center md:text-right min-w-0">
                     <div
                       className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-[var(--surface-1)] bg-contain bg-center bg-no-repeat border border-[var(--border-1)] shadow-sm p-2 flex items-center justify-center text-[var(--text-muted)] font-bold text-[10px]"
@@ -1111,7 +1119,7 @@ export default function MatchesPage({
                 </div>
               </div>
 
-              {/* ACTIONS */}
+              // ACTIONS
               <div className="px-4 py-4 w-full md:w-48 text-center md:border-l border-[var(--border-1)] shrink-0">
                 {isAdmin ? (
                   <Link
@@ -1133,10 +1141,9 @@ export default function MatchesPage({
                   </Link>
                 )}
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            </div> */}
+        </div>
+      )}
     </div>
   );
 }
