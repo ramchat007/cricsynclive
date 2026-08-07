@@ -4,7 +4,7 @@
   "description": "The Industry Standard Cricket Tournament OS",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
+  "background_color": "#ffffff",
   "theme_color": "#14b8a6",
   "orientation": "portrait",
   "icons": [

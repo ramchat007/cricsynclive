@@ -60,7 +60,7 @@ export default function Keypad({
   return (
     <div
       onClickCapture={onManualInteraction}
-      className="order-1 lg:order-1 fixed bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/90 backdrop-blur-2xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.15)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 px-3 sm:px-4 lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:pb-0 transition-transform duration-300"
+      className="order-1 lg:order-1 fixed bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/90 backdrop-blur-2xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.15)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 px-3 sm:px-4 lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:pb-0 transition-transform duration-300"
     >
       <div className="lg:bg-[var(--surface-1)] lg:p-6 lg:rounded-2xl lg:border lg:border-[var(--border-1)] lg:shadow-sm max-w-lg mx-auto lg:max-w-none">
         {/* CONSOLE HEADER & LIVE SYNC INDICATOR */}

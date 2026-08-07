@@ -17,7 +17,7 @@ export default function QuickMatchStarter() {
 
   const [overs, setOvers] = useState(12);
   const [squadSize, setSquadSize] = useState(9);
-  const [ballType, setBallType] = useState("Hard Tennis");
+  const [ballType, setBallType] = useState("Soft Tennis");
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -157,7 +157,7 @@ export default function QuickMatchStarter() {
 
       <form
         onSubmit={handleStartMatch}
-        className="max-w-xl mx-auto px-4 pt-6 space-y-8 animate-in fade-in duration-300"
+        className="max-w-xl mx-auto px-4 pt-6 pb-[calc(64px+env(safe-area-inset-bottom))] space-y-8 animate-in fade-in duration-300"
       >
         {/* --- SECTION 1: THE TEAMS --- */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 relative overflow-hidden shadow-xl">
@@ -374,7 +374,7 @@ export default function QuickMatchStarter() {
         </div>
 
         {/* --- SUBMIT CTA --- */}
-        <div className="fixed sm:static bottom-0 left-0 right-0 p-4 sm:p-0 bg-slate-950/90 sm:bg-transparent backdrop-blur-lg border-t border-slate-800 sm:border-0 z-40">
+        <div className="fixed sm:static bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 p-4 sm:p-0 bg-slate-950/90 sm:bg-transparent backdrop-blur-lg border-t border-slate-800 sm:border-0 z-40">
           <button
             type="submit"
             disabled={isLoading}

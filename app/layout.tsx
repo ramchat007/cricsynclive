@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Providers } from "./providers";
 import LayoutWrapper from "./components/LayoutWrapper";
+import SplashScreen from "./components/SplashScreen";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
 import type { Metadata, Viewport } from "next";
@@ -90,9 +91,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AuthListener/>
+        <AuthListener />
         <Providers>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <SplashScreen>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </SplashScreen>
         </Providers>
         <GoogleAnalytics gaId="G-NGL0G335B2" />
         <Script

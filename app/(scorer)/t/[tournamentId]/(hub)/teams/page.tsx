@@ -497,7 +497,7 @@ export default function TeamsPage({
 
       {/* 2. RESPONSIVE EDIT TEAM MODAL */}
       {editingTeam && (
-        <div className="fixed inset-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+        <div className="fixed inset-0 bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
           <div className="bg-[var(--surface-1)] w-full sm:rounded-xl rounded-t-[2rem] max-w-md border border-[var(--border-1)] flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
             <div className="p-5 sm:p-6 border-b border-[var(--border-1)] flex justify-between items-center">
               <h2 className="text-lg sm:text-xl font-black uppercase tracking-widest text-[var(--foreground)]">
@@ -655,7 +655,7 @@ export default function TeamsPage({
 
       {/* 3. RESPONSIVE SQUAD MANAGER MODAL */}
       {addingToTeam && (
-        <div className="fixed inset-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+        <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 inset-0 bg-[var(--overlay-bg)] backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
           <div className="bg-[var(--surface-1)] w-full sm:rounded-xl rounded-t-[2rem] max-w-md flex flex-col max-h-[90vh] border border-[var(--border-1)] animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)] shrink-0 sm:rounded-t-[2rem]">

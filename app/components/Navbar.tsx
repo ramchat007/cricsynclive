@@ -127,7 +127,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center gap-2 md:gap-3 group">
             <Image
               src="/cricsync-logo.png"
-              alt="Logo"
+              alt="CricSyncLive"
               width={80}
               height={51}
               priority
@@ -250,11 +250,11 @@ export default function Navbar() {
           <button
             onClick={() => {
               if (isTournamentConsole) {
-                // Fire a signal to the Tournament Layout to open its own drawer
-                window.dispatchEvent(new Event("open-tournament-menu"));
+                // Fire a toggle signal to the other file
+                window.dispatchEvent(new Event("toggle-tournament-menu"));
               } else {
-                // Open the global 'More' menu
-                setIsMoreMenuOpen(true);
+                // Toggle the global 'More' menu located in this file
+                setIsMoreMenuOpen((prev) => !prev);
               }
             }}
             className="flex flex-col items-center justify-center w-full h-full space-y-1 text-[var(--text-muted)] hover:text-[var(--foreground)] transition-all active:scale-95"

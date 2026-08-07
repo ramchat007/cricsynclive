@@ -70,11 +70,10 @@ export default function TournamentLayout({
   }, [tournamentId]);
 
   useEffect(() => {
-    const handleOpenMenu = () => setIsSidebarOpen(true);
-    window.addEventListener("open-tournament-menu", handleOpenMenu);
-    return () =>
-      window.removeEventListener("open-tournament-menu", handleOpenMenu);
-  }, []);
+  const handleToggleMenu = () => setIsSidebarOpen((prev) => !prev);
+  window.addEventListener("toggle-tournament-menu", handleToggleMenu);
+  return () => window.removeEventListener("toggle-tournament-menu", handleToggleMenu);
+}, []);
 
   const fetchLayoutData = async () => {
     if (tournamentId === "QUICK_MATCH") {
@@ -292,7 +291,7 @@ export default function TournamentLayout({
       {/* MORPHING SIDEBAR / BOTTOM SHEET */}
       <aside
         className={`
-    fixed inset-x-0 bottom-0 z-50 w-full max-h-[85vh] pb-[100px] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
+    fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 z-50 w-full max-h-[85vh] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
     transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
     lg:static lg:inset-y-0 lg:top-[65px] lg:left-0 lg:h-full lg:w-72 lg:max-h-none lg:border-t-0 lg:border-r lg:rounded-none lg:shadow-none
     ${isSidebarOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
@@ -504,7 +503,7 @@ export default function TournamentLayout({
       {/* TOURNAMENT SETTINGS MODAL */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-[var(--surface-1)] w-full rounded-2xl rounded-t-[2.5rem] max-w-xl border border-[var(--border-1)] flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-8">
+          <div className="bg-[var(--surface-1)] w-full rounded-2xl rounded-t-[2rem] max-w-xl border border-[var(--border-1)] flex flex-col max-h-[90vh] sm:max-h-[85vh] shadow-2xl animate-in slide-in-from-bottom-8">
             <div className="p-6 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]/50">
               <h2 className="text-xl font-black uppercase text-[var(--foreground)] tracking-tight">
                 Tournament Settings
