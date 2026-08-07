@@ -8,7 +8,7 @@ export default function RecentBalls({
   isAuthorized,
 }: any) {
   return (
-    <div className="bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] shadow-sm transition-colors duration-300">
+    <div className="bg-[var(--surface-1)] p-6 rounded-xl border border-[var(--border-1)] shadow-sm transition-colors duration-300 w-full">
       <p className="text-[13px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">
         Recent Balls (Over {currentOvers})
       </p>
