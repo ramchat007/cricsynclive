@@ -6,6 +6,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
 import type { Metadata, Viewport } from "next";
 import AuthListener from "./AuthListener";
+import DoubleBackExitGuard from "./(scorer)/t/[tournamentId]/m/[matchId]/components/DoubleBackExitGuard";
 
 export const viewport: Viewport = {
   themeColor: "#020617", // THEME_COLORS.dark.background
@@ -94,6 +95,7 @@ export default function RootLayout({
         <AuthListener />
         <Providers>
           <SplashScreen>
+            <DoubleBackExitGuard />
             <LayoutWrapper>{children}</LayoutWrapper>
           </SplashScreen>
         </Providers>

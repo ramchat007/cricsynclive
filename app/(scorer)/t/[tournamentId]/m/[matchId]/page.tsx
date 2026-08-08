@@ -235,9 +235,21 @@ export default function UnifiedLiveMatchPage({
           }
 
           // Authorize ONLY if the logged-in user is the creator of this quick match
-          const isCreator = session.user.id === engine.match.created_by;
-          setIsAuthorized(isCreator);
-          return;
+          // const isCreator = session.user.id === engine.match.created_by;
+          // setIsAuthorized(isCreator);
+          // return;
+
+          const { data: pData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        const isSuperAdmin = pData?.role === "super_admin";
+        const isCreator = session.user.id === engine.match.created_by;
+
+        setIsAuthorized(isSuperAdmin || isCreator);
+        return;
         }
 
         // 3. Regular Tournament Database Verification
@@ -1335,7 +1347,7 @@ export default function UnifiedLiveMatchPage({
                 </span>
               )}
 
-              {isAuthorized && tournamentId === "QUICK_MATCH" && (
+              {isAuthorized  && (
                 <button
                   onClick={handleDeleteMatch}
                   className="flex items-center justify-center gap-1.5 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[13px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"

@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import VoiceManualModal from "./VoiceManualModal";
+import { useScrollDirection } from "@/app/hooks/useScrollDirection";
 
 type MoreActionType =
   | "penalty-add"
@@ -32,35 +33,27 @@ export default function Keypad({
   setShowWicketModal,
   onManualInteraction, // <--- DESTRUCTURE THE NEW PROP
 }: KeypadProps) {
-  
+  const isVisible = useScrollDirection();
   const strikerId = engine.match?.live_striker_id;
-  
+
   const allPlayers = [
     ...(engine.team1Players || []),
     ...(engine.team2Players || []),
   ];
-  
+
   const activeStriker = allPlayers.find(
     (player: any) => player.id === strikerId,
   );
-
 
   const strikerName =
     activeStriker?.full_name ||
     activeStriker?.name ||
     activeStriker?.short_name ||
     "Striker";
-
-  console.log(
-    "Keypad Rendered: Striker Name:",
-    strikerName,
-    "Striker ID:",
-    strikerId,
-  );
   return (
     <div
       onClickCapture={onManualInteraction}
-      className="order-1 lg:order-1 fixed bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/90 backdrop-blur-2xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.15)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 px-3 sm:px-4 lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:pb-0 transition-transform duration-300"
+      className={`order-1 lg:order-1 fixed bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 right-0 z-[70] bg-[var(--surface-1)]/90 backdrop-blur-2xl border-t border-[var(--border-1)] shadow-[0_-20px_40px_rgba(0,0,0,0.15)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 px-3 sm:px-4 lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:pb-0 transition-transform duration-300 ${isVisible ? "translate-y-0" : "translate-y-[64px] lg:translate-y-0"}`}
     >
       <div className="lg:bg-[var(--surface-1)] lg:p-6 lg:rounded-2xl lg:border lg:border-[var(--border-1)] lg:shadow-sm max-w-lg mx-auto lg:max-w-none">
         {/* CONSOLE HEADER & LIVE SYNC INDICATOR */}
@@ -86,7 +79,7 @@ export default function Keypad({
               key={runs}
               onClick={() => handleRecordBall(runs)}
               disabled={engine.isSubmittingBall}
-              className="min-h-[56px] sm:min-h-[64px] bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-2xl sm:text-3xl rounded-xl sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shadow-sm"
+              className="min-h-[40px] sm:min-h-[64px] bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] disabled:opacity-50 text-[var(--foreground)] font-black text-2xl sm:text-3xl rounded-xl sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shadow-sm"
             >
               {runs}
             </button>
@@ -99,7 +92,7 @@ export default function Keypad({
           <button
             onClick={() => handleRecordBall(4)}
             disabled={engine.isSubmittingBall}
-            className="min-h-[56px] sm:min-h-[64px] bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-2xl sm:text-3xl rounded-xl sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shadow-[0_4px_12px_rgba(245,158,11,0.3)] border border-amber-400"
+            className="min-h-[40px] sm:min-h-[64px] bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-2xl sm:text-3xl rounded-xl sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shadow-[0_4px_12px_rgba(245,158,11,0.3)] border border-amber-400"
           >
             4
           </button>
@@ -108,7 +101,7 @@ export default function Keypad({
           <button
             onClick={() => handleRecordBall(6)}
             disabled={engine.isSubmittingBall}
-            className="min-h-[56px] sm:min-h-[64px] bg-[var(--accent)] hover:brightness-110 disabled:opacity-50 text-[var(--background)] font-black text-2xl sm:text-3xl rounded-xl sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shadow-[0_4px_12px_var(--accent-glow,rgba(0,0,0,0.2))] border border-[var(--accent)]/50"
+            className="min-h-[40px] sm:min-h-[64px] bg-[var(--accent)] hover:brightness-110 disabled:opacity-50 text-[var(--background)] font-black text-2xl sm:text-3xl rounded-xl sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shadow-[0_4px_12px_var(--accent-glow,rgba(0,0,0,0.2))] border border-[var(--accent)]/50"
           >
             6
           </button>
@@ -119,7 +112,7 @@ export default function Keypad({
               setMoreActionType("penalty-add");
               setShowMoreModal(true);
             }}
-            className="col-span-2 min-h-[56px] sm:min-h-[64px] bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--foreground)] font-black text-xs sm:text-sm uppercase tracking-widest rounded-xl sm:rounded-xl transition-all active:scale-95 flex flex-col items-center justify-center shadow-sm"
+            className="col-span-2 min-h-[40px] sm:min-h-[64px] bg-[var(--surface-2)] border border-[var(--border-1)] hover:bg-[var(--border-1)] text-[var(--foreground)] font-black text-xs sm:text-sm uppercase tracking-widest rounded-xl sm:rounded-xl transition-all active:scale-95 shadow-sm"
           >
             <span className="text-[16px] sm:text-[20px] leading-none mb-0.5">
               ⚙️

@@ -26,6 +26,8 @@ import {
   Activity,
   ImageIcon,
   Webcam,
+  Home,
+  LayoutDashboard,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 import AdBanner from "../../../../components/AdBanner";
@@ -70,10 +72,11 @@ export default function TournamentLayout({
   }, [tournamentId]);
 
   useEffect(() => {
-  const handleToggleMenu = () => setIsSidebarOpen((prev) => !prev);
-  window.addEventListener("toggle-tournament-menu", handleToggleMenu);
-  return () => window.removeEventListener("toggle-tournament-menu", handleToggleMenu);
-}, []);
+    const handleToggleMenu = () => setIsSidebarOpen((prev) => !prev);
+    window.addEventListener("toggle-tournament-menu", handleToggleMenu);
+    return () =>
+      window.removeEventListener("toggle-tournament-menu", handleToggleMenu);
+  }, []);
 
   const fetchLayoutData = async () => {
     if (tournamentId === "QUICK_MATCH") {
@@ -204,64 +207,73 @@ export default function TournamentLayout({
   const isProOrHigher = currentTier === "pro" || currentTier === "broadcast";
   const isBroadcastTier = currentTier === "broadcast";
 
-  const navItems = [
-    {
-      name: "Teams",
-      href: `/t/${tournamentId}/teams`,
-      icon: Users,
-      requiredTier: "free",
-    },
-    {
-      name: "Matches",
-      href: `/t/${tournamentId}/matches`,
-      icon: CalendarDays,
-      requiredTier: "free",
-    },
-    {
-      name: "Points Table",
-      href: `/t/${tournamentId}/standings`,
-      icon: ListOrdered,
-      requiredTier: "free",
-    },
-    {
-      name: "All Players",
-      href: `/t/${tournamentId}/players`,
-      icon: Shirt,
-      requiredTier: "free",
-    },
-    {
-      name: "Leaderboards",
-      href: `/t/${tournamentId}/leaderboards`,
-      icon: Medal,
-      requiredTier: "free",
-    },
-    // {
-    //   name: "Media",
-    //   href: `/t/${tournamentId}/media`,
-    //   icon: ImageIcon,
-    //   requiredTier: "free",
-    // },
-    {
-      name: "Auction",
-      href: `/t/${tournamentId}/auction`,
-      icon: Gavel,
-      requiredTier: "pro",
-    },
-    {
-      name: "Brackets & Fixtures",
-      href: `/t/${tournamentId}/brackets`,
-      icon: Brackets,
-      requiredTier: "pro",
-    },
-    // {
-    //   name: "AI Umpire",
-    //   href: `/t/${tournamentId}/ai-umpire`,
-    //   icon: Webcam,
-    //   requiredTier: "broadcast",
-    // },
-  ];
+  const isQuickMatch =
+    tournamentId === "QUICK_MATCH" ||
+    tournamentId === "00000000-0000-0000-0000-000000000000";
 
-  if (isAdmin) {
+  // Only show Home and Dashboard if it's a Quick Match
+  const navItems = isQuickMatch
+    ? [
+        {
+          name: "Back to Home",
+          href: "/",
+          icon: Home,
+          requiredTier: "free",
+        },
+        {
+          name: "My Dashboard",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          requiredTier: "free",
+        },
+      ]
+    : [
+        {
+          name: "Teams",
+          href: `/t/${tournamentId}/teams`,
+          icon: Users,
+          requiredTier: "free",
+        },
+        {
+          name: "Matches",
+          href: `/t/${tournamentId}/matches`,
+          icon: CalendarDays,
+          requiredTier: "free",
+        },
+        {
+          name: "Points Table",
+          href: `/t/${tournamentId}/standings`,
+          icon: ListOrdered,
+          requiredTier: "free",
+        },
+        {
+          name: "All Players",
+          href: `/t/${tournamentId}/players`,
+          icon: Shirt,
+          requiredTier: "free",
+        },
+        {
+          name: "Leaderboards",
+          href: `/t/${tournamentId}/leaderboards`,
+          icon: Medal,
+          requiredTier: "free",
+        },
+        {
+          name: "Auction",
+          href: `/t/${tournamentId}/auction`,
+          icon: Gavel,
+          requiredTier: "pro",
+        },
+        {
+          name: "Brackets & Fixtures",
+          href: `/t/${tournamentId}/brackets`,
+          icon: Brackets,
+          requiredTier: "pro",
+        },
+      ];
+
+  // Prevent Admin menus from attaching to Quick Matches
+  if (isAdmin && !isQuickMatch) {
     navItems.push(
       {
         name: "Admin & Scorers",
@@ -279,7 +291,7 @@ export default function TournamentLayout({
   }
 
   return (
-    <div className="h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden pb-[80px] md:pb-0">
+    <div className="min-h-[calc(100vh-65px)] w-full bg-[var(--background)] flex overflow-hidden pb-[80px] md:pb-0">
       <div
         className={`
     fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300
@@ -291,13 +303,14 @@ export default function TournamentLayout({
       {/* MORPHING SIDEBAR / BOTTOM SHEET */}
       <aside
         className={`
-    fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-0 z-50 w-full max-h-[85vh] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
-    transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
-    lg:static lg:inset-y-0 lg:top-[65px] lg:left-0 lg:h-full lg:w-72 lg:max-h-none lg:border-t-0 lg:border-r lg:rounded-none lg:shadow-none
-    ${isSidebarOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
+    fixed inset-x-0 bottom-0 lg:bottom-auto z-50 w-full max-h-[85vh] bg-[var(--surface-1)] border-t border-[var(--border-1)] rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]
+          transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+          /* 🔥 BULLETPROOF FIX: Fixed to the left side on desktop! */
+          lg:fixed lg:inset-y-0 lg:top-0 lg:left-0 lg:pt-[65px] lg:h-full lg:w-72 lg:max-h-none lg:border-t-0 lg:border-r lg:rounded-none lg:shadow-none
+          ${isSidebarOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
   `}
       >
-        <div className="h-full flex flex-col p-4 md:p-6">
+        <div className="h-full flex flex-col p-4 md:p-6 pb-[calc(64px+env(safe-area-inset-bottom))]">
           {/* Mobile-only Drag Handle */}
           <div className="w-12 h-1.5 bg-[var(--border-1)] rounded-full mx-auto mb-6 lg:hidden shrink-0" />
 
@@ -387,7 +400,7 @@ export default function TournamentLayout({
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 h-full flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
+      <main className="flex-1 flex flex-col min-w-0 lg:ml-72">
         {/* <header className="lg:hidden h-16 bg-[var(--surface-1)] border-b border-[var(--border-1)] flex items-center justify-between px-4 shrink-0 sticky top-0 z-40">
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -446,14 +459,16 @@ export default function TournamentLayout({
                   <Gavel size={14} /> Auction
                 </Link>
               )} */}
-              <a
-                href={`${window.location.origin}/register/${tournamentId}/`}
-                target="_blank"
-                className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-xl font-black text-[13px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2 text-[var(--foreground)]"
-              >
-                <PersonStanding size={14} /> Registration
-              </a>
-              {isAdmin && (
+              {!isQuickMatch && (
+                <a
+                  href={`${window.location.origin}/register/${tournamentId}/`}
+                  target="_blank"
+                  className="bg-[var(--surface-1)]/80 backdrop-blur-md border border-[var(--border-1)] px-5 py-3 rounded-xl font-black text-[13px] uppercase tracking-widest hover:bg-[var(--surface-1)] transition-all flex items-center gap-2 text-[var(--foreground)]"
+                >
+                  <PersonStanding size={14} /> Registration
+                </a>
+              )}
+              {isAdmin && !isQuickMatch &&(
                 <CldUploadWidget
                   uploadPreset={String(
                     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
