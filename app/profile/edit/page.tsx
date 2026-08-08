@@ -41,7 +41,8 @@ export default function EditProfilePage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login");
+    setAvatarUrl("");
+    setFullName("")
       return;
     }
 

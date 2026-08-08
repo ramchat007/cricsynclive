@@ -64,7 +64,8 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login");
+    setAvatarUrl("");
+    setFullName("")
       return;
     }
 
@@ -74,9 +75,6 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
     const googleName =
       user.user_metadata?.full_name || user.user_metadata?.name || "";
 
-    console.log("🔍 ----- PROFILE IMAGE DEBUG ----- 🔍");
-    console.log("Google Image URL:", googleAvatar || "None found");
-
     // Fetch existing profile data from your table
     const { data: profile } = await supabase
       .from("profiles")
@@ -85,14 +83,8 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
       .single();
 
     if (profile) {
-      console.log(
-        "Database Image URL (Cloudinary):",
-        profile.avatar_url || "None found",
-      );
-
       // The logic: Use the database image first. If it's empty, fall back to Google's image.
       const finalAvatar = profile.avatar_url || googleAvatar;
-      console.log("✅ Final Image Selected:", finalAvatar);
 
       setFullName(profile.full_name || googleName);
       setAvatarUrl(finalAvatar);
@@ -140,6 +132,8 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
     router.refresh();
+    setAvatarUrl("");
+    setFullName("")
     setIsLoggingOut(false);
   };
 
@@ -222,12 +216,12 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
               </Link>
             ))}
             <div className="flex items-center gap-3">
-              {/* <Link
+              <Link
                 href="/search"
                 className="p-2.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
               >
                 <Search size={20} />
-              </Link> */}
+              </Link>
               <button
                 onClick={toggleTheme}
                 className="p-2.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
@@ -447,6 +441,13 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
               </span>
             </Link>
             <Link
+              href="/blogs"
+              onClick={() => setIsMoreMenuOpen(false)}
+              className="flex items-center gap-3 bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)] font-bold text-sm"
+            >
+              Blogs & Articles
+            </Link>
+            <Link
               href="/about"
               onClick={() => setIsMoreMenuOpen(false)}
               className="flex items-center gap-3 bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)] font-bold text-sm"
@@ -458,7 +459,7 @@ export default function Navbar({ isVisible = true }: { isVisible?: boolean }) {
               onClick={() => setIsMoreMenuOpen(false)}
               className="flex items-center gap-3 bg-[var(--surface-2)] p-4 rounded-2xl border border-[var(--border-1)] font-bold text-sm"
             >
-              Contact Support
+              Contact Us
             </Link>
 
             <div className="mt-auto pt-6 border-t border-[var(--border-1)] flex flex-col gap-3">

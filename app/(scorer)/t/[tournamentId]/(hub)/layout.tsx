@@ -118,8 +118,11 @@ export default function TournamentLayout({
       data: { session },
     } = await supabase.auth.getSession();
     if (session) {
-      if (session.user.id === tData?.owner_id) setIsAdmin(true);
-      else {
+      const MASTER_ADMIN_UUID = "32ada1b0-2c20-4283-9d14-cb862a73a06b";
+      const isMasterAdmin = session.user.id === MASTER_ADMIN_UUID;
+      if (session.user.id === tData?.owner_id || isMasterAdmin) {
+        setIsAdmin(true);
+      } else {
         const { data: pData } = await supabase
           .from("profiles")
           .select("role")

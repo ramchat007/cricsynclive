@@ -226,49 +226,27 @@ export default function UnifiedLiveMatchPage({
           return;
         }
 
+        const MASTER_ADMIN_UUID = "32ada1b0-2c20-4283-9d14-cb862a73a06b";
+        const isMasterAdmin = session.user.id === MASTER_ADMIN_UUID;
+
         // 2. Handle Quick Match Logic cleanly in one place
-        if (tournamentId === "QUICK_MATCH") {
-          if (!engine.match) {
-            // Keep authorized as false (or a separate loading state) until match metadata is available
-            setIsAuthorized(false);
-            return;
+        if (tournamentId === "QUICK_MATCH" || tournamentId === "00000000-0000-0000-0000-000000000000") {
+          if (engine.match) {
+            const isCreator = session.user.id === engine.match.created_by;
+            // 🌟 Master Admin overrides Quick Match lock
+            setIsAuthorized(isCreator || isMasterAdmin);
           }
-
-          // Authorize ONLY if the logged-in user is the creator of this quick match
-          // const isCreator = session.user.id === engine.match.created_by;
-          // setIsAuthorized(isCreator);
-          // return;
-
-          const { data: pData } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-
-        const isSuperAdmin = pData?.role === "super_admin";
-        const isCreator = session.user.id === engine.match.created_by;
-
-        setIsAuthorized(isSuperAdmin || isCreator);
-        return;
+          return;
         }
 
-        // 3. Regular Tournament Database Verification
-        const { data: tData } = await supabase
-          .from("tournaments")
-          .select("owner_id")
-          .eq("id", tournamentId)
-          .single();
+        // 2. REGULAR TOURNAMENT MATCHES
+        const { data: tData } = await supabase.from("tournaments").select("owner_id").eq("id", tournamentId).single();
+        const { data: pData } = await supabase.from("profiles").select("role").eq("id", session.user.id).single();
 
-        const { data: pData } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-
-        const isSuperAdmin = pData?.role === "super_admin";
+        // 🌟 Master Admin overrides normal roles
+        const isSuperAdmin = pData?.role === "super_admin" || isMasterAdmin;
         const isTournamentOwner = tData?.owner_id === session.user.id;
-        const isAssignedScorer =
-          pData?.role === "scorer" || pData?.role === "admin";
+        const isAssignedScorer = pData?.role === "scorer" || pData?.role === "admin";
 
         setIsAuthorized(isSuperAdmin || isTournamentOwner || isAssignedScorer);
       } catch (error) {
@@ -295,20 +273,38 @@ export default function UnifiedLiveMatchPage({
   const handleShareMatch = async () => {
     setIsSharing(true);
 
-    // 1. Safely extract names using ctx (preferred) or the nested engine relationships
-    const t1Name =
-      ctx?.team1Name ||
-      engine.match?.team1?.name ||
-      engine.match?.team1?.short_name ||
-      "Team 1";
-    const t2Name =
-      ctx?.team2Name ||
-      engine.match?.team2?.name ||
-      engine.match?.team2?.short_name ||
-      "Team 2";
+    // 1. Safely extract names using ctx
+    const t1Name = ctx?.team1Name || engine.match?.team1?.name || engine.match?.team1?.short_name || "Team 1";
+    const t2Name = ctx?.team2Name || engine.match?.team2?.name || engine.match?.team2?.short_name || "Team 2";
+    
+    // 2. Extract match context
+    const tossString = ctx?.tossString || "";
+    const tournamentName = ctx?.tournamentName ? `🏆 ${ctx.tournamentName}` : "";
+    const equation = ctx?.equation ? `📈 ${ctx.equation}` : "";
+    const crr = ctx?.crr ? `CRR: ${ctx.crr}` : "";
 
-    // 2. Build the dynamic share text
-    const shareText = `🔥 LIVE Cricket on CricSyncLive!\n\n${t1Name} vs ${t2Name}\n\n👉 To view the Live Scoreboard click here!`;
+    // 3. Get the live score (Using your existing stats object!)
+    const currentRuns = stats?.currentScore ?? stats?.currentScore ?? engine.match?.current_score ?? 0;
+    const currentWickets = stats?.currentWickets ?? stats?.currentWickets ?? engine.match?.current_wickets ?? 0;
+    const currentOvers = stats?.currentOvers ?? stats?.currentOvers ?? engine.match?.current_overs ?? 0;
+    
+    // Figure out who is batting based on the context text
+    const battingTeamStr = ctx?.scoreContextText?.includes("Bowling") 
+      ? (ctx.scoreContextText.startsWith(ctx.team2ShortName) ? t1Name : t2Name) 
+      : "Score";
+
+    // 4. Build the dynamic share text formatting for WhatsApp
+    const shareText = `🏏 LIVE NOW on CricSyncLive!
+    ${tournamentName}
+
+    ${tossString}
+
+    ⚔️ ${t1Name} vs ${t2Name}
+    📊 ${battingTeamStr}: ${currentRuns}/${currentWickets} in ${currentOvers} Overs
+    ${equation} ${crr ? `| ${crr}` : ""}
+
+👉 To view the Live Scoreboard click here!`;
+
     const url = window.location.href;
 
     const shareData = {
@@ -321,8 +317,8 @@ export default function UnifiedLiveMatchPage({
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(`${shareText}\n${url}`);
-        alert("Match link & details copied!");
+        await navigator.clipboard.writeText(`${shareText}\n\n${url}`);
+        alert("Match link & details copied!"); // Replace with your Toast library if you use one
       }
     } catch (err: any) {
       if (err.name !== "AbortError") console.error("Share failed:", err);
@@ -1347,7 +1343,7 @@ export default function UnifiedLiveMatchPage({
                 </span>
               )}
 
-              {isAuthorized  && (
+              {isAuthorized && (
                 <button
                   onClick={handleDeleteMatch}
                   className="flex items-center justify-center gap-1.5 bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-2 rounded-xl text-[13px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"

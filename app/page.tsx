@@ -99,7 +99,7 @@ export default function Home() {
         .select(selectQuery)
         .eq("status", "completed")
         .order("created_at", { ascending: false })
-        .limit(6),
+        .limit(3),
       supabase.from("matches").select("*", { count: "exact", head: true }),
       supabase.from("tournaments").select("*", { count: "exact", head: true }),
       supabase.from("players").select("*", { count: "exact", head: true }),
@@ -166,42 +166,51 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--background)]/80 via-transparent to-[var(--background)] transition-colors duration-500" />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col pt-10 md:pt-20 pb-10">
+      <div className="relative z-10 flex-1 flex flex-col pt-5 md:pt-20 pb-5">
         {/* --- SECTION 1: LIVE MATCHES TICKER --- */}
-        <section className="w-full max-w-7xl mx-auto px-4 mb-10 animate-in fade-in duration-700 min-h-[300px] overflow-hidden">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <Activity
-              className="text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"
-              size={24}
-            />
-            <h2 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)]">
-              Action Live Now
-            </h2>
+        <section className="w-full max-w-7xl mx-auto px-4 mb-8 md:mb-14 animate-in fade-in duration-700 overflow-hidden">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+              <h2 className="font-black uppercase tracking-widest text-xs md:text-sm text-[var(--foreground)]">
+                Action Live Now
+              </h2>
+            </div>
+            
+            {/* Optional helper text for mobile swipe */}
+            {liveMatches.length > 1 && (
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest md:hidden">
+                Swipe ➔
+              </span>
+            )}
           </div>
 
-          <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-5 pb-6 pt-2 no-scrollbar snap-x px-2">
+          <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-4 pb-4 pt-1 snap-x snap-mandatory no-scrollbar px-2">
             {/* 1. Show Skeletons while fetching data */}
             {isLoading ? (
               [1, 2, 3].map((skeleton) => (
                 <div
                   key={skeleton}
-                  className="shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl snap-center animate-pulse shadow-sm"
+                  className="shrink-0 w-[90%] sm:w-[380px] md:w-full bg-[var(--surface-1)] border border-[var(--border-1)] p-5 rounded-2xl snap-center animate-pulse shadow-sm"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex gap-2">
-                      <div className="h-6 w-16 bg-[var(--foreground)]/10 rounded-full"></div>
-                      <div className="h-6 w-20 bg-[var(--foreground)]/10 rounded-lg"></div>
+                      <div className="h-5 w-14 bg-[var(--surface-2)] rounded-full"></div>
+                      <div className="h-5 w-16 bg-[var(--surface-2)] rounded-lg"></div>
                     </div>
                   </div>
-                  <div className="mb-5 h-4 w-3/4 bg-[var(--foreground)]/10 rounded"></div>
-                  <div className="space-y-4">
+                  <div className="mb-4 h-4 w-2/3 bg-[var(--surface-2)] rounded"></div>
+                  <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <div className="h-5 w-1/3 bg-[var(--foreground)]/10 rounded"></div>
-                      <div className="h-8 w-16 bg-[var(--foreground)]/10 rounded-xl"></div>
+                      <div className="h-4 w-1/3 bg-[var(--surface-2)] rounded"></div>
+                      <div className="h-7 w-14 bg-[var(--surface-2)] rounded-xl"></div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <div className="h-5 w-1/3 bg-[var(--foreground)]/10 rounded"></div>
-                      <div className="h-8 w-16 bg-[var(--foreground)]/10 rounded-xl"></div>
+                      <div className="h-4 w-1/3 bg-[var(--surface-2)] rounded"></div>
+                      <div className="h-7 w-14 bg-[var(--surface-2)] rounded-xl"></div>
                     </div>
                   </div>
                 </div>
@@ -211,56 +220,60 @@ export default function Home() {
                 <Link
                   key={match.id}
                   href={getMatchLink(match)}
-                  className="group relative shrink-0 w-[85%] sm:w-[400px] md:w-full bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl snap-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden shadow-sm"
+                  className="group relative shrink-0 w-[90%] sm:w-[380px] md:w-full bg-[var(--surface-1)] backdrop-blur-xl border border-[var(--border-1)] p-5 rounded-2xl snap-center transition-all duration-300 hover:border-[var(--accent)] hover:shadow-xl overflow-hidden shadow-sm active:scale-[0.98]"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
+                  {/* Subtle background glow effect on hover */}
+                  <div className="absolute top-0 right-0 w-28 h-28 bg-[var(--accent)]/10 rounded-full blur-2xl -z-10 group-hover:bg-[var(--accent)]/20 transition-all duration-500" />
 
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse">
+                      <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.4)] animate-pulse">
                         LIVE
                       </span>
-                      <span className="text-[13px] opacity-80 font-bold uppercase tracking-wider bg-[var(--foreground)]/5 px-2 py-1 rounded-lg backdrop-blur-sm border border-[var(--foreground)]/10">
+                      <span className="text-[10px] opacity-75 font-bold uppercase tracking-wider bg-[var(--surface-2)] px-2 py-0.5 rounded-md border border-[var(--border-1)]">
                         {match.ball_type || "Tennis"} Ball
                       </span>
                     </div>
                   </div>
 
-                  <div className="mb-5">
-                    <p className="text-xs text-[var(--accent)] font-black uppercase tracking-widest truncate">
+                  <div className="mb-4">
+                    <p className="text-[11px] text-[var(--accent)] font-black uppercase tracking-widest truncate">
                       🏆 {getTournamentName(match)}
                     </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-black text-sm truncate pr-2 text-[var(--foreground)]">
+                  <div className="space-y-2.5">
+                    {/* Team 1 Score */}
+                    <div className="flex justify-between items-center bg-[var(--surface-2)]/60 px-3 py-2 rounded-xl border border-[var(--border-1)]">
+                      <span className="font-black text-xs uppercase truncate pr-2 text-[var(--foreground)]">
                         {getTeamName(match, 1)}
                       </span>
-                      <div className="text-right shrink-0 bg-[var(--foreground)]/5 px-3 py-1.5 rounded-xl border border-[var(--foreground)]/5">
-                        <span className="font-black text-xl text-[var(--foreground)]">
+                      <div className="text-right shrink-0">
+                        <span className="font-black text-lg text-[var(--foreground)]">
                           {match.team1_score || 0}
-                          <span className="opacity-50 text-sm">
+                          <span className="opacity-50 text-xs">
                             /{match.team1_wickets || 0}
                           </span>
                         </span>
-                        <span className="opacity-50 text-[13px] font-black ml-1.5">
+                        <span className="opacity-50 text-[11px] font-black ml-1.5">
                           ({match.team1_overs || 0})
                         </span>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center opacity-90">
-                      <span className="font-black text-sm truncate pr-2 text-[var(--foreground)]">
+
+                    {/* Team 2 Score */}
+                    <div className="flex justify-between items-center bg-[var(--surface-2)]/60 px-3 py-2 rounded-xl border border-[var(--border-1)]">
+                      <span className="font-black text-xs uppercase truncate pr-2 text-[var(--foreground)]">
                         {getTeamName(match, 2)}
                       </span>
-                      <div className="text-right shrink-0 bg-[var(--foreground)]/5 px-3 py-1.5 rounded-xl border border-[var(--foreground)]/5">
-                        <span className="font-black text-xl text-[var(--foreground)]">
+                      <div className="text-right shrink-0">
+                        <span className="font-black text-lg text-[var(--foreground)]">
                           {match.team2_score || 0}
-                          <span className="opacity-50 text-sm">
+                          <span className="opacity-50 text-xs">
                             /{match.team2_wickets || 0}
                           </span>
                         </span>
-                        <span className="opacity-50 text-[13px] font-black ml-1.5">
+                        <span className="opacity-50 text-[11px] font-black ml-1.5">
                           ({match.team2_overs || 0})
                         </span>
                       </div>
@@ -269,7 +282,7 @@ export default function Home() {
                 </Link>
               ))
             ) : (
-              <div className="w-full md:col-span-3 text-center py-8 text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest border border-dashed border-[var(--foreground)]/10 rounded-xl">
+              <div className="w-full md:col-span-3 text-center py-10 text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest border border-dashed border-[var(--border-1)] rounded-2xl bg-[var(--surface-1)]">
                 No live matches at the moment.
               </div>
             )}
@@ -277,38 +290,55 @@ export default function Home() {
         </section>
 
         {/* --- MAIN HERO & CTA --- */}
-        <section className="flex-1 flex flex-col items-center justify-center text-center mb-5 md:mb-16 min-h-[60vh] p-4">
-          <div className="animate-in zoom-in-95 duration-1000 flex flex-col items-center">
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black italic uppercase leading-none text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
+        <section className="relative flex-1 flex flex-col items-center justify-center text-center pt-5 pb-5 md:pt-12 md:pb-8 md:mb-16 min-h-[40vh] md:min-h-[60vh] px-4 md:px-6">
+          <div className="animate-in zoom-in-95 duration-1000 flex flex-col items-center w-full max-w-4xl mx-auto">
+            
+            {/* 1. Responsive Typography */}
+            <h1 className="text-[4rem] leading-[0.85] tracking-tighter sm:text-6xl md:text-8xl lg:text-9xl font-black italic uppercase text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
               CricSync <br className="md:hidden" />
-              <span className="text-[var(--accent)] drop-shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+              <span className="text-[var(--accent)] drop-shadow-[0_0_20px_rgba(245,158,11,0.3)] inline-block mt-2 md:mt-0">
                 Live
               </span>
             </h1>
-            <p className="text-sm md:text-xl font-bold uppercase tracking-[0.2em] mt-6 opacity-80 transition-colors duration-300">
-              Run Cricket Like a Pro — From Toss to Trophy
+            
+            <p className="text-[11px] sm:text-sm md:text-xl font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] mt-5 md:mt-6 opacity-80 text-[var(--text-dark)] max-w-xs md:max-w-none mx-auto">
+              Run Cricket Like a Pro <br className="md:hidden" /> From Toss to Trophy
             </p>
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
+            
+            {/* 📱 2. MOBILE-OPTIMIZED BUTTON LAYOUT */}
+            <div className="mt-10 md:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-5 w-full max-w-sm sm:max-w-none">
+              
+              {/* Primary Action: Always Full Width on Mobile */}
               <Link
                 href="/quick-match"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--accent)] text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:scale-105 transition-all active:scale-95 group"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--accent)] text-white px-6 py-4 md:px-10 md:py-5 rounded-2xl md:rounded-full font-black uppercase tracking-widest text-sm shadow-[0_8px_30px_rgba(245,158,11,0.3)] hover:shadow-[0_8px_40px_rgba(245,158,11,0.5)] active:scale-95 transition-all group"
               >
-                <Flame size={20} className="group-hover:animate-bounce" /> Start
-                Quick Match
+                <Flame size={20} className="group-hover:animate-bounce shrink-0" /> 
+                <span>Quick Match</span>
               </Link>
-              <Link
-                href="/explore"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm"
-              >
-                <Search size={18} /> Find Tournaments
-              </Link>
-              <Link
-                href="/dashboard"
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)]/[0.05] hover:bg-[var(--foreground)]/[0.1] backdrop-blur-xl border border-[var(--foreground)]/10 text-[var(--foreground)] px-8 py-5 rounded-full font-bold uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-sm"
-              >
-                <Plus size={18} /> Create Your Tournament
-              </Link>
-              <InstallAppButton className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[var(--foreground)] text-[var(--background)] px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm hover:opacity-90 hover:scale-105 transition-all active:scale-95 shadow-xl" />
+
+              {/* Secondary Actions: Side-by-Side Grid on Mobile */}
+              <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:w-auto sm:gap-5">
+                <Link
+                  href="/explore"
+                  className="w-full flex items-center justify-center gap-2 bg-[var(--surface-2)] hover:bg-[var(--border-1)] border border-[var(--border-1)] text-[var(--foreground)] px-2 py-4 md:px-8 md:py-5 rounded-2xl md:rounded-full font-bold uppercase tracking-widest text-[11px] md:text-sm active:scale-95 transition-all shadow-sm"
+                >
+                  <Search size={16} className="shrink-0" /> 
+                  <span className="truncate">Find</span>
+                </Link>
+                
+                <Link
+                  href="/dashboard"
+                  className="w-full flex items-center justify-center gap-2 bg-[var(--surface-2)] hover:bg-[var(--border-1)] border border-[var(--border-1)] text-[var(--foreground)] px-2 py-4 md:px-8 md:py-5 rounded-2xl md:rounded-full font-bold uppercase tracking-widest text-[11px] md:text-sm active:scale-95 transition-all shadow-sm"
+                >
+                  <Plus size={16} className="shrink-0" /> 
+                  <span className="truncate">Create</span>
+                </Link>
+              </div>
+
+              {/* Tertiary Action: Grounded Full Width */}
+              <InstallAppButton className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] px-6 py-4 md:px-10 md:py-5 rounded-2xl md:rounded-full font-black uppercase tracking-widest text-[12px] md:text-sm hover:opacity-90 active:scale-95 transition-all shadow-xl mt-1 md:mt-0" />
+              
             </div>
           </div>
         </section>
@@ -437,19 +467,19 @@ export default function Home() {
         </section>
 
         {/* --- SECTION 3: THE 6 ECOSYSTEM MODULES --- */}
-        <section className="w-full max-w-7xl mx-auto px-4 mb-5 md:mb-16">
-          <div className="flex items-center gap-3 mb-10 px-2 border-b border-[var(--foreground)]/10 pb-4">
-            <Zap className="text-[var(--accent)] animate-bounce" size={24} />
-            <h2 className="font-black uppercase tracking-widest text-sm text-[var(--foreground)]">
+        <section className="w-full max-w-7xl mx-auto px-4 mb-12 md:mb-16">
+          <div className="flex items-center gap-3 mb-8 md:mb-10 px-2 border-b border-[var(--border-1)] pb-4">
+            <Zap className="text-[var(--accent)] animate-bounce" size={22} />
+            <h2 className="font-black uppercase tracking-widest text-xs md:text-sm text-[var(--foreground)]">
               The CricSync Power Grid
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
             {/* Module 01 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--surface-1)] backdrop-blur-2xl border border-[var(--border-1)] p-6 md:p-8 rounded-2xl hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -z-10 group-hover:bg-blue-500/10 transition-all" />
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-1 w-8 bg-blue-500 rounded-full" />
                   <span className="text-blue-500 font-black uppercase tracking-widest text-xs">
@@ -461,11 +491,11 @@ export default function Home() {
                   className="text-blue-500/50 group-hover:text-blue-500 transition-colors"
                 />
               </div>
-              <h3 className="text-2xl font-black uppercase italic mb-4 text-[var(--foreground)]">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic mb-3 md:mb-4 text-[var(--foreground)]">
                 Tournament <br />
                 <span className="text-blue-500">Command Center</span>
               </h3>
-              <p className="text-sm font-medium opacity-80 leading-relaxed text-[var(--foreground)]">
+              <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed text-[var(--text-muted)]">
                 Take full control from a single dashboard. Assign umpires,
                 manage scorers (online/offline), and onboard commentators
                 effortlessly.
@@ -473,9 +503,9 @@ export default function Home() {
             </div>
 
             {/* Module 02 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--surface-1)] backdrop-blur-2xl border border-[var(--border-1)] p-6 md:p-8 rounded-2xl hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-3xl -z-10 group-hover:bg-teal-500/10 transition-all" />
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-1 w-8 bg-teal-500 rounded-full" />
                   <span className="text-teal-500 font-black uppercase tracking-widest text-xs">
@@ -487,11 +517,11 @@ export default function Home() {
                   className="text-teal-500/50 group-hover:text-teal-500 transition-colors"
                 />
               </div>
-              <h3 className="text-2xl font-black uppercase italic mb-4 text-[var(--foreground)]">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic mb-3 md:mb-4 text-[var(--foreground)]">
                 Ball-by-Ball, <br />
                 <span className="text-teal-500">Zero Delay</span>
               </h3>
-              <p className="text-sm font-medium opacity-80 leading-relaxed text-[var(--foreground)]">
+              <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed text-[var(--text-muted)]">
                 A lightning-fast scoring engine built for accuracy. Every single
                 delivery is tracked, mathematically synced, and updated in real
                 time.
@@ -499,9 +529,9 @@ export default function Home() {
             </div>
 
             {/* Module 03 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--surface-1)] backdrop-blur-2xl border border-[var(--border-1)] p-6 md:p-8 rounded-2xl hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -z-10 group-hover:bg-amber-500/10 transition-all" />
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-1 w-8 bg-amber-500 rounded-full" />
                   <span className="text-amber-500 font-black uppercase tracking-widest text-xs">
@@ -513,11 +543,11 @@ export default function Home() {
                   className="text-amber-500/50 group-hover:text-amber-500 transition-colors"
                 />
               </div>
-              <h3 className="text-2xl font-black uppercase italic mb-4 text-[var(--foreground)]">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic mb-3 md:mb-4 text-[var(--foreground)]">
                 Auctions <br />
                 <span className="text-amber-500">Simplified</span>
               </h3>
-              <p className="text-sm font-medium opacity-80 leading-relaxed text-[var(--foreground)]">
+              <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed text-[var(--text-muted)]">
                 Host high-energy IPL-style player auctions with live bidding
                 screens, virtual franchise wallet tracking, and automated squad
                 sorting.
@@ -525,9 +555,9 @@ export default function Home() {
             </div>
 
             {/* Module 04 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-red-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--surface-1)] backdrop-blur-2xl border border-[var(--border-1)] p-6 md:p-8 rounded-2xl hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -z-10 group-hover:bg-red-500/10 transition-all" />
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-1 w-8 bg-red-500 rounded-full" />
                   <span className="text-red-500 font-black uppercase tracking-widest text-xs">
@@ -539,11 +569,11 @@ export default function Home() {
                   className="text-red-500/50 group-hover:text-red-500 transition-colors"
                 />
               </div>
-              <h3 className="text-2xl font-black uppercase italic mb-4 text-[var(--foreground)]">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic mb-3 md:mb-4 text-[var(--foreground)]">
                 Stream Like a <br />
                 <span className="text-red-500">TV Network</span>
               </h3>
-              <p className="text-sm font-medium opacity-80 leading-relaxed text-[var(--foreground)]">
+              <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed text-[var(--text-muted)]">
                 Deliver professional match broadcasts with OBS-ready live
                 graphical overlays, wagon wheels, and smooth YouTube live
                 integration.
@@ -551,9 +581,9 @@ export default function Home() {
             </div>
 
             {/* Module 05 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--surface-1)] backdrop-blur-2xl border border-[var(--border-1)] p-6 md:p-8 rounded-2xl hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/5 rounded-full blur-3xl -z-10 group-hover:bg-fuchsia-500/10 transition-all" />
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-1 w-8 bg-fuchsia-500 rounded-full" />
                   <span className="text-fuchsia-500 font-black uppercase tracking-widest text-xs">
@@ -565,20 +595,20 @@ export default function Home() {
                   className="text-fuchsia-500/50 group-hover:text-fuchsia-500 transition-colors"
                 />
               </div>
-              <h3 className="text-2xl font-black uppercase italic mb-4 text-[var(--foreground)]">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic mb-3 md:mb-4 text-[var(--foreground)]">
                 Smart Fixtures <br />
                 <span className="text-fuchsia-500">& Standings</span>
               </h3>
-              <p className="text-sm font-medium opacity-80 leading-relaxed text-[var(--foreground)]">
+              <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed text-[var(--text-muted)]">
                 Dynamic auto-advancing knockout brackets, round-robin schedule
                 generators, and Net Run Rate (NRR) calculated points tables.
               </p>
             </div>
 
             {/* Module 06 */}
-            <div className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-8 rounded-2xl hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
+            <div className="group relative bg-[var(--surface-1)] backdrop-blur-2xl border border-[var(--border-1)] p-6 md:p-8 rounded-2xl hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -z-10 group-hover:bg-purple-500/10 transition-all" />
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-5 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="h-1 w-8 bg-purple-500 rounded-full" />
                   <span className="text-purple-500 font-black uppercase tracking-widest text-xs">
@@ -590,11 +620,11 @@ export default function Home() {
                   className="text-purple-500/50 group-hover:text-purple-500 transition-colors"
                 />
               </div>
-              <h3 className="text-2xl font-black uppercase italic mb-4 text-[var(--foreground)]">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic mb-3 md:mb-4 text-[var(--foreground)]">
                 Digital Player <br />
                 <span className="text-purple-500">Passport</span>
               </h3>
-              <p className="text-sm font-medium opacity-80 leading-relaxed text-[var(--foreground)]">
+              <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed text-[var(--text-muted)]">
                 Track every single run, hat-trick, and MVP award across multiple
                 tournaments. Players get a permanent shareable QR verified web
                 profile.
@@ -605,41 +635,42 @@ export default function Home() {
       </div>
 
       {/* --- LIVE ANIMATED STATS FOOTER --- */}
-      <section className="border-t border-[var(--foreground)]/10 bg-[var(--background)]/80 backdrop-blur-3xl w-full py-8 mt-auto relative z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-3 md:grid-cols-3 gap-5 divide-x divide-[var(--foreground)]/10">
-          <div className="flex flex-col items-center justify-center text-center px-4">
-            <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
+      <section className="border-t border-[var(--border-1)] bg-[var(--surface-1)]/80 backdrop-blur-3xl w-full py-6 md:py-8 mt-auto relative z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-3 gap-2 md:gap-5 divide-x divide-[var(--border-1)]">
+          
+          {/* Stat 1 */}
+          <div className="flex flex-col items-center justify-center text-center px-1 md:px-4">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-[var(--foreground)] tracking-tight">
               <AnimatedNumber value={systemStats.matches} />+
             </span>
-            <span className="text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
-              <Play size={12} /> Matches Scored
+            <span className="text-[10px] sm:text-xs md:text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-1 md:mt-2 flex items-center gap-1">
+              <Play size={10} className="shrink-0" /> 
+              <span className="truncate">Matches</span>
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center text-center px-4">
-            <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
+
+          {/* Stat 2 */}
+          <div className="flex flex-col items-center justify-center text-center px-1 md:px-4">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-[var(--foreground)] tracking-tight">
               <AnimatedNumber value={systemStats.tournaments} />+
             </span>
-            <span className="text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
-              <Trophy size={12} /> Tournaments
+            <span className="text-[10px] sm:text-xs md:text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-1 md:mt-2 flex items-center gap-1">
+              <Trophy size={10} className="shrink-0" /> 
+              <span className="truncate">Tournaments</span>
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center text-center px-4">
-            <span className="text-3xl md:text-4xl font-black text-[var(--foreground)]">
+
+          {/* Stat 3 */}
+          <div className="flex flex-col items-center justify-center text-center px-1 md:px-4">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-[var(--foreground)] tracking-tight">
               <AnimatedNumber value={systemStats.players} />+
             </span>
-            <span className="text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-2 flex items-center gap-1.5">
-              <Users size={12} /> Players Enrolled
+            <span className="text-[10px] sm:text-xs md:text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-1 md:mt-2 flex items-center gap-1">
+              <Users size={10} className="shrink-0" /> 
+              <span className="truncate">Players</span>
             </span>
           </div>
-          {/* <div className="flex flex-col items-center justify-center text-center px-4 group cursor-pointer hover:bg-[var(--foreground)]/5 rounded-xl py-2 transition-colors">
-            <a
-              href="/dashboard"
-              className="text-sm font-black text-[var(--foreground)] uppercase flex items-center gap-2 group-hover:translate-x-2 transition-transform tracking-widest"
-            >
-              Create Tournament
-              <ArrowRight size={16} className="text-[var(--accent)]" />
-            </a>
-          </div> */}
+
         </div>
       </section>
     </main>

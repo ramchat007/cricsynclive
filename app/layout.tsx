@@ -7,6 +7,7 @@ import Script from "next/script";
 import type { Metadata, Viewport } from "next";
 import AuthListener from "./AuthListener";
 import DoubleBackExitGuard from "./(scorer)/t/[tournamentId]/m/[matchId]/components/DoubleBackExitGuard";
+import SmartInstallBanner from "./components/SmartInstallBanner";
 
 export const viewport: Viewport = {
   themeColor: "#020617", // THEME_COLORS.dark.background
@@ -95,6 +96,7 @@ export default function RootLayout({
         <AuthListener />
         <Providers>
           <SplashScreen>
+            <SmartInstallBanner />
             <DoubleBackExitGuard />
             <LayoutWrapper>{children}</LayoutWrapper>
           </SplashScreen>

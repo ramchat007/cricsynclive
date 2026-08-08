@@ -8,17 +8,26 @@ export function useMatchContext(match: any, stats: any) {
   // 2. The hook will automatically fetch the name itself!
   useEffect(() => {
     const fetchTournamentName = async () => {
-      // If we have a match and it has a tournament_id, ask Supabase for the name
-      if (match?.tournament_id) {
-        const { data } = await supabase
-          .from("tournaments")
-          .select("name")
-          .eq("id", match.tournament_id)
-          .single();
+      if (!match?.tournament_id) return;
 
-        if (data?.name) {
-          setTournamentName(data.name);
-        }
+      // 🌟 SAFETY GUARD: Prevent database errors for Quick Matches!
+      if (
+        match.tournament_id === "QUICK_MATCH" ||
+        match.tournament_id === "00000000-0000-0000-0000-000000000000"
+      ) {
+        setTournamentName("Quick Match");
+        return;
+      }
+
+      // If it's a real tournament, ask Supabase for the name
+      const { data, error } = await supabase
+        .from("tournaments")
+        .select("name")
+        .eq("id", match.tournament_id)
+        .single();
+
+      if (data?.name && !error) {
+        setTournamentName(data.name);
       }
     };
 
@@ -137,7 +146,7 @@ export function useMatchContext(match: any, stats: any) {
       team2Name,
       team1ShortName,
       team2ShortName,
-      tournamentName, // <--- Now it returns the state from the hook!
+      tournamentName, // <--- Accurately returns the state from the hook!
       venue,
       oversCount,
       currentInnings,
@@ -145,5 +154,5 @@ export function useMatchContext(match: any, stats: any) {
       team1Score,
       team2Score,
     };
-  }, [match, stats, tournamentName]); // <-- Added tournamentName to dependencies so it updates when fetched
+  }, [match, stats, tournamentName]); // <-- Perfect dependency array
 }

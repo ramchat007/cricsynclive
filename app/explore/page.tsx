@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Activity, ChevronRight } from "lucide-react";
+import { Search, Activity, ChevronRight, Crown, Radio } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function ExploreTournamentsPage() {
@@ -36,34 +36,32 @@ export default function ExploreTournamentsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[var(--background)] pt-32 pb-20 px-6 transition-colors duration-300">
+    <main className="min-h-screen bg-[var(--background)] pt-6 md:pt-32 pb-20 px-4 md:px-6 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
+        
         {/* Page Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight text-slate-900 mb-4 transition-colors">
-            Explore {/* Safe Accent Text */}
-            <span className="accent-text">Tournaments</span>
+        <div className="text-center mb-6 md:mb-16">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black uppercase tracking-tight text-[var(--foreground)] mb-3 md:mb-4 transition-colors">
+            Explore <span className="accent-text">Tournaments</span>
           </h1>
-          <p className="text-slate-500 font-medium text-lg uppercase tracking-widest transition-colors">
+          <p className="text-[var(--text-muted)] font-medium text-xs sm:text-sm md:text-lg uppercase tracking-widest transition-colors">
             Find local matches, leagues, and live streams
           </p>
         </div>
 
         {/* Live Search Bar */}
-        <div className="max-w-2xl mx-auto mb-16">
+        <div className="max-w-2xl mx-auto mb-6 md:mb-16">
           <div className="relative group">
             <Search
-              // Dynamically changes to your theme's accent color on focus
-              className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--accent)] transition-colors"
-              size={20}
+              className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--accent)] transition-colors"
+              size={18}
             />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by tournament name or city..."
-              // Stripped all dark: classes, using safe mapped variables and dynamic focus rings
-              className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-full py-4 pl-14 pr-6 shadow-sm focus:outline-none focus:border-[var(--accent)] transition-all placeholder:text-slate-400 text-lg font-medium"
+              className="w-full bg-[var(--surface-1)] border-2 border-[var(--border-1)] text-[var(--foreground)] rounded-full py-3.5 md:py-4 pl-12 md:pl-14 pr-6 shadow-sm focus:outline-none focus:border-[var(--accent)] transition-all placeholder:text-[var(--text-muted)] text-sm md:text-lg font-medium"
             />
           </div>
         </div>
@@ -71,25 +69,24 @@ export default function ExploreTournamentsPage() {
         {/* The Grid */}
         {loading ? (
           // Loading Skeleton
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                // Uses mapped surface-2 background seamlessly
-                className="h-64 bg-slate-100 rounded-xl animate-pulse transition-colors"
+                className="h-56 md:h-64 bg-[var(--surface-1)] border border-[var(--border-1)] rounded-2xl animate-pulse transition-colors"
               ></div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredTournaments.length === 0 ? (
               // Empty State (No search results or no tournaments at all)
-              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-xl transition-colors bg-[var(--glass-bg)] backdrop-blur-sm">
-                <Activity size={40} className="mx-auto text-slate-400 mb-4" />
-                <h3 className="text-xl font-black uppercase tracking-widest text-slate-900">
+              <div className="col-span-full py-16 md:py-24 text-center border-2 border-dashed border-[var(--border-1)] rounded-2xl transition-colors bg-[var(--surface-1)] backdrop-blur-sm px-4">
+                <Activity size={36} className="mx-auto text-[var(--text-muted)] mb-3" />
+                <h3 className="text-lg md:text-xl font-black uppercase tracking-widest text-[var(--foreground)]">
                   No Tournaments Found
                 </h3>
-                <p className="text-slate-500 font-bold mt-2">
+                <p className="text-[var(--text-muted)] text-xs md:text-sm font-bold mt-2">
                   {searchQuery
                     ? "Try searching for a different name or city."
                     : "Check back soon for upcoming events."}
@@ -97,7 +94,7 @@ export default function ExploreTournamentsPage() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="mt-6 accent-text font-bold hover:underline"
+                    className="mt-5 accent-text font-bold text-xs md:text-sm hover:underline uppercase tracking-widest"
                   >
                     Clear Search
                   </button>
@@ -109,11 +106,10 @@ export default function ExploreTournamentsPage() {
                 <Link
                   key={t.id}
                   href={`/t/${t.id}/`}
-                  className="group block relative h-64 rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all"
+                  className="group block relative h-60 md:h-64 rounded-2xl overflow-hidden border border-[var(--border-1)] shadow-sm hover:shadow-xl transition-all active:scale-[0.98]"
                 >
                   <div
-                    // Fallback background before image loads uses surface-2
-                    className="absolute inset-0 bg-slate-100 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    className="absolute inset-0 bg-[var(--surface-2)] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                     style={{
                       backgroundImage: t.banner_url
                         ? `url(${t.banner_url})`
@@ -121,27 +117,46 @@ export default function ExploreTournamentsPage() {
                     }}
                   />
 
-                  {/* Keep gradient as dark to ensure white text is always readable over images */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-90"></div>
+                  {/* 🌟 PREMIUM SUBSCRIPTION BADGES 🌟 */}
+                  {t.subscription_tier === "pro" && (
+                    <div className="absolute top-3 right-3 md:top-4 md:right-4 z-20 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-lg shadow-amber-500/30 border border-amber-300/50">
+                      <Crown size={11} className="fill-amber-950/20" />
+                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest leading-none mt-px">
+                        Pro
+                      </span>
+                    </div>
+                  )}
 
-                  <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                  {t.subscription_tier === "broadcast" && (
+                    <div className="absolute top-3 right-3 md:top-4 md:right-4 z-20 flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-500 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-lg shadow-purple-500/30 border border-purple-400/50">
+                      <Radio size={11} className="animate-pulse" />
+                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest leading-none mt-px">
+                        Broadcast
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-90 z-10"></div>
+
+                  <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end z-20">
                     {/* Theme-Adaptive Format Badge */}
                     <span className="accent-bg text-[var(--background)] text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded w-max mb-2 shadow-md">
                       {t.format || "T20"}
                     </span>
 
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-[var(--accent)] transition-colors drop-shadow-md">
+                    <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter leading-none mb-1 group-hover:text-[var(--accent)] transition-colors drop-shadow-md truncate">
                       {t.name}
                     </h3>
 
                     <div className="flex justify-between items-center mt-2">
-                      <p className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1 drop-shadow">
+                      <p className="text-[11px] md:text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1 drop-shadow truncate pr-2">
                         📍 {t.location || "Local Ground"}
                       </p>
 
-                      {/* Hover Arrow dynamically matches theme */}
-                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[var(--accent)] transition-colors shadow-lg">
-                        <ChevronRight size={16} />
+                      {/* Hover Arrow */}
+                      <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[var(--accent)] transition-colors shadow-lg shrink-0">
+                        <ChevronRight size={14} />
                       </div>
                     </div>
                   </div>
