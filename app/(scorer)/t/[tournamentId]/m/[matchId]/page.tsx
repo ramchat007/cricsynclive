@@ -28,6 +28,7 @@ import RecentBalls from "./components/RecentBalls";
 import FullScorecard from "./components/FullScorecard";
 import Commentary from "./components/Commentary";
 import Predictor from "./components/Predictor";
+import Squads from "./components/Squads";
 import Info from "./components/Info";
 
 import { Mic, MicOff } from "lucide-react";
@@ -100,7 +101,7 @@ export default function UnifiedLiveMatchPage({
 
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [moreActionType, setMoreActionType] = useState<
-    "penalty-add" | "penalty-minus" | "dead-ball" | "end-innings"
+    "penalty-add" | "penalty-minus" | "dead-ball" | "end-innings" | "abandon-match"
   >("penalty-add");
   const [customRuns, setCustomRuns] = useState(5);
 
@@ -211,6 +212,10 @@ export default function UnifiedLiveMatchPage({
   const [completedRuns, setCompletedRuns] = useState(0);
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [abandonReason, setAbandonReason] = useState("No Result (Rain / Bad Light)");
+  const [customResultText, setCustomResultText] = useState("");
+  const [selectedWinnerId, setSelectedWinnerId] = useState<string | null>(null); // null = No Result / Points Split
 
   // 🔒 --- AUTHENTICATION CHECKER --- 🔒
   useEffect(() => {
@@ -346,18 +351,33 @@ export default function UnifiedLiveMatchPage({
   const handleUndoEndInnings = async () => {
     if (
       !window.confirm(
-        "Undo End Innings? This will set the match back to 1st Innings.",
+        "Undo End Innings? This will set the match back to 1st Innings."
       )
     )
       return;
 
+    // 1. Get the very last delivery of the 1st innings securely
+    const inn1Deliveries = engine.deliveries.filter((d: any) => d.innings === 1);
+    const lastDelivery = inn1Deliveries[inn1Deliveries.length - 1];
+
+    // 2. Prepare the match update payload
+    const matchUpdatePayload: any = {
+      current_innings: 1, // Revert to Innings 1
+    };
+
+    // 3. Extract the players from that last ball to restore them to the crease!
+    if (lastDelivery) {
+      matchUpdatePayload.live_striker_id = lastDelivery.striker_id;
+      matchUpdatePayload.live_non_striker_id = lastDelivery.non_striker_id;
+      matchUpdatePayload.live_bowler_id = lastDelivery.bowler_id;
+    }
+
     try {
+      // 4. Update the match to restore the innings AND the players simultaneously
       const { error } = await supabase
         .from("matches")
-        .update({
-          current_innings: 1, // ONLY update this!
-        })
-        .eq("id", engine.match?.id || matchId);
+        .update(matchUpdatePayload)
+        .eq("id", engine.match?.id);
 
       if (error) {
         console.error("Supabase Update Error Details:", error.message);
@@ -365,11 +385,51 @@ export default function UnifiedLiveMatchPage({
         return;
       }
 
+      // 5. Ask if they ALSO want to delete that last delivery (if it was a mistake)
+      if (lastDelivery) {
+        if (window.confirm("Do you also want to delete the last delivery of the 1st Innings?")) {
+          await engine.deleteLastBall(lastDelivery.id);
+        }
+      }
+
+      // 6. Refresh the UI
       await engine.fetchMatchData();
       setShowMoreModal(false);
       alert("Successfully reverted to 1st Innings!");
     } catch (err) {
       console.error("Unexpected Undo Error:", err);
+    }
+  };
+  const handleForceAbandonMatch = async () => {
+    if (!engine.match?.id) return;
+
+    const finalResultMargin = customResultText.trim()
+      ? customResultText.trim()
+      : abandonReason;
+
+    const confirmMsg = `Are you sure you want to officially end this match as:\n"${finalResultMargin}"?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      // 1. Update the match status in Supabase
+      const { error } = await supabase
+        .from("matches")
+        .update({
+          status: "completed",
+          result_margin: finalResultMargin,
+          winner_id: selectedWinnerId, // null for No Result, or a specific team ID if awarded
+        })
+        .eq("id", engine.match.id);
+
+      if (error) throw error;
+
+      // 2. Refresh local state & close modal
+      await engine.fetchMatchData();
+      setShowMoreModal(false);
+      alert("Match has been officially closed!");
+    } catch (err: any) {
+      console.error("Failed to abandon match:", err);
+      alert("Failed to update match: " + err.message);
     }
   };
   const handleDeleteMatch = async () => {
@@ -1277,6 +1337,7 @@ export default function UnifiedLiveMatchPage({
     { id: "scorecard", label: "Full Scorecard" },
     { id: "commentary", label: "Commentary" },
     { id: "predictor", label: "Win Predictor" },
+    { id: "squads", label: "Squads" },
     { id: "info", label: "Match Info" },
   ];
 
@@ -1306,7 +1367,7 @@ export default function UnifiedLiveMatchPage({
             <div className="flex-1 min-w-0">
               {/* Broadcast-style Badges */}
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] md:text-[13px] uppercase font-black text-[var(--accent)] tracking-widest bg-[var(--accent)]/10 px-2 py-0.5 rounded-md truncate max-w-[250px] md:max-w-[200px] border border-[var(--accent)]/20">
+                <span className="text-[9px] md:text-[13px] uppercase font-black text-[var(--accent)] tracking-widest bg-[var(--accent)]/10 px-2 py-0.5 rounded-md truncate !md:truncate max-w-[250px] md:max-w-[400px] border border-[var(--accent)]/20">
                   {ctx.tournamentName}
                 </span>
                 <span className="text-[9px] md:text-[13px] uppercase font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md border border-[var(--border-1)] shrink-0">
@@ -1561,7 +1622,7 @@ export default function UnifiedLiveMatchPage({
         {/* --- RIGHT COLUMN: MAIN CONTENT (De-boxed & Clean) --- */}
         <div className="flex-1 w-full z-10 relative flex flex-col min-w-0">
           {/* ✨ STICKY SWIPEABLE TAB BAR ✨ */}
-          <div className="sticky top-[60px] md:top-[76px] z-30 bg-[var(--background)]/90 backdrop-blur-md pb-4 pt-2 -mx-2 px-2 sm:mx-0 sm:px-0">
+          <div className="sticky top-[60px] md:top-[64px] z-30 bg-[var(--background)]/90 backdrop-blur-md pb-4 pt-2 -mx-2 px-2 sm:mx-0 sm:px-0">
             <div className="flex overflow-x-auto gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory touch-pan-x">
               {tabs.map((tab) => (
                 <button
@@ -1661,6 +1722,13 @@ export default function UnifiedLiveMatchPage({
                 )}
                 {activeTab === "predictor" && (
                   <Predictor match={engine.match} stats={stats} />
+                )}
+                {activeTab === "squads" && (
+                  <Squads
+                    match={engine.match}
+                    team1Players={engine.team1Players}
+                    team2Players={engine.team2Players}
+                  />
                 )}
                 {activeTab === "info" && (
                   <Info
@@ -2407,17 +2475,17 @@ export default function UnifiedLiveMatchPage({
           {/* --- MORE ACTIONS MODAL --- */}
           {showMoreModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[80] flex items-center justify-center p-4">
-              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
-                <h2 className="text-2xl font-black uppercase tracking-tighter text-center mb-8 text-[var(--foreground)]">
+              <div className="bg-[var(--surface-1)] rounded-2xl w-full max-w-md p-6 md:p-8 border border-[var(--border-1)] shadow-2xl animate-in zoom-in-95">
+                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tighter text-center mb-6 text-[var(--foreground)]">
                   More Actions
                 </h2>
-                <div className="space-y-8 mb-10">
+                <div className="space-y-6 mb-8">
                   <div>
                     <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 block">
                       Action Type
                     </label>
 
-                    {/* 🔥 NEW COMPACT GRID LAYOUT 🔥 */}
+                    {/* 🔥 COMPACT GRID LAYOUT 🔥 */}
                     <div className="space-y-3">
                       {/* Row 1: Penalty (+ and -) Side by Side */}
                       <div className="grid grid-cols-2 gap-3">
@@ -2455,32 +2523,41 @@ export default function UnifiedLiveMatchPage({
                         >
                           End Innings ⏹️
                         </button>
-                        {engine.match?.current_innings === 2 && (
-                          <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
-                            <button
-                              onClick={handleUndoEndInnings}
-                              className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm"
-                            >
-                              ⚠️ Revert to 1st Innings
-                            </button>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Row 3: Force End / Abandon Match */}
+                      <div className="pt-2">
+                        <button
+                          onClick={() => setMoreActionType("abandon-match")}
+                          className={`w-full py-3 px-4 text-[13px] sm:text-xs font-black rounded-xl border-2 uppercase transition-colors flex items-center justify-center gap-2 ${moreActionType === "abandon-match" ? "bg-red-500 text-white border-red-500 shadow-md" : "bg-red-500/5 border-red-500/20 text-red-500 hover:bg-red-500/10 hover:border-red-500/40"}`}
+                        >
+                          Force End / Abandon Match 🌧️
+                        </button>
+                      </div>
+                      
+                      {/* Revert Innings Button */}
+                      {engine.match?.current_innings === 2 && (
+                        <div className="mt-4 pt-4 border-t border-[var(--border-1)]">
+                          <button
+                            onClick={handleUndoEndInnings}
+                            className="w-full py-3 px-4 text-xs font-black rounded-xl border-2 uppercase transition-colors bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            ⚠️ Revert to 1st Innings
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* 1. PENALTY RUNS INPUT UI (Only shows when penalty is selected) */}
-                  {(moreActionType === "penalty-add" ||
-                    moreActionType === "penalty-minus") && (
+                  {/* 1. PENALTY RUNS INPUT UI */}
+                  {(moreActionType === "penalty-add" || moreActionType === "penalty-minus") && (
                     <div className="animate-in fade-in slide-in-from-top-2">
                       <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 block text-center">
                         Penalty Runs
                       </label>
                       <div className="flex items-center justify-center gap-4">
                         <button
-                          onClick={() =>
-                            setCustomRuns(Math.max(1, customRuns - 1))
-                          }
+                          onClick={() => setCustomRuns(Math.max(1, customRuns - 1))}
                           className="w-14 h-14 rounded-full bg-[var(--surface-2)] text-[var(--foreground)] font-black text-2xl hover:bg-[var(--border-1)] transition-colors"
                         >
                           -
@@ -2488,11 +2565,7 @@ export default function UnifiedLiveMatchPage({
                         <input
                           type="number"
                           value={customRuns}
-                          onChange={(e) =>
-                            setCustomRuns(
-                              Math.max(1, parseInt(e.target.value) || 0),
-                            )
-                          }
+                          onChange={(e) => setCustomRuns(Math.max(1, parseInt(e.target.value) || 0))}
                           className="text-5xl font-black w-24 text-center text-[var(--foreground)] bg-transparent border-b-2 border-[var(--border-1)] focus:border-[var(--accent)] outline-none"
                         />
                         <button
@@ -2509,31 +2582,76 @@ export default function UnifiedLiveMatchPage({
                   {moreActionType === "end-innings" && (
                     <div className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-xl animate-in fade-in slide-in-from-top-2 text-center">
                       <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest mb-2">
-                        {engine.match!.current_innings === 1
-                          ? "Start 2nd Innings"
-                          : "End Match"}
+                        {engine.match!.current_innings === 1 ? "Start 2nd Innings" : "End Match"}
                       </h3>
-
                       {engine.match!.current_innings === 1 ? (
                         <p className="text-[13px] text-[var(--text-muted)] font-bold">
-                          The target will be automatically calculated based on
-                          the 1st innings score plus any penalty runs.
+                          The target will be automatically calculated based on the 1st innings score plus any penalty runs.
                         </p>
                       ) : (
                         <p className="text-[13px] sm:text-xs text-[var(--text-muted)] font-bold">
-                          This will finalize the match and take you to the
-                          awards screen.
+                          This will finalize the match and take you to the awards screen.
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {/* 3. ABANDON MATCH UI */}
+                  {moreActionType === "abandon-match" && (
+                    <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl animate-in fade-in slide-in-from-top-2 space-y-4 text-left">
+                      <div>
+                        <label className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1.5 block">
+                          Outcome Reason
+                        </label>
+                        <select
+                          value={abandonReason}
+                          onChange={(e) => setAbandonReason(e.target.value)}
+                          className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] p-2.5 rounded-lg font-bold text-[13px] focus:outline-none focus:border-red-500"
+                        >
+                          <option value="Match Abandoned due to Rain (No Result)">Rain / Abandoned (No Result)</option>
+                          <option value="Match Called Off due to Bad Light">Bad Light</option>
+                          <option value="Match Tied (DLS Method)">Tied (DLS Method)</option>
+                          <option value="Match Forfeited">Match Forfeited</option>
+                          <option value="Custom Result">Custom Reason...</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1.5 block">
+                          Custom Result Message
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Team 1 won by 12 runs (DLS)"
+                          value={customResultText}
+                          onChange={(e) => setCustomResultText(e.target.value)}
+                          className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] p-2.5 rounded-lg font-medium text-[13px] focus:outline-none focus:border-red-500 placeholder:opacity-40"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1.5 block">
+                          Award Victory To
+                        </label>
+                        <select
+                          value={selectedWinnerId || ""}
+                          onChange={(e) => setSelectedWinnerId(e.target.value || null)}
+                          className="w-full bg-[var(--surface-1)] border border-[var(--border-1)] text-[var(--foreground)] p-2.5 rounded-lg font-bold text-[13px] focus:outline-none focus:border-red-500"
+                        >
+                          <option value="">No Winner (Points Shared)</option>
+                          <option value={engine.match?.team1_id}>{engine.match?.team1?.name || "Team 1"}</option>
+                          <option value={engine.match?.team2_id}>{engine.match?.team2?.name || "Team 2"}</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>
 
                 {/* MODAL FOOTER BUTTONS */}
-                <div className="flex gap-4">
+                <div className="flex gap-3 md:gap-4">
                   <button
                     onClick={() => setShowMoreModal(false)}
-                    className="flex-1 py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-xl transition-colors text-lg"
+                    className="flex-1 py-4 md:py-5 font-bold text-[var(--text-muted)] hover:text-[var(--foreground)] bg-[var(--surface-2)] rounded-xl transition-colors text-sm md:text-lg"
                   >
                     Cancel
                   </button>
@@ -2541,13 +2659,23 @@ export default function UnifiedLiveMatchPage({
                     onClick={
                       moreActionType === "end-innings"
                         ? handleSmartEndInnings
+                        : moreActionType === "abandon-match"
+                        ? handleForceAbandonMatch
                         : submitMoreAction
                     }
                     disabled={engine.isSubmittingBall}
-                    className={`flex-[2] text-[var(--background)] font-black uppercase py-5 rounded-xl transition-opacity disabled:opacity-50 text-sm sm:text-lg tracking-widest ${moreActionType === "end-innings" ? "bg-orange-500 hover:bg-orange-600" : "bg-[var(--foreground)] hover:opacity-80"}`}
+                    className={`flex-[2] text-[var(--background)] font-black uppercase py-4 md:py-5 rounded-xl transition-opacity disabled:opacity-50 text-[13px] sm:text-lg tracking-widest shadow-md ${
+                      moreActionType === "end-innings"
+                        ? "bg-orange-500 hover:bg-orange-600"
+                        : moreActionType === "abandon-match"
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-[var(--foreground)] hover:opacity-80"
+                    }`}
                   >
                     {moreActionType === "end-innings"
                       ? "Confirm End"
+                      : moreActionType === "abandon-match"
+                      ? "Abandon Match"
                       : "Submit Action"}
                   </button>
                 </div>

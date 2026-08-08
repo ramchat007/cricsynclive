@@ -97,8 +97,10 @@ export default function RootLayout({
         <Providers>
           <SplashScreen>
             <SmartInstallBanner />
-            <DoubleBackExitGuard />
-            <LayoutWrapper>{children}</LayoutWrapper>
+            <LayoutWrapper>
+              <DoubleBackExitGuard />
+              {children}
+            </LayoutWrapper>
           </SplashScreen>
         </Providers>
         <GoogleAnalytics gaId="G-NGL0G335B2" />

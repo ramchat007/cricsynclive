@@ -2,11 +2,37 @@ import Link from "next/link";
 import { Trash2, Calendar, Clock, ChevronRight } from "lucide-react";
 
 export default function MatchCard({ match, isAdmin, deleteMatch }) {
-  // Helper to check winner for visual emphasis
-  const isTeam1Winner =
-    match.status === "completed" && match.winner_id === match.team1?.id;
-  const isTeam2Winner =
-    match.status === "completed" && match.winner_id === match.team2?.id;
+  
+  // 🧠 1. FIGURE OUT WHO ACTUALLY BATTED FIRST
+  // If the toss hasn't happened, we just default to true.
+  const choseBat = String(match?.toss_decision || "").toLowerCase().includes("bat");
+  const t1WonToss = match?.toss_winner_id === match?.team1_id;
+  const actualT1BattedFirst = match?.toss_winner_id ? (choseBat ? t1WonToss : !t1WonToss) : true;
+
+  // 🧠 2. MAP SCORES TO THE CORRECT TEAM
+  // If the DB saves Innings 1 into team1_score, this routes it to the team that ACTUALLY batted first.
+  const t1ActualScore = actualT1BattedFirst ? (match.team1_score ?? 0) : (match.team2_score ?? 0);
+  const t1ActualWickets = actualT1BattedFirst ? (match.team1_wickets ?? 0) : (match.team2_wickets ?? 0);
+  const t1ActualOvers = actualT1BattedFirst ? (match.team1_overs ?? 0) : (match.team2_overs ?? 0);
+
+  const t2ActualScore = actualT1BattedFirst ? (match.team2_score ?? 0) : (match.team1_score ?? 0);
+  const t2ActualWickets = actualT1BattedFirst ? (match.team2_wickets ?? 0) : (match.team1_wickets ?? 0);
+  const t2ActualOvers = actualT1BattedFirst ? (match.team2_overs ?? 0) : (match.team1_overs ?? 0);
+
+  // 🧠 3. OVERRIDE WINNER LOGIC
+  // We use the corrected actual scores to calculate the winner securely.
+  let actualWinnerId = match.winner_id;
+  if (match.status === "completed") {
+    if (t1ActualScore > t2ActualScore) {
+      actualWinnerId = match.team1?.id;
+    } else if (t2ActualScore > t1ActualScore) {
+      actualWinnerId = match.team2?.id;
+    }
+  }
+
+  // Visual emphasis variables based on our corrected winner
+  const isTeam1Winner = match.status === "completed" && actualWinnerId === match.team1?.id;
+  const isTeam2Winner = match.status === "completed" && actualWinnerId === match.team2?.id;
 
   return (
     <div
@@ -69,6 +95,7 @@ export default function MatchCard({ match, isAdmin, deleteMatch }) {
 
       {/* 2. MAIN TEAMS & SCORES PANEL (Vertical Stack = 0 Collisions) */}
       <div className="bg-[var(--surface-2)]/40 border border-[var(--border-1)]/80 rounded-xl p-3 md:p-4 flex flex-col gap-3">
+        
         {/* TEAM 1 ROW */}
         <div
           className={`flex items-center justify-between gap-3 min-w-0 ${isTeam2Winner ? "opacity-60" : "opacity-100"}`}
@@ -102,14 +129,14 @@ export default function MatchCard({ match, isAdmin, deleteMatch }) {
             </div>
           </div>
 
-          {/* Team 1 Score */}
+          {/* Team 1 Score (Now securely mapped!) */}
           {match.status === "live" || match.status === "completed" ? (
             <div className="text-right shrink-0">
               <div className="text-base md:text-lg font-black tracking-tight text-[var(--foreground)]">
-                {match.team1_score ?? 0}/{match.team1_wickets ?? 0}
+                {t1ActualScore}/{t1ActualWickets}
               </div>
               <div className="text-[13px] font-bold text-[var(--text-muted)]">
-                ({match.team1_overs ?? 0.0} ov)
+                ({t1ActualOvers} ov)
               </div>
             </div>
           ) : (
@@ -155,14 +182,14 @@ export default function MatchCard({ match, isAdmin, deleteMatch }) {
             </div>
           </div>
 
-          {/* Team 2 Score */}
+          {/* Team 2 Score (Now securely mapped!) */}
           {match.status === "live" || match.status === "completed" ? (
             <div className="text-right shrink-0">
               <div className="text-base md:text-lg font-black tracking-tight text-[var(--foreground)]">
-                {match.team2_score ?? 0}/{match.team2_wickets ?? 0}
+                {t2ActualScore}/{t2ActualWickets}
               </div>
               <div className="text-[13px] font-bold text-[var(--text-muted)]">
-                ({match.team2_overs ?? 0.0} ov)
+                ({t2ActualOvers} ov)
               </div>
             </div>
           ) : (
@@ -178,7 +205,7 @@ export default function MatchCard({ match, isAdmin, deleteMatch }) {
         {/* Left Side: Result or Timing Info */}
         <div className="flex-1 min-w-0">
           {match.status === "completed" ? (
-            <p className="text-xs font-bold text-amber-500 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl truncate">
+            <p className="text-xs font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl truncate">
               🏆 {match.result_margin || "Match Ended"}
             </p>
           ) : match.status === "scheduled" ? (

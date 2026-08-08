@@ -179,7 +179,7 @@ export default function Home() {
                 Action Live Now
               </h2>
             </div>
-            
+
             {/* Optional helper text for mobile swipe */}
             {liveMatches.length > 1 && (
               <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest md:hidden">
@@ -292,28 +292,30 @@ export default function Home() {
         {/* --- MAIN HERO & CTA --- */}
         <section className="relative flex-1 flex flex-col items-center justify-center text-center pt-5 pb-5 md:pt-12 md:pb-8 md:mb-16 min-h-[40vh] md:min-h-[60vh] px-4 md:px-6">
           <div className="animate-in zoom-in-95 duration-1000 flex flex-col items-center w-full max-w-4xl mx-auto">
-            
             {/* 1. Responsive Typography */}
             <h1 className="text-[4rem] leading-[0.85] tracking-tighter sm:text-6xl md:text-8xl lg:text-9xl font-black italic uppercase text-[var(--foreground)] transition-colors duration-300 drop-shadow-lg">
-              CricSync <br className="md:hidden" />
+              CricSyncLive <br className="md:hidden" />
               <span className="text-[var(--accent)] drop-shadow-[0_0_20px_rgba(245,158,11,0.3)] inline-block mt-2 md:mt-0">
                 Live
               </span>
             </h1>
-            
+
             <p className="text-[11px] sm:text-sm md:text-xl font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] mt-5 md:mt-6 opacity-80 text-[var(--text-dark)] max-w-xs md:max-w-none mx-auto">
-              Run Cricket Like a Pro <br className="md:hidden" /> From Toss to Trophy
+              Run Cricket Like a Pro <br className="md:hidden" /> From Toss to
+              Trophy
             </p>
-            
+
             {/* 📱 2. MOBILE-OPTIMIZED BUTTON LAYOUT */}
             <div className="mt-10 md:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-5 w-full max-w-sm sm:max-w-none">
-              
               {/* Primary Action: Always Full Width on Mobile */}
               <Link
                 href="/quick-match"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--accent)] text-white px-6 py-4 md:px-10 md:py-5 rounded-2xl md:rounded-full font-black uppercase tracking-widest text-sm shadow-[0_8px_30px_rgba(245,158,11,0.3)] hover:shadow-[0_8px_40px_rgba(245,158,11,0.5)] active:scale-95 transition-all group"
               >
-                <Flame size={20} className="group-hover:animate-bounce shrink-0" /> 
+                <Flame
+                  size={20}
+                  className="group-hover:animate-bounce shrink-0"
+                />
                 <span>Quick Match</span>
               </Link>
 
@@ -323,22 +325,21 @@ export default function Home() {
                   href="/explore"
                   className="w-full flex items-center justify-center gap-2 bg-[var(--surface-2)] hover:bg-[var(--border-1)] border border-[var(--border-1)] text-[var(--foreground)] px-2 py-4 md:px-8 md:py-5 rounded-2xl md:rounded-full font-bold uppercase tracking-widest text-[11px] md:text-sm active:scale-95 transition-all shadow-sm"
                 >
-                  <Search size={16} className="shrink-0" /> 
+                  <Search size={16} className="shrink-0" />
                   <span className="truncate">Find</span>
                 </Link>
-                
+
                 <Link
                   href="/dashboard"
                   className="w-full flex items-center justify-center gap-2 bg-[var(--surface-2)] hover:bg-[var(--border-1)] border border-[var(--border-1)] text-[var(--foreground)] px-2 py-4 md:px-8 md:py-5 rounded-2xl md:rounded-full font-bold uppercase tracking-widest text-[11px] md:text-sm active:scale-95 transition-all shadow-sm"
                 >
-                  <Plus size={16} className="shrink-0" /> 
+                  <Plus size={16} className="shrink-0" />
                   <span className="truncate">Create</span>
                 </Link>
               </div>
 
               {/* Tertiary Action: Grounded Full Width */}
               <InstallAppButton className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--foreground)] text-[var(--background)] px-6 py-4 md:px-10 md:py-5 rounded-2xl md:rounded-full font-black uppercase tracking-widest text-[12px] md:text-sm hover:opacity-90 active:scale-95 transition-all shadow-xl mt-1 md:mt-0" />
-              
             </div>
           </div>
         </section>
@@ -391,72 +392,116 @@ export default function Home() {
             </div>
           ) : completedMatches.length > 0 ? (
             /* 2. Show actual matches once data arrives */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {completedMatches.map((match) => (
-                <Link
-                  key={match.id}
-                  href={getMatchLink(match)}
-                  className="group relative bg-[var(--background)]/[0.7] backdrop-blur-2xl border border-[var(--foreground)]/10 p-6 rounded-xl transition-all flex flex-col justify-between min-h-[160px] hover:-translate-y-2 hover:shadow-xl shadow-sm overflow-hidden"
-                >
-                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-all duration-500" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {completedMatches.map((match) => {
+                
+                // 🧠 1. FIGURE OUT WHO BATTED FIRST
+                const choseBat = String(match?.toss_decision || "").toLowerCase().includes("bat");
+                const t1WonToss = match?.toss_winner_id === match?.team1_id;
+                const actualT1BattedFirst = match?.toss_winner_id ? (choseBat ? t1WonToss : !t1WonToss) : true;
 
-                  <div>
-                    <div className="flex justify-between items-center text-[13px] font-bold opacity-70 uppercase mb-4 border-b border-[var(--foreground)]/10 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-[var(--foreground)]/10 px-2 py-1 rounded-lg">
-                          🏁 Finished
+                // 🧠 2. ASSIGN TEAMS TO INNINGS
+                const inn1TeamName = actualT1BattedFirst ? getTeamName(match, 1) : getTeamName(match, 2);
+                const inn2TeamName = actualT1BattedFirst ? getTeamName(match, 2) : getTeamName(match, 1);
+
+                const inn1Score = match.team1_score ?? 0;
+                const inn1Wickets = match.team1_wickets ?? 0;
+                const inn1Overs = match.team1_overs ?? 0;
+
+                const inn2Score = match.team2_score ?? 0;
+                const inn2Wickets = match.team2_wickets ?? 0;
+                const inn2Overs = match.team2_overs ?? 0;
+
+                // 🧠 3. WINNER MATH & OPACITY LOGIC
+                let winnerText = match.result_margin || "Match Ended";
+                let isInn1Winner = false;
+                let isInn2Winner = false;
+
+                if (inn1Score > inn2Score) {
+                  winnerText = `${inn1TeamName} Won`;
+                  isInn1Winner = true;
+                } else if (inn2Score > inn1Score) {
+                  winnerText = `${inn2TeamName} Won`;
+                  isInn2Winner = true;
+                } else if (inn1Score === inn2Score && inn1Score > 0) {
+                  winnerText = "Match Tied";
+                }
+
+                return (
+                  <Link
+                    key={match.id}
+                    href={getMatchLink(match)}
+                    className="group relative bg-[var(--surface-1)] backdrop-blur-xl border border-[var(--border-1)] p-5 rounded-2xl transition-all flex flex-col justify-between hover:border-[var(--accent)] hover:shadow-xl shadow-sm overflow-hidden active:scale-[0.98]"
+                  >
+                    <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-emerald-500/5 rounded-full blur-2xl -z-10 group-hover:bg-emerald-500/10 transition-all duration-500" />
+
+                    <div>
+                      {/* Header info */}
+                      <div className="flex justify-between items-center text-[10px] md:text-[11px] font-bold opacity-75 uppercase mb-3 border-b border-[var(--border-1)] pb-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-[var(--surface-2)] px-2 py-0.5 rounded-md border border-[var(--border-1)] text-[var(--foreground)]">
+                            🏁 Finished
+                          </span>
+                          <span className="text-[var(--text-muted)]">{match.ball_type || "Tennis"}</span>
+                        </div>
+                        <span className="flex items-center gap-1 text-[var(--text-muted)]">
+                          <CalendarDays size={11} />{" "}
+                          {formatDateTime(match.created_at)}
                         </span>
-                        <span>{match.ball_type || "Tennis"} Ball</span>
                       </div>
-                      <span className="flex items-center gap-1">
-                        <CalendarDays size={12} />{" "}
-                        {formatDateTime(match.created_at)}
-                      </span>
+
+                      {/* Tournament Name */}
+                      <p className="text-[11px] text-[var(--accent)] font-black uppercase tracking-wide truncate mb-3">
+                        🏆 {getTournamentName(match)}
+                      </p>
+
+                      {/* Scores Section */}
+                      <div className="space-y-2 text-xs md:text-sm font-bold text-[var(--foreground)]">
+                        
+                        {/* 🏏 1ST INNINGS ROW (Fades if Team 2 won) */}
+                        <div className={`flex justify-between items-center px-3 py-2 rounded-xl transition-opacity ${isInn2Winner ? "opacity-50 grayscale-[50%]" : "opacity-100"}`}>
+                          <span className="truncate pr-2 uppercase">
+                            {inn1TeamName} {isInn1Winner && "👑"}
+                          </span>
+                          <span className="font-black text-base shrink-0">
+                            {inn1Score}
+                            <span className="opacity-50 text-xs">
+                              /{inn1Wickets}
+                            </span>{" "}
+                            <span className="text-[11px] opacity-50 font-medium">
+                              ({inn1Overs})
+                            </span>
+                          </span>
+                        </div>
+                        
+                        {/* 🏏 2ND INNINGS ROW (Fades if Team 1 won) */}
+                        <div className={`flex justify-between items-center px-3 py-2 rounded-xl transition-opacity ${isInn1Winner ? "opacity-50 grayscale-[50%]" : "opacity-100"}`}>
+                          <span className="truncate pr-2 uppercase">
+                            {inn2TeamName} {isInn2Winner && "👑"}
+                          </span>
+                          <span className="font-black text-base shrink-0">
+                            {inn2Score}
+                            <span className="opacity-50 text-xs">
+                              /{inn2Wickets}
+                            </span>{" "}
+                            <span className="text-[11px] opacity-50 font-medium">
+                              ({inn2Overs})
+                            </span>
+                          </span>
+                        </div>
+
+                      </div>
                     </div>
 
-                    <p className="text-xs text-[var(--accent)] font-black uppercase tracking-wide truncate mb-4">
-                      🏆 {getTournamentName(match)}
-                    </p>
-
-                    <div className="space-y-3 text-sm font-bold text-[var(--foreground)]">
-                      <div className="flex justify-between items-center">
-                        <span className="truncate pr-2">
-                          {getTeamName(match, 1)}
-                        </span>
-                        <span className="font-black text-lg">
-                          {match.team1_score || 0}
-                          <span className="opacity-50 text-sm">
-                            /{match.team1_wickets || 0}
-                          </span>{" "}
-                          <span className="text-[13px] opacity-50 font-normal">
-                            ({match.team1_overs || 0})
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="truncate pr-2">
-                          {getTeamName(match, 2)}
-                        </span>
-                        <span className="font-black text-lg">
-                          {match.team2_score || 0}
-                          <span className="opacity-50 text-sm">
-                            /{match.team2_wickets || 0}
-                          </span>{" "}
-                          <span className="text-[13px] opacity-50 font-normal">
-                            ({match.team2_overs || 0})
-                          </span>
-                        </span>
-                      </div>
+                    {/* 🏆 Result Footer */}
+                    <div className="mt-4 pt-2.5 border-t border-[var(--border-1)]">
+                      <p className="text-[11px] font-black text-emerald-500 uppercase tracking-wide truncate bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-center">
+                        📢 {winnerText}
+                      </p>
                     </div>
-                  </div>
-
-                  <div className="mt-5 pt-3 border-t border-[var(--foreground)]/10">
-                    <p className="text-xs font-black text-emerald-500 uppercase tracking-wide truncate">
-                      📢 {match.result_margin || "Match Ended"}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             /* 3. Empty State if no matches are found */
@@ -637,14 +682,13 @@ export default function Home() {
       {/* --- LIVE ANIMATED STATS FOOTER --- */}
       <section className="border-t border-[var(--border-1)] bg-[var(--surface-1)]/80 backdrop-blur-3xl w-full py-6 md:py-8 mt-auto relative z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-3 gap-2 md:gap-5 divide-x divide-[var(--border-1)]">
-          
           {/* Stat 1 */}
           <div className="flex flex-col items-center justify-center text-center px-1 md:px-4">
             <span className="text-2xl sm:text-3xl md:text-4xl font-black text-[var(--foreground)] tracking-tight">
               <AnimatedNumber value={systemStats.matches} />+
             </span>
             <span className="text-[10px] sm:text-xs md:text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-1 md:mt-2 flex items-center gap-1">
-              <Play size={10} className="shrink-0" /> 
+              <Play size={10} className="shrink-0" />
               <span className="truncate">Matches</span>
             </span>
           </div>
@@ -655,7 +699,7 @@ export default function Home() {
               <AnimatedNumber value={systemStats.tournaments} />+
             </span>
             <span className="text-[10px] sm:text-xs md:text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-1 md:mt-2 flex items-center gap-1">
-              <Trophy size={10} className="shrink-0" /> 
+              <Trophy size={10} className="shrink-0" />
               <span className="truncate">Tournaments</span>
             </span>
           </div>
@@ -666,11 +710,10 @@ export default function Home() {
               <AnimatedNumber value={systemStats.players} />+
             </span>
             <span className="text-[10px] sm:text-xs md:text-[13px] text-[var(--accent)] font-black uppercase tracking-widest mt-1 md:mt-2 flex items-center gap-1">
-              <Users size={10} className="shrink-0" /> 
+              <Users size={10} className="shrink-0" />
               <span className="truncate">Players</span>
             </span>
           </div>
-
         </div>
       </section>
     </main>

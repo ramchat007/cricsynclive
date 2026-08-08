@@ -155,6 +155,37 @@ export default function Scoreboard({
   if (isCompleted) {
     const { topBatters, topBowlers } = getTopPerformers();
 
+    // 🧠 1. BULLETPROOF TEAM IDENTIFICATION (Imported from FullScorecard)
+    let actualT1BattedFirst = true;
+    const allInn1Delivs = deliveries.filter((d: any) => d.innings === 1);
+
+    if (allInn1Delivs.length > 0 && (allInn1Delivs[0].batting_team_id || allInn1Delivs[0].team_id)) {
+      const firstTeamId = allInn1Delivs[0].batting_team_id || allInn1Delivs[0].team_id;
+      actualT1BattedFirst = firstTeamId === match?.team1_id;
+    } else {
+      const choseBat = String(match?.toss_decision || "").toLowerCase().includes("bat");
+      const t1Won = match?.toss_winner_id === match?.team1_id;
+      actualT1BattedFirst = choseBat ? t1Won : !t1Won;
+    }
+
+    // 🧠 2. DYNAMIC SCORE MAPPING (Fixes the swapped DB columns)
+    // If the DB saves Innings 1 into team1_score, this routes it to the team that ACTUALLY batted first.
+    const t1ActualScore = actualT1BattedFirst ? match.team1_score : match.team2_score;
+    const t1ActualWickets = actualT1BattedFirst ? match.team1_wickets : match.team2_wickets;
+    const t1ActualOvers = actualT1BattedFirst ? match.team1_overs : match.team2_overs;
+
+    const t2ActualScore = actualT1BattedFirst ? match.team2_score : match.team1_score;
+    const t2ActualWickets = actualT1BattedFirst ? match.team2_wickets : match.team1_wickets;
+    const t2ActualOvers = actualT1BattedFirst ? match.team2_overs : match.team1_overs;
+
+    // 🧠 3. BULLETPROOF WINNER LOGIC (Overrides incorrect DB winner_id)
+    let actualWinnerId = match.winner_id;
+    if (t1ActualScore > t2ActualScore) {
+      actualWinnerId = match.team1_id;
+    } else if (t2ActualScore > t1ActualScore) {
+      actualWinnerId = match.team2_id;
+    }
+
     return (
       <div className="flex flex-col gap-4 animate-in fade-in w-full">
         <div className="bg-[var(--surface-1)] p-4 sm:p-6 rounded-sm border border-[var(--border-1)] shadow-sm">
@@ -170,10 +201,10 @@ export default function Scoreboard({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Team 1 Summary */}
             <div
-              className={`p-4 rounded-xl border flex justify-between items-center ${match.winner_id === match.team1_id ? "bg-[var(--accent)]/10 border-[var(--accent)]/30" : "bg-[var(--surface-2)] border-[var(--border-1)]"}`}
+              className={`p-4 rounded-xl border flex justify-between items-center ${actualWinnerId === match.team1_id ? "bg-[var(--accent)]/10 border-[var(--accent)]/30" : "bg-[var(--surface-2)] border-[var(--border-1)]"}`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                {match.winner_id === match.team1_id && (
+                {actualWinnerId === match.team1_id && (
                   <span className="text-xl shrink-0">🏆</span>
                 )}
                 <div className="flex flex-col min-w-0">
@@ -181,15 +212,15 @@ export default function Scoreboard({
                     {match?.team1?.name}
                   </span>
                   <span className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-widest">
-                    {match.team1_overs} Overs
+                    {t1ActualOvers} Overs
                   </span>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <span className="text-2xl font-black text-[var(--foreground)]">
-                  {match.team1_score}
+                  {t1ActualScore}
                   <span className="text-base text-[var(--text-muted)]">
-                    /{match.team1_wickets}
+                    /{t1ActualWickets}
                   </span>
                 </span>
               </div>
@@ -197,10 +228,10 @@ export default function Scoreboard({
 
             {/* Team 2 Summary */}
             <div
-              className={`p-4 rounded-xl border flex justify-between items-center ${match.winner_id === match.team2_id ? "bg-[var(--accent)]/10 border-[var(--accent)]/30" : "bg-[var(--surface-2)] border-[var(--border-1)]"}`}
+              className={`p-4 rounded-xl border flex justify-between items-center ${actualWinnerId === match.team2_id ? "bg-[var(--accent)]/10 border-[var(--accent)]/30" : "bg-[var(--surface-2)] border-[var(--border-1)]"}`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                {match.winner_id === match.team2_id && (
+                {actualWinnerId === match.team2_id && (
                   <span className="text-xl shrink-0">🏆</span>
                 )}
                 <div className="flex flex-col min-w-0">
@@ -208,15 +239,15 @@ export default function Scoreboard({
                     {match?.team2?.name}
                   </span>
                   <span className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-widest">
-                    {match.team2_overs} Overs
+                    {t2ActualOvers} Overs
                   </span>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <span className="text-2xl font-black text-[var(--foreground)]">
-                  {match.team2_score}
+                  {t2ActualScore}
                   <span className="text-base text-[var(--text-muted)]">
-                    /{match.team2_wickets}
+                    /{t2ActualWickets}
                   </span>
                 </span>
               </div>
